@@ -1,0 +1,2539 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
+	<meta name="apple-mobile-web-app-capable" content="yes">
+	<meta name="mobile-web-app-capable" content="yes">
+	<meta name="theme-color" content="#0ea5e9">
+	<title>♟️ Club Morphy - Curso de Ajedrez</title>
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+	<style>
+    	/* ===== TEMA ÚNICO (CLARO) ===== */
+    	:root {
+        	--bg: #ffffff;
+        	--surface: #f1f5f9;
+        	--surface2: #e2e8f0;
+        	--acento: #0ea5e9;
+        	--acento-oscuro: #0284c7;
+        	--acento-claro: #38bdf8;
+        	--blanco: #ffffff;
+        	--texto: #1e293b;
+        	--texto-suave: #64748b;
+        	--borde: #cbd5e1;
+        	--exito: #16a34a;
+        	--peligro: #dc2626;
+        	--warning: #f59e0b;
+        	--sombra: 0 4px 20px rgba(0, 0, 0, 0.06);
+        	--sombra-acento: 0 0 15px rgba(14, 165, 233, 0.15);
+        	--radio: 12px;
+        	--transicion: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        	--header-bg: linear-gradient(135deg, var(--bg) 0%, var(--surface) 50%, var(--bg) 100%);
+        	--sidebar-bg: linear-gradient(180deg, var(--surface) 0%, var(--bg) 100%);
+        	--btn-bg: linear-gradient(135deg, var(--surface2), var(--surface));
+        	--btn-hover-bg: linear-gradient(135deg, #cbd5e1, #e2e8f0);
+        	--btn-acento-bg: linear-gradient(135deg, var(--acento-oscuro), var(--acento), var(--acento-oscuro));
+        	--btn-acento-hover-bg: linear-gradient(135deg, var(--acento), var(--acento-claro), var(--acento));
+        	--btn-peligro-bg: linear-gradient(135deg, #fee2e2, #fecaca);
+        	--btn-peligro-hover-bg: linear-gradient(135deg, #fecaca, #fca5a5);
+        	--btn-exito-bg: linear-gradient(135deg, #dcfce7, #bbf7d0);
+        	--btn-exito-hover-bg: linear-gradient(135deg, #bbf7d0, #86efac);
+        	--modal-bg: linear-gradient(160deg, var(--bg) 0%, var(--surface) 100%);
+        	--toast-bg: linear-gradient(135deg, var(--surface), var(--surface2));
+        	--input-bg: var(--bg);
+    	}
+
+    	* { margin: 0; padding: 0; box-sizing: border-box; }
+
+    	body {
+        	font-family: 'Lato', 'Segoe UI', system-ui, sans-serif;
+        	background-color: var(--bg);
+        	background-image: none;
+        	color: var(--texto);
+        	min-height: 100vh;
+        	display: flex;
+        	flex-direction: column;
+        	line-height: 1.6;
+        	-webkit-tap-highlight-color: transparent;
+        	transition: background-color var(--transicion), color var(--transicion);
+        	overflow-x: hidden;
+        	width: 100%;
+    	}
+
+    	.content, .sidebar, .modal-content, .tema-body, .nota-debajo {
+        	word-wrap: break-word;
+        	overflow-wrap: break-word;
+    	}
+
+    	/* ─── HEADER ─── */
+    	.header {
+        	padding: 14px 28px;
+        	background: var(--header-bg);
+        	border-bottom: 2px solid var(--acento);
+        	display: flex;
+        	justify-content: space-between;
+        	align-items: center;
+        	flex-wrap: wrap;
+        	gap: 10px;
+        	box-shadow: 0 4px 24px rgba(0,0,0,0.1), 0 1px 0 rgba(14,165,233,0.3);
+        	z-index: 10;
+        	position: relative;
+    	}
+
+    	.header::after {
+        	content: '';
+        	position: absolute;
+        	bottom: -4px;
+        	left: 0;
+        	right: 0;
+        	height: 2px;
+        	background: linear-gradient(90deg, transparent, rgba(14,165,233,0.4), transparent);
+        	pointer-events: none;
+    	}
+
+    	.header h1 {
+        	font-family: 'Playfair Display', serif;
+        	font-size: 1.6rem;
+        	font-weight: 700;
+        	color: var(--acento);
+        	display: flex;
+        	align-items: center;
+        	gap: 10px;
+        	text-shadow: 0 2px 8px rgba(14,165,233,0.15);
+        	letter-spacing: 0.5px;
+    	}
+
+    	.header-left { display: flex; align-items: center; gap: 10px; }
+    	.header-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+    	.logo-club {
+        	width: 44px; height: 44px;
+        	border-radius: 50%;
+        	object-fit: cover;
+        	border: 2px solid var(--acento);
+        	background: var(--surface2);
+        	display: none;
+        	box-shadow: 0 0 10px rgba(14,165,233,0.3);
+    	}
+
+    	.logo-club.visible { display: block; }
+    	.btn-label { display: inline; }
+
+    	/* ─── BOTONES ─── */
+    	.btn {
+        	background: var(--btn-bg);
+        	border: 1px solid var(--borde);
+        	color: var(--texto);
+        	padding: 10px 20px;
+        	border-radius: 6px;
+        	font-family: 'Lato', sans-serif;
+        	font-weight: 700;
+        	font-size: 0.85rem;
+        	cursor: pointer;
+        	transition: var(--transicion);
+        	display: inline-flex;
+        	align-items: center;
+        	gap: 6px;
+        	white-space: nowrap;
+        	text-decoration: none;
+        	position: relative;
+        	letter-spacing: 0.3px;
+        	box-shadow: 0 2px 8px rgba(0,0,0,0.05), inset 0 1px 0 rgba(255,255,255,0.3);
+    	}
+
+    	.btn:hover {
+        	background: var(--btn-hover-bg);
+        	border-color: var(--acento);
+        	color: var(--acento-oscuro);
+        	box-shadow: 0 4px 16px rgba(0,0,0,0.1), 0 0 10px rgba(14,165,233,0.2), inset 0 1px 0 rgba(255,255,255,0.4);
+        	transform: translateY(-1px);
+    	}
+
+    	.btn:active { transform: scale(0.97) translateY(0); box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
+    	.btn:disabled { opacity: 0.5; pointer-events: none; }
+
+    	.btn-azul {
+        	background: var(--btn-acento-bg);
+        	background-size: 200% 100%;
+        	border: 1px solid var(--acento-claro);
+        	color: white;
+        	font-weight: 700;
+        	box-shadow: 0 3px 12px rgba(14,165,233,0.35), inset 0 1px 0 rgba(255,255,255,0.3);
+        	text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+    	}
+
+    	.btn-azul:hover {
+        	background-position: right center;
+        	background: var(--btn-acento-hover-bg);
+        	border-color: var(--acento-claro);
+        	color: white;
+        	box-shadow: 0 4px 20px rgba(14,165,233,0.5), inset 0 1px 0 rgba(255,255,255,0.4);
+    	}
+
+    	.btn-peligro { background: var(--btn-peligro-bg); border-color: var(--peligro); color: var(--peligro); }
+    	.btn-peligro:hover { background: var(--btn-peligro-hover-bg); border-color: #b91c1c; color: white; box-shadow: 0 4px 16px rgba(220,38,38,0.3); }
+    	.btn-exito { background: var(--btn-exito-bg); border-color: var(--exito); color: var(--exito); }
+    	.btn-exito:hover { background: var(--btn-exito-hover-bg); border-color: #15803d; color: white; box-shadow: 0 4px 16px rgba(22,163,74,0.3); }
+    	.btn-small { padding: 6px 12px; font-size: 0.78rem; border-radius: 5px; }
+    	.btn-icon { background: transparent; border: none; color: inherit; cursor: pointer; padding: 6px; }
+    	.btn-solicitar { background: var(--btn-acento-bg); border-color: var(--acento); color: white; font-weight: 700; box-shadow: 0 3px 12px rgba(14,165,233,0.35); }
+    	.btn-solicitar:hover { background: var(--btn-acento-hover-bg); box-shadow: 0 5px 20px rgba(14,165,233,0.5); }
+    	.btn-solicitar:disabled { background: var(--surface2); color: var(--texto-suave); border-color: var(--borde); }
+
+    	/* Botón warning (publicar/ocultar) */
+    	.btn-warning {
+        	background: #fef3c7;
+        	border: 1px solid var(--warning);
+        	color: #92400e;
+    	}
+    	.btn-warning:hover {
+        	background: #fde68a;
+        	box-shadow: 0 4px 16px rgba(245,158,11,0.3);
+    	}
+
+    	/* ─── BADGE ─── */
+    	.notification-badge {
+        	position: absolute;
+        	top: -6px; right: -6px;
+        	background: var(--peligro);
+        	color: white;
+        	border-radius: 50%;
+        	width: 20px; height: 20px;
+        	font-size: 0.7rem;
+        	font-weight: bold;
+        	display: flex;
+        	align-items: center;
+        	justify-content: center;
+        	pointer-events: none;
+        	box-shadow: 0 0 8px rgba(220,38,38,0.6);
+        	animation: pulse-badge 2s infinite;
+    	}
+
+    	@keyframes pulse-badge {
+        	0%, 100% { transform: scale(1); }
+        	50% { transform: scale(1.2); box-shadow: 0 0 14px rgba(220,38,38,0.8); }
+    	}
+
+    	/* ─── SIDEBAR ─── */
+    	.sidebar {
+        	width: 285px;
+        	background: var(--sidebar-bg);
+        	border-right: 1px solid var(--borde);
+        	padding: 20px 14px;
+        	overflow-y: auto;
+        	transition: transform var(--transicion);
+        	box-shadow: 3px 0 20px rgba(0,0,0,0.05);
+        	z-index: 5;
+        	scrollbar-width: thin;
+        	scrollbar-color: var(--acento-oscuro) var(--surface);
+    	}
+
+    	.sidebar::-webkit-scrollbar { width: 5px; }
+    	.sidebar::-webkit-scrollbar-track { background: var(--surface); }
+    	.sidebar::-webkit-scrollbar-thumb { background: var(--acento-oscuro); border-radius: 3px; }
+    	.sidebar.collapsed { transform: translateX(-100%); }
+
+    	.sidebar-overlay {
+        	display: none;
+        	position: fixed;
+        	top: 0;
+        	left: 0;
+        	width: 100vw;
+        	height: 100vh;
+        	height: 100dvh;
+        	background: rgba(0,0,0,0.3);
+        	z-index: 4;
+        	backdrop-filter: blur(2px);
+    	}
+    	@media (max-width: 768px) { .sidebar-overlay.active { display: block; } }
+
+    	/* ─── CLASE ITEMS ─── */
+    	.clase-item {
+        	padding: 13px 15px;
+        	background: var(--surface);
+        	border-radius: 8px;
+        	margin-bottom: 7px;
+        	cursor: pointer;
+        	font-family: 'Lato', sans-serif;
+        	font-weight: 600;
+        	font-size: 0.9rem;
+        	display: flex;
+        	justify-content: space-between;
+        	align-items: center;
+        	color: var(--texto);
+        	transition: var(--transicion);
+        	border: 1px solid var(--borde);
+        	touch-action: manipulation;
+        	flex-wrap: wrap;
+        	gap: 6px;
+        	box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+    	}
+
+    	.clase-item:hover { background: var(--surface2); border-color: var(--acento); transform: translateX(4px); box-shadow: 0 3px 12px rgba(0,0,0,0.05), 0 0 8px rgba(14,165,233,0.15); }
+    	.clase-item.active { border-left: 4px solid var(--acento); background: var(--surface2); box-shadow: 0 4px 16px rgba(0,0,0,0.08), 0 0 12px rgba(14,165,233,0.2); color: var(--acento-oscuro); }
+    	.clase-item.bloqueada { opacity: 0.55; filter: grayscale(0.4); }
+    	.clase-num { font-weight: 700; color: var(--acento); margin-right: 6px; }
+
+    	/* ─── LAYOUT ─── */
+    	.main-layout { display: flex; flex: 1; overflow: hidden; position: relative; }
+    	.content {
+        	flex: 1;
+        	padding: 28px;
+        	overflow-y: auto;
+        	background: transparent;
+        	scrollbar-width: thin;
+        	scrollbar-color: var(--acento-oscuro) var(--surface);
+    	}
+    	.content::-webkit-scrollbar { width: 6px; }
+    	.content::-webkit-scrollbar-track { background: var(--bg); }
+    	.content::-webkit-scrollbar-thumb { background: var(--acento-oscuro); border-radius: 3px; }
+
+    	/* ─── TEMAS ─── */
+    	.tema {
+        	border: 1px solid var(--borde);
+        	border-radius: var(--radio);
+        	margin-bottom: 14px;
+        	background: var(--surface);
+        	overflow: hidden;
+        	transition: box-shadow var(--transicion), border-color var(--transicion);
+        	box-shadow: 0 3px 12px rgba(0,0,0,0.04);
+    	}
+
+    	.tema:hover { box-shadow: 0 6px 24px rgba(0,0,0,0.07), 0 0 10px rgba(14,165,233,0.1); border-color: var(--acento-oscuro); }
+    	.tema.abierto { border-color: var(--acento); box-shadow: 0 6px 28px rgba(0,0,0,0.08), 0 0 15px rgba(14,165,233,0.15); }
+
+    	.tema-header {
+        	padding: 16px 20px;
+        	background: var(--surface2);
+        	display: flex;
+        	align-items: center;
+        	gap: 12px;
+        	cursor: pointer;
+        	font-family: 'Playfair Display', serif;
+        	font-weight: 600;
+        	font-size: 0.95rem;
+        	color: var(--texto);
+        	border-bottom: 1px solid transparent;
+        	transition: background var(--transicion);
+        	flex-wrap: wrap;
+    	}
+
+    	.tema-header:hover { background: #cbd5e1; }
+    	.tema.abierto .tema-header { border-bottom-color: var(--borde); background: var(--surface2); }
+
+    	.tema-body {
+        	padding: 0 20px;
+        	max-height: 0;
+        	overflow: hidden;
+        	opacity: 0;
+        	transition: max-height 0.4s ease, opacity 0.3s, padding 0.3s;
+    	}
+
+    	.tema.abierto .tema-body {
+        	max-height: 80vh;
+        	overflow-y: auto;
+        	opacity: 1;
+        	padding: 20px;
+        	display: flex;
+        	flex-direction: column;
+        	gap: 18px;
+    	}
+
+    	/* ─── VIDEOS / IFRAMES ─── */
+    	.video-wrapper,
+    	.iframe-wrapper {
+        	position: relative;
+        	padding-bottom: 56.25%;
+        	height: 0;
+        	border-radius: 10px;
+        	overflow: hidden;
+        	background: var(--surface);
+        	margin: 5px 0;
+        	border: 1px solid var(--borde);
+        	box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+    	}
+
+    	.video-wrapper iframe,
+    	.iframe-wrapper iframe {
+        	position: absolute;
+        	top: 0; left: 0;
+        	width: 100%; height: 100%;
+        	border: none;
+        	max-width: 100%;
+    	}
+
+    	/* ─── INPUTS ─── */
+    	input, textarea, select {
+        	padding: 12px 16px;
+        	border-radius: 8px;
+        	border: 1px solid var(--borde);
+        	background: var(--input-bg);
+        	color: var(--texto);
+        	font-family: 'Lato', sans-serif;
+        	font-size: 0.95rem;
+        	width: 100%;
+        	transition: border var(--transicion), box-shadow var(--transicion);
+    	}
+
+    	input::placeholder, textarea::placeholder { color: var(--texto-suave); opacity: 0.7; }
+
+    	input:focus, textarea:focus, select:focus {
+        	outline: none;
+        	border-color: var(--acento);
+        	box-shadow: 0 0 0 3px rgba(14,165,233,0.15), 0 0 12px rgba(14,165,233,0.1);
+        	scroll-margin-bottom: 100px;
+    	}
+
+    	.input-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    	.input-row input { flex: 1; min-width: 140px; }
+
+    	/* ─── LABELS ─── */
+    	label {
+        	font-family: 'Lato', sans-serif;
+        	font-size: 0.82rem;
+        	font-weight: 700;
+        	color: var(--acento-oscuro);
+        	letter-spacing: 0.5px;
+        	text-transform: uppercase;
+        	display: block;
+        	margin-bottom: 4px;
+    	}
+
+    	/* ─── LINKS ─── */
+    	a { color: var(--acento); text-decoration: none; font-weight: 600; transition: color var(--transicion); }
+    	a:hover { color: var(--acento-oscuro); text-decoration: underline; }
+
+    	/* ─── BADGE ─── */
+    	.badge {
+        	background: var(--exito);
+        	color: white;
+        	padding: 3px 10px;
+        	border-radius: 12px;
+        	font-size: 0.72rem;
+        	font-weight: 700;
+        	letter-spacing: 0.5px;
+        	border: 1px solid rgba(22,163,74,0.4);
+        	box-shadow: 0 0 8px rgba(22,163,74,0.2);
+    	}
+
+    	/* ─── TOAST ─── */
+    	.toast {
+        	position: fixed;
+        	bottom: 30px; right: 30px;
+        	background: var(--toast-bg);
+        	color: var(--texto);
+        	padding: 14px 26px;
+        	border-radius: 8px;
+        	font-family: 'Lato', sans-serif;
+        	font-weight: 600;
+        	font-size: 0.9rem;
+        	box-shadow: 0 8px 32px rgba(0,0,0,0.1), 0 0 20px rgba(14,165,233,0.15);
+        	border: 1px solid var(--borde);
+        	z-index: 999;
+        	transform: translateY(120px);
+        	opacity: 0;
+        	transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s;
+        	display: flex;
+        	align-items: center;
+        	gap: 8px;
+    	}
+
+    	.toast.show { transform: translateY(0); opacity: 1; }
+    	.toast.error {
+        	background: #fee2e2;
+        	border-color: var(--peligro);
+        	color: var(--peligro);
+        	box-shadow: 0 8px 32px rgba(0,0,0,0.1), 0 0 15px rgba(220,38,38,0.25);
+    	}
+
+    	.toast.success {
+        	background: #dcfce7;
+        	border-color: var(--exito);
+        	color: var(--exito);
+        	box-shadow: 0 8px 32px rgba(0,0,0,0.1), 0 0 15px rgba(22,163,74,0.25);
+    	}
+
+    	/* ─── MODALES ─── */
+    	.modal-overlay {
+        	position: fixed;
+        	top: 0; left: 0;
+        	width: 100%; height: 100%;
+        	background: rgba(0,0,0,0.5);
+        	display: flex;
+        	align-items: center;
+        	justify-content: center;
+        	z-index: 1000;
+        	opacity: 0;
+        	pointer-events: none;
+        	transition: opacity var(--transicion);
+        	backdrop-filter: blur(4px);
+    	}
+
+    	.modal-overlay.active {
+        	display: flex;
+        	align-items: center;
+        	justify-content: center;
+        	overflow-y: auto;
+        	padding: 20px;
+        	box-sizing: border-box;
+        	opacity: 1;
+        	pointer-events: auto;
+    	}
+
+    	.modal-content {
+        	background: var(--modal-bg);
+        	padding: 30px;
+        	border-radius: 16px;
+        	max-width: 420px;
+        	width: 90%;
+        	box-shadow: 0 24px 60px rgba(0,0,0,0.15), 0 0 40px rgba(14,165,233,0.1);
+        	border: 1px solid var(--borde);
+        	border-top: 2px solid var(--acento);
+        	transform: scale(0.9);
+        	transition: transform var(--transicion);
+        	max-height: 90vh;
+        	overflow-y: auto;
+        	scrollbar-width: thin;
+        	scrollbar-color: var(--acento-oscuro) var(--surface);
+        	margin: auto;
+    	}
+
+    	.modal-overlay.active .modal-content { transform: scale(1); }
+
+    	.modal-content h3 {
+        	font-family: 'Playfair Display', serif;
+        	color: var(--acento);
+        	margin-bottom: 20px;
+        	font-size: 1.4rem;
+        	letter-spacing: 0.3px;
+        	text-shadow: 0 2px 8px rgba(14,165,233,0.15);
+        	padding-bottom: 12px;
+        	border-bottom: 1px solid var(--borde);
+    	}
+
+    	.modal-content input { margin-bottom: 12px; }
+
+    	.modal-buttons {
+        	display: flex;
+        	gap: 10px;
+        	justify-content: flex-end;
+        	margin-top: 22px;
+        	flex-wrap: wrap;
+    	}
+
+    	/* ─── ADMIN ─── */
+    	.titulo-editable {
+        	cursor: pointer;
+        	border-bottom: 2px dashed transparent;
+        	transition: border var(--transicion), color var(--transicion);
+        	-webkit-user-select: none;
+        	user-select: none;
+    	}
+
+    	body.modo-admin .titulo-editable:hover { border-bottom-color: var(--acento); color: var(--acento); }
+    	.admin-only { display: none; }
+    	body.modo-admin .admin-only { display: inline-flex; }
+    	.solo-admin { display: none; }
+    	body.modo-admin .solo-admin { display: block; }
+
+    	/* ─── HAMBURGER ─── */
+    	.hamburger {
+        	display: none;
+        	background: var(--surface);
+        	border: 1px solid var(--borde);
+        	border-radius: 6px;
+        	color: var(--acento);
+        	font-size: 1.4rem;
+        	cursor: pointer;
+        	padding: 8px 12px;
+        	touch-action: manipulation;
+        	transition: var(--transicion);
+        	box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    	}
+
+    	.hamburger:hover { background: var(--surface2); border-color: var(--acento); }
+
+    	/* ─── LOADER ─── */
+    	.loader {
+        	display: inline-block;
+        	width: 18px; height: 18px;
+        	border: 2px solid rgba(14,165,233,0.2);
+        	border-top-color: var(--acento);
+        	border-radius: 50%;
+        	animation: spin 0.7s linear infinite;
+    	}
+
+    	@keyframes spin { to { transform: rotate(360deg); } }
+
+    	/* ─── UTILITIES ─── */
+    	.flex-between { display: flex; justify-content: space-between; align-items: center; }
+    	.flex-between h2 {
+        	font-family: 'Playfair Display', serif;
+        	font-size: 1.5rem;
+        	color: var(--acento);
+        	text-shadow: 0 2px 10px rgba(14,165,233,0.15);
+    	}
+
+    	/* ─── USER SESSION ─── */
+    	.user-session-info {
+        	background: var(--surface);
+        	border-radius: 10px;
+        	padding: 14px 16px;
+        	display: flex;
+        	align-items: center;
+        	gap: 12px;
+        	margin-bottom: 16px;
+        	border: 1px solid var(--borde);
+    	}
+
+    	.user-avatar {
+        	width: 42px; height: 42px;
+        	background: linear-gradient(135deg, var(--acento-oscuro), var(--acento));
+        	border-radius: 50%;
+        	display: flex;
+        	align-items: center;
+        	justify-content: center;
+        	font-family: 'Playfair Display', serif;
+        	font-weight: 700;
+        	font-size: 1.2rem;
+        	color: white;
+        	box-shadow: 0 0 12px rgba(14,165,233,0.3);
+    	}
+
+    	/* ─── PASSWORD TOGGLE ─── */
+    	.input-password-wrapper { position: relative; }
+    	.input-password-wrapper input { padding-right: 44px; }
+
+    	.toggle-password-btn {
+        	position: absolute;
+        	right: 10px; top: 50%;
+        	transform: translateY(-50%);
+        	background: none;
+        	border: none;
+        	color: var(--texto-suave);
+        	cursor: pointer;
+        	font-size: 1.1rem;
+        	transition: color var(--transicion);
+    	}
+
+    	.toggle-password-btn:hover { color: var(--acento); }
+
+    	/* ─── AUTOFILL WARNING ─── */
+    	.autofill-warning { color: var(--warning); font-size: 0.8rem; margin-top: 4px; display: none; }
+
+    	/* ─── REORDER BUTTONS ─── */
+    	.btn-reorder {
+        	background: var(--surface);
+        	border: 1px solid var(--borde);
+        	color: var(--acento);
+        	padding: 4px 8px;
+        	border-radius: 5px;
+        	font-size: 0.85rem;
+        	cursor: pointer;
+        	line-height: 1;
+        	touch-action: manipulation;
+        	transition: var(--transicion);
+        	box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+    	}
+
+    	.btn-reorder:hover { background: var(--surface2); border-color: var(--acento-oscuro); box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+
+    	/* ─── NOTA DEBAJO ─── */
+    	.nota-debajo {
+        	background: var(--surface);
+        	padding: 12px 16px;
+        	border-radius: 7px;
+        	color: var(--texto);
+        	font-size: 0.9rem;
+        	border-left: 3px solid var(--acento-oscuro);
+        	margin: 8px 0;
+        	white-space: pre-wrap;
+        	box-shadow: inset 0 1px 4px rgba(0,0,0,0.05);
+    	}
+
+    	/* ─── USER ACCESS LIST ─── */
+    	.user-access-list, .solicitudes-list, .notificaciones-list {
+        	max-height: 380px;
+        	overflow-y: auto;
+        	margin: 15px 0;
+        	border-radius: 8px;
+        	border: 1px solid var(--borde);
+        	scrollbar-width: thin;
+        	scrollbar-color: var(--acento-oscuro) var(--surface);
+    	}
+
+    	.user-access-item, .solicitud-item, .notificacion-item {
+        	display: flex;
+        	justify-content: space-between;
+        	align-items: center;
+        	padding: 12px 14px;
+        	border-bottom: 1px solid var(--borde);
+        	gap: 10px;
+        	flex-wrap: wrap;
+        	transition: background var(--transicion);
+    	}
+
+    	.user-access-item:hover, .solicitud-item:hover, .notificacion-item:hover { background: var(--surface); }
+    	.user-email { font-weight: 600; word-break: break-all; color: var(--texto); font-size: 0.9rem; }
+
+    	/* ─── TOGGLE SWITCH ─── */
+    	.toggle-switch { position: relative; display: inline-block; width: 50px; height: 24px; }
+    	.toggle-switch input { opacity: 0; width: 0; height: 0; }
+
+    	.slider {
+        	position: absolute;
+        	cursor: pointer;
+        	top: 0; left: 0; right: 0; bottom: 0;
+        	background-color: var(--borde);
+        	transition: .3s;
+        	border-radius: 24px;
+        	border: 1px solid var(--borde);
+    	}
+
+    	.slider:before {
+        	position: absolute;
+        	content: "";
+        	height: 18px; width: 18px;
+        	left: 3px; bottom: 3px;
+        	background-color: white;
+        	transition: .3s;
+        	border-radius: 50%;
+    	}
+
+    	input:checked + .slider { background: var(--exito); border-color: var(--exito); }
+    	input:checked + .slider:before { transform: translateX(26px); }
+
+    	/* ─── STATUS MESSAGES ─── */
+    	.no-users-msg { text-align: center; color: var(--texto-suave); padding: 24px; font-style: italic; }
+    	.estado-pendiente { color: var(--warning); font-weight: 700; }
+    	.estado-aprobada { color: var(--exito); font-weight: 700; }
+    	.estado-rechazada { color: var(--peligro); font-weight: 700; }
+
+    	/* ─── NOTIFICACIONES ─── */
+    	.notificacion-no-leida { border-left: 3px solid var(--acento); background: rgba(14,165,233,0.04); }
+    	.notificacion-texto { flex: 1; min-width: 150px; font-size: 0.9rem; }
+
+    	/* ─── CLUB DATA ─── */
+    	.club-data-item {
+        	display: flex;
+        	align-items: center;
+        	gap: 10px;
+        	padding: 10px 0;
+        	border-bottom: 1px solid var(--borde);
+        	font-size: 0.92rem;
+        	color: var(--texto);
+    	}
+
+    	.club-data-icon { font-size: 1.2rem; min-width: 30px; text-align: center; }
+
+    	/* ─── USER INFO ─── */
+    	#user-info {
+        	font-size: 0.85rem;
+        	color: var(--texto-suave);
+        	font-family: 'Lato', sans-serif;
+        	max-width: 120px;
+        	overflow: hidden;
+        	text-overflow: ellipsis;
+        	white-space: nowrap;
+        	display: inline-block;
+        	vertical-align: middle;
+    	}
+
+    	/* ─── BLOCKQUOTE / PRE ─── */
+    	pre {
+        	background: var(--surface);
+        	border: 1px solid var(--borde);
+        	border-radius: 6px;
+        	padding: 10px 14px;
+        	font-size: 0.8rem;
+        	color: var(--texto);
+        	overflow-x: auto;
+    	}
+
+    	code {
+        	font-family: 'Courier New', monospace;
+        	background: var(--surface);
+        	padding: 2px 6px;
+        	border-radius: 4px;
+        	color: var(--acento-oscuro);
+        	font-size: 0.85em;
+    	}
+
+    	/* ─── SCROLL SUAVE EN IOS ─── */
+    	.sidebar, .content, .modal-content, .user-access-list, .solicitudes-list, .notificaciones-list {
+        	-webkit-overflow-scrolling: touch;
+    	}
+
+    	/* ─── RESPONSIVE ─── */
+    	@media (max-width: 768px) {
+        	.sidebar { position: fixed; top: 0; left: 0; height: 100%; z-index: 20; transform: translateX(-100%); width: 85%; max-width: 320px; }
+        	.sidebar.open { transform: translateX(0); }
+        	.hamburger { display: block; }
+        	.main-layout { flex-direction: column; }
+        	.content { padding: 16px; }
+        	.header h1 { font-size: 1.25rem; }
+        	.header { padding: 10px 14px; }
+        	.header-right { gap: 4px; }
+        	.header-right .btn { font-size: 0.75rem; padding: 6px 10px; }
+        	.btn, .btn-small, .btn-reorder, .clase-item, .tema-header button { min-height: 44px; min-width: 44px; padding: 10px 18px; }
+        	.btn-small { padding: 8px 14px; font-size: 0.82rem; }
+        	.btn-reorder { padding: 8px 12px; font-size: 1rem; min-width: 44px; text-align: center; }
+        	.clase-item { padding: 15px; margin-bottom: 10px; font-size: 0.95rem; }
+        	.tema-header { gap: 12px; padding: 14px 16px; flex-wrap: wrap; }
+        	.tema-header button { flex-shrink: 0; }
+        	.tema-header .btn { margin-left: auto; }
+        	.tema.abierto .tema-body { padding: 16px; gap: 20px; }
+        	input, textarea { font-size: 16px; padding: 14px 16px; }
+        	.input-row { flex-direction: column; align-items: stretch; gap: 12px; }
+        	.input-row input { min-width: auto; }
+        	.modal-content { width: 92%; padding: 22px; max-width: 480px; }
+        	.modal-content .btn { min-height: 48px; justify-content: center; }
+        	.toast { bottom: 20px; left: 20px; right: 20px; width: auto; border-radius: 10px; text-align: center; justify-content: center; }
+        	.video-wrapper, .iframe-wrapper { margin: 12px 0; }
+        	.nota-debajo { font-size: 0.88rem; }
+        	.header-right { gap: 6px; }
+        	.header-right .btn { padding: 8px 12px; font-size: 0.8rem; }
+    	}
+
+    	@media (max-width: 480px) {
+        	.header { padding: 10px 14px; }
+        	.tema-header { flex-direction: column; align-items: flex-start; }
+        	.tema-header .btn { align-self: flex-end; }
+        	.header-right .btn .btn-label { display: none; }
+        	.header-right .btn { padding: 10px 12px; font-size: 1.2rem; gap: 2px; }
+        	#user-info { max-width: 100px; }
+    	}
+
+    	/* ─── TABLETS (768px - 1024px) ─── */
+    	@media (min-width: 769px) and (max-width: 1024px) {
+        	.sidebar { width: 240px; font-size: 0.9rem; }
+        	.content { padding: 22px; }
+        	.header h1 { font-size: 1.4rem; }
+        	.tema-header { padding: 12px 16px; }
+        	.clase-item { padding: 12px; font-size: 0.88rem; }
+        	.btn, .btn-small { min-height: 44px; min-width: 44px; padding: 8px 14px; }
+    	}
+
+    	@media (max-width: 1024px) {
+        	button, .btn, .btn-small, .btn-reorder, .btn-azul, .btn-peligro, .btn-exito,
+        	.clase-item, .tema-header, .hamburger, .toggle-password-btn {
+            	min-height: 44px;
+            	min-width: 44px;
+            	cursor: pointer;
+        	}
+    	}
+
+    	* { touch-action: manipulation; }
+
+    	.btn:active, .btn-reorder:active, .clase-item:active, .tema-header:active { transform: scale(0.98); transition: transform 0.05s; }
+    	.clase-item:active { background: var(--surface2); }
+    	input, textarea, button { touch-action: manipulation; }
+
+    	.input-edicion-inline {
+        	font-family: 'Playfair Display', serif !important;
+        	background: var(--bg) !important;
+        	border: 2px solid var(--acento) !important;
+        	color: var(--texto) !important;
+        	border-radius: 6px !important;
+        	padding: 4px 10px !important;
+        	box-shadow: 0 0 12px rgba(14,165,233,0.2) !important;
+    	}
+
+    	.bloque-editor {
+        	border: 1px solid var(--borde);
+        	border-radius: 8px;
+        	padding: 10px;
+        	margin-bottom: 10px;
+        	background: var(--bg);
+    	}
+    	.bloque-campos {
+        	display: flex;
+        	flex-wrap: wrap;
+        	gap: 8px;
+        	align-items: center;
+    	}
+    	.bloque-campos > * {
+        	flex: 1 1 auto;
+        	min-width: 120px;
+    	}
+    	.bloque-campos select,
+    	.bloque-campos input {
+        	max-width: 100%;
+    	}
+    	.estilo-controls {
+        	display: flex;
+        	flex-wrap: wrap;
+        	gap: 10px;
+        	align-items: center;
+        	margin-top: 8px;
+    	}
+    	.estilo-controls label {
+        	display: flex;
+        	align-items: center;
+        	gap: 6px;
+        	font-size: 0.78rem;
+        	text-transform: none;
+        	margin-bottom: 0;
+        	flex: 1 1 auto;
+        	min-width: 140px;
+    	}
+    	.estilo-controls input[type="color"] {
+        	width: 36px;
+        	height: 36px;
+        	padding: 2px;
+    	}
+
+    	@media (max-width: 768px) {
+        	.bloque-campos {
+            	flex-direction: column;
+            	align-items: stretch;
+        	}
+        	.bloque-campos > * {
+            	min-width: auto;
+        	}
+        	.estilo-controls {
+            	flex-direction: column;
+            	align-items: flex-start;
+        	}
+    	}
+	</style>
+</head>
+<body>
+	<div class="header">
+    	<div class="header-left">
+        	<button class="hamburger" id="hamburger-btn" aria-label="Menú">☰</button>
+        	<img id="logo-club-img" class="logo-club" src="" alt="Logo del club" onerror="this.style.display='none'">
+        	<h1>♟️ Club Morphy</h1>
+    	</div>
+    	<div class="header-right">
+        	<span id="user-info" style="font-size:0.9rem;"></span>
+        	<button class="btn" id="btn-datos-club" style="display:none;" onclick="mostrarDatosClub()">📋 <span class="btn-label">Contacto</span></button>
+        	<button class="btn" id="btn-notificaciones" style="display:none; position:relative;" onclick="abrirNotificaciones()">
+            	🔔 <span class="btn-label">Notif.</span> <span id="notif-badge" class="notification-badge" style="display:none;">0</span>
+        	</button>
+        	<button class="btn" id="btn-solicitudes-admin" style="display:none; position:relative;" onclick="abrirSolicitudesAdmin()">
+            	📩 <span class="btn-label">Solicitudes</span> <span id="solicitudes-badge" class="notification-badge" style="display:none;">0</span>
+        	</button>
+        	<button class="btn" id="btn-login" onclick="mostrarLogin()">🔐 <span class="btn-label">Iniciar sesión</span></button>
+        	<button class="btn" id="btn-logout" style="display:none;" onclick="confirmarCerrarSesion()">🚪 <span class="btn-label">Cerrar sesión</span></button>
+        	<button class="btn btn-azul" id="btn-admin" style="display:none;" onclick="toggleAdmin()">🛠️ <span class="btn-label">Admin</span></button>
+    	</div>
+	</div>
+
+	<div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+	<div class="main-layout">
+    	<div class="sidebar" id="sidebar">
+        	<div id="lista-clases"></div>
+        	<button class="btn btn-azul admin-only" id="btn-add-clase" style="margin-top:15px; width:100%;" onclick="agregarClase()">➕ <span class="btn-label">Nueva clase</span></button>
+        	<button class="btn admin-only" id="btn-config-club" style="margin-top:8px; width:100%;" onclick="abrirConfigClub()">⚙️ <span class="btn-label">Configurar Club</span></button>
+    	</div>
+    	<div class="content" id="main-content">
+        	<div style="text-align:center; margin-top:40px; color:var(--texto-suave);">
+            	<p style="font-size:1.2rem;">♞ Inicia sesión para acceder al curso.</p>
+        	</div>
+    	</div>
+	</div>
+
+	<div class="toast" id="toast"></div>
+
+	<!-- Modal Login -->
+	<div class="modal-overlay" id="modal-login">
+    	<div class="modal-content">
+        	<h3 id="modal-title">Iniciar sesión</h3>
+        	<div id="current-session" style="display:none;">
+            	<div class="user-session-info">
+                	<div class="user-avatar" id="session-avatar">👤</div>
+                	<div><strong id="session-email">usuario@example.com</strong>
+                    	<div style="font-size:0.8rem; color:var(--texto-suave);">Sesión activa</div>
+                	</div>
+            	</div>
+            	<button class="btn btn-azul" style="width:100%;" onclick="cambiarCuenta()">🔄 <span class="btn-label">Cambiar de cuenta</span></button>
+            	<button class="btn" style="width:100%; margin-top:8px;" onclick="document.getElementById('modal-login').classList.remove('active')">Cancelar</button>
+        	</div>
+        	<form id="auth-form" autocomplete="on" style="display:none;">
+            	<input type="email" id="email" placeholder="Correo electrónico" autocomplete="username email" required>
+            	<div class="input-password-wrapper">
+                	<input type="password" id="password" placeholder="Contraseña" autocomplete="current-password" required>
+                	<button type="button" class="toggle-password-btn" id="toggle-password" title="Mostrar contraseña">👁️</button>
+            	</div>
+            	<small class="autofill-warning" id="autofill-warning">⚠️ El navegador ha rellenado automáticamente. Verifica los datos antes de continuar.</small>
+            	<button type="submit" class="btn btn-azul" id="btn-auth" style="width:100%; margin-top:12px;">Ingresar</button>
+        	</form>
+        	<div id="extra-controls" style="display:none;">
+            	<button class="btn btn-small" style="width:100%; margin-top:8px;" onclick="limpiarCampos()">🧹 <span class="btn-label">Limpiar campos</span></button>
+            	<p style="margin-top:12px; text-align:center;">
+                	<a href="#" id="switch-auth" style="color:var(--acento-claro);">¿No tienes cuenta? Regístrate</a>
+            	</p>
+            	<button class="btn" style="margin-top:8px; width:100%;" onclick="document.getElementById('modal-login').classList.remove('active')">Cancelar</button>
+        	</div>
+    	</div>
+	</div>
+
+	<!-- Modal Confirmar Logout -->
+	<div class="modal-overlay" id="modal-confirm-logout">
+    	<div class="modal-content">
+        	<h3>Cerrar sesión</h3>
+        	<p>¿Estás seguro de que deseas cerrar la sesión actual?</p>
+        	<div class="modal-buttons">
+            	<button class="btn" onclick="document.getElementById('modal-confirm-logout').classList.remove('active')">Cancelar</button>
+            	<button class="btn btn-peligro" onclick="cerrarSesionConfirmada()">Cerrar sesión</button>
+        	</div>
+    	</div>
+	</div>
+
+	<!-- Modal Confirmación genérica -->
+	<div class="modal-overlay" id="modal-confirm">
+    	<div class="modal-content">
+        	<h3 id="confirm-title">Confirmar</h3>
+        	<p id="confirm-message"></p>
+        	<div class="modal-buttons">
+            	<button class="btn" onclick="closeConfirm()">Cancelar</button>
+            	<button class="btn btn-peligro" id="confirm-ok">Eliminar</button>
+        	</div>
+    	</div>
+	</div>
+
+	<!-- Modal Gestión de accesos especiales -->
+	<div class="modal-overlay" id="modal-accesos">
+    	<div class="modal-content" style="max-width:500px;">
+        	<h3 id="accesos-title">Gestionar accesos</h3>
+        	<div id="accesos-lista" class="user-access-list"></div>
+        	<div class="modal-buttons">
+            	<button class="btn" onclick="cerrarModalAccesos()">Cerrar</button>
+        	</div>
+    	</div>
+	</div>
+
+	<!-- Modal Solicitudes de acceso (admin) -->
+	<div class="modal-overlay" id="modal-solicitudes-admin">
+    	<div class="modal-content" style="max-width:550px;">
+        	<h3>📩 Solicitudes de acceso pendientes</h3>
+        	<div id="solicitudes-lista" class="solicitudes-list"></div>
+        	<div class="modal-buttons">
+            	<button class="btn" onclick="document.getElementById('modal-solicitudes-admin').classList.remove('active')">Cerrar</button>
+        	</div>
+    	</div>
+	</div>
+
+	<!-- Modal Notificaciones -->
+	<div class="modal-overlay" id="modal-notificaciones">
+    	<div class="modal-content" style="max-width:550px;">
+        	<h3>🔔 Notificaciones</h3>
+        	<div id="notificaciones-lista" class="notificaciones-list"></div>
+        	<div class="modal-buttons">
+            	<button class="btn" id="btn-marcar-todo-leido" onclick="marcarTodasNotificacionesLeidas()">✅ <span class="btn-label">Marcar todo leído</span></button>
+            	<button class="btn" onclick="document.getElementById('modal-notificaciones').classList.remove('active')">Cerrar</button>
+        	</div>
+    	</div>
+	</div>
+
+	<!-- Modal Datos del Club -->
+	<div class="modal-overlay" id="modal-datos-club">
+    	<div class="modal-content" style="max-width:500px;">
+        	<h3>📋 Datos de contacto del club</h3>
+        	<div id="datos-club-contenido"></div>
+        	<div class="modal-buttons">
+            	<button class="btn" onclick="document.getElementById('modal-datos-club').classList.remove('active')">Cerrar</button>
+        	</div>
+    	</div>
+	</div>
+
+	<!-- Modal Configuración del Club (admin) -->
+	<div class="modal-overlay" id="modal-config-club">
+    	<div class="modal-content" style="max-width:550px;">
+        	<h3>⚙️ Configuración del Club</h3>
+        	<label>🖼️ URL del logo</label>
+        	<input type="url" id="config-logo-url" placeholder="https://ejemplo.com/logo.png">
+        	<small style="color:var(--texto-suave); display:block; margin-bottom:8px;">Deja vacío para no mostrar logo.</small>
+        	<label>📞 Teléfono</label>
+        	<input type="text" id="config-telefono" placeholder="+52 123 456 7890">
+        	<label>📍 Dirección</label>
+        	<input type="text" id="config-direccion" placeholder="Calle, ciudad, país">
+        	<label>📧 Email de contacto</label>
+        	<input type="email" id="config-email-contacto" placeholder="club@example.com">
+        	<label>🕐 Horarios</label>
+        	<textarea id="config-horarios" placeholder="Lunes a Viernes: 16:00 - 20:00" style="height:60px;"></textarea>
+        	<label>🌐 Redes sociales / Web</label>
+        	<input type="url" id="config-web" placeholder="https://clubmorphy.com">
+        	<div class="modal-buttons">
+            	<button class="btn" onclick="document.getElementById('modal-config-club').classList.remove('active')">Cancelar</button>
+            	<button class="btn btn-azul" onclick="guardarConfigClub()">💾 Guardar</button>
+        	</div>
+    	</div>
+	</div>
+
+	<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+	<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+	<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
+	<script>
+    	const firebaseConfig = {
+        	apiKey: "AIzaSyC3Cw3kIDQinwnoZ-YoVxecl6Q62BJKRN8",
+        	authDomain: "club-morphy.firebaseapp.com",
+        	projectId: "club-morphy",
+        	storageBucket: "club-morphy.firebasestorage.app",
+        	messagingSenderId: "809840353367",
+        	appId: "1:809840353367:web:80f43c4519be776aa88312"
+    	};
+
+    	firebase.initializeApp(firebaseConfig);
+    	const auth = firebase.auth();
+    	const db = firebase.firestore();
+
+    	auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
+        	.catch(err => console.warn('No se pudo configurar persistencia', err));
+
+    	db.enablePersistence({ synchronizeTabs: true }).catch(err => console.warn('Offline:', err));
+
+    	const ADMIN_UID = 'lGpY5nXBRAXxG10PFHALCgtcDXq1';
+    	let currentUser = null;
+    	let curso = { clases: [] };
+    	let claseActivaId = null;
+    	let modoAdmin = false;
+    	let confirmCallback = null;
+    	let accesosEspeciales = {};
+    	let datosClub = {};
+    	let notificaciones = [];
+    	let solicitudesPendientes = [];
+    	let unsubscribeNotificaciones = null;
+    	let unsubscribeSolicitudes = null;
+    	let unsubscribeAccesos = null;
+    	let unsubscribeClub = null;
+
+    	const modalLogin = document.getElementById('modal-login');
+    	const modalConfirmLogout = document.getElementById('modal-confirm-logout');
+    	const modalConfirm = document.getElementById('modal-confirm');
+    	const modalAccesos = document.getElementById('modal-accesos');
+    	const modalSolicitudesAdmin = document.getElementById('modal-solicitudes-admin');
+    	const modalNotificaciones = document.getElementById('modal-notificaciones');
+    	const modalDatosClub = document.getElementById('modal-datos-club');
+    	const modalConfigClub = document.getElementById('modal-config-club');
+    	const btnLogin = document.getElementById('btn-login');
+    	const btnLogout = document.getElementById('btn-logout');
+    	const btnAdmin = document.getElementById('btn-admin');
+    	const userInfo = document.getElementById('user-info');
+    	const sidebar = document.getElementById('sidebar');
+    	const sidebarOverlay = document.getElementById('sidebar-overlay');
+    	const hamburgerBtn = document.getElementById('hamburger-btn');
+    	let modoRegistro = false;
+    	let claseActualGestion = null;
+
+    	function ajustarModalParaTeclado(event) {
+        	const target = event.target;
+        	if (!target.closest) return;
+        	const modalContent = target.closest('.modal-content');
+        	if (!modalContent) return;
+        	setTimeout(() => {
+            	const rect = target.getBoundingClientRect();
+            	const modalRect = modalContent.getBoundingClientRect();
+            	if (rect.bottom > modalRect.bottom - 40 || rect.top < modalRect.top + 40) {
+                	target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            	}
+        	}, 400);
+    	}
+
+    	document.addEventListener('focusin', ajustarModalParaTeclado);
+
+    	async function registrarUsuarioEnColeccion(user) {
+        	if (!user) return;
+        	const userRef = db.collection('usuarios').doc(user.uid);
+        	const doc = await userRef.get();
+        	if (!doc.exists) {
+            	await userRef.set({
+                	uid: user.uid,
+                	email: user.email,
+                	createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            	});
+        	} else {
+            	if (doc.data().email !== user.email) {
+                	await userRef.update({ email: user.email });
+            	}
+        	}
+    	}
+
+    	async function obtenerListaUsuarios() {
+        	try {
+            	const snapshot = await db.collection('usuarios').get();
+            	const users = [];
+            	snapshot.forEach(doc => { users.push({ uid: doc.id, email: doc.data().email }); });
+            	users.sort((a, b) => (a.email || '').localeCompare(b.email || ''));
+            	return users;
+        	} catch (error) {
+            	console.error('Error al obtener usuarios:', error);
+            	return [];
+        	}
+    	}
+
+    	function suscribirAccesosEspeciales() {
+        	if (unsubscribeAccesos) unsubscribeAccesos();
+        	if (!currentUser) return;
+        	unsubscribeAccesos = db.collection('accesosEspeciales').onSnapshot(snapshot => {
+            	accesosEspeciales = {};
+            	snapshot.forEach(doc => { accesosEspeciales[doc.id] = doc.data().uids || []; });
+            	actualizarUI();
+        	}, error => console.warn('Error en snapshot de accesos:', error));
+    	}
+
+    	async function guardarAccesoEspecial(claseId, uids) {
+        	if (!currentUser?.esAdmin) return;
+        	try {
+            	await db.collection('accesosEspeciales').doc(claseId).set({ uids }, { merge: true });
+            	mostrarToast('Accesos actualizados', 'success');
+        	} catch (error) {
+            	mostrarToast('Error al guardar accesos', 'error');
+            	console.error(error);
+        	}
+    	}
+
+    	function tieneAccesoEspecial(claseId, uid) {
+        	if (!uid) return false;
+        	const uids = accesosEspeciales[claseId] || [];
+        	return uids.includes(uid);
+    	}
+
+    	function esClaseDesbloqueada(clase) {
+        	if (!currentUser) return false;
+        	if (currentUser.esAdmin) return true;
+        	if (clase.numero === 1) return true;
+        	if (tieneAccesoEspecial(clase.id, currentUser.uid)) return true;
+        	return false;
+    	}
+
+    	async function solicitarAcceso(claseId) {
+        	if (!currentUser) return mostrarToast('Debes iniciar sesión', 'error');
+        	const clase = curso.clases.find(c => c.id === claseId);
+        	if (!clase) return;
+
+        	try {
+            	const previas = await db.collection('solicitudesAcceso')
+                	.where('claseId', '==', claseId)
+                	.where('uid', '==', currentUser.uid)
+                	.get();
+            	if (!previas.empty) {
+                	const batch = db.batch();
+                	previas.forEach(doc => batch.delete(doc.ref));
+                	await batch.commit();
+            	}
+        	} catch (error) {
+            	console.warn('No se pudieron eliminar solicitudes anteriores:', error);
+        	}
+
+        	try {
+            	await db.collection('solicitudesAcceso').add({
+                	claseId: claseId,
+                	claseTitulo: clase.titulo,
+                	uid: currentUser.uid,
+                	email: currentUser.email,
+                	estado: 'pendiente',
+                	createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            	});
+
+            	await db.collection('notificaciones').add({
+                	paraUid: ADMIN_UID,
+                	mensaje: `${currentUser.email} solicita acceso a "${clase.titulo}"`,
+                	leida: false,
+                	tipo: 'solicitud',
+                	claseId: claseId,
+                	createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            	});
+
+            	mostrarToast('✅ Solicitud enviada. El administrador la revisará pronto.', 'success');
+            	actualizarUI();
+        	} catch (error) {
+            	mostrarToast('Error al enviar solicitud', 'error');
+            	console.error(error);
+        	}
+    	}
+
+    	async function aprobarSolicitud(solicitudId, claseId, uid, email) {
+        	if (!currentUser?.esAdmin) return;
+        	try {
+            	await db.collection('solicitudesAcceso').doc(solicitudId).update({ estado: 'aprobada' });
+
+            	const uidsActual = accesosEspeciales[claseId] || [];
+            	if (!uidsActual.includes(uid)) {
+                	uidsActual.push(uid);
+                	await guardarAccesoEspecial(claseId, uidsActual);
+            	}
+
+            	const clase = curso.clases.find(c => c.id === claseId);
+            	await db.collection('notificaciones').add({
+                	paraUid: uid,
+                	mensaje: `✅ Tu solicitud de acceso a "${clase?.titulo || 'la clase'}" ha sido aprobada.`,
+                	leida: false,
+                	tipo: 'aprobada',
+                	claseId: claseId,
+                	createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            	});
+
+            	mostrarToast('Solicitud aprobada y acceso concedido', 'success');
+        	} catch (error) {
+            	mostrarToast('Error al aprobar solicitud', 'error');
+            	console.error(error);
+        	}
+    	}
+
+    	async function rechazarSolicitud(solicitudId, uid, claseId) {
+        	if (!currentUser?.esAdmin) return;
+        	try {
+            	await db.collection('solicitudesAcceso').doc(solicitudId).update({ estado: 'rechazada' });
+
+            	const clase = curso.clases.find(c => c.id === claseId);
+            	await db.collection('notificaciones').add({
+                	paraUid: uid,
+                	mensaje: `❌ Tu solicitud de acceso a "${clase?.titulo || 'la clase'}" ha sido rechazada.`,
+                	leida: false,
+                	tipo: 'rechazada',
+                	claseId: claseId,
+                	createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            	});
+
+            	mostrarToast('Solicitud rechazada', 'success');
+        	} catch (error) {
+            	mostrarToast('Error al rechazar solicitud', 'error');
+            	console.error(error);
+        	}
+    	}
+
+    	function suscribirSolicitudesAdmin() {
+        	if (unsubscribeSolicitudes) unsubscribeSolicitudes();
+        	if (!currentUser?.esAdmin) {
+            	solicitudesPendientes = [];
+            	actualizarBadgeSolicitudes();
+            	return;
+        	}
+        	unsubscribeSolicitudes = db.collection('solicitudesAcceso')
+            	.where('estado', '==', 'pendiente')
+            	.onSnapshot(snapshot => {
+                	solicitudesPendientes = [];
+                	snapshot.forEach(doc => {
+                    	solicitudesPendientes.push({ id: doc.id, ...doc.data() });
+                	});
+                	solicitudesPendientes.sort((a, b) => {
+                    	const ta = a.createdAt?.toDate?.() || new Date(0);
+                    	const tb = b.createdAt?.toDate?.() || new Date(0);
+                    	return tb - ta;
+                	});
+                	actualizarBadgeSolicitudes();
+            	}, error => console.warn('Error snapshot solicitudes:', error));
+    	}
+
+    	function actualizarBadgeSolicitudes() {
+        	const badge = document.getElementById('solicitudes-badge');
+        	const btn = document.getElementById('btn-solicitudes-admin');
+        	if (!currentUser?.esAdmin) {
+            	badge.style.display = 'none';
+            	btn.style.display = 'none';
+            	return;
+        	}
+        	btn.style.display = 'inline-flex';
+        	const count = solicitudesPendientes.length;
+        	if (count > 0) {
+            	badge.textContent = count;
+            	badge.style.display = 'flex';
+        	} else {
+            	badge.style.display = 'none';
+        	}
+    	}
+
+    	function abrirSolicitudesAdmin() {
+        	if (!currentUser?.esAdmin) return;
+        	const listaDiv = document.getElementById('solicitudes-lista');
+        	if (solicitudesPendientes.length === 0) {
+            	listaDiv.innerHTML = '<div class="no-users-msg">📭 No hay solicitudes pendientes.</div>';
+        	} else {
+            	listaDiv.innerHTML = solicitudesPendientes.map(s => `
+                	<div class="solicitud-item">
+                    	<div>
+                        	<strong>${escapeHtml(s.email)}</strong><br>
+                        	<span style="font-size:0.85rem; color:var(--texto-suave);">Clase: ${escapeHtml(s.claseTitulo || 'Desconocida')}</span>
+                        	<br><span class="estado-pendiente">⏳ Pendiente</span>
+                    	</div>
+                    	<div style="display:flex; gap:6px;">
+                        	<button class="btn btn-exito btn-small" onclick="aprobarSolicitud('${s.id}','${s.claseId}','${s.uid}','${escapeHtml(s.email)}')">✅ Aprobar</button>
+                        	<button class="btn btn-peligro btn-small" onclick="rechazarSolicitud('${s.id}','${s.uid}','${s.claseId}')">❌ Rechazar</button>
+                    	</div>
+                	</div>
+            	`).join('');
+        	}
+        	modalSolicitudesAdmin.classList.add('active');
+    	}
+
+    	function suscribirNotificaciones() {
+        	if (unsubscribeNotificaciones) unsubscribeNotificaciones();
+        	if (!currentUser) {
+            	notificaciones = [];
+            	actualizarBadgeNotificaciones();
+            	return;
+        	}
+        	unsubscribeNotificaciones = db.collection('notificaciones')
+            	.where('paraUid', '==', currentUser.uid)
+            	.orderBy('createdAt', 'desc')
+            	.limit(50)
+            	.onSnapshot(snapshot => {
+                	notificaciones = [];
+                	snapshot.forEach(doc => {
+                    	notificaciones.push({ id: doc.id, ...doc.data() });
+                	});
+                	actualizarBadgeNotificaciones();
+            	}, error => console.warn('Error snapshot notificaciones:', error));
+    	}
+
+    	function actualizarBadgeNotificaciones() {
+        	const badge = document.getElementById('notif-badge');
+        	const btn = document.getElementById('btn-notificaciones');
+        	if (!currentUser) {
+            	badge.style.display = 'none';
+            	btn.style.display = 'none';
+            	return;
+        	}
+        	btn.style.display = 'inline-flex';
+        	const noLeidas = notificaciones.filter(n => !n.leida).length;
+        	if (noLeidas > 0) {
+            	badge.textContent = noLeidas;
+            	badge.style.display = 'flex';
+        	} else {
+            	badge.style.display = 'none';
+        	}
+    	}
+
+    	function abrirNotificaciones() {
+        	const listaDiv = document.getElementById('notificaciones-lista');
+        	if (notificaciones.length === 0) {
+            	listaDiv.innerHTML = '<div class="no-users-msg">🔔 No tienes notificaciones.</div>';
+            	document.getElementById('btn-marcar-todo-leido').style.display = 'none';
+        	} else {
+            	document.getElementById('btn-marcar-todo-leido').style.display = 'inline-flex';
+            	listaDiv.innerHTML = notificaciones.map(n => {
+                	const fecha = n.createdAt?.toDate?.() || new Date();
+                	const fechaStr = fecha.toLocaleString('es-MX', { dateStyle: 'short', timeStyle: 'short' });
+                	return `
+                    	<div class="notificacion-item ${n.leida ? '' : 'notificacion-no-leida'}" data-id="${n.id}">
+                        	<div class="notificacion-texto">
+                            	<span>${escapeHtml(n.mensaje)}</span>
+                            	<br><small style="color:var(--texto-suave);">${fechaStr}</small>
+                        	</div>
+                        	${!n.leida ? `<button class="btn btn-small btn-azul" onclick="marcarNotificacionLeida('${n.id}')">✓ Leída</button>` : ''}
+                        	<button class="btn btn-small btn-peligro" onclick="eliminarNotificacion('${n.id}')">🗑️</button>
+                    	</div>
+                	`;
+            	}).join('');
+        	}
+        	modalNotificaciones.classList.add('active');
+    	}
+
+    	async function marcarNotificacionLeida(notifId) {
+        	try {
+            	await db.collection('notificaciones').doc(notifId).update({ leida: true });
+        	} catch (error) {
+            	console.warn('Error al marcar leída:', error);
+        	}
+    	}
+
+    	async function marcarTodasNotificacionesLeidas() {
+        	const noLeidas = notificaciones.filter(n => !n.leida);
+        	const batch = db.batch();
+        	noLeidas.forEach(n => batch.update(db.collection('notificaciones').doc(n.id), { leida: true }));
+        	try {
+            	await batch.commit();
+            	mostrarToast('Todas las notificaciones marcadas como leídas', 'success');
+        	} catch (error) {
+            	mostrarToast('Error al actualizar', 'error');
+            	console.error(error);
+        	}
+    	}
+
+    	async function eliminarNotificacion(notifId) {
+        	try {
+            	await db.collection('notificaciones').doc(notifId).delete();
+        	} catch (error) {
+            	console.warn('Error al eliminar:', error);
+        	}
+    	}
+
+    	function suscribirDatosClub() {
+        	if (unsubscribeClub) unsubscribeClub();
+        	unsubscribeClub = db.collection('config').doc('club').onSnapshot(doc => {
+            	if (doc.exists) {
+                	datosClub = doc.data();
+            	} else {
+                	datosClub = {};
+            	}
+            	actualizarLogoClub();
+            	actualizarBotonDatosClub();
+        	}, error => console.warn('Error snapshot club:', error));
+    	}
+
+    	function actualizarLogoClub() {
+        	const logoImg = document.getElementById('logo-club-img');
+        	if (datosClub.logoURL && datosClub.logoURL.trim()) {
+            	logoImg.src = datosClub.logoURL.trim();
+            	logoImg.classList.add('visible');
+        	} else {
+            	logoImg.src = '';
+            	logoImg.classList.remove('visible');
+        	}
+    	}
+
+    	function actualizarBotonDatosClub() {
+        	const btn = document.getElementById('btn-datos-club');
+        	if (!currentUser) {
+            	btn.style.display = 'none';
+            	return;
+        	}
+        	const tieneDatos = datosClub.telefono || datosClub.direccion || datosClub.emailContacto || datosClub.horarios || datosClub.web;
+        	btn.style.display = tieneDatos ? 'inline-flex' : 'none';
+    	}
+
+    	function mostrarDatosClub() {
+        	const contenedor = document.getElementById('datos-club-contenido');
+        	let html = '';
+        	if (datosClub.telefono) html += `<div class="club-data-item"><span class="club-data-icon">📞</span><span>${escapeHtml(datosClub.telefono)}</span></div>`;
+        	if (datosClub.direccion) html += `<div class="club-data-item"><span class="club-data-icon">📍</span><span>${escapeHtml(datosClub.direccion)}</span></div>`;
+        	if (datosClub.emailContacto) html += `<div class="club-data-item"><span class="club-data-icon">📧</span><a href="mailto:${escapeHtml(datosClub.emailContacto)}">${escapeHtml(datosClub.emailContacto)}</a></div>`;
+        	if (datosClub.horarios) html += `<div class="club-data-item"><span class="club-data-icon">🕐</span><span style="white-space:pre-wrap;">${escapeHtml(datosClub.horarios)}</span></div>`;
+        	if (datosClub.web) html += `<div class="club-data-item"><span class="club-data-icon">🌐</span><a href="${escapeHtml(datosClub.web)}" target="_blank">${escapeHtml(datosClub.web)}</a></div>`;
+        	if (!html) html = '<p style="color:var(--texto-suave);">No hay datos de contacto configurados.</p>';
+        	contenedor.innerHTML = html;
+        	modalDatosClub.classList.add('active');
+    	}
+
+    	function abrirConfigClub() {
+        	if (!currentUser?.esAdmin) return;
+        	document.getElementById('config-logo-url').value = datosClub.logoURL || '';
+        	document.getElementById('config-telefono').value = datosClub.telefono || '';
+        	document.getElementById('config-direccion').value = datosClub.direccion || '';
+        	document.getElementById('config-email-contacto').value = datosClub.emailContacto || '';
+        	document.getElementById('config-horarios').value = datosClub.horarios || '';
+        	document.getElementById('config-web').value = datosClub.web || '';
+        	modalConfigClub.classList.add('active');
+    	}
+
+    	async function guardarConfigClub() {
+        	if (!currentUser?.esAdmin) return;
+        	const nuevosDatos = {
+            	logoURL: document.getElementById('config-logo-url').value.trim(),
+            	telefono: document.getElementById('config-telefono').value.trim(),
+            	direccion: document.getElementById('config-direccion').value.trim(),
+            	emailContacto: document.getElementById('config-email-contacto').value.trim(),
+            	horarios: document.getElementById('config-horarios').value.trim(),
+            	web: document.getElementById('config-web').value.trim(),
+        	};
+        	try {
+            	await db.collection('config').doc('club').set(nuevosDatos, { merge: true });
+            	modalConfigClub.classList.remove('active');
+            	mostrarToast('Configuración del club guardada', 'success');
+        	} catch (error) {
+            	mostrarToast('Error al guardar configuración', 'error');
+            	console.error(error);
+        	}
+    	}
+
+    	function extraerYouTubeID(url) {
+        	if (!url || typeof url !== 'string') return null;
+        	url = url.trim();
+        	const patterns = [
+            	/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/v\/|youtube\.com\/shorts\/)([a-zA-Z0-9_-]{11})/,
+            	/[?&]v=([a-zA-Z0-9_-]{11})/,
+            	/^([a-zA-Z0-9_-]{11})$/
+        	];
+        	for (let pattern of patterns) {
+            	const match = url.match(pattern);
+            	if (match && match[1]) return match[1];
+        	}
+        	return null;
+    	}
+
+    	function esUrlYouTubeValida(url) {
+        	return extraerYouTubeID(url) !== null;
+    	}
+
+    	function generarId() { return Date.now().toString(36) + Math.random().toString(36).substr(2); }
+
+    	function migrarTemaABloques(tema) {
+        	if (tema.bloques && tema.bloques.length > 0) return;
+        	tema.bloques = [];
+        	if (tema.videoUrl) tema.bloques.push({ id: generarId(), tipo: 'video', contenido: tema.videoUrl, nota: tema.notaDebajoVideo || '' });
+        	if (tema.iframeCode) tema.bloques.push({ id: generarId(), tipo: 'iframe', contenido: tema.iframeCode, nota: tema.notaDebajoEjercicios || '' });
+        	if (tema.links && tema.links.length) {
+            	tema.links.forEach(link => tema.bloques.push({ id: generarId(), tipo: 'enlace', label: link.label, url: link.url }));
+        	}
+        	if (tema.materialUrl) tema.bloques.push({ id: generarId(), tipo: 'enlace', label: 'Material', url: tema.materialUrl });
+        	tema.videoUrl = '';
+        	tema.iframeCode = '';
+        	tema.links = [];
+        	tema.materialUrl = '';
+        	tema.notaDebajoVideo = '';
+        	tema.notaDebajoEjercicios = '';
+    	}
+
+    	function agregarBloque(claseId, temaId, tipo) {
+        	const clase = curso.clases.find(c => c.id === claseId);
+        	const tema = clase?.temas.find(t => t.id === temaId);
+        	if (!tema) return;
+        	if (!tema.bloques) tema.bloques = [];
+        	const nuevo = {
+            	id: generarId(),
+            	tipo: tipo,
+            	contenido: '',
+            	estilo: tipo === 'texto' ? { fontSize: '1rem', color: '#000000', textAlign: 'left' } : {},
+            	nota: ''
+        	};
+        	if (tipo === 'enlace') { nuevo.label = ''; nuevo.url = ''; }
+        	tema.bloques.push(nuevo);
+        	guardarCurso();
+        	actualizarUI();
+    	}
+
+    	function eliminarBloque(claseId, temaId, bloqueId) {
+        	const clase = curso.clases.find(c => c.id === claseId);
+        	const tema = clase?.temas.find(t => t.id === temaId);
+        	if (!tema || !tema.bloques) return;
+        	tema.bloques = tema.bloques.filter(b => b.id !== bloqueId);
+        	guardarCurso();
+        	actualizarUI();
+    	}
+
+    	function moverBloqueArriba(claseId, temaId, bloqueId) {
+        	const clase = curso.clases.find(c => c.id === claseId);
+        	const tema = clase?.temas.find(t => t.id === temaId);
+        	if (!tema || !tema.bloques) return;
+        	const i = tema.bloques.findIndex(b => b.id === bloqueId);
+        	if (i <= 0) return;
+        	[tema.bloques[i-1], tema.bloques[i]] = [tema.bloques[i], tema.bloques[i-1]];
+        	guardarCurso();
+        	actualizarUI();
+    	}
+
+    	function moverBloqueAbajo(claseId, temaId, bloqueId) {
+        	const clase = curso.clases.find(c => c.id === claseId);
+        	const tema = clase?.temas.find(t => t.id === temaId);
+        	if (!tema || !tema.bloques) return;
+        	const i = tema.bloques.findIndex(b => b.id === bloqueId);
+        	if (i === -1 || i >= tema.bloques.length - 1) return;
+        	[tema.bloques[i], tema.bloques[i+1]] = [tema.bloques[i+1], tema.bloques[i]];
+        	guardarCurso();
+        	actualizarUI();
+    	}
+
+    	function actualizarBloqueContenido(claseId, temaId, bloqueId, contenido) {
+        	const clase = curso.clases.find(c => c.id === claseId);
+        	const tema = clase?.temas.find(t => t.id === temaId);
+        	const bloque = tema?.bloques?.find(b => b.id === bloqueId);
+        	if (!bloque) return;
+        	bloque.contenido = contenido;
+        	guardarCurso();
+    	}
+
+    	function actualizarBloqueEnlace(claseId, temaId, bloqueId, label, url) {
+        	const clase = curso.clases.find(c => c.id === claseId);
+        	const tema = clase?.temas.find(t => t.id === temaId);
+        	const bloque = tema?.bloques?.find(b => b.id === bloqueId);
+        	if (!bloque) return;
+        	bloque.label = label; bloque.url = url;
+        	guardarCurso();
+    	}
+
+    	function actualizarBloqueEstilo(claseId, temaId, bloqueId, prop, valor) {
+        	const clase = curso.clases.find(c => c.id === claseId);
+        	const tema = clase?.temas.find(t => t.id === temaId);
+        	const bloque = tema?.bloques?.find(b => b.id === bloqueId);
+        	if (!bloque) return;
+        	if (!bloque.estilo) bloque.estilo = {};
+        	bloque.estilo[prop] = valor;
+        	guardarCurso();
+    	}
+
+    	function actualizarBloqueNota(claseId, temaId, bloqueId, nota) {
+        	const clase = curso.clases.find(c => c.id === claseId);
+        	const tema = clase?.temas.find(t => t.id === temaId);
+        	const bloque = tema?.bloques?.find(b => b.id === bloqueId);
+        	if (!bloque) return;
+        	bloque.nota = nota;
+        	guardarCurso();
+    	}
+
+    	function cambiarTipoBloque(claseId, temaId, bloqueId, nuevoTipo) {
+        	const clase = curso.clases.find(c => c.id === claseId);
+        	const tema = clase?.temas.find(t => t.id === temaId);
+        	const bloque = tema?.bloques?.find(b => b.id === bloqueId);
+        	if (!bloque) return;
+        	bloque.tipo = nuevoTipo;
+        	if (nuevoTipo === 'enlace') {
+            	bloque.label = bloque.label || '';
+            	bloque.url = bloque.url || '';
+            	delete bloque.contenido;
+        	} else {
+            	bloque.contenido = bloque.contenido || '';
+            	delete bloque.label;
+            	delete bloque.url;
+        	}
+        	guardarCurso();
+        	actualizarUI();
+    	}
+
+    	async function guardarVideo(claseId, temaId) {
+        	if (!currentUser?.esAdmin) return;
+        	const inputElement = document.getElementById(`video-${temaId}`);
+        	if (!inputElement) return;
+        	const urlRaw = inputElement.value.trim();
+        	const clase = curso.clases.find(c => c.id === claseId);
+        	const tema = clase?.temas.find(t => t.id === temaId);
+        	if (!tema) return;
+        	if (urlRaw && !esUrlYouTubeValida(urlRaw)) {
+            	mostrarToast('❌ URL de YouTube no válida. Revisa el enlace.', 'error');
+            	inputElement.style.borderColor = 'var(--peligro)';
+            	setTimeout(() => { if (inputElement) inputElement.style.borderColor = ''; }, 2000);
+            	return;
+        	}
+        	tema.videoUrl = urlRaw;
+        	await guardarCurso();
+        	actualizarUI();
+        	mostrarToast(urlRaw ? '✅ Video guardado correctamente' : '🗑️ Video eliminado', 'success');
+    	}
+
+    	function mostrarToast(mensaje, tipo = 'success') {
+        	const toast = document.getElementById('toast');
+        	toast.textContent = mensaje;
+        	toast.className = `toast ${tipo} show`;
+        	clearTimeout(toast._timeout);
+        	toast._timeout = setTimeout(() => toast.classList.remove('show'), 3000);
+    	}
+
+    	function mostrarConfirmacion(titulo, mensaje, callback) {
+        	document.getElementById('confirm-title').textContent = titulo;
+        	document.getElementById('confirm-message').textContent = mensaje;
+        	confirmCallback = callback;
+        	modalConfirm.classList.add('active');
+        	document.getElementById('confirm-ok').onclick = () => {
+            	if (confirmCallback) confirmCallback();
+            	closeConfirm();
+        	};
+    	}
+
+    	function closeConfirm() {
+        	modalConfirm.classList.remove('active');
+        	confirmCallback = null;
+    	}
+    	window.closeConfirm = closeConfirm;
+
+    	function mostrarLogin() {
+        	if (currentUser) {
+            	document.getElementById('modal-title').textContent = 'Tu cuenta';
+            	document.getElementById('current-session').style.display = 'block';
+            	document.getElementById('auth-form').style.display = 'none';
+            	document.getElementById('extra-controls').style.display = 'none';
+            	document.getElementById('session-email').textContent = currentUser.email;
+            	document.getElementById('session-avatar').textContent = currentUser.email.charAt(0).toUpperCase();
+        	} else {
+            	document.getElementById('modal-title').textContent = 'Iniciar sesión';
+            	document.getElementById('current-session').style.display = 'none';
+            	document.getElementById('auth-form').style.display = 'block';
+            	document.getElementById('extra-controls').style.display = 'block';
+            	document.getElementById('btn-auth').textContent = 'Ingresar';
+            	modoRegistro = false;
+            	limpiarCampos();
+        	}
+        	modalLogin.classList.add('active');
+    	}
+
+    	function cambiarCuenta() {
+        	auth.signOut();
+        	modalLogin.classList.remove('active');
+        	setTimeout(() => { mostrarLogin(); }, 300);
+    	}
+
+    	function limpiarCampos() {
+        	document.getElementById('email').value = '';
+        	document.getElementById('password').value = '';
+        	document.getElementById('autofill-warning').style.display = 'none';
+        	document.getElementById('email').focus();
+    	}
+
+    	function configurarDeteccionAutofill() {
+        	const emailInput = document.getElementById('email');
+        	const passInput = document.getElementById('password');
+        	const warningEl = document.getElementById('autofill-warning');
+        	const handler = (e) => { if (e.animationName === 'onAutoFillStart') warningEl.style.display = 'block'; };
+        	emailInput.addEventListener('animationstart', handler);
+        	passInput.addEventListener('animationstart', handler);
+        	const styleEl = document.createElement('style');
+        	styleEl.textContent = `@keyframes onAutoFillStart { from { /* dummy */ } to { /* dummy */ } } input:-webkit-autofill { animation-name: onAutoFillStart; }`;
+        	document.head.appendChild(styleEl);
+    	}
+
+    	document.getElementById('toggle-password').addEventListener('click', function() {
+        	const passInput = document.getElementById('password');
+        	const type = passInput.getAttribute('type') === 'password' ? 'text' : 'password';
+        	passInput.setAttribute('type', type);
+        	this.textContent = type === 'password' ? '👁️' : '🙈';
+    	});
+
+    	document.getElementById('auth-form').addEventListener('submit', async (e) => {
+        	e.preventDefault();
+        	const email = document.getElementById('email').value.trim();
+        	const pass = document.getElementById('password').value.trim();
+        	if (!email || !pass) return mostrarToast('Llena todos los campos', 'error');
+        	const btnAuth = document.getElementById('btn-auth');
+        	btnAuth.disabled = true;
+        	btnAuth.innerHTML = '<span class="loader"></span> Procesando...';
+        	try {
+            	if (modoRegistro) {
+                	const credencial = await auth.createUserWithEmailAndPassword(email, pass);
+                	await registrarUsuarioEnColeccion(credencial.user);
+                	mostrarToast('Registro exitoso. Ya puedes iniciar sesión.');
+                	modoRegistro = false;
+                	document.getElementById('modal-title').textContent = 'Iniciar sesión';
+                	document.getElementById('btn-auth').textContent = 'Ingresar';
+                	limpiarCampos();
+            	} else {
+                	const credencial = await auth.signInWithEmailAndPassword(email, pass);
+                	await registrarUsuarioEnColeccion(credencial.user);
+                	mostrarToast('¡Bienvenido!');
+                	modalLogin.classList.remove('active');
+            	}
+        	} catch (error) {
+            	mostrarToast(error.message, 'error');
+        	} finally {
+            	btnAuth.disabled = false;
+            	btnAuth.textContent = modoRegistro ? 'Crear cuenta' : 'Ingresar';
+        	}
+    	});
+
+    	document.getElementById('switch-auth').addEventListener('click', (e) => {
+        	e.preventDefault();
+        	modoRegistro = !modoRegistro;
+        	document.getElementById('modal-title').textContent = modoRegistro ? 'Registrarse' : 'Iniciar sesión';
+        	document.getElementById('btn-auth').textContent = modoRegistro ? 'Crear cuenta' : 'Ingresar';
+        	limpiarCampos();
+    	});
+
+    	function confirmarCerrarSesion() { modalConfirmLogout.classList.add('active'); }
+
+    	function cerrarSesionConfirmada() { modalConfirmLogout.classList.remove('active'); auth.signOut(); }
+
+    	function toggleAdmin() {
+        	if (!currentUser || !currentUser.esAdmin) return;
+        	modoAdmin = !modoAdmin;
+        	document.body.classList.toggle('modo-admin', modoAdmin);
+        	mostrarToast(modoAdmin ? 'Modo administrador activado' : 'Modo usuario', 'success');
+        	actualizarUI();
+    	}
+    	window.toggleAdmin = toggleAdmin;
+
+    	auth.onAuthStateChanged(async (user) => {
+        	if (user) {
+            	currentUser = { uid: user.uid, email: user.email, esAdmin: user.uid === ADMIN_UID };
+            	await registrarUsuarioEnColeccion(user);
+            	btnLogin.style.display = 'none';
+            	btnLogout.style.display = 'inline-flex';
+            	userInfo.textContent = `👤 ${user.email}`;
+            	if (currentUser.esAdmin) {
+                	btnAdmin.style.display = 'inline-flex';
+            	} else {
+                	btnAdmin.style.display = 'none';
+            	}
+            	suscribirAccesosEspeciales();
+            	suscribirNotificaciones();
+            	suscribirSolicitudesAdmin();
+            	await cargarCurso();
+            	await sincronizarProgresoDesdeFirestore();
+            	if (!claseActivaId && curso.clases.length > 0) claseActivaId = curso.clases[0].id;
+            	actualizarUI();
+            	actualizarBotonDatosClub();
+        	} else {
+            	currentUser = null;
+            	btnLogin.style.display = 'inline-flex';
+            	btnLogout.style.display = 'none';
+            	btnAdmin.style.display = 'none';
+            	userInfo.textContent = '';
+            	document.body.classList.remove('modo-admin');
+            	modoAdmin = false;
+            	if (unsubscribeAccesos) { unsubscribeAccesos(); unsubscribeAccesos = null; }
+            	if (unsubscribeNotificaciones) { unsubscribeNotificaciones(); unsubscribeNotificaciones = null; }
+            	if (unsubscribeSolicitudes) { unsubscribeSolicitudes(); unsubscribeSolicitudes = null; }
+            	notificaciones = [];
+            	solicitudesPendientes = [];
+            	document.getElementById('notif-badge').style.display = 'none';
+            	document.getElementById('solicitudes-badge').style.display = 'none';
+            	document.getElementById('btn-notificaciones').style.display = 'none';
+            	document.getElementById('btn-solicitudes-admin').style.display = 'none';
+            	document.getElementById('btn-datos-club').style.display = 'none';
+            	actualizarUI();
+        	}
+    	});
+
+    	async function sincronizarProgresoDesdeFirestore() {
+        	if (!currentUser) return;
+        	try {
+            	const doc = await db.collection('progreso').doc(currentUser.uid).get();
+            	if (doc.exists) {
+                	const data = doc.data();
+                	const local = JSON.parse(localStorage.getItem(`progreso_${currentUser.uid}`) || '{}');
+                	const combinado = { ...local, ...data };
+                	localStorage.setItem(`progreso_${currentUser.uid}`, JSON.stringify(combinado));
+            	}
+        	} catch (err) { console.warn('No se pudo sincronizar progreso', err); }
+    	}
+
+    	async function cargarCurso() {
+        	document.getElementById('main-content').innerHTML = '<div class="loading-indicator" style="text-align:center; padding:40px; color:var(--texto-suave);">Cargando curso…</div>';
+        	try {
+            	const doc = await db.collection('config').doc('curso').get();
+            	if (doc.exists) { curso = doc.data(); } else { curso = { clases: [] }; if (currentUser && currentUser.esAdmin) { await db.collection('config').doc('curso').set(curso); } }
+            	if (!curso.clases) curso.clases = [];
+            	curso.clases.forEach(c => {
+                	if (!c.temas) c.temas = [];
+                	c.temas.forEach(t => {
+                    	t.notaDebajoVideo = t.notaDebajoVideo || '';
+                    	t.notaDebajoEjercicios = t.notaDebajoEjercicios || '';
+                    	migrarTemaABloques(t);
+                	});
+            	});
+            	curso.clases.sort((a, b) => a.numero - b.numero);
+        	} catch (error) {
+            	console.warn('Error al cargar el curso:', error);
+            	if (error.code === 'permission-denied') { mostrarToast('No tienes permisos para acceder al curso.', 'error'); } else { mostrarToast('Sin conexión. Se mostrará la última versión guardada.', 'error'); const backup = localStorage.getItem('cursoBackup'); if (backup) curso = JSON.parse(backup); }
+        	}
+    	}
+
+    	async function guardarCurso() {
+        	try {
+            	await db.collection('config').doc('curso').set(curso, { merge: true });
+            	localStorage.setItem('cursoBackup', JSON.stringify(curso));
+        	} catch (err) { mostrarToast('Error al guardar. Verifica tu conexión.', 'error'); }
+    	}
+
+    	function reordenarTemas(clase) { clase.temas.forEach((tema, index) => { tema.numero = index + 1; }); }
+
+    	function estaCompletado(claseId, temaId) {
+        	if (!currentUser) return false;
+        	const progreso = JSON.parse(localStorage.getItem(`progreso_${currentUser.uid}`) || '{}');
+        	return progreso[`${claseId}_${temaId}`] === true;
+    	}
+
+    	async function marcarVisto(claseId, temaId) {
+        	if (!currentUser) return;
+        	const key = `${claseId}_${temaId}`;
+        	const progreso = JSON.parse(localStorage.getItem(`progreso_${currentUser.uid}`) || '{}');
+        	if (progreso[key]) { mostrarToast('Este tema ya está completado.', 'error'); return; }
+        	progreso[key] = true;
+        	localStorage.setItem(`progreso_${currentUser.uid}`, JSON.stringify(progreso));
+        	try {
+            	await db.collection('progreso').doc(currentUser.uid).set({ [key]: true }, { merge: true });
+            	mostrarToast('Progreso guardado ✓');
+        	} catch (error) { mostrarToast('Progreso guardado localmente (sin conexión)', 'error'); }
+        	actualizarUI();
+    	}
+
+    	async function moverClaseArriba(claseId) {
+        	if (!currentUser?.esAdmin) return;
+        	const index = curso.clases.findIndex(c => c.id === claseId);
+        	if (index <= 0) return;
+        	const anterior = curso.clases[index - 1];
+        	const actual = curso.clases[index];
+        	const tempNum = actual.numero;
+        	actual.numero = anterior.numero;
+        	anterior.numero = tempNum;
+        	curso.clases.sort((a, b) => a.numero - b.numero);
+        	curso.clases.forEach((c, i) => c.numero = i + 1);
+        	await guardarCurso();
+        	actualizarUI();
+        	mostrarToast('Orden de clases actualizado');
+    	}
+
+    	async function moverClaseAbajo(claseId) {
+        	if (!currentUser?.esAdmin) return;
+        	const index = curso.clases.findIndex(c => c.id === claseId);
+        	if (index === -1 || index >= curso.clases.length - 1) return;
+        	const siguiente = curso.clases[index + 1];
+        	const actual = curso.clases[index];
+        	const tempNum = actual.numero;
+        	actual.numero = siguiente.numero;
+        	siguiente.numero = tempNum;
+        	curso.clases.sort((a, b) => a.numero - b.numero);
+        	curso.clases.forEach((c, i) => c.numero = i + 1);
+        	await guardarCurso();
+        	actualizarUI();
+        	mostrarToast('Orden de clases actualizado');
+    	}
+
+    	async function moverTemaArriba(claseId, temaId) {
+        	if (!currentUser?.esAdmin) return;
+        	const clase = curso.clases.find(c => c.id === claseId);
+        	if (!clase) return;
+        	const temas = clase.temas;
+        	const index = temas.findIndex(t => t.id === temaId);
+        	if (index <= 0) return;
+        	const anterior = temas[index - 1];
+        	const actual = temas[index];
+        	const tempNum = actual.numero;
+        	actual.numero = anterior.numero;
+        	anterior.numero = tempNum;
+        	temas.sort((a, b) => a.numero - b.numero);
+        	temas.forEach((t, i) => t.numero = i + 1);
+        	await guardarCurso();
+        	actualizarUI();
+        	mostrarToast('Orden de temas actualizado');
+    	}
+
+    	async function moverTemaAbajo(claseId, temaId) {
+        	if (!currentUser?.esAdmin) return;
+        	const clase = curso.clases.find(c => c.id === claseId);
+        	if (!clase) return;
+        	const temas = clase.temas;
+        	const index = temas.findIndex(t => t.id === temaId);
+        	if (index === -1 || index >= temas.length - 1) return;
+        	const siguiente = temas[index + 1];
+        	const actual = temas[index];
+        	const tempNum = actual.numero;
+        	actual.numero = siguiente.numero;
+        	siguiente.numero = tempNum;
+        	temas.sort((a, b) => a.numero - b.numero);
+        	temas.forEach((t, i) => t.numero = i + 1);
+        	await guardarCurso();
+        	actualizarUI();
+        	mostrarToast('Orden de temas actualizado');
+    	}
+
+    	async function guardarNotas(claseId, temaId) {
+        	if (!currentUser?.esAdmin) return;
+    	}
+
+    	function actualizarUI() {
+        	if (!currentUser) {
+            	document.getElementById('main-content').innerHTML = `
+                	<div style="text-align:center; margin-top:40px; color:var(--texto-suave);">
+                    	<p style="font-size:1.2rem;">♞ Inicia sesión para acceder al curso.</p>
+                	</div>`;
+            	renderizarSidebar();
+            	return;
+        	}
+        	renderizarSidebar();
+        	if (claseActivaId) {
+            	const clase = curso.clases.find(c => c.id === claseActivaId);
+            	if (clase && esClaseDesbloqueada(clase)) {
+                	renderizarContenido(clase);
+            	} else if (clase && !esClaseDesbloqueada(clase)) {
+                	const yaSolicitada = solicitudesPendientes.some(s => s.claseId === clase.id && s.uid === currentUser.uid);
+                	document.getElementById('main-content').innerHTML = `
+                    	<div style="text-align:center; margin-top:40px;">
+                        	<p style="color:var(--warning); font-size:1.1rem;">🔒 Esta clase está bloqueada.</p>
+                        	<p style="color:var(--texto-suave); margin:10px 0;">Completa los temas anteriores o solicita acceso especial al administrador.</p>
+                        	<button class="btn btn-solicitar" id="btn-solicitar-acceso"
+                            	${yaSolicitada ? 'disabled' : ''}
+                            	onclick="solicitarAcceso('${clase.id}')">
+                            	${yaSolicitada ? '⏳ Solicitud enviada' : '📩 Solicitar acceso'}
+                        	</button>
+                    	</div>`;
+            	} else {
+                	document.getElementById('main-content').innerHTML = `
+                    	<div style="text-align:center; margin-top:40px; color:var(--texto-suave);">
+                        	<p>Selecciona una clase del menú lateral.</p>
+                    	</div>`;
+            	}
+        	} else if (curso.clases.length > 0) {
+            	const primeraDesbloqueada = curso.clases.find(c => esClaseDesbloqueada(c));
+            	if (primeraDesbloqueada) {
+                	claseActivaId = primeraDesbloqueada.id;
+                	renderizarContenido(primeraDesbloqueada);
+            	} else {
+                	document.getElementById('main-content').innerHTML = `
+                    	<div style="text-align:center; margin-top:40px; color:var(--texto-suave);">
+                        	<p>No hay clases disponibles o todas están bloqueadas.</p>
+                    	</div>`;
+            	}
+        	} else {
+            	document.getElementById('main-content').innerHTML = `
+                	<div style="text-align:center; margin-top:40px; color:var(--texto-suave);">
+                    	<p>📚 El curso aún no tiene contenido. Si eres administrador, agrega clases desde el menú.</p>
+                	</div>`;
+        	}
+        	habilitarEdicionPorLongPress();
+    	}
+
+    	function renderizarSidebar() {
+        	const lista = document.getElementById('lista-clases');
+        	if (!currentUser) { lista.innerHTML = ''; return; }
+        	const esAdmin = currentUser.esAdmin;
+
+        	// Filtrar clases: admin ve todas, alumnos solo las publicadas
+        	const clasesVisibles = esAdmin
+            	? curso.clases
+            	: curso.clases.filter(c => c.publicada === true);
+
+        	lista.innerHTML = clasesVisibles.map(c => {
+            	const desbloqueada = esClaseDesbloqueada(c);
+            	return `
+            	<div class="clase-item ${c.id === claseActivaId ? 'active' : ''} ${desbloqueada ? '' : 'bloqueada'}"
+                 	data-id="${c.id}">
+                	<span class="titulo-editable" data-accion="renombrarClase" data-id="${c.id}">
+                    	<span class="clase-num">${c.numero}.</span> ${c.titulo}
+                	</span>
+                	${!desbloqueada ? '<span>🔒</span>' : ''}
+                	${esAdmin ? `
+                    	<div style="display:flex; align-items:center; gap:4px; flex-wrap:wrap;">
+                        	<button class="btn-reorder" onclick="event.stopPropagation(); moverClaseArriba('${c.id}')" title="Subir clase">↑</button>
+                        	<button class="btn-reorder" onclick="event.stopPropagation(); moverClaseAbajo('${c.id}')" title="Bajar clase">↓</button>
+                        	<button class="btn btn-small ${c.publicada ? 'btn-exito' : 'btn-warning'}"
+                                	onclick="event.stopPropagation(); togglePublicarClase('${c.id}')"
+                                	title="${c.publicada ? 'Visible para alumnos' : 'Oculta para alumnos'}">
+                            	${c.publicada ? '👁️' : '🙈'}
+                        	</button>
+                        	<button class="btn btn-peligro btn-small btn-eliminar-clase" data-id="${c.id}">🗑️</button>
+                        	<button class="btn btn-azul btn-small" onclick="event.stopPropagation(); gestionarAccesos('${c.id}')" title="Gestionar accesos especiales">👥</button>
+                    	</div>` : ''}
+            	</div>`;
+        	}).join('');
+
+        	document.querySelectorAll('.btn-eliminar-clase').forEach(btn => {
+            	btn.addEventListener('click', (e) => {
+                	e.stopPropagation();
+                	const id = btn.dataset.id;
+                	mostrarConfirmacion('Eliminar clase', '¿Seguro que deseas eliminar esta clase y todos sus temas?', () => eliminarClase(id));
+            	});
+        	});
+
+        	document.querySelectorAll('.clase-item').forEach(item => {
+            	item.addEventListener('click', (e) => {
+                	if (e.target.closest('button')) return;
+                	const id = item.dataset.id;
+                	const clase = curso.clases.find(c => c.id === id);
+                	if (clase && esClaseDesbloqueada(clase)) {
+                    	seleccionarClase(id);
+                	} else if (clase && !esClaseDesbloqueada(clase)) {
+                    	seleccionarClase(id);
+                	}
+            	});
+        	});
+    	}
+
+    	function seleccionarClase(id) {
+        	claseActivaId = id;
+        	actualizarUI();
+        	if (window.innerWidth <= 768) { sidebar.classList.remove('open'); sidebarOverlay.classList.remove('active'); }
+    	}
+
+    	function renderizarContenido(clase) {
+        	const esAdmin = currentUser.esAdmin;
+        	const temasHTML = clase.temas.map(tema => {
+            	const completado = estaCompletado(clase.id, tema.id);
+
+            	let contenidoHTML = '';
+            	if (tema.bloques && tema.bloques.length > 0) {
+                	contenidoHTML = tema.bloques.map(bloque => {
+                    	let html = '';
+                    	switch (bloque.tipo) {
+                        	case 'video': {
+                            	const vid = extraerYouTubeID(bloque.contenido);
+                            	if (!bloque.contenido || !bloque.contenido.trim()) return '';
+                            	if (vid) {
+                                	html = `<div class="video-wrapper"><iframe src="https://www.youtube.com/embed/${vid}?rel=0" allowfullscreen></iframe></div>`;
+                            	} else if (/<iframe/i.test(bloque.contenido)) {
+                                	html = `<div class="video-wrapper">${bloque.contenido}</div>`;
+                            	}
+                            	break;
+                        	}
+                        	case 'iframe':
+                            	if (!bloque.contenido) return '';
+                            	html = `<div class="iframe-wrapper">${bloque.contenido}</div>`;
+                            	break;
+                        	case 'texto': {
+                            	if (!bloque.contenido) return '';
+                            	const est = bloque.estilo || {};
+                            	html = `<div style="font-size:${est.fontSize||'inherit'}; color:${est.color||'inherit'}; text-align:${est.textAlign||'left'}; margin:10px 0; white-space:pre-wrap;">${bloque.contenido}</div>`;
+                            	break;
+                        	}
+                        	case 'imagen':
+                            	if (!bloque.contenido) return '';
+                            	html = `<img src="${escapeHtml(bloque.contenido)}" style="max-width:100%; border-radius:8px;" alt="Imagen">`;
+                            	break;
+                        	case 'enlace':
+                            	if (!bloque.label || !bloque.url) return '';
+                            	html = `<a href="${escapeHtml(bloque.url)}" target="_blank">${escapeHtml(bloque.label)}</a>`;
+                            	break;
+                    	}
+                    	if (bloque.nota) html += `<div class="nota-debajo">${escapeHtml(bloque.nota)}</div>`;
+                    	return html;
+                	}).filter(Boolean).join('');
+            	} else {
+                	const videoId = extraerYouTubeID(tema.videoUrl);
+                	if (videoId) {
+                    	contenidoHTML += `<label>🎬 Video de YouTube</label><div class="video-wrapper"><iframe src="https://www.youtube.com/embed/${videoId}?rel=0" allowfullscreen></iframe></div>`;
+                	}
+                	if (tema.iframeCode) {
+                    	contenidoHTML += `<label>🎯 Ejercicios interactivos (Lichess)</label><div class="iframe-wrapper">${tema.iframeCode}</div>`;
+                	}
+                	if (tema.links && tema.links.length) {
+                    	contenidoHTML += `<label>🔗 Enlaces / Ejercicios</label><ul>${tema.links.map(l => `<li><a href="${l.url}" target="_blank">${l.label}</a></li>`).join('')}</ul>`;
+                	}
+                	if (tema.materialUrl) {
+                    	contenidoHTML += `<label>📁 Material (Drive, PDF)</label><a href="${tema.materialUrl}" target="_blank">📂 Abrir material</a>`;
+                	}
+            	}
+
+            	const adminEditorHTML = esAdmin ? `
+            	<div class="solo-admin" style="margin-top:15px; padding-top:15px; border-top:1px solid var(--borde);">
+                	<p style="color:var(--acento-claro); font-weight:bold;">🛠️ Editor de bloques múltiples</p>
+                	<div id="bloques-editor-${tema.id}">
+                    	${(tema.bloques || []).map(bloque => `
+                        	<div class="bloque-editor" data-bloque-id="${bloque.id}">
+                            	<div class="bloque-campos">
+                                	<select onchange="cambiarTipoBloque('${clase.id}','${tema.id}','${bloque.id}', this.value)">
+                                    	<option value="video" ${bloque.tipo==='video'?'selected':''}>Video</option>
+                                    	<option value="texto" ${bloque.tipo==='texto'?'selected':''}>Texto</option>
+                                    	<option value="iframe" ${bloque.tipo==='iframe'?'selected':''}>Iframe</option>
+                                    	<option value="imagen" ${bloque.tipo==='imagen'?'selected':''}>Imagen</option>
+                                    	<option value="enlace" ${bloque.tipo==='enlace'?'selected':''}>Enlace</option>
+                                	</select>
+                                	${bloque.tipo === 'enlace' ? `
+                                    	<input placeholder="Etiqueta" value="${escapeHtml(bloque.label||'')}" onchange="actualizarBloqueEnlace('${clase.id}','${tema.id}','${bloque.id}', this.value, this.nextElementSibling.value)">
+                                    	<input placeholder="URL" value="${escapeHtml(bloque.url||'')}" onchange="actualizarBloqueEnlace('${clase.id}','${tema.id}','${bloque.id}', this.previousElementSibling.value, this.value)">
+                                	` : `
+                                    	<input placeholder="Contenido" value="${escapeHtml(bloque.contenido||'')}" onchange="actualizarBloqueContenido('${clase.id}','${tema.id}','${bloque.id}', this.value)">
+                                	`}
+                                	<button class="btn-reorder" onclick="moverBloqueArriba('${clase.id}','${tema.id}','${bloque.id}')">↑</button>
+                                	<button class="btn-reorder" onclick="moverBloqueAbajo('${clase.id}','${tema.id}','${bloque.id}')">↓</button>
+                                	<button class="btn btn-peligro btn-small" onclick="eliminarBloque('${clase.id}','${tema.id}','${bloque.id}')">🗑️</button>
+                            	</div>
+                            	${bloque.tipo === 'texto' ? `
+                                	<div class="estilo-controls">
+                                    	<label>Tamaño: <input type="text" value="${escapeHtml(bloque.estilo?.fontSize||'')}" placeholder="1rem" onchange="actualizarBloqueEstilo('${clase.id}','${tema.id}','${bloque.id}', 'fontSize', this.value)"></label>
+                                    	<label>Color: <input type="color" value="${escapeHtml(bloque.estilo?.color||'#000000')}" onchange="actualizarBloqueEstilo('${clase.id}','${tema.id}','${bloque.id}', 'color', this.value)"></label>
+                                    	<label>Alineación:
+                                        	<select onchange="actualizarBloqueEstilo('${clase.id}','${tema.id}','${bloque.id}', 'textAlign', this.value)">
+                                            	<option value="left" ${bloque.estilo?.textAlign==='left'?'selected':''}>Izquierda</option>
+                                            	<option value="center" ${bloque.estilo?.textAlign==='center'?'selected':''}>Centro</option>
+                                            	<option value="right" ${bloque.estilo?.textAlign==='right'?'selected':''}>Derecha</option>
+                                        	</select>
+                                    	</label>
+                                	</div>
+                            	` : ''}
+                            	<input placeholder="Nota al pie (opcional)" value="${escapeHtml(bloque.nota||'')}" onchange="actualizarBloqueNota('${clase.id}','${tema.id}','${bloque.id}', this.value)">
+                        	</div>
+                    	`).join('')}
+                	</div>
+                	<button class="btn btn-azul btn-small" onclick="agregarBloque('${clase.id}','${tema.id}','texto')">➕ Texto</button>
+                	<button class="btn btn-azul btn-small" onclick="agregarBloque('${clase.id}','${tema.id}','video')">➕ Video</button>
+                	<button class="btn btn-azul btn-small" onclick="agregarBloque('${clase.id}','${tema.id}','iframe')">➕ Iframe</button>
+                	<button class="btn btn-azul btn-small" onclick="agregarBloque('${clase.id}','${tema.id}','imagen')">➕ Imagen</button>
+                	<button class="btn btn-azul btn-small" onclick="agregarBloque('${clase.id}','${tema.id}','enlace')">➕ Enlace</button>
+            	</div>` : '';
+
+            	return `
+            	<div class="tema ${completado ? 'abierto' : ''}" data-tema-id="${tema.id}">
+                	<div class="tema-header" data-accion="toggle-tema" data-tema-id="${tema.id}">
+                    	<span class="titulo-editable" data-accion="renombrarTema" data-clase="${clase.id}" data-tema="${tema.id}">${tema.numero}. ${tema.titulo}</span>
+                    	${completado ? '<span class="badge">✓</span>' : ''}
+                    	<span style="flex:1;"></span>
+                    	<button class="btn btn-exito btn-small" onclick="event.stopPropagation(); marcarVisto('${clase.id}','${tema.id}')">
+                        	${completado ? '✓ Completado' : '👁️ Visto'}
+                    	</button>
+                    	${esAdmin ? `
+                        	<button class="btn-reorder" onclick="event.stopPropagation(); moverTemaArriba('${clase.id}','${tema.id}')" title="Subir tema">↑</button>
+                        	<button class="btn-reorder" onclick="event.stopPropagation(); moverTemaAbajo('${clase.id}','${tema.id}')" title="Bajar tema">↓</button>
+                        	<button class="btn btn-peligro btn-small" onclick="event.stopPropagation(); eliminarTema('${clase.id}','${tema.id}')">🗑️</button>` : ''}
+                	</div>
+                	<div class="tema-body">
+                    	${contenidoHTML}
+                    	${adminEditorHTML}
+                	</div>
+            	</div>`;
+        	}).join('');
+
+        	document.getElementById('main-content').innerHTML = `
+            	<div class="flex-between" style="margin-bottom:20px;">
+                	<h2><span class="titulo-editable" data-accion="renombrarClase" data-id="${clase.id}">${clase.numero}. ${escapeHtml(clase.titulo)}</span></h2>
+                	<div class="solo-admin">
+                    	<button class="btn btn-azul btn-small" onclick="agregarTema('${clase.id}')">➕ Agregar tema</button>
+                	</div>
+            	</div>
+            	<div id="temas-container">${temasHTML}</div>`;
+
+        	document.querySelectorAll('[data-accion="toggle-tema"]').forEach(header => {
+            	header.addEventListener('click', (e) => {
+                	if (e.target.closest('button') || e.target.closest('[data-accion="renombrarTema"]')) return;
+                	const temaId = header.dataset.temaId;
+                	const temaDiv = document.querySelector(`.tema[data-tema-id="${temaId}"]`);
+                	if (!temaDiv) return;
+                	document.querySelectorAll('.tema.abierto').forEach(otro => { if (otro !== temaDiv) otro.classList.remove('abierto'); });
+                	temaDiv.classList.toggle('abierto');
+            	});
+        	});
+    	}
+
+    	function escapeHtml(str) {
+        	if (!str) return '';
+        	return str.replace(/[&<>]/g, function(m) {
+            	if (m === '&') return '&amp;';
+            	if (m === '<') return '&lt;';
+            	if (m === '>') return '&gt;';
+            	return m;
+        	}).replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, function(c) { return c; });
+    	}
+
+    	async function guardarIframe(claseId, temaId) {}
+
+    	async function agregarLink(claseId, temaId) {}
+
+    	async function eliminarLink(claseId, temaId, index) {}
+
+    	async function guardarMaterial(claseId, temaId) {}
+
+    	async function eliminarTema(claseId, temaId) {
+        	if (!currentUser?.esAdmin) return;
+        	const clase = curso.clases.find(c => c.id === claseId);
+        	if (!clase) return;
+        	clase.temas = clase.temas.filter(t => t.id !== temaId);
+        	reordenarTemas(clase);
+        	await guardarCurso();
+        	actualizarUI();
+        	mostrarToast('Tema eliminado');
+    	}
+
+    	async function agregarTema(claseId) {
+        	if (!currentUser?.esAdmin) return;
+        	const clase = curso.clases.find(c => c.id === claseId);
+        	if (!clase) return;
+        	const nuevoNum = clase.temas.length + 1;
+        	const nuevoTema = {
+            	id: generarId(),
+            	numero: nuevoNum,
+            	titulo: `Tema ${nuevoNum}`,
+            	bloques: []
+        	};
+        	clase.temas.push(nuevoTema);
+        	actualizarUI();
+        	try { await guardarCurso(); mostrarToast('Tema agregado'); } catch (err) { clase.temas.pop(); actualizarUI(); mostrarToast('Error al agregar tema', 'error'); }
+    	}
+
+    	async function renombrarClase(id, nuevoNombre = null) {
+        	if (!currentUser?.esAdmin) return;
+        	const clase = curso.clases.find(c => c.id === id);
+        	if (!clase) return;
+        	const nombre = nuevoNombre || prompt('Nuevo nombre de la clase:', clase.titulo);
+        	if (!nombre || !nombre.trim()) return;
+        	clase.titulo = nombre.trim();
+        	await guardarCurso();
+        	actualizarUI();
+        	mostrarToast('Clase renombrada');
+    	}
+
+    	async function renombrarTema(claseId, temaId, nuevoNombre = null) {
+        	if (!currentUser?.esAdmin) return;
+        	const clase = curso.clases.find(c => c.id === claseId);
+        	const tema = clase?.temas.find(t => t.id === temaId);
+        	if (!tema) return;
+        	const nombre = nuevoNombre || prompt('Nuevo nombre del tema:', tema.titulo);
+        	if (!nombre || !nombre.trim()) return;
+        	tema.titulo = nombre.trim();
+        	await guardarCurso();
+        	actualizarUI();
+        	mostrarToast('Tema renombrado');
+    	}
+
+    	async function agregarClase() {
+        	if (!currentUser?.esAdmin) return;
+        	const num = curso.clases.length + 1;
+        	const nuevaClase = {
+            	id: generarId(),
+            	numero: num,
+            	titulo: `Clase ${num}`,
+            	temas: [],
+            	publicada: false   // ← NUEVO: por defecto oculta para alumnos
+        	};
+        	curso.clases.push(nuevaClase);
+        	claseActivaId = nuevaClase.id;
+        	actualizarUI();
+        	try { await guardarCurso(); mostrarToast('Clase creada (oculta para alumnos)'); }
+        	catch (err) { curso.clases.pop(); claseActivaId = curso.clases.length > 0 ? curso.clases[0].id : null; actualizarUI(); mostrarToast('Error al crear clase', 'error'); }
+    	}
+
+    	async function eliminarClase(id) {
+        	if (!currentUser?.esAdmin) return;
+        	const index = curso.clases.findIndex(c => c.id === id);
+        	if (index === -1) return;
+        	curso.clases.splice(index, 1);
+        	if (claseActivaId === id) claseActivaId = curso.clases.length > 0 ? curso.clases[0].id : null;
+        	await guardarCurso();
+        	actualizarUI();
+        	mostrarToast('Clase eliminada');
+        	try { await db.collection('accesosEspeciales').doc(id).delete(); } catch (e) { console.warn('No se pudo eliminar accesos', e); }
+    	}
+
+    	async function togglePublicarClase(claseId) {
+        	if (!currentUser?.esAdmin) return;
+        	const clase = curso.clases.find(c => c.id === claseId);
+        	if (!clase) return;
+        	clase.publicada = !clase.publicada;
+        	await guardarCurso();
+        	actualizarUI();
+        	mostrarToast(clase.publicada ? '✅ Clase visible para alumnos' : '🙈 Clase oculta para alumnos', 'success');
+    	}
+
+    	function habilitarEdicionPorLongPress() {
+        	document.querySelectorAll('.titulo-editable').forEach(span => {
+            	if (span.dataset.longPressEnabled === 'true') return;
+            	span.dataset.longPressEnabled = 'true';
+            	let timer;
+            	let longPressed = false;
+            	const start = (e) => { longPressed = false; timer = setTimeout(() => { longPressed = true; activarEdicion(span); }, 600); };
+            	const cancel = () => { clearTimeout(timer); };
+            	const cancelOnMove = (e) => { if (e.cancelable) { clearTimeout(timer); } };
+            	const clickHandler = (e) => { if (longPressed) { e.stopPropagation(); e.preventDefault(); longPressed = false; } };
+            	span.addEventListener('mousedown', start);
+            	span.addEventListener('touchstart', start, { passive: true });
+            	span.addEventListener('touchmove', cancelOnMove, { passive: true });
+            	span.addEventListener('mouseup', cancel);
+            	span.addEventListener('mouseleave', cancel);
+            	span.addEventListener('touchend', cancel);
+            	span.addEventListener('touchcancel', cancel);
+            	span.addEventListener('click', clickHandler);
+        	});
+    	}
+
+    	function activarEdicion(span) {
+        	const textoActual = span.textContent.trim();
+        	const input = document.createElement('input');
+        	input.type = 'text';
+        	input.value = textoActual;
+        	input.className = 'input-edicion-inline';
+        	input.style.cssText = 'font-size: inherit; font-weight: inherit; color: inherit; background: var(--bg); border: 2px solid var(--acento); padding: 4px 8px; border-radius: 6px; width: 100%;';
+        	for (let attr of span.attributes) { if (attr.name.startsWith('data-')) input.setAttribute(attr.name, attr.value); }
+        	span.replaceWith(input);
+        	input.focus();
+        	input.select();
+        	input.addEventListener('contextmenu', (e) => e.preventDefault());
+        	const guardar = async () => {
+            	const nuevo = input.value.trim();
+            	if (nuevo && nuevo !== textoActual) {
+                	const tipo = input.dataset.accion;
+                	if (tipo === 'renombrarClase') { await renombrarClase(input.dataset.id, nuevo); } else if (tipo === 'renombrarTema') { await renombrarTema(input.dataset.clase, input.dataset.tema, nuevo); }
+            	}
+            	const nuevoSpan = document.createElement('span');
+            	nuevoSpan.className = span.className;
+            	for (let attr of span.attributes) { if (attr.name.startsWith('data-')) nuevoSpan.setAttribute(attr.name, attr.value); }
+            	nuevoSpan.textContent = nuevo || textoActual;
+            	input.replaceWith(nuevoSpan);
+            	habilitarEdicionPorLongPress();
+        	};
+        	input.addEventListener('blur', guardar);
+        	input.addEventListener('keypress', (e) => { if (e.key === 'Enter') { e.preventDefault(); input.blur(); } });
+    	}
+
+    	async function gestionarAccesos(claseId) {
+        	if (!currentUser?.esAdmin) return;
+        	const clase = curso.clases.find(c => c.id === claseId);
+        	if (!clase) return;
+        	claseActualGestion = claseId;
+        	document.getElementById('accesos-title').innerHTML = `🔐 Accesos especiales: ${escapeHtml(clase.titulo)}`;
+        	const listaDiv = document.getElementById('accesos-lista');
+        	listaDiv.innerHTML = '<div class="loader" style="margin:20px auto;"></div>';
+        	const usuarios = await obtenerListaUsuarios();
+        	const uidsAutorizados = accesosEspeciales[claseId] || [];
+        	if (usuarios.length === 0) {
+            	listaDiv.innerHTML = `
+                	<div class="no-users-msg">
+                    	📭 No se encontraron usuarios registrados.
+                    	<br><br>
+                    	<strong>Posible causa:</strong> las reglas de seguridad de Firestore no permiten al administrador leer la colección <code>usuarios</code>.
+                    	<br><br>
+                    	Agrega esta regla en la consola de Firebase (Firestore → Reglas):
+                    	<pre style="background:#0f172a; padding:8px; border-radius:6px; text-align:left; margin-top:6px;">match /usuarios/{uid} {
+  allow read: if request.auth.uid == '${ADMIN_UID}';
+  allow write: if request.auth.uid == uid;
+}</pre>
+                	</div>`;
+        	} else {
+            	listaDiv.innerHTML = usuarios.map(user => {
+                	const checked = uidsAutorizados.includes(user.uid);
+                	return `
+                    	<div class="user-access-item">
+                        	<span class="user-email">${escapeHtml(user.email)}</span>
+                        	<label class="toggle-switch">
+                            	<input type="checkbox" data-uid="${user.uid}" ${checked ? 'checked' : ''}>
+                            	<span class="slider"></span>
+                        	</label>
+                    	</div>`;
+            	}).join('');
+            	listaDiv.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+                	cb.addEventListener('change', async (e) => {
+                    	const uid = cb.dataset.uid;
+                    	let uidsActual = [...(accesosEspeciales[claseId] || [])];
+                    	if (cb.checked) { if (!uidsActual.includes(uid)) uidsActual.push(uid); } else { uidsActual = uidsActual.filter(id => id !== uid); }
+                    	await guardarAccesoEspecial(claseId, uidsActual);
+                    	accesosEspeciales[claseId] = uidsActual;
+                    	actualizarUI();
+                	});
+            	});
+        	}
+        	modalAccesos.classList.add('active');
+    	}
+
+    	function cerrarModalAccesos() { modalAccesos.classList.remove('active'); claseActualGestion = null; }
+
+    	hamburgerBtn.addEventListener('click', () => { sidebar.classList.toggle('open'); sidebarOverlay.classList.toggle('active'); });
+    	sidebarOverlay.addEventListener('click', () => { sidebar.classList.remove('open'); sidebarOverlay.classList.remove('active'); });
+    	document.getElementById('main-content').addEventListener('click', () => {
+        	if (window.innerWidth <= 768) { sidebar.classList.remove('open'); sidebarOverlay.classList.remove('active'); }
+    	});
+
+    	// Exponer funciones globales
+    	window.mostrarLogin = mostrarLogin;
+    	window.confirmarCerrarSesion = confirmarCerrarSesion;
+    	window.cerrarSesionConfirmada = cerrarSesionConfirmada;
+    	window.agregarClase = agregarClase;
+    	window.agregarTema = agregarTema;
+    	window.eliminarTema = eliminarTema;
+    	window.eliminarLink = eliminarLink;
+    	window.guardarVideo = guardarVideo;
+    	window.guardarIframe = guardarIframe;
+    	window.agregarLink = agregarLink;
+    	window.guardarMaterial = guardarMaterial;
+    	window.renombrarClase = renombrarClase;
+    	window.renombrarTema = renombrarTema;
+    	window.marcarVisto = marcarVisto;
+    	window.eliminarClase = eliminarClase;
+    	window.moverClaseArriba = moverClaseArriba;
+    	window.moverClaseAbajo = moverClaseAbajo;
+    	window.moverTemaArriba = moverTemaArriba;
+    	window.moverTemaAbajo = moverTemaAbajo;
+    	window.guardarNotas = guardarNotas;
+    	window.gestionarAccesos = gestionarAccesos;
+    	window.cerrarModalAccesos = cerrarModalAccesos;
+    	window.solicitarAcceso = solicitarAcceso;
+    	window.aprobarSolicitud = aprobarSolicitud;
+    	window.rechazarSolicitud = rechazarSolicitud;
+    	window.abrirSolicitudesAdmin = abrirSolicitudesAdmin;
+    	window.abrirNotificaciones = abrirNotificaciones;
+    	window.marcarNotificacionLeida = marcarNotificacionLeida;
+    	window.marcarTodasNotificacionesLeidas = marcarTodasNotificacionesLeidas;
+    	window.eliminarNotificacion = eliminarNotificacion;
+    	window.mostrarDatosClub = mostrarDatosClub;
+    	window.abrirConfigClub = abrirConfigClub;
+    	window.guardarConfigClub = guardarConfigClub;
+    	window.actualizarBotonDatosClub = actualizarBotonDatosClub;
+    	window.suscribirDatosClub = suscribirDatosClub;
+    	window.suscribirNotificaciones = suscribirNotificaciones;
+    	window.suscribirSolicitudesAdmin = suscribirSolicitudesAdmin;
+    	window.agregarBloque = agregarBloque;
+    	window.eliminarBloque = eliminarBloque;
+    	window.moverBloqueArriba = moverBloqueArriba;
+    	window.moverBloqueAbajo = moverBloqueAbajo;
+    	window.actualizarBloqueContenido = actualizarBloqueContenido;
+    	window.actualizarBloqueEnlace = actualizarBloqueEnlace;
+    	window.actualizarBloqueEstilo = actualizarBloqueEstilo;
+    	window.actualizarBloqueNota = actualizarBloqueNota;
+    	window.cambiarTipoBloque = cambiarTipoBloque;
+    	window.togglePublicarClase = togglePublicarClase;   // ← NUEVA
+
+    	configurarDeteccionAutofill();
+    	suscribirDatosClub();
+
+    	console.log('✅ Club Morphy – Control de publicación de clases activado');
+	</script>
+</body>
+</html>
