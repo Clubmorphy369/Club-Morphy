@@ -1832,10 +1832,15 @@ const firebaseConfig = {
             	btnLogout.style.display = 'inline-flex';
             	userInfo.textContent = `👤 ${user.email}`;
             	if (currentUser.esAdmin) {
-                	btnAdmin.style.display = 'inline-flex';
-            	} else {
-                	btnAdmin.style.display = 'none';
-            	}
+    btnAdmin.style.display = 'inline-flex';
+    // Activar automáticamente el modo administrador
+    modoAdmin = true;
+    document.body.classList.add('modo-admin');
+} else {
+    btnAdmin.style.display = 'none';
+    modoAdmin = false;
+    document.body.classList.remove('modo-admin');
+}
             	suscribirAccesosEspeciales();
             	suscribirNotificaciones();
             	suscribirSolicitudesAdmin();
