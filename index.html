@@ -1890,6 +1890,11 @@ const firebaseConfig = {
             	const doc = await db.collection('config').doc('curso').get();
             	if (doc.exists) { curso = doc.data(); } else { curso = { clases: [] }; if (currentUser && currentUser.esAdmin) { await db.collection('config').doc('curso').set(curso); } }
             	if (!curso.clases) curso.clases = [];
+				// Reparar clases corruptas automáticamente
+curso.clases.forEach(c => {
+    if (!c.id) c.id = generarId();
+    if (!c.temas) c.temas = [];
+});
             	curso.clases.forEach(c => {
                 	if (!c.temas) c.temas = [];
                 	c.temas.forEach(t => {
