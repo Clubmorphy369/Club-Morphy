@@ -2014,9 +2014,10 @@ curso.clases.forEach(c => {
     	}
 
 function actualizarUI() {
-    // 🔧 Recordar posición de scroll antes de actualizar
+    // 🔧 Guardar ID del tema abierto antes de redibujar
     const contentDiv = document.getElementById('main-content');
-    const scrollAntes = contentDiv.scrollTop;
+    const temaAbiertoActual = contentDiv.querySelector('.tema.abierto');
+    const idTemaAbierto = temaAbiertoActual ? temaAbiertoActual.dataset.temaId : null;
 
     if (!currentUser) {
         contentDiv.innerHTML = `
@@ -2068,12 +2069,18 @@ function actualizarUI() {
     }
     habilitarEdicionPorLongPress();
 
-    // 🔧 Restaurar la posición de scroll después de un breve instante
-    requestAnimationFrame(() => {
-        contentDiv.scrollTop = scrollAntes;
-    });
+    // 🔧 Restaurar tema abierto y hacer scroll hacia él
+    if (idTemaAbierto) {
+        // Usamos un pequeño retardo para asegurar que el DOM esté completo
+        setTimeout(() => {
+            const tema = contentDiv.querySelector(`.tema[data-tema-id="${idTemaAbierto}"]`);
+            if (tema) {
+                tema.classList.add('abierto');
+                tema.scrollIntoView({ behavior: 'auto', block: 'start' });
+            }
+        }, 50);
+    }
 }
-
     	function renderizarSidebar() {
         	const lista = document.getElementById('lista-clases');
         	if (!currentUser) { lista.innerHTML = ''; return; }
