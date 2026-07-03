@@ -2013,57 +2013,66 @@ curso.clases.forEach(c => {
         	if (!currentUser?.esAdmin) return;
     	}
 
-    	function actualizarUI() {
-        	if (!currentUser) {
-            	document.getElementById('main-content').innerHTML = `
-                	<div style="text-align:center; margin-top:40px; color:var(--texto-suave);">
-                    	<p style="font-size:1.2rem;">♞ Inicia sesión para acceder al curso.</p>
-                	</div>`;
-            	renderizarSidebar();
-            	return;
-        	}
-        	renderizarSidebar();
-        	if (claseActivaId) {
-            	const clase = curso.clases.find(c => c.id === claseActivaId);
-            	if (clase && esClaseDesbloqueada(clase)) {
-                	renderizarContenido(clase);
-            	} else if (clase && !esClaseDesbloqueada(clase)) {
-                	const yaSolicitada = solicitudesPendientes.some(s => s.claseId === clase.id && s.uid === currentUser.uid);
-                	document.getElementById('main-content').innerHTML = `
-                    	<div style="text-align:center; margin-top:40px;">
-                        	<p style="color:var(--warning); font-size:1.1rem;">🔒 Esta clase está bloqueada.</p>
-                        	<p style="color:var(--texto-suave); margin:10px 0;">Completa los temas anteriores o solicita acceso especial al administrador.</p>
-                        	<button class="btn btn-solicitar" id="btn-solicitar-acceso"
-                            	${yaSolicitada ? 'disabled' : ''}
-                            	onclick="solicitarAcceso('${clase.id}')">
-                            	${yaSolicitada ? '⏳ Solicitud enviada' : '📩 Solicitar acceso'}
-                        	</button>
-                    	</div>`;
-            	} else {
-                	document.getElementById('main-content').innerHTML = `
-                    	<div style="text-align:center; margin-top:40px; color:var(--texto-suave);">
-                        	<p>Selecciona una clase del menú lateral.</p>
-                    	</div>`;
-            	}
-        	} else if (curso.clases.length > 0) {
-            	const primeraDesbloqueada = curso.clases.find(c => esClaseDesbloqueada(c));
-            	if (primeraDesbloqueada) {
-                	claseActivaId = primeraDesbloqueada.id;
-                	renderizarContenido(primeraDesbloqueada);
-            	} else {
-                	document.getElementById('main-content').innerHTML = `
-                    	<div style="text-align:center; margin-top:40px; color:var(--texto-suave);">
-                        	<p>No hay clases disponibles o todas están bloqueadas.</p>
-                    	</div>`;
-            	}
-        	} else {
-            	document.getElementById('main-content').innerHTML = `
-                	<div style="text-align:center; margin-top:40px; color:var(--texto-suave);">
-                    	<p>📚 El curso aún no tiene contenido. Si eres administrador, agrega clases desde el menú.</p>
-                	</div>`;
-        	}
-        	habilitarEdicionPorLongPress();
-    	}
+function actualizarUI() {
+    // 🔧 Recordar posición de scroll antes de actualizar
+    const contentDiv = document.getElementById('main-content');
+    const scrollAntes = contentDiv.scrollTop;
+
+    if (!currentUser) {
+        contentDiv.innerHTML = `
+            <div style="text-align:center; margin-top:40px; color:var(--texto-suave);">
+                <p style="font-size:1.2rem;">♞ Inicia sesión para acceder al curso.</p>
+            </div>`;
+        renderizarSidebar();
+        return;
+    }
+    renderizarSidebar();
+    if (claseActivaId) {
+        const clase = curso.clases.find(c => c.id === claseActivaId);
+        if (clase && esClaseDesbloqueada(clase)) {
+            renderizarContenido(clase);
+        } else if (clase && !esClaseDesbloqueada(clase)) {
+            const yaSolicitada = solicitudesPendientes.some(s => s.claseId === clase.id && s.uid === currentUser.uid);
+            contentDiv.innerHTML = `
+                <div style="text-align:center; margin-top:40px;">
+                    <p style="color:var(--warning); font-size:1.1rem;">🔒 Esta clase está bloqueada.</p>
+                    <p style="color:var(--texto-suave); margin:10px 0;">Completa los temas anteriores o solicita acceso especial al administrador.</p>
+                    <button class="btn btn-solicitar" id="btn-solicitar-acceso"
+                        ${yaSolicitada ? 'disabled' : ''}
+                        onclick="solicitarAcceso('${clase.id}')">
+                        ${yaSolicitada ? '⏳ Solicitud enviada' : '📩 Solicitar acceso'}
+                    </button>
+                </div>`;
+        } else {
+            contentDiv.innerHTML = `
+                <div style="text-align:center; margin-top:40px; color:var(--texto-suave);">
+                    <p>Selecciona una clase del menú lateral.</p>
+                </div>`;
+        }
+    } else if (curso.clases.length > 0) {
+        const primeraDesbloqueada = curso.clases.find(c => esClaseDesbloqueada(c));
+        if (primeraDesbloqueada) {
+            claseActivaId = primeraDesbloqueada.id;
+            renderizarContenido(primeraDesbloqueada);
+        } else {
+            contentDiv.innerHTML = `
+                <div style="text-align:center; margin-top:40px; color:var(--texto-suave);">
+                    <p>No hay clases disponibles o todas están bloqueadas.</p>
+                </div>`;
+        }
+    } else {
+        contentDiv.innerHTML = `
+            <div style="text-align:center; margin-top:40px; color:var(--texto-suave);">
+                <p>📚 El curso aún no tiene contenido. Si eres administrador, agrega clases desde el menú.</p>
+            </div>`;
+    }
+    habilitarEdicionPorLongPress();
+
+    // 🔧 Restaurar la posición de scroll después de un breve instante
+    requestAnimationFrame(() => {
+        contentDiv.scrollTop = scrollAntes;
+    });
+}
 
     	function renderizarSidebar() {
         	const lista = document.getElementById('lista-clases');
