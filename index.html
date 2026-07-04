@@ -2014,10 +2014,16 @@ curso.clases.forEach(c => {
     	}
 
 function actualizarUI() {
-    // 🔧 Guardar ID del tema abierto antes de redibujar
+function actualizarUI() {
     const contentDiv = document.getElementById('main-content');
     const temaAbiertoActual = contentDiv.querySelector('.tema.abierto');
     const idTemaAbierto = temaAbiertoActual ? temaAbiertoActual.dataset.temaId : null;
+
+    // 🔧 Detectar si hay un tema recién creado (tiene prioridad)
+    const idNuevoTema = window.__nuevoTemaId;
+    if (idNuevoTema) {
+        window.__nuevoTemaId = null; // solo se usa una vez
+    }
 
     if (!currentUser) {
         contentDiv.innerHTML = `
@@ -2028,6 +2034,59 @@ function actualizarUI() {
         return;
     }
     renderizarSidebar();
+    if (claseActivaId) {
+        const clase = curso.clases.find(c => c.id === claseActivaId);
+        if (clase && esClaseDesbloqueada(clase)) {
+            renderizarContenido(clase);
+        } else if (clase && !esClaseDesbloqueada(clase)) {
+            const yaSolicitada = solicitudesPendientes.some(s => s.claseId === clase.id && s.uid === currentUser.uid);
+            contentDiv.innerHTML = `
+                <div style="text-align:center; margin-top:40px;">
+                    <p style="color:var(--warning); font-size:1.1rem;">🔒 Esta clase está bloqueada.</p>
+                    <p style="color:var(--texto-suave); margin:10px 0;">Completa los temas anteriores o solicita acceso especial al administrador.</p>
+                    <button class="btn btn-solicitar" id="btn-solicitar-acceso"
+                        ${yaSolicitada ? 'disabled' : ''}
+                        onclick="solicitarAcceso('${clase.id}')">
+                        ${yaSolicitada ? '⏳ Solicitud enviada' : '📩 Solicitar acceso'}
+                    </button>
+                </div>`;
+        } else {
+            contentDiv.innerHTML = `
+                <div style="text-align:center; margin-top:40px; color:var(--texto-suave);">
+                    <p>Selecciona una clase del menú lateral.</p>
+                </div>`;
+        }
+    } else if (curso.clases.length > 0) {
+        const primeraDesbloqueada = curso.clases.find(c => esClaseDesbloqueada(c));
+        if (primeraDesbloqueada) {
+            claseActivaId = primeraDesbloqueada.id;
+            renderizarContenido(primeraDesbloqueada);
+        } else {
+            contentDiv.innerHTML = `
+                <div style="text-align:center; margin-top:40px; color:var(--texto-suave);">
+                    <p>No hay clases disponibles o todas están bloqueadas.</p>
+                </div>`;
+        }
+    } else {
+        contentDiv.innerHTML = `
+            <div style="text-align:center; margin-top:40px; color:var(--texto-suave);">
+                <p>📚 El curso aún no tiene contenido. Si eres administrador, agrega clases desde el menú.</p>
+            </div>`;
+    }
+    habilitarEdicionPorLongPress();
+
+    // 🔧 Auto-abrir y hacer scroll al tema que corresponda
+    const idParaAbrir = idNuevoTema || idTemaAbierto;
+    if (idParaAbrir) {
+        setTimeout(() => {
+            const tema = contentDiv.querySelector(`.tema[data-tema-id="${idParaAbrir}"]`);
+            if (tema) {
+                tema.classList.add('abierto');
+                tema.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }, 50);
+    }
+}    renderizarSidebar();
     if (claseActivaId) {
         const clase = curso.clases.find(c => c.id === claseActivaId);
         if (clase && esClaseDesbloqueada(clase)) {
@@ -2320,21 +2379,32 @@ function actualizarUI() {
         	mostrarToast('Tema eliminado');
     	}
 
-    	async function agregarTema(claseId) {
-        	if (!currentUser?.esAdmin) return;
-        	const clase = curso.clases.find(c => c.id === claseId);
-        	if (!clase) return;
-        	const nuevoNum = clase.temas.length + 1;
-        	const nuevoTema = {
-            	id: generarId(),
-            	numero: nuevoNum,
-            	titulo: `Tema ${nuevoNum}`,
-            	bloques: []
-        	};
-        	clase.temas.push(nuevoTema);
-        	actualizarUI();
-        	try { await guardarCurso(); mostrarToast('Tema agregado'); } catch (err) { clase.temas.pop(); actualizarUI(); mostrarToast('Error al agregar tema', 'error'); }
-    	}
+async function agregarTema(claseId) {
+    if (!currentUser?.esAdmin) return;
+    const clase = curso.clases.find(c => c.id === claseId);
+    if (!clase) return;
+    const nuevoNum = clase.temas.length + 1;
+    const nuevoTema = {
+        id: generarId(),
+        numero: nuevoNum,
+        titulo: `Tema ${nuevoNum}`,
+        bloques: []
+    };
+    clase.temas.push(nuevoTema);
+    
+    // 🔧 Guardar el ID del nuevo tema para que actualizarUI lo abra automáticamente
+    window.__nuevoTemaId = nuevoTema.id;
+    
+    actualizarUI();
+    try {
+        await guardarCurso();
+        mostrarToast('Tema agregado');
+    } catch (err) {
+        clase.temas.pop();
+        actualizarUI();
+        mostrarToast('Error al agregar tema', 'error');
+    }
+}
 
     	async function renombrarClase(id, nuevoNombre = null) {
         	if (!currentUser?.esAdmin) return;
