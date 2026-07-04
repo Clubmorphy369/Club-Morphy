@@ -1091,6 +1091,7 @@ const firebaseConfig = {
     	const ADMIN_UID = 'FVnX1NOVgvavWnwnad75zBsRpBU2';
     	let currentUser = null;
     	let curso = { clases: [] };
+		let temaAbiertoGlobal = null;   // recuerda el último tema abierto manualmente
     	let claseActivaId = null;
     	let modoAdmin = false;
     	let confirmCallback = null;
@@ -2338,17 +2339,25 @@ function actualizarUI() {
             	</div>
             	<div id="temas-container">${temasHTML}</div>`;
 
-        	document.querySelectorAll('[data-accion="toggle-tema"]').forEach(header => {
-            	header.addEventListener('click', (e) => {
-                	if (e.target.closest('button') || e.target.closest('[data-accion="renombrarTema"]')) return;
-                	const temaId = header.dataset.temaId;
-                	const temaDiv = document.querySelector(`.tema[data-tema-id="${temaId}"]`);
-                	if (!temaDiv) return;
-                	document.querySelectorAll('.tema.abierto').forEach(otro => { if (otro !== temaDiv) otro.classList.remove('abierto'); });
-                	temaDiv.classList.toggle('abierto');
-            	});
-        	});
-    	}
+document.querySelectorAll('[data-accion="toggle-tema"]').forEach(header => {
+    header.addEventListener('click', (e) => {
+        if (e.target.closest('button') || e.target.closest('[data-accion="renombrarTema"]')) return;
+        const temaId = header.dataset.temaId;
+        const temaDiv = document.querySelector(`.tema[data-tema-id="${temaId}"]`);
+        if (!temaDiv) return;
+        
+        // Cerrar todos los demás temas (solo permitir uno abierto a la vez)
+        document.querySelectorAll('.tema.abierto').forEach(otro => {
+            if (otro !== temaDiv) otro.classList.remove('abierto');
+        });
+        
+        // Alternar el estado del tema clicado
+        temaDiv.classList.toggle('abierto');
+        
+        // Actualizar la variable global con el ID del tema que queda abierto (o null si se cerró)
+        temaAbiertoGlobal = temaDiv.classList.contains('abierto') ? temaId : null;
+    });
+});
 
     	function escapeHtml(str) {
         	if (!str) return '';
