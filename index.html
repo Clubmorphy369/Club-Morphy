@@ -2586,9 +2586,27 @@ document.getElementById('main-content').addEventListener('click', () => {
 /* ─── Evento de scroll para guardar posición ─── */
 document.getElementById('main-content').addEventListener('scroll', onContentScroll, { passive: true });
 
-/* ─── Guardar estado antes de salir de la página ─── */
-window.addEventListener('beforeunload', () => {
+/* ─── Guardar estado antes de que la página se oculte (bfcache seguro) ─── */
+window.addEventListener('pagehide', () => {
     guardarEstadoNavegacion();
+});
+
+/* ─── Restaurar estado cuando la página regresa desde caché ─── */
+window.addEventListener('pageshow', (event) => {
+    if (event.persisted) {
+        const estadoPrevio = cargarEstadoNavegacion();
+        if (estadoPrevio && estadoPrevio.claseActivaId && curso.clases.some(c => c.id === estadoPrevio.claseActivaId)) {
+            claseActivaId = estadoPrevio.claseActivaId;
+            temaAbiertoGlobal = estadoPrevio.temaAbiertoId || null;
+            actualizarUI();
+            if (estadoPrevio.scrollTop) {
+                setTimeout(() => {
+                    const content = document.getElementById('main-content');
+                    if (content) content.scrollTop = estadoPrevio.scrollTop;
+                }, 100);
+            }
+        }
+    }
 });
 
 // Exponer funciones globales
@@ -2644,7 +2662,7 @@ configurarDeteccionAutofill();
 suscribirDatosClub();
 
 console.log('✅ Club Morphy – Control de publicación de clases activado');
-console.log('✅ Persistencia de navegación con sessionStorage activada');
+console.log('✅ Persistencia de navegación con sessionStorage activada (bfcache)');
 </script>
 </body>
 </html>
