@@ -11,7 +11,6 @@
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 	<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
 	<style>
-    	/* ===== TEMA ÚNICO (CLARO) ===== */
     	:root {
         	--bg: #ffffff;
         	--surface: #f1f5f9;
@@ -50,7 +49,6 @@
     	body {
         	font-family: 'Lato', 'Segoe UI', system-ui, sans-serif;
         	background-color: var(--bg);
-        	background-image: none;
         	color: var(--texto);
         	min-height: 100vh;
         	display: flex;
@@ -67,7 +65,6 @@
         	overflow-wrap: break-word;
     	}
 
-    	/* ─── HEADER ─── */
     	.header {
         	padding: 14px 28px;
         	background: var(--header-bg);
@@ -121,7 +118,6 @@
     	.logo-club.visible { display: block; }
     	.btn-label { display: inline; }
 
-    	/* ─── BOTONES ─── */
     	.btn {
         	background: var(--btn-bg);
         	border: 1px solid var(--borde);
@@ -182,7 +178,6 @@
     	.btn-solicitar:hover { background: var(--btn-acento-hover-bg); box-shadow: 0 5px 20px rgba(14,165,233,0.5); }
     	.btn-solicitar:disabled { background: var(--surface2); color: var(--texto-suave); border-color: var(--borde); }
 
-    	/* Botón warning (publicar/ocultar) */
     	.btn-warning {
         	background: #fef3c7;
         	border: 1px solid var(--warning);
@@ -193,7 +188,6 @@
         	box-shadow: 0 4px 16px rgba(245,158,11,0.3);
     	}
 
-    	/* ─── BADGE ─── */
     	.notification-badge {
         	position: absolute;
         	top: -6px; right: -6px;
@@ -216,7 +210,6 @@
         	50% { transform: scale(1.2); box-shadow: 0 0 14px rgba(220,38,38,0.8); }
     	}
 
-    	/* ─── SIDEBAR ─── */
     	.sidebar {
         	width: 285px;
         	background: var(--sidebar-bg);
@@ -249,7 +242,6 @@
     	}
     	@media (max-width: 768px) { .sidebar-overlay.active { display: block; } }
 
-    	/* ─── CLASE ITEMS ─── */
     	.clase-item {
         	padding: 13px 15px;
         	background: var(--surface);
@@ -276,7 +268,6 @@
     	.clase-item.bloqueada { opacity: 0.55; filter: grayscale(0.4); }
     	.clase-num { font-weight: 700; color: var(--acento); margin-right: 6px; }
 
-    	/* ─── LAYOUT ─── */
     	.main-layout { display: flex; flex: 1; overflow: hidden; position: relative; }
     	.content {
         	flex: 1;
@@ -290,7 +281,6 @@
     	.content::-webkit-scrollbar-track { background: var(--bg); }
     	.content::-webkit-scrollbar-thumb { background: var(--acento-oscuro); border-radius: 3px; }
 
-    	/* ─── TEMAS ─── */
     	.tema {
         	border: 1px solid var(--borde);
         	border-radius: var(--radio);
@@ -341,7 +331,6 @@
         	gap: 18px;
     	}
 
-    	/* ─── VIDEOS / IFRAMES ─── */
     	.video-wrapper,
     	.iframe-wrapper {
         	position: relative;
@@ -364,7 +353,6 @@
         	max-width: 100%;
     	}
 
-    	/* ─── INPUTS ─── */
     	input, textarea, select {
         	padding: 12px 16px;
         	border-radius: 8px;
@@ -389,7 +377,6 @@
     	.input-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
     	.input-row input { flex: 1; min-width: 140px; }
 
-    	/* ─── LABELS ─── */
     	label {
         	font-family: 'Lato', sans-serif;
         	font-size: 0.82rem;
@@ -401,11 +388,9 @@
         	margin-bottom: 4px;
     	}
 
-    	/* ─── LINKS ─── */
     	a { color: var(--acento); text-decoration: none; font-weight: 600; transition: color var(--transicion); }
     	a:hover { color: var(--acento-oscuro); text-decoration: underline; }
 
-    	/* ─── BADGE ─── */
     	.badge {
         	background: var(--exito);
         	color: white;
@@ -418,7 +403,6 @@
         	box-shadow: 0 0 8px rgba(22,163,74,0.2);
     	}
 
-    	/* ─── TOAST ─── */
     	.toast {
         	position: fixed;
         	bottom: 30px; right: 30px;
@@ -455,7 +439,6 @@
         	box-shadow: 0 8px 32px rgba(0,0,0,0.1), 0 0 15px rgba(22,163,74,0.25);
     	}
 
-    	/* ─── MODALES ─── */
     	.modal-overlay {
         	position: fixed;
         	top: 0; left: 0;
@@ -523,7 +506,6 @@
         	flex-wrap: wrap;
     	}
 
-    	/* ─── ADMIN ─── */
     	.titulo-editable {
         	cursor: pointer;
         	border-bottom: 2px dashed transparent;
@@ -538,7 +520,6 @@
     	.solo-admin { display: none; }
     	body.modo-admin .solo-admin { display: block; }
 
-    	/* ─── HAMBURGER ─── */
     	.hamburger {
         	display: none;
         	background: var(--surface);
@@ -555,7 +536,6 @@
 
     	.hamburger:hover { background: var(--surface2); border-color: var(--acento); }
 
-    	/* ─── LOADER ─── */
     	.loader {
         	display: inline-block;
         	width: 18px; height: 18px;
@@ -567,7 +547,6 @@
 
     	@keyframes spin { to { transform: rotate(360deg); } }
 
-    	/* ─── UTILITIES ─── */
     	.flex-between { display: flex; justify-content: space-between; align-items: center; }
     	.flex-between h2 {
         	font-family: 'Playfair Display', serif;
@@ -576,7 +555,6 @@
         	text-shadow: 0 2px 10px rgba(14,165,233,0.15);
     	}
 
-    	/* ─── USER SESSION ─── */
     	.user-session-info {
         	background: var(--surface);
         	border-radius: 10px;
@@ -602,7 +580,6 @@
         	box-shadow: 0 0 12px rgba(14,165,233,0.3);
     	}
 
-    	/* ─── PASSWORD TOGGLE ─── */
     	.input-password-wrapper { position: relative; }
     	.input-password-wrapper input { padding-right: 44px; }
 
@@ -620,10 +597,8 @@
 
     	.toggle-password-btn:hover { color: var(--acento); }
 
-    	/* ─── AUTOFILL WARNING ─── */
     	.autofill-warning { color: var(--warning); font-size: 0.8rem; margin-top: 4px; display: none; }
 
-    	/* ─── REORDER BUTTONS ─── */
     	.btn-reorder {
         	background: var(--surface);
         	border: 1px solid var(--borde);
@@ -640,7 +615,6 @@
 
     	.btn-reorder:hover { background: var(--surface2); border-color: var(--acento-oscuro); box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
 
-    	/* ─── NOTA DEBAJO ─── */
     	.nota-debajo {
         	background: var(--surface);
         	padding: 12px 16px;
@@ -653,7 +627,6 @@
         	box-shadow: inset 0 1px 4px rgba(0,0,0,0.05);
     	}
 
-    	/* ─── USER ACCESS LIST ─── */
     	.user-access-list, .solicitudes-list, .notificaciones-list {
         	max-height: 380px;
         	overflow-y: auto;
@@ -678,7 +651,6 @@
     	.user-access-item:hover, .solicitud-item:hover, .notificacion-item:hover { background: var(--surface); }
     	.user-email { font-weight: 600; word-break: break-all; color: var(--texto); font-size: 0.9rem; }
 
-    	/* ─── TOGGLE SWITCH ─── */
     	.toggle-switch { position: relative; display: inline-block; width: 50px; height: 24px; }
     	.toggle-switch input { opacity: 0; width: 0; height: 0; }
 
@@ -705,17 +677,14 @@
     	input:checked + .slider { background: var(--exito); border-color: var(--exito); }
     	input:checked + .slider:before { transform: translateX(26px); }
 
-    	/* ─── STATUS MESSAGES ─── */
     	.no-users-msg { text-align: center; color: var(--texto-suave); padding: 24px; font-style: italic; }
     	.estado-pendiente { color: var(--warning); font-weight: 700; }
     	.estado-aprobada { color: var(--exito); font-weight: 700; }
     	.estado-rechazada { color: var(--peligro); font-weight: 700; }
 
-    	/* ─── NOTIFICACIONES ─── */
     	.notificacion-no-leida { border-left: 3px solid var(--acento); background: rgba(14,165,233,0.04); }
     	.notificacion-texto { flex: 1; min-width: 150px; font-size: 0.9rem; }
 
-    	/* ─── CLUB DATA ─── */
     	.club-data-item {
         	display: flex;
         	align-items: center;
@@ -728,7 +697,6 @@
 
     	.club-data-icon { font-size: 1.2rem; min-width: 30px; text-align: center; }
 
-    	/* ─── USER INFO ─── */
     	#user-info {
         	font-size: 0.85rem;
         	color: var(--texto-suave);
@@ -741,7 +709,6 @@
         	vertical-align: middle;
     	}
 
-    	/* ─── BLOCKQUOTE / PRE ─── */
     	pre {
         	background: var(--surface);
         	border: 1px solid var(--borde);
@@ -761,12 +728,17 @@
         	font-size: 0.85em;
     	}
 
-    	/* ─── SCROLL SUAVE EN IOS ─── */
     	.sidebar, .content, .modal-content, .user-access-list, .solicitudes-list, .notificaciones-list {
         	-webkit-overflow-scrolling: touch;
     	}
 
-    	/* ─── RESPONSIVE ─── */
+    	.sidebar-separator {
+        	border: none;
+        	border-top: 1px solid var(--borde);
+        	margin: 15px 0 12px;
+        	opacity: 0.8;
+    	}
+
     	@media (max-width: 768px) {
         	.sidebar { position: fixed; top: 0; left: 0; height: 100%; z-index: 20; transform: translateX(-100%); width: 85%; max-width: 320px; }
         	.sidebar.open { transform: translateX(0); }
@@ -806,7 +778,6 @@
         	#user-info { max-width: 100px; }
     	}
 
-    	/* ─── TABLETS (768px - 1024px) ─── */
     	@media (min-width: 769px) and (max-width: 1024px) {
         	.sidebar { width: 240px; font-size: 0.9rem; }
         	.content { padding: 22px; }
@@ -928,11 +899,13 @@
     	<div class="sidebar" id="sidebar">
         	<div id="lista-clases"></div>
         	<button class="btn btn-azul admin-only" id="btn-add-clase" style="margin-top:15px; width:100%;" onclick="agregarClase()">➕ <span class="btn-label">Nueva clase</span></button>
-        	<button class="btn admin-only" id="btn-config-club" style="margin-top:8px; width:100%;" onclick="abrirConfigClub()">⚙️ <span class="btn-label">Configurar Club</span></button>
+        	<hr class="sidebar-separator admin-only">
+        	<button class="btn admin-only" id="btn-config-club" style="width:100%;" onclick="abrirConfigClub()">⚙️ <span class="btn-label">Configurar Club</span></button>
     	</div>
     	<div class="content" id="main-content">
         	<div style="text-align:center; margin-top:40px; color:var(--texto-suave);">
-            	<p style="font-size:1.2rem;">♞ Inicia sesión para acceder al curso.</p>
+            	<p style="font-size:1.2rem;">♞ Bienvenido al curso de ajedrez del Club Morphy</p>
+            	<p style="margin-top:12px; font-size:0.95rem;">Inicia sesión o regístrate para acceder a las clases, videos y ejercicios interactivos.</p>
         	</div>
     	</div>
 	</div>
@@ -1275,7 +1248,7 @@ async function solicitarAcceso(claseId) {
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
         });
 
-        mostrarToast('✅ Solicitud enviada. El administrador la revisará pronto.', 'success');
+        mostrarToast('Solicitud enviada. El administrador la revisará pronto.', 'success');
         actualizarUI();
     } catch (error) {
         mostrarToast('Error al enviar solicitud', 'error');
@@ -1297,7 +1270,7 @@ async function aprobarSolicitud(solicitudId, claseId, uid, email) {
         const clase = curso.clases.find(c => c.id === claseId);
         await db.collection('notificaciones').add({
             paraUid: uid,
-            mensaje: `✅ Tu solicitud de acceso a "${clase?.titulo || 'la clase'}" ha sido aprobada.`,
+            mensaje: `Tu solicitud de acceso a "${clase?.titulo || 'la clase'}" ha sido aprobada`,
             leida: false,
             tipo: 'aprobada',
             claseId: claseId,
@@ -1319,7 +1292,7 @@ async function rechazarSolicitud(solicitudId, uid, claseId) {
         const clase = curso.clases.find(c => c.id === claseId);
         await db.collection('notificaciones').add({
             paraUid: uid,
-            mensaje: `❌ Tu solicitud de acceso a "${clase?.titulo || 'la clase'}" ha sido rechazada.`,
+            mensaje: `Tu solicitud de acceso a "${clase?.titulo || 'la clase'}" ha sido rechazada`,
             leida: false,
             tipo: 'rechazada',
             claseId: claseId,
@@ -1719,7 +1692,7 @@ async function guardarVideo(claseId, temaId) {
     const tema = clase?.temas.find(t => t.id === temaId);
     if (!tema) return;
     if (urlRaw && !esUrlYouTubeValida(urlRaw)) {
-        mostrarToast('❌ URL de YouTube no válida. Revisa el enlace.', 'error');
+        mostrarToast('URL de YouTube no válida. Revisa el enlace.', 'error');
         inputElement.style.borderColor = 'var(--peligro)';
         setTimeout(() => { if (inputElement) inputElement.style.borderColor = ''; }, 2000);
         return;
@@ -1727,7 +1700,7 @@ async function guardarVideo(claseId, temaId) {
     tema.videoUrl = urlRaw;
     await guardarCurso();
     actualizarUI();
-    mostrarToast(urlRaw ? '✅ Video guardado correctamente' : '🗑️ Video eliminado', 'success');
+    mostrarToast(urlRaw ? 'Video guardado correctamente' : 'Video eliminado', 'success');
 }
 
 function mostrarToast(mensaje, tipo = 'success') {
@@ -1800,6 +1773,21 @@ function configurarDeteccionAutofill() {
     document.head.appendChild(styleEl);
 }
 
+/* ─── Traducción de errores de Firebase ─── */
+function traducirErrorFirebase(codigo) {
+    const mensajes = {
+        'auth/invalid-email': 'Ese correo no parece válido. Revísalo e inténtalo de nuevo.',
+        'auth/invalid-credential': 'Correo o contraseña incorrectos.',
+        'auth/wrong-password': 'Correo o contraseña incorrectos.',
+        'auth/user-not-found': 'No encontramos una cuenta con ese correo. ¿Quieres registrarte?',
+        'auth/email-already-in-use': 'Ya existe una cuenta con ese correo. Intenta iniciar sesión.',
+        'auth/weak-password': 'Tu contraseña es muy corta. Usa al menos 6 caracteres.',
+        'auth/too-many-requests': 'Demasiados intentos. Espera unos minutos y vuelve a intentar.',
+        'auth/network-request-failed': 'Sin conexión a internet. Verifica tu red e inténtalo de nuevo.'
+    };
+    return mensajes[codigo] || 'Ocurrió un problema. Inténtalo de nuevo en unos segundos.';
+}
+
 document.getElementById('toggle-password').addEventListener('click', function() {
     const passInput = document.getElementById('password');
     const type = passInput.getAttribute('type') === 'password' ? 'text' : 'password';
@@ -1811,7 +1799,7 @@ document.getElementById('auth-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     const email = document.getElementById('email').value.trim();
     const pass = document.getElementById('password').value.trim();
-    if (!email || !pass) return mostrarToast('Llena todos los campos', 'error');
+    if (!email || !pass) return mostrarToast('Falta tu correo o contraseña', 'error');
     const btnAuth = document.getElementById('btn-auth');
     btnAuth.disabled = true;
     btnAuth.innerHTML = '<span class="loader"></span> Procesando...';
@@ -1819,7 +1807,7 @@ document.getElementById('auth-form').addEventListener('submit', async (e) => {
         if (modoRegistro) {
             const credencial = await auth.createUserWithEmailAndPassword(email, pass);
             await registrarUsuarioEnColeccion(credencial.user);
-            mostrarToast('Registro exitoso. Ya puedes iniciar sesión.');
+            mostrarToast('¡Cuenta creada! Ya tienes acceso.', 'success');
             modoRegistro = false;
             document.getElementById('modal-title').textContent = 'Iniciar sesión';
             document.getElementById('btn-auth').textContent = 'Ingresar';
@@ -1827,11 +1815,11 @@ document.getElementById('auth-form').addEventListener('submit', async (e) => {
         } else {
             const credencial = await auth.signInWithEmailAndPassword(email, pass);
             await registrarUsuarioEnColeccion(credencial.user);
-            mostrarToast('¡Bienvenido!');
+            mostrarToast('¡Bienvenido!', 'success');
             modalLogin.classList.remove('active');
         }
     } catch (error) {
-        mostrarToast(error.message, 'error');
+        mostrarToast(traducirErrorFirebase(error.code), 'error');
     } finally {
         btnAuth.disabled = false;
         btnAuth.textContent = modoRegistro ? 'Crear cuenta' : 'Ingresar';
@@ -1881,7 +1869,6 @@ auth.onAuthStateChanged(async (user) => {
         await cargarCurso();
         await sincronizarProgresoDesdeFirestore();
 
-        /* ─── Restaurar estado de navegación anterior ─── */
         const estadoPrevio = cargarEstadoNavegacion();
         if (estadoPrevio && estadoPrevio.claseActivaId && curso.clases.some(c => c.id === estadoPrevio.claseActivaId)) {
             claseActivaId = estadoPrevio.claseActivaId;
@@ -1892,7 +1879,6 @@ auth.onAuthStateChanged(async (user) => {
         }
         actualizarUI();
 
-        /* Restaurar scroll después de que el DOM se haya actualizado */
         if (estadoPrevio && estadoPrevio.scrollTop) {
             setTimeout(() => {
                 const content = document.getElementById('main-content');
@@ -1957,7 +1943,7 @@ async function cargarCurso() {
         curso.clases.sort((a, b) => a.numero - b.numero);
     } catch (error) {
         console.warn('Error al cargar el curso:', error);
-        if (error.code === 'permission-denied') { mostrarToast('No tienes permisos para acceder al curso.', 'error'); } else { mostrarToast('Sin conexión. Se mostrará la última versión guardada.', 'error'); const backup = localStorage.getItem('cursoBackup'); if (backup) curso = JSON.parse(backup); }
+        if (error.code === 'permission-denied') { mostrarToast('Tu cuenta aún no tiene acceso a este curso. Contacta al administrador.', 'error'); } else { mostrarToast('Sin conexión. Se mostrará la última versión guardada.', 'error'); const backup = localStorage.getItem('cursoBackup'); if (backup) curso = JSON.parse(backup); }
     }
 }
 
@@ -1980,12 +1966,12 @@ async function marcarVisto(claseId, temaId) {
     if (!currentUser) return;
     const key = `${claseId}_${temaId}`;
     const progreso = JSON.parse(localStorage.getItem(`progreso_${currentUser.uid}`) || '{}');
-    if (progreso[key]) { mostrarToast('Este tema ya está completado.', 'error'); return; }
+    if (progreso[key]) { mostrarToast('Ya habías completado este tema ✓'); return; }
     progreso[key] = true;
     localStorage.setItem(`progreso_${currentUser.uid}`, JSON.stringify(progreso));
     try {
         await db.collection('progreso').doc(currentUser.uid).set({ [key]: true }, { merge: true });
-        mostrarToast('Progreso guardado ✓');
+        mostrarToast('Progreso guardado ✓', 'success');
     } catch (error) { mostrarToast('Progreso guardado localmente (sin conexión)', 'error'); }
     actualizarUI();
 }
@@ -2003,7 +1989,7 @@ async function moverClaseArriba(claseId) {
     curso.clases.forEach((c, i) => c.numero = i + 1);
     await guardarCurso();
     actualizarUI();
-    mostrarToast('Orden de clases actualizado');
+    mostrarToast('Orden de clases actualizado', 'success');
 }
 
 async function moverClaseAbajo(claseId) {
@@ -2019,7 +2005,7 @@ async function moverClaseAbajo(claseId) {
     curso.clases.forEach((c, i) => c.numero = i + 1);
     await guardarCurso();
     actualizarUI();
-    mostrarToast('Orden de clases actualizado');
+    mostrarToast('Orden de clases actualizado', 'success');
 }
 
 async function moverTemaArriba(claseId, temaId) {
@@ -2038,7 +2024,7 @@ async function moverTemaArriba(claseId, temaId) {
     temas.forEach((t, i) => t.numero = i + 1);
     await guardarCurso();
     actualizarUI();
-    mostrarToast('Orden de temas actualizado');
+    mostrarToast('Orden de temas actualizado', 'success');
 }
 
 async function moverTemaAbajo(claseId, temaId) {
@@ -2057,7 +2043,7 @@ async function moverTemaAbajo(claseId, temaId) {
     temas.forEach((t, i) => t.numero = i + 1);
     await guardarCurso();
     actualizarUI();
-    mostrarToast('Orden de temas actualizado');
+    mostrarToast('Orden de temas actualizado', 'success');
 }
 
 async function guardarNotas(claseId, temaId) {
@@ -2070,7 +2056,8 @@ function actualizarUI() {
     if (!currentUser) {
         contentDiv.innerHTML = `
             <div style="text-align:center; margin-top:40px; color:var(--texto-suave);">
-                <p style="font-size:1.2rem;">♞ Inicia sesión para acceder al curso.</p>
+                <p style="font-size:1.2rem;">♞ Bienvenido al curso de ajedrez del Club Morphy</p>
+                <p style="margin-top:12px; font-size:0.95rem;">Inicia sesión o regístrate para acceder a las clases, videos y ejercicios interactivos.</p>
             </div>`;
         renderizarSidebar();
         return;
@@ -2135,7 +2122,6 @@ function actualizarUI() {
         }, 50);
     }
 
-    /* Guardar estado después de renderizar */
     guardarEstadoNavegacion();
 }
 
@@ -2196,7 +2182,7 @@ function renderizarSidebar() {
 
 function seleccionarClase(id) {
     claseActivaId = id;
-    temaAbiertoGlobal = null; // al cambiar de clase se cierran los temas previos
+    temaAbiertoGlobal = null;
     actualizarUI();
     guardarEstadoNavegacion();
     if (window.innerWidth <= 768) { sidebar.classList.remove('open'); sidebarOverlay.classList.remove('active'); }
@@ -2379,7 +2365,7 @@ async function eliminarTema(claseId, temaId) {
     reordenarTemas(clase);
     await guardarCurso();
     actualizarUI();
-    mostrarToast('Tema eliminado');
+    mostrarToast('Tema eliminado', 'success');
 }
 
 async function agregarTema(claseId) {
@@ -2400,7 +2386,7 @@ async function agregarTema(claseId) {
     actualizarUI();
     try {
         await guardarCurso();
-        mostrarToast('Tema agregado');
+        mostrarToast('Tema agregado', 'success');
     } catch (err) {
         clase.temas.pop();
         actualizarUI();
@@ -2417,7 +2403,7 @@ async function renombrarClase(id, nuevoNombre = null) {
     clase.titulo = nombre.trim();
     await guardarCurso();
     actualizarUI();
-    mostrarToast('Clase renombrada');
+    mostrarToast('Clase renombrada', 'success');
 }
 
 async function renombrarTema(claseId, temaId, nuevoNombre = null) {
@@ -2430,7 +2416,7 @@ async function renombrarTema(claseId, temaId, nuevoNombre = null) {
     tema.titulo = nombre.trim();
     await guardarCurso();
     actualizarUI();
-    mostrarToast('Tema renombrado');
+    mostrarToast('Tema renombrado', 'success');
 }
 
 async function agregarClase() {
@@ -2448,7 +2434,7 @@ async function agregarClase() {
     temaAbiertoGlobal = null;
     actualizarUI();
     guardarEstadoNavegacion();
-    try { await guardarCurso(); mostrarToast('Clase creada (oculta para alumnos)'); }
+    try { await guardarCurso(); mostrarToast('Clase creada (oculta para alumnos)', 'success'); }
     catch (err) { curso.clases.pop(); claseActivaId = curso.clases.length > 0 ? curso.clases[0].id : null; actualizarUI(); mostrarToast('Error al crear clase', 'error'); }
 }
 
@@ -2462,7 +2448,7 @@ async function eliminarClase(id) {
     await guardarCurso();
     actualizarUI();
     guardarEstadoNavegacion();
-    mostrarToast('Clase eliminada');
+    mostrarToast('Clase eliminada', 'success');
     try { await db.collection('accesosEspeciales').doc(id).delete(); } catch (e) { console.warn('No se pudo eliminar accesos', e); }
 }
 
@@ -2473,7 +2459,7 @@ async function togglePublicarClase(claseId) {
     clase.publicada = !clase.publicada;
     await guardarCurso();
     actualizarUI();
-    mostrarToast(clase.publicada ? '✅ Clase visible para alumnos' : '🙈 Clase oculta para alumnos', 'success');
+    mostrarToast(clase.publicada ? 'Clase visible para alumnos' : 'Clase oculta para alumnos', 'success');
 }
 
 function habilitarEdicionPorLongPress() {
@@ -2583,15 +2569,12 @@ document.getElementById('main-content').addEventListener('click', () => {
     if (window.innerWidth <= 768) { sidebar.classList.remove('open'); sidebarOverlay.classList.remove('active'); }
 });
 
-/* ─── Evento de scroll para guardar posición ─── */
 document.getElementById('main-content').addEventListener('scroll', onContentScroll, { passive: true });
 
-/* ─── Guardar estado antes de que la página se oculte (bfcache seguro) ─── */
 window.addEventListener('pagehide', () => {
     guardarEstadoNavegacion();
 });
 
-/* ─── Restaurar estado cuando la página regresa desde caché ─── */
 window.addEventListener('pageshow', (event) => {
     if (event.persisted) {
         const estadoPrevio = cargarEstadoNavegacion();
@@ -2609,7 +2592,6 @@ window.addEventListener('pageshow', (event) => {
     }
 });
 
-// Exponer funciones globales
 window.mostrarLogin = mostrarLogin;
 window.confirmarCerrarSesion = confirmarCerrarSesion;
 window.cerrarSesionConfirmada = cerrarSesionConfirmada;
@@ -2661,8 +2643,7 @@ window.togglePublicarClase = togglePublicarClase;
 configurarDeteccionAutofill();
 suscribirDatosClub();
 
-console.log('✅ Club Morphy – Control de publicación de clases activado');
-console.log('✅ Persistencia de navegación con sessionStorage activada (bfcache)');
+console.log('✅ Club Morphy – Mejoras de UX aplicadas');
 </script>
 </body>
 </html>
