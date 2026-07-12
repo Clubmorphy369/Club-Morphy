@@ -1104,6 +1104,40 @@ let unsubscribeSolicitudes = null;
 let unsubscribeAccesos = null;
 let unsubscribeClub = null;
 
+/* ─── PERSISTENCIA DE NAVEGACIÓN (sessionStorage) ─── */
+const STORAGE_KEY = 'clubMorphy_navegacion';
+
+function guardarEstadoNavegacion() {
+    try {
+        const estado = {
+            claseActivaId: claseActivaId,
+            temaAbiertoId: temaAbiertoGlobal,
+            scrollTop: document.getElementById('main-content')?.scrollTop || 0
+        };
+        sessionStorage.setItem(STORAGE_KEY, JSON.stringify(estado));
+    } catch (e) { /* ignorar */ }
+}
+
+function cargarEstadoNavegacion() {
+    try {
+        const raw = sessionStorage.getItem(STORAGE_KEY);
+        if (!raw) return null;
+        const estado = JSON.parse(raw);
+        return estado;
+    } catch (e) { return null; }
+}
+
+/* Guardar scroll con debounce */
+let debounceScrollTimer = null;
+function onContentScroll() {
+    if (debounceScrollTimer) clearTimeout(debounceScrollTimer);
+    debounceScrollTimer = setTimeout(() => {
+        guardarEstadoNavegacion();
+    }, 200);
+}
+
+/* ─── FIN PERSISTENCIA ─── */
+
 const modalLogin = document.getElementById('modal-login');
 const modalConfirmLogout = document.getElementById('modal-confirm-logout');
 const modalConfirm = document.getElementById('modal-confirm');
@@ -1846,8 +1880,27 @@ auth.onAuthStateChanged(async (user) => {
         suscribirSolicitudesAdmin();
         await cargarCurso();
         await sincronizarProgresoDesdeFirestore();
-        if (!claseActivaId && curso.clases.length > 0) claseActivaId = curso.clases[0].id;
+
+        /* ─── Restaurar estado de navegación anterior ─── */
+        const estadoPrevio = cargarEstadoNavegacion();
+        if (estadoPrevio && estadoPrevio.claseActivaId && curso.clases.some(c => c.id === estadoPrevio.claseActivaId)) {
+            claseActivaId = estadoPrevio.claseActivaId;
+            temaAbiertoGlobal = estadoPrevio.temaAbiertoId || null;
+        } else if (!claseActivaId && curso.clases.length > 0) {
+            claseActivaId = curso.clases[0].id;
+            temaAbiertoGlobal = null;
+        }
         actualizarUI();
+
+        /* Restaurar scroll después de que el DOM se haya actualizado */
+        if (estadoPrevio && estadoPrevio.scrollTop) {
+            setTimeout(() => {
+                const content = document.getElementById('main-content');
+                if (content) {
+                    content.scrollTop = estadoPrevio.scrollTop;
+                }
+            }, 100);
+        }
         actualizarBotonDatosClub();
     } else {
         currentUser = null;
@@ -1890,7 +1943,6 @@ async function cargarCurso() {
         const doc = await db.collection('config').doc('curso').get();
         if (doc.exists) { curso = doc.data(); } else { curso = { clases: [] }; if (currentUser && currentUser.esAdmin) { await db.collection('config').doc('curso').set(curso); } }
         if (!curso.clases) curso.clases = [];
-        // Reparar clases corruptas automáticamente
         curso.clases.forEach(c => {
             if (!c.id) c.id = generarId();
             if (!c.temas) c.temas = [];
@@ -2065,7 +2117,6 @@ function actualizarUI() {
     }
     habilitarEdicionPorLongPress();
 
-    // Determinar qué tema debe quedar abierto
     const idNuevoTema = window.__nuevoTemaId;
     if (idNuevoTema) {
         window.__nuevoTemaId = null;
@@ -2083,6 +2134,9 @@ function actualizarUI() {
             }
         }, 50);
     }
+
+    /* Guardar estado después de renderizar */
+    guardarEstadoNavegacion();
 }
 
 function renderizarSidebar() {
@@ -2142,7 +2196,9 @@ function renderizarSidebar() {
 
 function seleccionarClase(id) {
     claseActivaId = id;
+    temaAbiertoGlobal = null; // al cambiar de clase se cierran los temas previos
     actualizarUI();
+    guardarEstadoNavegacion();
     if (window.innerWidth <= 768) { sidebar.classList.remove('open'); sidebarOverlay.classList.remove('active'); }
 }
 
@@ -2295,6 +2351,7 @@ function renderizarContenido(clase) {
             
             temaDiv.classList.toggle('abierto');
             temaAbiertoGlobal = temaDiv.classList.contains('abierto') ? temaId : null;
+            guardarEstadoNavegacion();
         });
     });
 }
@@ -2388,7 +2445,9 @@ async function agregarClase() {
     };
     curso.clases.push(nuevaClase);
     claseActivaId = nuevaClase.id;
+    temaAbiertoGlobal = null;
     actualizarUI();
+    guardarEstadoNavegacion();
     try { await guardarCurso(); mostrarToast('Clase creada (oculta para alumnos)'); }
     catch (err) { curso.clases.pop(); claseActivaId = curso.clases.length > 0 ? curso.clases[0].id : null; actualizarUI(); mostrarToast('Error al crear clase', 'error'); }
 }
@@ -2399,8 +2458,10 @@ async function eliminarClase(id) {
     if (index === -1) return;
     curso.clases.splice(index, 1);
     if (claseActivaId === id) claseActivaId = curso.clases.length > 0 ? curso.clases[0].id : null;
+    temaAbiertoGlobal = null;
     await guardarCurso();
     actualizarUI();
+    guardarEstadoNavegacion();
     mostrarToast('Clase eliminada');
     try { await db.collection('accesosEspeciales').doc(id).delete(); } catch (e) { console.warn('No se pudo eliminar accesos', e); }
 }
@@ -2522,6 +2583,14 @@ document.getElementById('main-content').addEventListener('click', () => {
     if (window.innerWidth <= 768) { sidebar.classList.remove('open'); sidebarOverlay.classList.remove('active'); }
 });
 
+/* ─── Evento de scroll para guardar posición ─── */
+document.getElementById('main-content').addEventListener('scroll', onContentScroll, { passive: true });
+
+/* ─── Guardar estado antes de salir de la página ─── */
+window.addEventListener('beforeunload', () => {
+    guardarEstadoNavegacion();
+});
+
 // Exponer funciones globales
 window.mostrarLogin = mostrarLogin;
 window.confirmarCerrarSesion = confirmarCerrarSesion;
@@ -2575,6 +2644,7 @@ configurarDeteccionAutofill();
 suscribirDatosClub();
 
 console.log('✅ Club Morphy – Control de publicación de clases activado');
+console.log('✅ Persistencia de navegación con sessionStorage activada');
 </script>
 </body>
 </html>
