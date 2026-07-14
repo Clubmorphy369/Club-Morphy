@@ -558,6 +558,40 @@
             box-shadow: 0 0 12px rgba(14,165,233,0.2) !important;
         }
 
+        .btn-reorder {
+            background: transparent;
+            border: 1px solid var(--borde);
+            border-radius: 4px;
+            padding: 2px 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            color: var(--texto-suave);
+            transition: var(--transicion);
+        }
+        .btn-reorder:hover {
+            background: var(--surface);
+            border-color: var(--acento);
+            color: var(--acento-oscuro);
+        }
+
+        /* Datos del club */
+        .club-data-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--borde);
+            font-size: 0.95rem;
+        }
+        .club-data-icon {
+            font-size: 1.2rem;
+            min-width: 28px;
+            text-align: center;
+        }
+        .club-data-item:last-child {
+            border-bottom: none;
+        }
+
         @media (max-width: 768px) {
             .sidebar { position: fixed; top: 0; left: 0; height: 100%; z-index: 20; transform: translateX(-100%); width: 85%; max-width: 320px; }
             .sidebar.open { transform: translateX(0); }
@@ -789,7 +823,7 @@
         const ADMIN_UID = 'FVnX1NOVgvavWnwnad75zBsRpBU2';
         let currentUser = null;
         let curso = { clases: [] };
-        let temaAbiertoGlobal = null;
+        let temaAbiertoGlobal = null;   // ID del tema abierto actualmente
         let claseActivaId = null;
         let modoAdmin = false;
         let confirmCallback = null;
@@ -803,6 +837,10 @@
         let unsubscribeClub = null;
         let modoRegistro = false;
         let deferredPrompt;
+
+        // ─── Elementos del DOM (se declaran después de que el DOM esté listo) ───
+        const sidebar = document.getElementById('sidebar');
+        const sidebarOverlay = document.getElementById('sidebar-overlay');
 
         /* ─── PERSISTENCIA DE NAVEGACIÓN (sessionStorage) ─── */
         const STORAGE_KEY = 'clubMorphy_navegacion';
@@ -846,11 +884,11 @@
                 });
             }
         }
+        // Registro del Service Worker real (debes crear el archivo sw.js en la raíz)
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register("data:application/javascript," + encodeURIComponent(
-                "self.addEventListener('install',e=>{e.waitUntil(caches.open('morphy-v1').then(c=>c.addAll(['.'])));});" +
-                "self.addEventListener('fetch',e=>{e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request)));});"
-            ));
+            navigator.serviceWorker.register('/sw.js')
+                .then(reg => console.log('Service Worker registrado', reg))
+                .catch(err => console.log('Error al registrar SW', err));
         }
 
         // ═══════════════════════════════════════════════════════════
@@ -1050,6 +1088,8 @@
         function esClaseDesbloqueada(clase) {
             if (!currentUser) return false;
             if (currentUser.esAdmin) return true;
+            // Verificar que la clase esté publicada (visible) para usuarios normales
+            if (!clase.publicada) return false;
             if (clase.numero === 1) return true;
             if (tieneAccesoEspecial(clase.id, currentUser.uid)) return true;
             return false;
@@ -1773,7 +1813,7 @@
 
         function seleccionarClase(id) {
             claseActivaId = id;
-            temaAbiertoGlobal = null;
+            temaAbiertoGlobal = null;   // reiniciar tema abierto al cambiar de clase
             actualizarUI();
             guardarEstadoNavegacion();
             if (window.innerWidth <= 768) { sidebar.classList.remove('open'); sidebarOverlay.classList.remove('active'); }
@@ -1794,8 +1834,10 @@
             `;
             clase.temas.forEach(tema => {
                 const completado = estaCompletado(clase.id, tema.id);
-                html += `<div class="tema ${completado ? 'abierto' : ''}" data-tema-id="${tema.id}">
-                    <div class="tema-header" role="button" tabindex="0" aria-expanded="${completado ? 'true' : 'false'}" aria-controls="panel-${tema.id}" id="header-${tema.id}">
+                // Si el tema está abierto globalmente o está completado, se abre
+                const abrir = (tema.id === temaAbiertoGlobal) || completado;
+                html += `<div class="tema ${abrir ? 'abierto' : ''}" data-tema-id="${tema.id}">
+                    <div class="tema-header" role="button" tabindex="0" aria-expanded="${abrir ? 'true' : 'false'}" aria-controls="panel-${tema.id}" id="header-${tema.id}">
                         <span class="titulo-editable" data-accion="renombrarTema" data-clase="${clase.id}" data-tema="${tema.id}">${tema.numero}. ${escapeHtml(tema.titulo)}</span>
                         ${completado ? '<span class="badge">✓</span>' : ''}
                         <span style="flex:1;"></span>
@@ -1807,7 +1849,7 @@
                         ` : ''}
                     </div>
                     <div id="panel-${tema.id}" class="tema-body" role="region" aria-labelledby="header-${tema.id}">
-                        ${renderizarBloques(tema)}
+                        ${renderizarBloques(clase.id, tema.id, tema)}
                         ${esAdmin ? `
                             <div class="solo-admin" style="margin-top:15px; padding-top:15px; border-top:1px solid var(--borde);">
                                 <p style="color:var(--acento-claro); font-weight:bold;">🛠️ Editor de bloques múltiples</p>
@@ -1823,7 +1865,7 @@
             });
             document.getElementById('main-content').innerHTML = html;
 
-            // Activar acordeón y lazy‑load de iframes
+            // Activar acordeón y lazy‑load de iframes, guardando el tema abierto
             document.querySelectorAll('.tema-header').forEach(header => {
                 header.addEventListener('click', (e) => {
                     if (e.target.closest('button')) return;
@@ -1831,7 +1873,11 @@
                     const panel = temaDiv.querySelector('.tema-body');
                     const abierto = temaDiv.classList.toggle('abierto');
                     header.setAttribute('aria-expanded', abierto);
+                    // Actualizar el temaAbiertoGlobal
+                    const temaId = temaDiv.dataset.temaId;
                     if (abierto) {
+                        temaAbiertoGlobal = temaId;
+                        // Cargar iframes lazy
                         temaDiv.querySelectorAll('iframe[data-src]').forEach(iframe => {
                             iframe.src = iframe.dataset.src;
                             iframe.removeAttribute('data-src');
@@ -1840,14 +1886,26 @@
                         const focusable = panel.querySelector('button, a, input, [tabindex]:not([tabindex="-1"])');
                         if (focusable) focusable.focus();
                     } else {
+                        if (temaAbiertoGlobal === temaId) temaAbiertoGlobal = null;
                         header.focus();
                     }
+                    guardarEstadoNavegacion();
                 });
             });
+            // Cargar iframes si el tema ya está abierto al renderizar
+            document.querySelectorAll('.tema.abierto iframe[data-src]').forEach(iframe => {
+                iframe.src = iframe.dataset.src;
+                iframe.removeAttribute('data-src');
+                iframe.style.display = '';
+            });
+
+            // ¡Importante! Habilitar la edición por long press en los títulos recién renderizados
+            habilitarEdicionPorLongPress();
         }
 
-        function renderizarBloques(tema) {
+        function renderizarBloques(claseId, temaId, tema) {
             if (!tema.bloques || tema.bloques.length === 0) return '';
+            const esAdmin = currentUser?.esAdmin;
             return tema.bloques.map(bloque => {
                 let bloqueHtml = '';
                 switch (bloque.tipo) {
@@ -1856,17 +1914,37 @@
                         bloqueHtml = `<div class="video-wrapper"><iframe data-src="${escapeHtml(bloque.contenido)}" allowfullscreen style="display:none;"></iframe></div>`;
                         break;
                     case 'texto':
-                        bloqueHtml = `<div style="white-space:pre-wrap;">${escapeHtml(bloque.contenido || '')}</div>`;
+                        bloqueHtml = `<div class="bloque-texto" style="white-space:pre-wrap;">${escapeHtml(bloque.contenido || '')}</div>`;
                         break;
                     case 'imagen':
                         bloqueHtml = `<img src="${escapeHtml(bloque.contenido)}" style="max-width:100%; border-radius:8px;" alt="Imagen">`;
                         break;
                     case 'enlace':
-                        bloqueHtml = `<a href="${escapeHtml(bloque.url)}" target="_blank">${escapeHtml(bloque.label)}</a>`;
+                        bloqueHtml = `<a href="${escapeHtml(bloque.url)}" target="_blank" rel="noopener">${escapeHtml(bloque.label || bloque.url)}</a>`;
                         break;
+                    default:
+                        bloqueHtml = `<div>Bloque desconocido</div>`;
                 }
-                if (bloque.nota) bloqueHtml += `<div class="nota-debajo">${escapeHtml(bloque.nota)}</div>`;
-                return bloqueHtml;
+                if (bloque.nota) {
+                    bloqueHtml += `<div class="nota-debajo">${escapeHtml(bloque.nota)}</div>`;
+                }
+
+                // Controles de administrador para cada bloque
+                let adminControls = '';
+                if (esAdmin) {
+                    adminControls = `
+                        <div class="bloque-admin-controls" style="margin-top:6px; display:flex; gap:6px; align-items:center; flex-wrap:wrap; padding:4px 0; border-top:1px dashed var(--borde);">
+                            <button class="btn btn-small" onclick="event.stopPropagation(); moverBloqueArriba('${claseId}','${temaId}','${bloque.id}')" title="Subir bloque">↑</button>
+                            <button class="btn btn-small" onclick="event.stopPropagation(); moverBloqueAbajo('${claseId}','${temaId}','${bloque.id}')" title="Bajar bloque">↓</button>
+                            <button class="btn btn-small btn-peligro" onclick="event.stopPropagation(); eliminarBloque('${claseId}','${temaId}','${bloque.id}')" title="Eliminar bloque">🗑️</button>
+                            <span style="font-size:0.75rem; color:var(--texto-suave); margin-left:auto;">${bloque.tipo}</span>
+                        </div>`;
+                }
+
+                return `<div class="bloque-item" data-bloque-id="${bloque.id}">
+                            ${bloqueHtml}
+                            ${adminControls}
+                        </div>`;
             }).join('');
         }
 
@@ -2159,7 +2237,7 @@
                 suscribirAccesosEspeciales();
                 suscribirNotificaciones();
                 suscribirSolicitudesAdmin();
-                await cargarCurso();
+                await cargarCurso();          // Esperamos a que se cargue el curso
                 await sincronizarProgresoDesdeFirestore();
 
                 const estadoPrevio = cargarEstadoNavegacion();
