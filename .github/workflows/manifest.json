@@ -1,23 +1,52 @@
 {
-  "name": "Club Morphy - Curso de Ajedrez",
+  "name": "♟️ Club Morphy - Curso de Ajedrez",
   "short_name": "Club Morphy",
-  "description": "Curso de ajedrez interactivo para el Club Morphy",
+  "description": "Curso de ajedrez interactivo para el Club Morphy con lecciones, videos y ejercicios.",
+  "lang": "es-MX",
+  "dir": "ltr",
   "start_url": "/Club-Morphy/index.html",
   "display": "standalone",
-  "background_color": "#ffffff",
+  "orientation": "portrait",
   "theme_color": "#0ea5e9",
+  "background_color": "#ffffff",
+  "categories": ["education", "games", "sports"],
+  "iarc_rating_id": "0",
+  "scope": "/Club-Morphy/",
+  "prefer_related_applications": false,
   "icons": [
+    { "src": "/Club-Morphy/assets/icon-72.png", "sizes": "72x72", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/Club-Morphy/assets/icon-96.png", "sizes": "96x96", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/Club-Morphy/assets/icon-128.png", "sizes": "128x128", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/Club-Morphy/assets/icon-144.png", "sizes": "144x144", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/Club-Morphy/assets/icon-152.png", "sizes": "152x152", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/Club-Morphy/assets/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/Club-Morphy/assets/icon-256.png", "sizes": "256x256", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/Club-Morphy/assets/icon-384.png", "sizes": "384x384", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/Club-Morphy/assets/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ],
+  "screenshots": [
     {
-      "src": "/Club-Morphy/assets/icon-192.png",
-      "sizes": "192x192",
+      "src": "/Club-Morphy/assets/screenshot-mobile.png",
+      "sizes": "1080x1920",
       "type": "image/png",
-      "purpose": "any maskable"
+      "platform": "wide",
+      "label": "Pantalla principal del curso"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Última clase",
+      "short_name": "Última clase",
+      "description": "Continúa donde lo dejaste",
+      "url": "/Club-Morphy/index.html?action=resume",
+      "icons": [{ "src": "/Club-Morphy/assets/icon-96.png", "sizes": "96x96" }]
     },
     {
-      "src": "/Club-Morphy/assets/icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any maskable"
+      "name": "Ejercicios",
+      "short_name": "Ejercicios",
+      "description": "Accede a los ejercicios interactivos",
+      "url": "/Club-Morphy/index.html?action=ejercicios",
+      "icons": [{ "src": "/Club-Morphy/assets/icon-96.png", "sizes": "96x96" }]
     }
   ]
 }
