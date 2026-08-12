@@ -2934,6 +2934,24 @@
     window.agregarSubtema = agregarSubtema;
     window.gestionarAccesosTema = gestionarAccesosTema;
     window.closeConfirm = closeConfirm;
+        // ===== REGISTRO DEL SERVICE WORKER =====
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js')
+      .then(registration => {
+        console.log('✅ Service Worker registrado en:', registration.scope);
+        
+        navigator.serviceWorker.addEventListener('message', event => {
+          if (event.data && event.data.type === 'NEW_VERSION_AVAILABLE') {
+            if (window.confirm('Hay una nueva versión del sitio. ¿Recargar ahora?')) {
+              window.location.reload();
+            }
+          }
+        });
+      })
+      .catch(err => console.error('❌ Error al registrar el Service Worker:', err));
+  });
+}
     </script>
 </body>
 </html>
