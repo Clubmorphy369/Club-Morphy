@@ -11,18 +11,14 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Checkout del código
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2. Desplegar directamente a Firebase Hosting (sin build)
       - name: Deploy to Firebase Hosting
-        uses: FirebaseExtended/action-hosting-deploy@v6   # versión estable actual
+        uses: FirebaseExtended/action-hosting-deploy@v6
         with:
           repoToken: '${{ secrets.GITHUB_TOKEN }}'
           firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_CLUB_MORPHY }}'
           channelId: live
-          projectId: club-morphy-15639
-          # IMPORTANTE: si tus archivos están en la raíz, no hace falta entryPoint
-          # Si están en una subcarpeta (ej: public/), descomenta la siguiente línea:
-          # entryPoint: './public'
+          projectId: TU_PROJECT_ID_AQUI   # <-- ¡cámbialo por el real!
+          entryPoint: './'                # tus archivos están en la raíz
