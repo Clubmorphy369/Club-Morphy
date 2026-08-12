@@ -928,9 +928,28 @@
         margin-top: 10px;
     }
 
-    .tema.bloqueado .tema-header {
+       .tema.bloqueado .tema-header {
         opacity: 0.7;
         background: var(--surface);
+    }
+
+    /* Arreglo del input de edición en móviles */
+    .input-edicion-inline {
+        box-sizing: border-box !important;
+        max-width: 100% !important;
+        width: 100% !important;
+    }
+
+    @media (max-width: 768px) {
+        /* Cabecera de tema más compacta y título que puede partir palabras */
+        .tema-header {
+            padding: 8px 10px !important;
+        }
+        .tema-header .titulo-editable {
+            word-break: break-word;
+            flex: 1 1 auto;
+            min-width: 0;
+        }
     }
     </style>
 </head>
@@ -2731,8 +2750,7 @@
         input.type = 'text';
         input.value = textoActual;
         input.className = 'input-edicion-inline';
-        input.style.cssText = 'font-size: inherit; font-weight: inherit; color: inherit; background: var(--bg); border: 2px solid var(--acento); padding: 4px 8px; border-radius: 6px; width: 100%;';
-        for (let attr of span.attributes) { if (attr.name.startsWith('data-')) input.setAttribute(attr.name, attr.value); }
+       input.style.cssText = 'font-size: inherit; font-weight: inherit; color: inherit; background: var(--bg); border: 2px solid var(--acento); padding: 4px 8px; border-radius: 6px; width: 100%; box-sizing: border-box; max-width: 100%;';        for (let attr of span.attributes) { if (attr.name.startsWith('data-')) input.setAttribute(attr.name, attr.value); }
         span.replaceWith(input);
         input.focus();
         input.select();
