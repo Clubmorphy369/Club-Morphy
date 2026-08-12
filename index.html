@@ -240,7 +240,53 @@
         z-index: 4;
         backdrop-filter: blur(2px);
     }
-    @media (max-width: 768px) { .sidebar-overlay.active { display: block; } }
+   @media (max-width: 768px) {
+    .sidebar { position: fixed; top: 0; left: 0; height: 100%; z-index: 20; transform: translateX(-100%); width: 85%; max-width: 320px; }
+    .sidebar.open { transform: translateX(0); }
+    .sidebar-overlay.active { display: block; }
+    .hamburger { display: block; }
+    .main-layout { flex-direction: column; }
+    .content { padding: 16px; }
+    .header h1 { font-size: 1.25rem; }
+    .header { padding: 10px 14px; }
+    .header-right { gap: 4px; }
+    .header-right .btn { font-size: 0.75rem; padding: 6px 10px; }
+    .btn, .btn-small, .btn-reorder, .clase-item, .tema-header button { min-height: 44px; min-width: 44px; padding: 10px 18px; }
+    .btn-small { padding: 8px 14px; font-size: 0.82rem; }
+    .btn-reorder { padding: 8px 12px; font-size: 1rem; min-width: 44px; text-align: center; }
+    .clase-item { padding: 15px; margin-bottom: 10px; font-size: 0.95rem; }
+    .tema-header { gap: 12px; padding: 14px 16px; flex-wrap: wrap; }
+    .tema-header button { flex-shrink: 0; }
+    .tema-header .btn { margin-left: auto; }
+    .tema.abierto .tema-body { padding: 16px; gap: 20px; }
+    input, textarea { font-size: 16px; padding: 14px 16px; }
+    .input-row { flex-direction: column; align-items: stretch; gap: 12px; }
+    .input-row input { min-width: auto; }
+    .modal-content { width: 92%; padding: 22px; max-width: 480px; }
+    .modal-content .btn { min-height: 48px; justify-content: center; }
+    .toast { bottom: 20px; left: 20px; right: 20px; width: auto; border-radius: 10px; text-align: center; justify-content: center; }
+    .video-wrapper, .iframe-wrapper { margin: 12px 0; }
+    .nota-debajo { font-size: 0.88rem; }
+    .header-right { gap: 6px; }
+    .header-right .btn { padding: 8px 12px; font-size: 0.8rem; }
+
+    /* NUEVAS REGLAS PARA CABECERA MÁS DELGADA */
+    .tema-header {
+        padding: 8px 12px;
+        font-size: 0.9rem;
+        gap: 6px;
+    }
+    .tema-header .btn,
+    .tema-header .btn-reorder {
+        padding: 4px 6px;
+        font-size: 0.75rem;
+        min-height: 36px;
+        min-width: 36px;
+    }
+    .tema-header > span[style*="flex:1"] {
+        display: none;
+    }
+}
 
     .clase-item {
         padding: 13px 15px;
