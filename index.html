@@ -871,20 +871,17 @@
         }
     }
 
-    /* Estilo para bloques de texto (sanitizado) */
     .bloque-texto {
         margin: 10px 0;
         white-space: pre-wrap;
     }
 
-    /* Estilo para subtemas anidados */
     .subtemas-container {
         border-left: 2px dashed var(--borde);
         padding-left: 15px;
         margin-top: 10px;
     }
 
-    /* Estilo para tema bloqueado */
     .tema.bloqueado .tema-header {
         opacity: 0.7;
         background: var(--surface);
@@ -936,9 +933,115 @@
     <!-- Toast -->
     <div class="toast" id="toast"></div>
 
-    <!-- Modales (Login, Confirmaciones, Accesos, etc.) -->
-    <!-- (Mantén todos los modales que ya tenías, no los repito por brevedad) -->
-    <!-- ... -->
+    <!-- ========== MODALES (AGREGADOS CORRECTAMENTE) ========== -->
+    <!-- Modal de Login -->
+    <div class="modal-overlay" id="modal-login">
+        <div class="modal-content">
+            <h3 id="modal-title">Iniciar sesión</h3>
+            <div id="current-session" style="display:none;">
+                <div class="user-avatar" id="session-avatar"></div>
+                <p id="session-email"></p>
+                <button class="btn" onclick="cambiarCuenta()">Cambiar cuenta</button>
+            </div>
+            <form id="auth-form">
+                <label>Email</label>
+                <input id="email" type="email" required>
+                <label>Contraseña</label>
+                <div class="input-password-wrapper">
+                    <input id="password" type="password" required>
+                    <button type="button" id="toggle-password" class="toggle-password-btn">👁️</button>
+                </div>
+                <div id="autofill-warning" class="autofill-warning">⚠️ Parece que se rellenó automáticamente</div>
+                <div class="modal-buttons" id="extra-controls">
+                    <button type="submit" class="btn btn-azul" id="btn-auth">Ingresar</button>
+                    <button type="button" class="btn" id="switch-auth">Crear cuenta</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal de confirmación de cierre de sesión -->
+    <div class="modal-overlay" id="modal-confirm-logout">
+        <div class="modal-content">
+            <h3>¿Cerrar sesión?</h3>
+            <div class="modal-buttons">
+                <button class="btn btn-peligro" onclick="cerrarSesionConfirmada()">Sí, salir</button>
+                <button class="btn" onclick="document.getElementById('modal-confirm-logout').classList.remove('active')">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de confirmación genérica -->
+    <div class="modal-overlay" id="modal-confirm">
+        <div class="modal-content">
+            <h3 id="confirm-title"></h3>
+            <p id="confirm-message"></p>
+            <div class="modal-buttons">
+                <button class="btn btn-azul" id="confirm-ok">Aceptar</button>
+                <button class="btn" onclick="closeConfirm()">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de gestión de accesos -->
+    <div class="modal-overlay" id="modal-accesos">
+        <div class="modal-content">
+            <h3 id="accesos-title">Accesos</h3>
+            <div id="accesos-lista"></div>
+            <button class="btn" onclick="cerrarModalAccesos()">Cerrar</button>
+        </div>
+    </div>
+
+    <!-- Modal de solicitudes (admin) -->
+    <div class="modal-overlay" id="modal-solicitudes-admin">
+        <div class="modal-content">
+            <h3>Solicitudes pendientes</h3>
+            <div id="solicitudes-lista" class="solicitudes-list"></div>
+            <button class="btn" onclick="document.getElementById('modal-solicitudes-admin').classList.remove('active')">Cerrar</button>
+        </div>
+    </div>
+
+    <!-- Modal de notificaciones -->
+    <div class="modal-overlay" id="modal-notificaciones">
+        <div class="modal-content">
+            <h3>Notificaciones</h3>
+            <button id="btn-marcar-todo-leido" class="btn btn-small" onclick="marcarTodasNotificacionesLeidas()" style="margin-bottom:10px;">✓ Marcar todas leídas</button>
+            <div id="notificaciones-lista" class="notificaciones-list"></div>
+            <button class="btn" onclick="document.getElementById('modal-notificaciones').classList.remove('active')">Cerrar</button>
+        </div>
+    </div>
+
+    <!-- Modal datos del club -->
+    <div class="modal-overlay" id="modal-datos-club">
+        <div class="modal-content">
+            <h3>Contacto del Club</h3>
+            <div id="datos-club-contenido"></div>
+            <button class="btn" onclick="document.getElementById('modal-datos-club').classList.remove('active')">Cerrar</button>
+        </div>
+    </div>
+
+    <!-- Modal configuración del club (admin) -->
+    <div class="modal-overlay" id="modal-config-club">
+        <div class="modal-content">
+            <h3>Configurar Club</h3>
+            <label>URL del logo</label>
+            <input id="config-logo-url" placeholder="https://...">
+            <label>Teléfono</label>
+            <input id="config-telefono">
+            <label>Dirección</label>
+            <input id="config-direccion">
+            <label>Email de contacto</label>
+            <input id="config-email-contacto">
+            <label>Horarios</label>
+            <input id="config-horarios">
+            <label>Web</label>
+            <input id="config-web">
+            <div class="modal-buttons">
+                <button class="btn btn-azul" onclick="guardarConfigClub()">Guardar</button>
+                <button class="btn" onclick="document.getElementById('modal-config-club').classList.remove('active')">Cancelar</button>
+            </div>
+        </div>
+    </div>
 
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
@@ -986,8 +1089,7 @@
     let unsubscribeAccesosTema = null;
     let unsubscribeClub = null;
 
-    // ... (continúa en la siguiente parte con las funciones JavaScript)
-		    // ------------------------------------------------
+    // ------------------------------------------------
     // VARIABLES GLOBALES Y REFERENCIAS A DOM
     // ------------------------------------------------
     const STORAGE_KEY = 'clubMorphy_navegacion';
@@ -1379,24 +1481,26 @@
                 if (!c.id) c.id = generarId();
                 if (!c.temas) c.temas = [];
             });
-            // Migrar temas a bloques y agregar campos de subtemas
-            let migrado = false;
-            curso.clases.forEach(c => {
-                c.temas.forEach(t => {
-                    t.notaDebajoVideo = t.notaDebajoVideo || '';
-                    t.notaDebajoEjercicios = t.notaDebajoEjercicios || '';
-                    if (t.bloqueado === undefined) t.bloqueado = false;
-                    if (!t.accesos) t.accesos = [];
-                    if (!t.subtemas) t.subtemas = [];
-                    if (!t.accesosTemaId) t.accesosTemaId = null;
-                    if (!t.bloques || t.bloques.length === 0) {
-                        migrarTemaABloques(t);
-                        migrado = true;
-                    }
+            // Migrar temas a bloques y agregar campos de subtemas (solo admin)
+            if (currentUser && currentUser.esAdmin) {
+                let migrado = false;
+                curso.clases.forEach(c => {
+                    c.temas.forEach(t => {
+                        t.notaDebajoVideo = t.notaDebajoVideo || '';
+                        t.notaDebajoEjercicios = t.notaDebajoEjercicios || '';
+                        if (t.bloqueado === undefined) t.bloqueado = false;
+                        if (!t.accesos) t.accesos = [];
+                        if (!t.subtemas) t.subtemas = [];
+                        if (!t.accesosTemaId) t.accesosTemaId = null;
+                        if (!t.bloques || t.bloques.length === 0) {
+                            migrarTemaABloques(t);
+                            migrado = true;
+                        }
+                    });
                 });
-            });
-            if (migrado) {
-                await guardarCurso();
+                if (migrado) {
+                    await guardarCurso();
+                }
             }
             curso.clases.sort((a, b) => a.numero - b.numero);
         } catch (error) {
