@@ -1152,6 +1152,8 @@
     let unsubscribeAccesos = null;
     let unsubscribeAccesosTema = null;
     let unsubscribeClub = null;
+    let unsubscribeCurso = null;
+    let migracionRealizada = false;
 
     // ------------------------------------------------
     // VARIABLES GLOBALES Y REFERENCIAS A DOM
@@ -1197,6 +1199,19 @@
             if (m === "'") return '&#39;';
             return m;
         });
+    }
+
+    // Nuevas funciones de seguridad
+    function esUrlSegura(url) {
+        if (!url || typeof url !== 'string') return false;
+        return /^(https?:\/\/|mailto:)/i.test(url.trim());
+    }
+
+    function escapeOnclick(str) {
+        if (!str) return '';
+        return str.replace(/\\/g, '\\\\')
+                  .replace(/'/g, "\\'")
+                  .replace(/"/g, '&quot;');
     }
 
     // ------------------------------------------------
@@ -1533,20 +1548,30 @@
     }
 
     // ------------------------------------------------
-    // GESTIÓN DEL CURSO (CRUD)
+    // GESTIÓN DEL CURSO (CRUD) – ahora con escucha en tiempo real
     // ------------------------------------------------
-    async function cargarCurso() {
-        document.getElementById('main-content').innerHTML = '<div class="loading-indicator" style="text-align:center; padding:40px; color:var(--texto-suave);">Cargando curso…</div>';
-        try {
-            const doc = await db.collection('config').doc('curso').get();
-            if (doc.exists) { curso = doc.data(); } else { curso = { clases: [] }; if (currentUser && currentUser.esAdmin) { await db.collection('config').doc('curso').set(curso); } }
+    function iniciarEscuchaCurso() {
+        if (unsubscribeCurso) unsubscribeCurso();
+        migracionRealizada = false;
+        
+        unsubscribeCurso = db.collection('config').doc('curso').onSnapshot(async (doc) => {
+            if (doc.exists) {
+                curso = doc.data();
+            } else {
+                curso = { clases: [] };
+                if (currentUser && currentUser.esAdmin) {
+                    await db.collection('config').doc('curso').set(curso);
+                }
+            }
+            
             if (!curso.clases) curso.clases = [];
             curso.clases.forEach(c => {
                 if (!c.id) c.id = generarId();
                 if (!c.temas) c.temas = [];
             });
-            // Migrar temas a bloques y agregar campos de subtemas (solo admin)
-            if (currentUser && currentUser.esAdmin) {
+            
+            // Migración única (solo admin)
+            if (currentUser && currentUser.esAdmin && !migracionRealizada) {
                 let migrado = false;
                 curso.clases.forEach(c => {
                     c.temas.forEach(t => {
@@ -1565,18 +1590,18 @@
                 if (migrado) {
                     await guardarCurso();
                 }
+                migracionRealizada = true;
             }
+            
             curso.clases.sort((a, b) => a.numero - b.numero);
-        } catch (error) {
-            console.warn('Error al cargar el curso:', error);
-            if (error.code === 'permission-denied') {
-                mostrarToast('Tu cuenta aún no tiene acceso a este curso. Contacta al administrador.', 'error');
-            } else {
-                mostrarToast('Sin conexión. Se mostrará la última versión guardada.', 'error');
-                const backup = localStorage.getItem('cursoBackup');
-                if (backup) curso = JSON.parse(backup);
+            
+            if (currentUser) {
+                actualizarUI();
             }
-        }
+        }, error => {
+            console.warn('Error en snapshot del curso:', error);
+            mostrarToast('Error al sincronizar el curso. Revisa tu conexión.', 'error');
+        });
     }
 
     async function guardarCurso() {
@@ -1605,7 +1630,7 @@
         tema.notaDebajoEjercicios = '';
     }
 
-    // ------------------------------------------------
+        // ------------------------------------------------
     // FUNCIONES DE BÚSQUEDA RECURSIVA Y REORDENAMIENTO
     // ------------------------------------------------
     function buscarTemaRecursivo(temas, temaId) {
@@ -2102,7 +2127,7 @@
                         <br><span class="estado-pendiente">⏳ Pendiente</span>
                     </div>
                     <div style="display:flex; gap:6px;">
-                        <button class="btn btn-exito btn-small" onclick="aprobarSolicitud('${s.id}','${s.claseId}','${s.uid}','${escapeHtml(s.email)}')">✅ Aprobar</button>
+                        <button class="btn btn-exito btn-small" onclick="aprobarSolicitud('${s.id}','${s.claseId}','${s.uid}','${escapeOnclick(s.email)}')">✅ Aprobar</button>
                         <button class="btn btn-peligro btn-small" onclick="rechazarSolicitud('${s.id}','${s.uid}','${s.claseId}')">❌ Rechazar</button>
                     </div>
                 </div>
@@ -2452,7 +2477,7 @@
         let contenidoHTML = '';
         if (accesible) {
             // Renderizar bloques del tema
-            if (tema.bloques && tema.bloques.length > 0) {
+            if (Array.isArray(tema.bloques) && tema.bloques.length > 0) {
                 contenidoHTML = tema.bloques.map(bloque => {
                     let html = '';
                     switch (bloque.tipo) {
@@ -2480,13 +2505,22 @@
                         }
                         case 'imagen': {
                             if (!bloque.contenido) return '';
-                            const src = encodeURI(bloque.contenido);
-                            html = `<img src="${src}" style="max-width:100%; border-radius:8px;" alt="Imagen">`;
+                            // Validar URL segura
+                            if (!esUrlSegura(bloque.contenido)) {
+                                html = `<p style="color:var(--peligro); font-style:italic;">⚠️ Imagen no segura (URL no permitida)</p>`;
+                            } else {
+                                const src = encodeURI(bloque.contenido);
+                                html = `<img src="${escapeAttr(src)}" style="max-width:100%; border-radius:8px;" alt="Imagen">`;
+                            }
                             break;
                         }
                         case 'enlace': {
                             if (!bloque.label || !bloque.url) return '';
-                            html = `<a href="${escapeAttr(bloque.url)}" target="_blank">${escapeHtml(bloque.label)}</a>`;
+                            const urlLimpia = bloque.url.trim();
+                            const esSegura = esUrlSegura(urlLimpia);
+                            const href = esSegura ? urlLimpia : '#';
+                            const estilosAdicionales = esSegura ? '' : 'pointer-events:none; color:var(--peligro); text-decoration:line-through;';
+                            html = `<a href="${escapeAttr(href)}" target="_blank" rel="noopener noreferrer" style="${estilosAdicionales}">${escapeHtml(bloque.label)}</a>`;
                             break;
                         }
                     }
@@ -2795,7 +2829,7 @@
             suscribirNotificaciones();
             suscribirSolicitudesAdmin();
             suscribirMisSolicitudes();
-            await cargarCurso();
+            iniciarEscuchaCurso();
             await sincronizarProgresoDesdeFirestore();
 
             const estadoPrevio = cargarEstadoNavegacion();
@@ -2830,6 +2864,7 @@
             if (unsubscribeNotificaciones) { unsubscribeNotificaciones(); unsubscribeNotificaciones = null; }
             if (unsubscribeSolicitudesAdmin) { unsubscribeSolicitudesAdmin(); unsubscribeSolicitudesAdmin = null; }
             if (unsubscribeMisSolicitudes) { unsubscribeMisSolicitudes(); unsubscribeMisSolicitudes = null; }
+            if (unsubscribeCurso) { unsubscribeCurso(); unsubscribeCurso = null; }
             notificaciones = [];
             solicitudesPendientes = [];
             misSolicitudes = [];
