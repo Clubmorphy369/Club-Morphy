@@ -937,3 +937,9 @@ input, textarea, button { touch-action: manipulation; }
         min-width: 0;
     }
 }
+.separador-bloque {
+  border: none;
+  border-top: 2px dashed var(--acento);
+  margin: 20px 0;
+  opacity: 0.6;
+}
