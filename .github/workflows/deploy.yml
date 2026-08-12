@@ -15,10 +15,10 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Deploy to Firebase Hosting
-        uses: FirebaseExtended/action-hosting-deploy@v6
+        uses: FirebaseExtended/action-hosting-deploy@v4   # versión estable
         with:
           repoToken: '${{ secrets.GITHUB_TOKEN }}'
           firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_CLUB_MORPHY }}'
           channelId: live
-          projectId: TU_PROJECT_ID_AQUI   # <-- ¡cámbialo por el real!
-          entryPoint: './'                # tus archivos están en la raíz
+          projectId: club-morphy-6aa5c
+          entryPoint: './'
