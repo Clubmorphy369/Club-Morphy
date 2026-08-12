@@ -2,21 +2,66 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#0ea5e9">
+  <meta name="apple-mobile-web-app-capable" content="yes">
   <title>Sin conexión - Club Morphy</title>
   <style>
-    body { font-family: 'Lato', sans-serif; text-align: center; padding: 40px; background: #f1f5f9; color: #1e293b; }
-    .container { max-width: 500px; margin: 0 auto; background: white; padding: 30px; border-radius: 16px; box-shadow: 0 8px 32px rgba(0,0,0,0.1); }
-    h1 { color: #0ea5e9; }
+    :root {
+      --acento: #0ea5e9;
+      --bg: #f1f5f9;
+      --texto: #1e293b;
+      --surface: #ffffff;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body {
+      font-family: 'Lato', sans-serif;
+      text-align: center;
+      padding: 40px;
+      background: var(--bg);
+      color: var(--texto);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+    }
+    .container {
+      max-width: 500px;
+      background: var(--surface);
+      padding: 30px;
+      border-radius: 16px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+    }
+    .logo {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      object-fit: cover;
+      margin-bottom: 20px;
+      border: 2px solid var(--acento);
+    }
+    h1 { color: var(--acento); margin: 15px 0; font-family: 'Playfair Display', serif; }
     .icon { font-size: 4rem; }
+    button {
+      padding: 12px 24px;
+      background: var(--acento);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: filter 0.2s;
+    }
+    button:hover { filter: brightness(1.1); }
   </style>
 </head>
 <body>
   <div class="container">
+    <img class="logo" src="/assets/android-chrome-192x192.png" alt="Club Morphy" onerror="this.style.display='none'">
     <div class="icon">📡</div>
     <h1>Sin conexión a Internet</h1>
     <p>Parece que no tienes acceso a la red. Por favor, revisa tu conexión y vuelve a intentarlo.</p>
-    <button onclick="location.reload()" style="padding:12px 24px; background:#0ea5e9; color:white; border:none; border-radius:8px; font-weight:bold; cursor:pointer;">Reintentar</button>
+    <button onclick="location.reload()">Reintentar</button>
   </div>
 </body>
 </html>
