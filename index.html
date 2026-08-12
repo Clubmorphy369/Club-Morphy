@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#0ea5e9">
+    <title>♟️ Club Morphy - Curso de Ajedrez</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <div class="header-left">
+            <button class="hamburger" id="hamburger-btn" aria-label="Menú">☰</button>
+            <img id="logo-club-img" class="logo-club" src="" alt="Logo del club" onerror="this.style.display='none'">
+            <h1>♟️ Club Morphy</h1>
+        </div>
+        <div class="header-right">
+            <span id="user-info" style="font-size:0.9rem;"></span>
+            <button class="btn" id="btn-datos-club" style="display:none;" onclick="mostrarDatosClub()">📋 <span class="btn-label">Contacto</span></button>
+            <button class="btn" id="btn-notificaciones" style="display:none; position:relative;" onclick="abrirNotificaciones()">
+                🔔 <span class="btn-label">Notif.</span> <span id="notif-badge" class="notification-badge" style="display:none;">0</span>
+            </button>
+            <button class="btn" id="btn-progreso" style="display:none;" onclick="abrirPanelProgreso()">📊 <span class="btn-label">Progreso</span></button>
+            <button class="btn" id="btn-solicitudes-admin" style="display:none; position:relative;" onclick="abrirSolicitudesAdmin()">
+                📩 <span class="btn-label">Solicitudes</span> <span id="solicitudes-badge" class="notification-badge" style="display:none;">0</span>
+            </button>
+            <button class="btn" id="btn-login" onclick="mostrarLogin()">🔐 <span class="btn-label">Iniciar sesión</span></button>
+            <button class="btn" id="btn-logout" style="display:none;" onclick="confirmarCerrarSesion()">🚪 <span class="btn-label">Cerrar sesión</span></button>
+            <button class="btn btn-azul" id="btn-admin" style="display:none;" onclick="toggleAdmin()">🛠️ <span class="btn-label">Admin</span></button>
+        </div>
+    </div>
+
+    <!-- Sidebar Overlay -->
+    <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+    <!-- Main Layout -->
+    <div class="main-layout">
+        <div class="sidebar" id="sidebar">
+            <!-- Campo de búsqueda -->
+            <input type="text" id="search-input" placeholder="🔍 Buscar clase..." style="margin-bottom:12px; display:none;">
+            <div id="lista-clases"></div>
+            <button class="btn btn-azul admin-only" id="btn-add-clase" style="margin-top:15px; width:100%;" onclick="agregarClase()">➕ <span class="btn-label">Nueva clase</span></button>
+            <hr class="sidebar-separator admin-only">
+            <button class="btn admin-only" id="btn-config-club" style="width:100%;" onclick="abrirConfigClub()">⚙️ <span class="btn-label">Configurar Club</span></button>
+        </div>
+        <div class="content" id="main-content">
+            <div style="text-align:center; margin-top:40px; color:var(--texto-suave);">
+                <p style="font-size:1.2rem;">♞ Bienvenido al curso de ajedrez del Club Morphy</p>
+                <p style="margin-top:12px; font-size:0.95rem;">Inicia sesión o regístrate para acceder a las clases, videos y ejercicios interactivos.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+
+    <!-- Modal de Login -->
+    <div class="modal-overlay" id="modal-login">
+        <div class="modal-content">
+            <h3 id="modal-title">Iniciar sesión</h3>
+            <div id="current-session" style="display:none;">
+                <div class="user-avatar" id="session-avatar"></div>
+                <p id="session-email"></p>
+                <button class="btn" onclick="cambiarCuenta()">Cambiar cuenta</button>
+            </div>
+            <form id="auth-form">
+                <label>Email</label>
+                <input id="email" type="email" required>
+                <label>Contraseña</label>
+                <div class="input-password-wrapper">
+                    <input id="password" type="password" required>
+                    <button type="button" id="toggle-password" class="toggle-password-btn">👁️</button>
+                </div>
+                <div id="autofill-warning" class="autofill-warning">⚠️ Parece que se rellenó automáticamente</div>
+                <div class="modal-buttons" id="extra-controls">
+                    <button type="submit" class="btn btn-azul" id="btn-auth">Ingresar</button>
+                    <button type="button" class="btn" id="switch-auth">Crear cuenta</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal de confirmación de cierre de sesión -->
+    <div class="modal-overlay" id="modal-confirm-logout">
+        <div class="modal-content">
+            <h3>¿Cerrar sesión?</h3>
+            <div class="modal-buttons">
+                <button class="btn btn-peligro" onclick="cerrarSesionConfirmada()">Sí, salir</button>
+                <button class="btn" onclick="document.getElementById('modal-confirm-logout').classList.remove('active')">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de confirmación genérica -->
+    <div class="modal-overlay" id="modal-confirm">
+        <div class="modal-content">
+            <h3 id="confirm-title"></h3>
+            <p id="confirm-message"></p>
+            <div class="modal-buttons">
+                <button class="btn btn-azul" id="confirm-ok">Aceptar</button>
+                <button class="btn" onclick="closeConfirm()">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de gestión de accesos -->
+    <div class="modal-overlay" id="modal-accesos">
+        <div class="modal-content">
+            <h3 id="accesos-title">Accesos</h3>
+            <div id="accesos-lista"></div>
+            <button class="btn" onclick="cerrarModalAccesos()">Cerrar</button>
+        </div>
+    </div>
+
+    <!-- Modal de solicitudes (admin) -->
+    <div class="modal-overlay" id="modal-solicitudes-admin">
+        <div class="modal-content">
+            <h3>Solicitudes pendientes</h3>
+            <div id="solicitudes-lista" class="solicitudes-list"></div>
+            <button class="btn" onclick="document.getElementById('modal-solicitudes-admin').classList.remove('active')">Cerrar</button>
+        </div>
+    </div>
+
+    <!-- Modal de notificaciones -->
+    <div class="modal-overlay" id="modal-notificaciones">
+        <div class="modal-content">
+            <h3>Notificaciones</h3>
+            <button id="btn-marcar-todo-leido" class="btn btn-small" onclick="marcarTodasNotificacionesLeidas()" style="margin-bottom:10px;">✓ Marcar todas leídas</button>
+            <div id="notificaciones-lista" class="notificaciones-list"></div>
+            <button class="btn" onclick="document.getElementById('modal-notificaciones').classList.remove('active')">Cerrar</button>
+        </div>
+    </div>
+
+    <!-- Modal datos del club -->
+    <div class="modal-overlay" id="modal-datos-club">
+        <div class="modal-content">
+            <h3>Contacto del Club</h3>
+            <div id="datos-club-contenido"></div>
+            <button class="btn" onclick="document.getElementById('modal-datos-club').classList.remove('active')">Cerrar</button>
+        </div>
+    </div>
+
+    <!-- Modal configuración del club (admin) -->
+    <div class="modal-overlay" id="modal-config-club">
+        <div class="modal-content">
+            <h3>Configurar Club</h3>
+            <label>URL del logo</label>
+            <input id="config-logo-url" placeholder="https://...">
+            <label>Teléfono</label>
+            <input id="config-telefono">
+            <label>Dirección</label>
+            <input id="config-direccion">
+            <label>Email de contacto</label>
+            <input id="config-email-contacto">
+            <label>Horarios</label>
+            <input id="config-horarios">
+            <label>Web</label>
+            <input id="config-web">
+            <div class="modal-buttons">
+                <button class="btn btn-azul" onclick="guardarConfigClub()">Guardar</button>
+                <button class="btn" onclick="document.getElementById('modal-config-club').classList.remove('active')">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de progreso -->
+    <div class="modal-overlay" id="modal-progreso">
+        <div class="modal-content">
+            <h3>📊 Mi Progreso</h3>
+            <div id="progreso-contenido"></div>
+            <button class="btn" onclick="document.getElementById('modal-progreso').classList.remove('active')">Cerrar</button>
+        </div>
+    </div>
+
+    <!-- Firebase y script principal -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
