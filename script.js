@@ -88,7 +88,6 @@ function escapeAttr(str) {
     });
 }
 
-// Nuevas funciones de seguridad
 function esUrlSegura(url) {
     if (!url || typeof url !== 'string') return false;
     return /^(https?:\/\/|mailto:)/i.test(url.trim());
@@ -589,7 +588,6 @@ async function gestionarAccesosTema(claseId, temaId) {
     const tema = buscarTemaRecursivo(clase.temas, temaId);
     if (!tema) return;
 
-    // Asegurar que tiene un doc en accesosTema
     if (!tema.accesosTemaId) {
         const docRef = await db.collection('accesosTema').doc();
         await docRef.set({ uids: [] });
@@ -953,7 +951,7 @@ function abrirPanelProgreso() {
 }
 
 // ------------------------------------------------
-// SOLICITUDES DE ACCESO
+// SOLICITUDES DE ACCESO (CLASE)
 // ------------------------------------------------
 async function solicitarAcceso(claseId) {
     if (!currentUser) return mostrarToast('Debes iniciar sesión', 'error');
@@ -981,6 +979,7 @@ async function solicitarAcceso(claseId) {
             uid: currentUser.uid,
             email: currentUser.email,
             estado: 'pendiente',
+            tipo: 'clase',
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
         });
 
@@ -988,8 +987,9 @@ async function solicitarAcceso(claseId) {
             paraUid: ADMIN_UID,
             mensaje: `${currentUser.email} solicita acceso a "${clase.titulo}"`,
             leida: false,
-            tipo: 'solicitud',
+            tipo: 'solicitud_clase',
             claseId: claseId,
+            uidAlumno: currentUser.uid,
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
         });
 
@@ -1001,46 +1001,135 @@ async function solicitarAcceso(claseId) {
     }
 }
 
-async function aprobarSolicitud(solicitudId, claseId, uid, email) {
+// 🔥 NUEVA FUNCIÓN: Solicitar acceso a un tema específico
+async function solicitarAccesoTema(claseId, temaId) {
+    if (!currentUser) {
+        mostrarToast("Debes iniciar sesión para solicitar acceso.", "error");
+        return;
+    }
+
+    const clase = curso.clases.find(c => c.id === claseId);
+    if (!clase) return;
+
+    const tema = buscarTemaRecursivo(clase.temas, temaId);
+    if (!tema) {
+        mostrarToast("El tema no existe.", "error");
+        return;
+    }
+
+    // Verificar si ya hay una solicitud pendiente para este tema
+    const yaSolicitada = misSolicitudes.some(s => s.temaId === temaId && s.estado === 'pendiente');
+    if (yaSolicitada) {
+        mostrarToast("Ya enviaste una solicitud para este tema. Espera la respuesta del administrador.", "info");
+        return;
+    }
+
+    try {
+        // 1. Crear la solicitud en la colección 'solicitudesAcceso'
+        await db.collection('solicitudesAcceso').add({
+            uid: currentUser.uid,
+            email: currentUser.email,
+            claseId: claseId,
+            claseTitulo: clase.titulo,
+            temaId: temaId,
+            temaTitulo: tema.titulo,
+            tipo: 'tema', // Para distinguir de solicitudes de clase
+            estado: 'pendiente',
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        // 2. Crear notificación para el administrador
+        await db.collection('notificaciones').add({
+            paraUid: ADMIN_UID,
+            mensaje: `${currentUser.email} solicita acceso al tema "${tema.titulo}" (Clase: ${clase.titulo})`,
+            leida: false,
+            tipo: 'solicitud_tema',
+            claseId: claseId,
+            temaId: temaId,
+            uidAlumno: currentUser.uid,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        mostrarToast("✅ Solicitud enviada al administrador.", "success");
+        actualizarUI(); // Refresca para deshabilitar el botón
+    } catch (error) {
+        console.error("Error al solicitar acceso:", error);
+        mostrarToast("Error al enviar la solicitud. Intenta de nuevo.", "error");
+    }
+}
+
+// 🔥 MODIFICADO: aprobar solicitud (ahora maneja tema y clase)
+async function aprobarSolicitud(solicitudId, claseId, uid, email, tipo = 'clase', temaId = null) {
     if (!currentUser?.esAdmin) return;
     try {
         await db.collection('solicitudesAcceso').doc(solicitudId).update({ estado: 'aprobada' });
 
-        const uidsActual = accesosEspeciales[claseId] || [];
-        if (!uidsActual.includes(uid)) {
-            uidsActual.push(uid);
-            await db.collection('accesosEspeciales').doc(claseId).set({ uids: uidsActual }, { merge: true });
+        let mensaje = '';
+        if (tipo === 'tema' && temaId) {
+            // Buscar el tema para obtener su accesosTemaId
+            const clase = curso.clases.find(c => c.id === claseId);
+            const tema = buscarTemaRecursivo(clase.temas, temaId);
+            if (tema && tema.accesosTemaId) {
+                const uidsActual = accesosTema[tema.accesosTemaId] || [];
+                if (!uidsActual.includes(uid)) {
+                    uidsActual.push(uid);
+                    await db.collection('accesosTema').doc(tema.accesosTemaId).set({ uids: uidsActual }, { merge: true });
+                }
+                mensaje = `Tu solicitud de acceso al tema "${tema.titulo}" en la clase "${clase?.titulo || 'Clase'}" ha sido aprobada`;
+            } else {
+                mensaje = `Tu solicitud de acceso al tema en la clase "${clase?.titulo || 'Clase'}" ha sido aprobada`;
+            }
+        } else {
+            // Solicitud de clase: usar accesosEspeciales
+            const uidsActual = accesosEspeciales[claseId] || [];
+            if (!uidsActual.includes(uid)) {
+                uidsActual.push(uid);
+                await db.collection('accesosEspeciales').doc(claseId).set({ uids: uidsActual }, { merge: true });
+            }
+            const clase = curso.clases.find(c => c.id === claseId);
+            mensaje = `Tu solicitud de acceso a la clase "${clase?.titulo || 'Clase'}" ha sido aprobada`;
         }
 
-        const clase = curso.clases.find(c => c.id === claseId);
         await db.collection('notificaciones').add({
             paraUid: uid,
-            mensaje: `Tu solicitud de acceso a "${clase?.titulo || 'la clase'}" ha sido aprobada`,
+            mensaje: mensaje,
             leida: false,
             tipo: 'aprobada',
             claseId: claseId,
+            temaId: temaId || null,
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
         });
 
         mostrarToast('Solicitud aprobada y acceso concedido', 'success');
+        actualizarUI();
     } catch (error) {
         mostrarToast('Error al aprobar solicitud', 'error');
         console.error(error);
     }
 }
 
-async function rechazarSolicitud(solicitudId, uid, claseId) {
+// 🔥 MODIFICADO: rechazar solicitud (opcional, para tema)
+async function rechazarSolicitud(solicitudId, uid, claseId, tipo = 'clase', temaId = null) {
     if (!currentUser?.esAdmin) return;
     try {
         await db.collection('solicitudesAcceso').doc(solicitudId).update({ estado: 'rechazada' });
 
         const clase = curso.clases.find(c => c.id === claseId);
+        let mensaje = '';
+        if (tipo === 'tema' && temaId) {
+            const tema = buscarTemaRecursivo(clase.temas, temaId);
+            mensaje = `Tu solicitud de acceso al tema "${tema?.titulo || 'Tema'}" en la clase "${clase?.titulo || 'Clase'}" ha sido rechazada`;
+        } else {
+            mensaje = `Tu solicitud de acceso a la clase "${clase?.titulo || 'Clase'}" ha sido rechazada`;
+        }
+
         await db.collection('notificaciones').add({
             paraUid: uid,
-            mensaje: `Tu solicitud de acceso a "${clase?.titulo || 'la clase'}" ha sido rechazada`,
+            mensaje: mensaje,
             leida: false,
             tipo: 'rechazada',
             claseId: claseId,
+            temaId: temaId || null,
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
         });
 
@@ -1051,6 +1140,7 @@ async function rechazarSolicitud(solicitudId, uid, claseId) {
     }
 }
 
+// 🔥 MODIFICADO: abrir panel de solicitudes del admin (muestra tema)
 function abrirSolicitudesAdmin() {
     if (!currentUser?.esAdmin) return;
     const listaDiv = document.getElementById('solicitudes-lista');
@@ -1062,11 +1152,12 @@ function abrirSolicitudesAdmin() {
                 <div>
                     <strong>${escapeHtml(s.email)}</strong><br>
                     <span style="font-size:0.85rem; color:var(--texto-suave);">Clase: ${escapeHtml(s.claseTitulo || 'Desconocida')}</span>
+                    ${s.temaTitulo ? `<br><span style="font-size:0.85rem; color:var(--texto-suave);">Tema: ${escapeHtml(s.temaTitulo)}</span>` : ''}
                     <br><span class="estado-pendiente">⏳ Pendiente</span>
                 </div>
                 <div style="display:flex; gap:6px;">
-                    <button class="btn btn-exito btn-small" onclick="aprobarSolicitud('${s.id}','${s.claseId}','${s.uid}','${escapeOnclick(s.email)}')">✅ Aprobar</button>
-                    <button class="btn btn-peligro btn-small" onclick="rechazarSolicitud('${s.id}','${s.uid}','${s.claseId}')">❌ Rechazar</button>
+                    <button class="btn btn-exito btn-small" onclick="aprobarSolicitud('${s.id}','${s.claseId}','${s.uid}','${escapeOnclick(s.email)}','${s.tipo || 'clase'}','${s.temaId || ''}')">✅ Aprobar</button>
+                    <button class="btn btn-peligro btn-small" onclick="rechazarSolicitud('${s.id}','${s.uid}','${s.claseId}','${s.tipo || 'clase'}','${s.temaId || ''}')">❌ Rechazar</button>
                 </div>
             </div>
         `).join('');
@@ -1344,7 +1435,6 @@ function renderizarSidebar() {
     }
 }
 
-// Función de filtrado de clases
 function filtrarClases() {
     const lista = document.getElementById('lista-clases');
     if (!lista) return;
@@ -1460,7 +1550,6 @@ function renderizarTemaRecursivo(tema, claseId, nivel = 0) {
                     }
                     case 'imagen': {
                         if (!bloque.contenido) return '';
-                        // Validar URL segura
                         if (!esUrlSegura(bloque.contenido)) {
                             html = `<p style="color:var(--peligro); font-style:italic;">⚠️ Imagen no segura (URL no permitida)</p>`;
                         } else {
@@ -1493,7 +1582,16 @@ function renderizarTemaRecursivo(tema, claseId, nivel = 0) {
             contenidoHTML += `</div>`;
         }
     } else {
-        contenidoHTML = `<div style="color:var(--texto-suave); padding:10px;">🔒 Tema bloqueado</div>`;
+        // 🔥 MODIFICADO: mostrar botón de solicitar acceso para temas bloqueados
+        const yaSolicitada = misSolicitudes.some(s => s.temaId === tema.id && s.estado === 'pendiente');
+        contenidoHTML = `
+            <div style="color:var(--texto-suave); padding:10px; border:1px dashed var(--borde); border-radius:8px; margin:8px 0;">
+                <p>🔒 Este tema está bloqueado. Solicita acceso al administrador.</p>
+                <button class="btn btn-azul" onclick="solicitarAccesoTema('${claseId}','${tema.id}')" ${yaSolicitada ? 'disabled' : ''}>
+                    ${yaSolicitada ? '⏳ Solicitud enviada' : '📩 Solicitar acceso'}
+                </button>
+            </div>
+        `;
     }
 
     // Editor de bloques (solo admin y si el tema es accesible)
@@ -1585,14 +1683,12 @@ function actualizarUI() {
                 <p style="margin-top:12px; font-size:0.95rem;">Inicia sesión o regístrate para acceder a las clases, videos y ejercicios interactivos.</p>
             </div>`;
         renderizarSidebar();
-        // Ocultar elementos de búsqueda y progreso
         document.getElementById('search-input').style.display = 'none';
         document.getElementById('btn-progreso').style.display = 'none';
         return;
     }
     renderizarSidebar();
     
-    // Mostrar búsqueda y botón de progreso
     const searchInput = document.getElementById('search-input');
     searchInput.style.display = 'block';
     if (terminoBusqueda) searchInput.value = terminoBusqueda;
@@ -1949,7 +2045,6 @@ window.addEventListener('pageshow', (event) => {
     }
 });
 
-// Evento para búsqueda
 document.getElementById('search-input').addEventListener('input', (e) => {
     terminoBusqueda = e.target.value;
     filtrarClases();
@@ -1980,6 +2075,7 @@ window.moverTemaAbajo = moverTemaAbajo;
 window.gestionarAccesosClase = gestionarAccesosClase;
 window.cerrarModalAccesos = cerrarModalAccesos;
 window.solicitarAcceso = solicitarAcceso;
+window.solicitarAccesoTema = solicitarAccesoTema; // 🔥 NUEVO
 window.aprobarSolicitud = aprobarSolicitud;
 window.rechazarSolicitud = rechazarSolicitud;
 window.abrirSolicitudesAdmin = abrirSolicitudesAdmin;
