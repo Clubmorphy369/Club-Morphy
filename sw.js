@@ -40,19 +40,23 @@ self.addEventListener('activate', event => {
   );
 });
 
+// 🔥 MEJORA: Excluir TODAS las solicitudes a Firebase/Google
 self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
 
-  // No cachear solicitudes a Firebase/Google
+  // No cachear solicitudes a Firebase/Google (incluye Firestore, Auth, etc.)
   if (
     url.hostname.includes('firebase') ||
     url.hostname.includes('googleapis') ||
-    url.hostname.includes('gstatic')
+    url.hostname.includes('gstatic') ||
+    url.hostname.includes('firestore.googleapis.com') ||
+    url.hostname.includes('cloudfunctions.net')
   ) {
     event.respondWith(fetch(event.request));
     return;
   }
 
+  // Navegación: intenta red, si falla muestra offline.html
   if (event.request.mode === 'navigate') {
     event.respondWith(
       fetch(event.request)
@@ -72,6 +76,7 @@ self.addEventListener('fetch', event => {
     return;
   }
 
+  // Resto de recursos: cache first, luego red
   event.respondWith(
     caches.match(event.request)
       .then(cachedResponse => {
