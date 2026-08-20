@@ -1,12 +1,11 @@
 const CACHE_NAME = 'club-morphy-v3';
 const STATIC_ASSETS = [
-  '/',
-  '/index.html',
-  '/offline.html',
-  '/manifest.json',
-  '/assets/android-chrome-192x192.png',
-  '/assets/android-chrome-512x512.png',
-  '/assets/apple-touch-icon.png'
+  '/Club-Morphy/',
+  '/Club-Morphy/index.html',
+  '/Club-Morphy/offline.html',
+  '/Club-Morphy/manifest.json',
+  '/Club-Morphy/styles.css',
+  '/Club-Morphy/script.js'
 ];
 const CACHE_LIMIT = 50;
 
@@ -41,6 +40,7 @@ self.addEventListener('activate', event => {
 self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
 
+  // No cachear solicitudes a Firebase/Google
   if (
     url.hostname.includes('firebase') ||
     url.hostname.includes('googleapis') ||
@@ -62,8 +62,8 @@ self.addEventListener('fetch', event => {
           return response;
         })
         .catch(() => {
-          return caches.match('/offline.html')
-            .then(offlineResponse => offlineResponse || caches.match('/index.html'));
+          return caches.match('/Club-Morphy/offline.html')
+            .then(offlineResponse => offlineResponse || caches.match('/Club-Morphy/index.html'));
         })
     );
     return;
