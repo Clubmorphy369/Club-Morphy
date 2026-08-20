@@ -1,4 +1,4 @@
-const CACHE_NAME = 'club-morphy-v4';
+const CACHE_NAME = 'club-morphy-v4'; // Cambiamos la versión para forzar actualización
 const STATIC_ASSETS = [
   '/Club-Morphy/',
   '/Club-Morphy/index.html',
@@ -40,11 +40,11 @@ self.addEventListener('activate', event => {
   );
 });
 
-// 🔥 MEJORA: Excluir TODAS las solicitudes a Firebase/Google
+// 🔥 MEJORA CRÍTICA: NO interceptar solicitudes a Firebase/Google
 self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
 
-  // No cachear solicitudes a Firebase/Google (incluye Firestore, Auth, etc.)
+  // Si es una solicitud a Firebase/Google, NO la interceptamos
   if (
     url.hostname.includes('firebase') ||
     url.hostname.includes('googleapis') ||
@@ -52,7 +52,8 @@ self.addEventListener('fetch', event => {
     url.hostname.includes('firestore.googleapis.com') ||
     url.hostname.includes('cloudfunctions.net')
   ) {
-    event.respondWith(fetch(event.request));
+    // ⚠️ IMPORTANTE: No llamamos a event.respondWith()
+    // Simplemente retornamos para que el navegador maneje la solicitud directamente
     return;
   }
 
