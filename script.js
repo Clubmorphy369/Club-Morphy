@@ -1193,23 +1193,32 @@ function abrirNotificaciones() {
     modalNotificaciones.classList.add('active');
 }
 
+// ====================================================================
+// ⭐ MEJORA: funciones de notificaciones con manejo de errores
+// ====================================================================
 async function marcarNotificacionLeida(notifId) {
     try {
         await db.collection('notificaciones').doc(notifId).update({ leida: true });
+        mostrarToast('✅ Notificación marcada como leída', 'success');
     } catch (error) {
-        console.warn('Error al marcar leída:', error);
+        console.error('❌ Error al marcar leída:', error);
+        mostrarToast('❌ Error al marcar leída: ' + error.message, 'error');
     }
 }
 
 async function marcarTodasNotificacionesLeidas() {
     const noLeidas = notificaciones.filter(n => !n.leida);
+    if (noLeidas.length === 0) {
+        mostrarToast('No hay notificaciones sin leer', 'info');
+        return;
+    }
     const batch = db.batch();
     noLeidas.forEach(n => batch.update(db.collection('notificaciones').doc(n.id), { leida: true }));
     try {
         await batch.commit();
-        mostrarToast('Todas las notificaciones marcadas como leídas', 'success');
+        mostrarToast('✅ Todas las notificaciones marcadas como leídas', 'success');
     } catch (error) {
-        mostrarToast('Error al actualizar', 'error');
+        mostrarToast('❌ Error al actualizar: ' + error.message, 'error');
         console.error(error);
     }
 }
@@ -1217,10 +1226,13 @@ async function marcarTodasNotificacionesLeidas() {
 async function eliminarNotificacion(notifId) {
     try {
         await db.collection('notificaciones').doc(notifId).delete();
+        mostrarToast('🗑️ Notificación eliminada', 'success');
     } catch (error) {
-        console.warn('Error al eliminar:', error);
+        console.error('❌ Error al eliminar notificación:', error);
+        mostrarToast('❌ Error al eliminar: ' + error.message, 'error');
     }
 }
+// ====================================================================
 
 // ------------------------------------------------
 // DATOS DEL CLUB
