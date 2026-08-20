@@ -1,4 +1,4 @@
-const CACHE_NAME = 'club-morphy-v3';
+const CACHE_NAME = 'club-morphy-v4';
 const STATIC_ASSETS = [
   '/Club-Morphy/',
   '/Club-Morphy/index.html',
