@@ -5,7 +5,10 @@ const STATIC_ASSETS = [
   '/Club-Morphy/offline.html',
   '/Club-Morphy/manifest.json',
   '/Club-Morphy/styles.css',
-  '/Club-Morphy/script.js'
+  '/Club-Morphy/script.js',
+  '/Club-Morphy/assets/android-chrome-192x192.png',
+  '/Club-Morphy/assets/android-chrome-512x512.png',
+  '/Club-Morphy/assets/apple-touch-icon.png'
 ];
 const CACHE_LIMIT = 50;
 
