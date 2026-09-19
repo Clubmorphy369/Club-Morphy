@@ -356,7 +356,7 @@ function suscribirMisSolicitudes() {
             snapshot.forEach(doc => {
                 misSolicitudes.push({ id: doc.id, ...doc.data() });
             });
-            actualizarUI(); // para refrescar botones de solicitud
+            actualizarUI();
         }, error => console.warn('Error snapshot mis solicitudes:', error));
 }
 
@@ -412,13 +412,16 @@ function actualizarBadgeSolicitudes() {
     }
 }
 
+// 🔧 PASO 3 - Fix 1: arreglar logo
 function actualizarLogoClub() {
     const logoImg = document.getElementById('logo-club-img');
     if (datosClub.logoURL && datosClub.logoURL.trim()) {
+        logoImg.style.display = ''; // Limpiar inline display:none que pudo dejar onerror
         logoImg.src = datosClub.logoURL.trim();
         logoImg.classList.add('visible');
     } else {
-        logoImg.src = '';
+        logoImg.style.display = 'none';
+        logoImg.removeAttribute('src');
         logoImg.classList.remove('visible');
     }
 }
@@ -434,12 +437,12 @@ function actualizarBotonDatosClub() {
 }
 
 // ------------------------------------------------
-// GESTIÓN DEL CURSO (CRUD) – ahora con escucha en tiempo real
+// GESTIÓN DEL CURSO (CRUD) – escucha en tiempo real
 // ------------------------------------------------
 function iniciarEscuchaCurso() {
     if (unsubscribeCurso) unsubscribeCurso();
     migracionRealizada = false;
-    
+
     unsubscribeCurso = db.collection('config').doc('curso').onSnapshot(async (doc) => {
         if (doc.exists) {
             curso = doc.data();
@@ -449,13 +452,13 @@ function iniciarEscuchaCurso() {
                 await db.collection('config').doc('curso').set(curso);
             }
         }
-        
+
         if (!curso.clases) curso.clases = [];
         curso.clases.forEach(c => {
             if (!c.id) c.id = generarId();
             if (!c.temas) c.temas = [];
         });
-        
+
         // Migración única (solo admin)
         if (currentUser && currentUser.esAdmin && !migracionRealizada) {
             let migrado = false;
@@ -478,9 +481,9 @@ function iniciarEscuchaCurso() {
             }
             migracionRealizada = true;
         }
-        
+
         curso.clases.sort((a, b) => a.numero - b.numero);
-        
+
         if (currentUser) {
             actualizarUI();
         }
@@ -517,7 +520,7 @@ function migrarTemaABloques(tema) {
 }
 
 // ------------------------------------------------
-// FUNCIONES DE BÚSQUEDA RECURSIVA Y REORDENAMIENTO
+// BÚSQUEDA RECURSIVA Y REORDENAMIENTO
 // ------------------------------------------------
 function buscarTemaRecursivo(temas, temaId) {
     for (let t of temas) {
@@ -570,7 +573,6 @@ function temaAccesible(tema, usuario) {
     if (usuario.esAdmin) return true;
     if (!tema.bloqueado) return true;
 
-    // Si está bloqueado, verificar en accesosTema (Firestore)
     if (tema.accesosTemaId) {
         const uids = accesosTema[tema.accesosTemaId] || [];
         if (uids.includes(usuario.uid)) return true;
@@ -633,26 +635,41 @@ async function gestionarAccesosTema(claseId, temaId) {
     modalAccesos.classList.add('active');
 }
 
-// ------------------------------------------------
-// ADMIN: BLOQUEAR/DESBLOQUEAR TEMA
-// ------------------------------------------------
+// 🔧 PASO 3 - Fix 4: revocar accesos al bloquear tema
 async function toggleBloqueoTema(claseId, temaId) {
     if (!currentUser?.esAdmin) return;
     const clase = curso.clases.find(c => c.id === claseId);
     const tema = buscarTemaRecursivo(clase.temas, temaId);
     if (!tema) return;
 
-    tema.bloqueado = !tema.bloqueado;
+    const seVaABloquear = !tema.bloqueado;
 
-    if (tema.bloqueado && !tema.accesosTemaId) {
-        const docRef = await db.collection('accesosTema').doc();
-        await docRef.set({ uids: [] });
-        tema.accesosTemaId = docRef.id;
+    if (seVaABloquear) {
+        mostrarConfirmacion(
+            'Bloquear tema',
+            '¿Quieres revocar el acceso a los alumnos que ya lo tenían?',
+            async () => {
+                tema.bloqueado = true;
+                if (!tema.accesosTemaId) {
+                    const docRef = await db.collection('accesosTema').doc();
+                    await docRef.set({ uids: [] });
+                    tema.accesosTemaId = docRef.id;
+                } else {
+                    await db.collection('accesosTema')
+                        .doc(tema.accesosTemaId)
+                        .set({ uids: [] }, { merge: true });
+                }
+                await guardarCurso();
+                actualizarUI();
+                mostrarToast('Tema bloqueado y accesos revocados', 'success');
+            }
+        );
+    } else {
+        tema.bloqueado = false;
+        await guardarCurso();
+        actualizarUI();
+        mostrarToast('Tema desbloqueado', 'success');
     }
-
-    await guardarCurso();
-    actualizarUI();
-    mostrarToast(tema.bloqueado ? 'Tema bloqueado' : 'Tema desbloqueado', 'success');
 }
 
 // ------------------------------------------------
@@ -711,7 +728,7 @@ async function eliminarTema(claseId, temaId) {
 }
 
 // ------------------------------------------------
-// ADMIN: MOVER TEMA ARRIBA/ABAJO (CON JERARQUÍA)
+// ADMIN: MOVER TEMA ARRIBA/ABAJO
 // ------------------------------------------------
 async function moverTemaArriba(claseId, temaId) {
     if (!currentUser?.esAdmin) return;
@@ -743,16 +760,13 @@ async function moverTemaAbajo(claseId, temaId) {
     mostrarToast('Orden actualizado', 'success');
 }
 
-// ------------------------------------------------
-// ADMIN: RENOMBRAR CLASE / TEMA
-// ------------------------------------------------
+// 🔧 PASO 3 - Fixes 2 y 3: renombrar sin prompt
 async function renombrarClase(id, nuevoNombre = null) {
     if (!currentUser?.esAdmin) return;
+    if (!nuevoNombre || !nuevoNombre.trim()) return;
     const clase = curso.clases.find(c => c.id === id);
     if (!clase) return;
-    const nombre = nuevoNombre || prompt('Nuevo nombre de la clase:', clase.titulo);
-    if (!nombre || !nombre.trim()) return;
-    clase.titulo = nombre.trim();
+    clase.titulo = nuevoNombre.trim();
     await guardarCurso();
     actualizarUI();
     mostrarToast('Clase renombrada', 'success');
@@ -760,12 +774,11 @@ async function renombrarClase(id, nuevoNombre = null) {
 
 async function renombrarTema(claseId, temaId, nuevoNombre = null) {
     if (!currentUser?.esAdmin) return;
+    if (!nuevoNombre || !nuevoNombre.trim()) return;
     const clase = curso.clases.find(c => c.id === claseId);
     const tema = buscarTemaRecursivo(clase.temas, temaId);
     if (!tema) return;
-    const nombre = nuevoNombre || prompt('Nuevo nombre del tema:', tema.titulo);
-    if (!nombre || !nombre.trim()) return;
-    tema.titulo = nombre.trim();
+    tema.titulo = nuevoNombre.trim();
     await guardarCurso();
     actualizarUI();
     mostrarToast('Tema renombrado', 'success');
@@ -921,10 +934,10 @@ function calcularProgresoClase(clase) {
 
 function abrirPanelProgreso() {
     const contenedor = document.getElementById('progreso-contenido');
-    const clasesVisibles = currentUser?.esAdmin 
-        ? curso.clases 
+    const clasesVisibles = currentUser?.esAdmin
+        ? curso.clases
         : curso.clases.filter(c => c.publicada === true);
-    
+
     if (!clasesVisibles || clasesVisibles.length === 0) {
         contenedor.innerHTML = '<p style="color:var(--texto-suave);">No hay clases disponibles para calcular progreso.</p>';
     } else {
@@ -951,7 +964,7 @@ function abrirPanelProgreso() {
 }
 
 // ------------------------------------------------
-// SOLICITUDES DE ACCESO (CLASE)
+// SOLICITUDES DE ACCESO
 // ------------------------------------------------
 async function solicitarAcceso(claseId) {
     if (!currentUser) return mostrarToast('Debes iniciar sesión', 'error');
@@ -1001,7 +1014,6 @@ async function solicitarAcceso(claseId) {
     }
 }
 
-// 🔥 NUEVA FUNCIÓN: Solicitar acceso a un tema específico
 async function solicitarAccesoTema(claseId, temaId) {
     if (!currentUser) {
         mostrarToast("Debes iniciar sesión para solicitar acceso.", "error");
@@ -1017,7 +1029,6 @@ async function solicitarAccesoTema(claseId, temaId) {
         return;
     }
 
-    // Verificar si ya hay una solicitud pendiente para este tema
     const yaSolicitada = misSolicitudes.some(s => s.temaId === temaId && s.estado === 'pendiente');
     if (yaSolicitada) {
         mostrarToast("Ya enviaste una solicitud para este tema. Espera la respuesta del administrador.", "info");
@@ -1025,7 +1036,6 @@ async function solicitarAccesoTema(claseId, temaId) {
     }
 
     try {
-        // 1. Crear la solicitud en la colección 'solicitudesAcceso'
         await db.collection('solicitudesAcceso').add({
             uid: currentUser.uid,
             email: currentUser.email,
@@ -1033,12 +1043,11 @@ async function solicitarAccesoTema(claseId, temaId) {
             claseTitulo: clase.titulo,
             temaId: temaId,
             temaTitulo: tema.titulo,
-            tipo: 'tema', // Para distinguir de solicitudes de clase
+            tipo: 'tema',
             estado: 'pendiente',
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
         });
 
-        // 2. Crear notificación para el administrador
         await db.collection('notificaciones').add({
             paraUid: ADMIN_UID,
             mensaje: `${currentUser.email} solicita acceso al tema "${tema.titulo}" (Clase: ${clase.titulo})`,
@@ -1051,14 +1060,13 @@ async function solicitarAccesoTema(claseId, temaId) {
         });
 
         mostrarToast("✅ Solicitud enviada al administrador.", "success");
-        actualizarUI(); // Refresca para deshabilitar el botón
+        actualizarUI();
     } catch (error) {
         console.error("Error al solicitar acceso:", error);
         mostrarToast("Error al enviar la solicitud. Intenta de nuevo.", "error");
     }
 }
 
-// 🔥 MODIFICADO: aprobar solicitud (ahora maneja tema y clase)
 async function aprobarSolicitud(solicitudId, claseId, uid, email, tipo = 'clase', temaId = null) {
     if (!currentUser?.esAdmin) return;
     try {
@@ -1066,7 +1074,6 @@ async function aprobarSolicitud(solicitudId, claseId, uid, email, tipo = 'clase'
 
         let mensaje = '';
         if (tipo === 'tema' && temaId) {
-            // Buscar el tema para obtener su accesosTemaId
             const clase = curso.clases.find(c => c.id === claseId);
             const tema = buscarTemaRecursivo(clase.temas, temaId);
             if (tema && tema.accesosTemaId) {
@@ -1080,7 +1087,6 @@ async function aprobarSolicitud(solicitudId, claseId, uid, email, tipo = 'clase'
                 mensaje = `Tu solicitud de acceso al tema en la clase "${clase?.titulo || 'Clase'}" ha sido aprobada`;
             }
         } else {
-            // Solicitud de clase: usar accesosEspeciales
             const uidsActual = accesosEspeciales[claseId] || [];
             if (!uidsActual.includes(uid)) {
                 uidsActual.push(uid);
@@ -1108,7 +1114,6 @@ async function aprobarSolicitud(solicitudId, claseId, uid, email, tipo = 'clase'
     }
 }
 
-// 🔥 MODIFICADO: rechazar solicitud (opcional, para tema)
 async function rechazarSolicitud(solicitudId, uid, claseId, tipo = 'clase', temaId = null) {
     if (!currentUser?.esAdmin) return;
     try {
@@ -1140,7 +1145,6 @@ async function rechazarSolicitud(solicitudId, uid, claseId, tipo = 'clase', tema
     }
 }
 
-// 🔥 MODIFICADO: abrir panel de solicitudes del admin (muestra tema)
 function abrirSolicitudesAdmin() {
     if (!currentUser?.esAdmin) return;
     const listaDiv = document.getElementById('solicitudes-lista');
@@ -1193,9 +1197,6 @@ function abrirNotificaciones() {
     modalNotificaciones.classList.add('active');
 }
 
-// ====================================================================
-// ⭐ MEJORA: funciones de notificaciones con manejo de errores
-// ====================================================================
 async function marcarNotificacionLeida(notifId) {
     try {
         await db.collection('notificaciones').doc(notifId).update({ leida: true });
@@ -1232,7 +1233,6 @@ async function eliminarNotificacion(notifId) {
         mostrarToast('❌ Error al eliminar: ' + error.message, 'error');
     }
 }
-// ====================================================================
 
 // ------------------------------------------------
 // DATOS DEL CLUB
@@ -1440,8 +1440,7 @@ function renderizarSidebar() {
             }
         });
     });
-    
-    // Reaplicar filtro después de regenerar la lista
+
     if (terminoBusqueda) {
         setTimeout(() => filtrarClases(), 0);
     }
@@ -1533,7 +1532,6 @@ function renderizarTemaRecursivo(tema, claseId, nivel = 0) {
 
     let contenidoHTML = '';
     if (accesible) {
-        // Renderizar bloques del tema
         if (Array.isArray(tema.bloques) && tema.bloques.length > 0) {
             contenidoHTML = tema.bloques.map(bloque => {
                 let html = '';
@@ -1585,7 +1583,6 @@ function renderizarTemaRecursivo(tema, claseId, nivel = 0) {
             }).filter(Boolean).join('');
         }
 
-        // Renderizar subtemas (recursivo)
         if (tema.subtemas && tema.subtemas.length > 0) {
             contenidoHTML += `<div class="subtemas-container">`;
             tema.subtemas.forEach(st => {
@@ -1594,7 +1591,6 @@ function renderizarTemaRecursivo(tema, claseId, nivel = 0) {
             contenidoHTML += `</div>`;
         }
     } else {
-        // 🔥 MODIFICADO: mostrar botón de solicitar acceso para temas bloqueados
         const yaSolicitada = misSolicitudes.some(s => s.temaId === tema.id && s.estado === 'pendiente');
         contenidoHTML = `
             <div style="color:var(--texto-suave); padding:10px; border:1px dashed var(--borde); border-radius:8px; margin:8px 0;">
@@ -1606,7 +1602,6 @@ function renderizarTemaRecursivo(tema, claseId, nivel = 0) {
         `;
     }
 
-    // Editor de bloques (solo admin y si el tema es accesible)
     const adminEditorHTML = (esAdmin && accesible) ? `
     <div class="solo-admin" style="margin-top:15px; padding-top:15px; border-top:1px solid var(--borde);">
         <p style="color:var(--acento-claro); font-weight:bold;">🛠️ Editor de bloques</p>
@@ -1700,12 +1695,12 @@ function actualizarUI() {
         return;
     }
     renderizarSidebar();
-    
+
     const searchInput = document.getElementById('search-input');
     searchInput.style.display = 'block';
     if (terminoBusqueda) searchInput.value = terminoBusqueda;
     document.getElementById('btn-progreso').style.display = 'inline-flex';
-    
+
     if (claseActivaId) {
         const clase = curso.clases.find(c => c.id === claseActivaId);
         if (clase && esClaseDesbloqueada(clase)) {
@@ -1827,7 +1822,7 @@ async function agregarTema(claseId) {
 }
 
 // ------------------------------------------------
-// EDICIÓN POR LONG PRESS (RENOMBRAR)
+// EDICIÓN POR LONG PRESS
 // ------------------------------------------------
 function habilitarEdicionPorLongPress() {
     document.querySelectorAll('.titulo-editable').forEach(span => {
@@ -1856,7 +1851,8 @@ function activarEdicion(span) {
     input.type = 'text';
     input.value = textoActual;
     input.className = 'input-edicion-inline';
-   input.style.cssText = 'font-size: inherit; font-weight: inherit; color: inherit; background: var(--bg); border: 2px solid var(--acento); padding: 4px 8px; border-radius: 6px; width: 100%; box-sizing: border-box; max-width: 100%;';        for (let attr of span.attributes) { if (attr.name.startsWith('data-')) input.setAttribute(attr.name, attr.value); }
+    input.style.cssText = 'font-size: inherit; font-weight: inherit; color: inherit; background: var(--bg); border: 2px solid var(--acento); padding: 4px 8px; border-radius: 6px; width: 100%; box-sizing: border-box; max-width: 100%;';
+    for (let attr of span.attributes) { if (attr.name.startsWith('data-')) input.setAttribute(attr.name, attr.value); }
     span.replaceWith(input);
     input.focus();
     input.select();
@@ -1971,11 +1967,13 @@ document.addEventListener('focusin', (event) => {
     }, 400);
 });
 
+// 🔧 PASO 3 - Fix 7: actualizar aria-label del botón 👁️
 document.getElementById('toggle-password').addEventListener('click', function() {
     const passInput = document.getElementById('password');
     const type = passInput.getAttribute('type') === 'password' ? 'text' : 'password';
     passInput.setAttribute('type', type);
     this.textContent = type === 'password' ? '👁️' : '🙈';
+    this.setAttribute('aria-label', type === 'password' ? 'Mostrar contraseña' : 'Ocultar contraseña');
 });
 
 document.getElementById('auth-form').addEventListener('submit', async (e) => {
@@ -2009,12 +2007,43 @@ document.getElementById('auth-form').addEventListener('submit', async (e) => {
     }
 });
 
+// 🔧 PASO 3 - Fix 8: cambiar autocomplete dinámicamente
 document.getElementById('switch-auth').addEventListener('click', (e) => {
     e.preventDefault();
     modoRegistro = !modoRegistro;
     document.getElementById('modal-title').textContent = modoRegistro ? 'Registrarse' : 'Iniciar sesión';
     document.getElementById('btn-auth').textContent = modoRegistro ? 'Crear cuenta' : 'Ingresar';
+
+    const passInput = document.getElementById('password');
+    passInput.setAttribute('autocomplete', modoRegistro ? 'new-password' : 'current-password');
+
     limpiarCampos();
+});
+
+// 🔧 PASO 3 - Fix 5: botón "¿Olvidaste tu contraseña?"
+document.getElementById('btn-forgot-password').addEventListener('click', async () => {
+    const emailInput = document.getElementById('email');
+    const email = emailInput.value.trim();
+
+    if (!email) {
+        mostrarToast('Escribe tu correo primero y vuelve a intentar', 'error');
+        emailInput.focus();
+        return;
+    }
+
+    const btn = document.getElementById('btn-forgot-password');
+    btn.disabled = true;
+    btn.textContent = 'Enviando...';
+
+    try {
+        await auth.sendPasswordResetEmail(email);
+        mostrarToast('📧 Te enviamos un correo para restablecer tu contraseña', 'success');
+    } catch (error) {
+        mostrarToast(traducirErrorFirebase(error.code), 'error');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = '¿Olvidaste tu contraseña?';
+    }
 });
 
 function configurarDeteccionAutofill() {
@@ -2032,11 +2061,31 @@ function configurarDeteccionAutofill() {
 // ------------------------------------------------
 // EVENTOS DE NAVEGACIÓN Y PERSISTENCIA
 // ------------------------------------------------
-hamburgerBtn.addEventListener('click', () => { sidebar.classList.toggle('open'); sidebarOverlay.classList.toggle('active'); });
-sidebarOverlay.addEventListener('click', () => { sidebar.classList.remove('open'); sidebarOverlay.classList.remove('active'); });
-document.getElementById('main-content').addEventListener('click', () => {
-    if (window.innerWidth <= 768) { sidebar.classList.remove('open'); sidebarOverlay.classList.remove('active'); }
+// 🔧 PASO 3 - Fix 6: actualizar aria-expanded del sidebar
+hamburgerBtn.addEventListener('click', () => {
+    sidebar.classList.toggle('open');
+    sidebarOverlay.classList.toggle('active');
+    const abierto = sidebar.classList.contains('open');
+    hamburgerBtn.setAttribute('aria-expanded', abierto ? 'true' : 'false');
+    hamburgerBtn.setAttribute('aria-label', abierto ? 'Cerrar menú' : 'Abrir menú');
 });
+
+sidebarOverlay.addEventListener('click', () => {
+    sidebar.classList.remove('open');
+    sidebarOverlay.classList.remove('active');
+    hamburgerBtn.setAttribute('aria-expanded', 'false');
+    hamburgerBtn.setAttribute('aria-label', 'Abrir menú');
+});
+
+document.getElementById('main-content').addEventListener('click', () => {
+    if (window.innerWidth <= 768) {
+        sidebar.classList.remove('open');
+        sidebarOverlay.classList.remove('active');
+        hamburgerBtn.setAttribute('aria-expanded', 'false');
+        hamburgerBtn.setAttribute('aria-label', 'Abrir menú');
+    }
+});
+
 document.getElementById('main-content').addEventListener('scroll', onContentScroll, { passive: true });
 
 window.addEventListener('pagehide', () => { guardarEstadoNavegacion(); });
@@ -2062,12 +2111,27 @@ document.getElementById('search-input').addEventListener('input', (e) => {
     filtrarClases();
 });
 
+// 🔧 PASO 3 - Fix 9: cerrar modales con Escape
+document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape') return;
+
+    const modalesAbiertos = document.querySelectorAll('.modal-overlay.active');
+    if (modalesAbiertos.length === 0) return;
+
+    const ultimoModal = modalesAbiertos[modalesAbiertos.length - 1];
+
+    // No cerrar el modal de confirmación si hay un callback pendiente
+    if (ultimoModal.id === 'modal-confirm' && confirmCallback) return;
+
+    ultimoModal.classList.remove('active');
+});
+
 // ------------------------------------------------
 // INICIALIZACIÓN
 // ------------------------------------------------
 configurarDeteccionAutofill();
 suscribirDatosClub();
-console.log('✅ Club Morphy – Mejoras de UX aplicadas');
+console.log('✅ Club Morphy – Mejoras de UX aplicadas (Paso 3 completado)');
 
 // Exponer funciones globales
 window.mostrarLogin = mostrarLogin;
@@ -2087,7 +2151,7 @@ window.moverTemaAbajo = moverTemaAbajo;
 window.gestionarAccesosClase = gestionarAccesosClase;
 window.cerrarModalAccesos = cerrarModalAccesos;
 window.solicitarAcceso = solicitarAcceso;
-window.solicitarAccesoTema = solicitarAccesoTema; // 🔥 NUEVO
+window.solicitarAccesoTema = solicitarAccesoTema;
 window.aprobarSolicitud = aprobarSolicitud;
 window.rechazarSolicitud = rechazarSolicitud;
 window.abrirSolicitudesAdmin = abrirSolicitudesAdmin;
@@ -2123,7 +2187,7 @@ if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/Club-Morphy/sw.js')
       .then(registration => {
         console.log('✅ Service Worker registrado en:', registration.scope);
-        
+
         navigator.serviceWorker.addEventListener('message', event => {
           if (event.data && event.data.type === 'NEW_VERSION_AVAILABLE') {
             if (window.confirm('Hay una nueva versión del sitio. ¿Recargar ahora?')) {
