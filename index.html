@@ -2,11 +2,17 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#0ea5e9">
+    <meta name="apple-mobile-web-app-title" content="Club Morphy">
+    <meta name="description" content="Curso de ajedrez interactivo del Club Morphy con lecciones, videos y ejercicios.">
     <link rel="manifest" href="/Club-Morphy/manifest.json">
+    <link rel="apple-touch-icon" href="/Club-Morphy/assets/apple-touch-icon.png">
+    <link rel="icon" href="/Club-Morphy/assets/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="/Club-Morphy/assets/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/Club-Morphy/assets/favicon-16x16.png">
     <title>♟️ Club Morphy - Curso de Ajedrez</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -18,7 +24,8 @@
     <div class="header">
         <div class="header-left">
             <button class="hamburger" id="hamburger-btn" aria-label="Menú">☰</button>
-            <img id="logo-club-img" class="logo-club" src="" alt="Logo del club" onerror="this.style.display='none'">
+            <img id="logo-club-img" class="logo-club" alt="Logo del club"
+                 onerror="this.classList.remove('visible')">
             <h1>♟️ Club Morphy</h1>
         </div>
         <div class="header-right">
@@ -43,7 +50,6 @@
     <!-- Main Layout -->
     <div class="main-layout">
         <div class="sidebar" id="sidebar">
-            <!-- Campo de búsqueda -->
             <input type="text" id="search-input" placeholder="🔍 Buscar clase..." style="margin-bottom:12px; display:none;">
             <div id="lista-clases"></div>
             <button class="btn btn-azul admin-only" id="btn-add-clase" style="margin-top:15px; width:100%;" onclick="agregarClase()">➕ <span class="btn-label">Nueva clase</span></button>
@@ -71,14 +77,27 @@
                 <button class="btn" onclick="cambiarCuenta()">Cambiar cuenta</button>
             </div>
             <form id="auth-form">
-                <label>Email</label>
+                <label for="email">Email</label>
                 <input id="email" type="email" required>
-                <label>Contraseña</label>
+
+                <label for="password">Contraseña</label>
                 <div class="input-password-wrapper">
                     <input id="password" type="password" required>
                     <button type="button" id="toggle-password" class="toggle-password-btn">👁️</button>
                 </div>
+
                 <div id="autofill-warning" class="autofill-warning">⚠️ Parece que se rellenó automáticamente</div>
+
+                <!-- 🆕 Botón olvidé mi contraseña -->
+                <div style="text-align:center; margin: 10px 0 4px;">
+                    <button type="button" id="btn-forgot-password"
+                            style="background:none; border:none; color:var(--acento-oscuro);
+                                   font-size:0.85rem; cursor:pointer; text-decoration:underline;
+                                   padding:8px; font-family:inherit;">
+                        ¿Olvidaste tu contraseña?
+                    </button>
+                </div>
+
                 <div class="modal-buttons" id="extra-controls">
                     <button type="submit" class="btn btn-azul" id="btn-auth">Ingresar</button>
                     <button type="button" class="btn" id="switch-auth">Crear cuenta</button>
@@ -151,18 +170,25 @@
     <div class="modal-overlay" id="modal-config-club">
         <div class="modal-content">
             <h3>Configurar Club</h3>
-            <label>URL del logo</label>
+
+            <label for="config-logo-url">URL del logo</label>
             <input id="config-logo-url" placeholder="https://...">
-            <label>Teléfono</label>
+
+            <label for="config-telefono">Teléfono</label>
             <input id="config-telefono">
-            <label>Dirección</label>
+
+            <label for="config-direccion">Dirección</label>
             <input id="config-direccion">
-            <label>Email de contacto</label>
+
+            <label for="config-email-contacto">Email de contacto</label>
             <input id="config-email-contacto">
-            <label>Horarios</label>
+
+            <label for="config-horarios">Horarios</label>
             <input id="config-horarios">
-            <label>Web</label>
+
+            <label for="config-web">Web</label>
             <input id="config-web">
+
             <div class="modal-buttons">
                 <button class="btn btn-azul" onclick="guardarConfigClub()">Guardar</button>
                 <button class="btn" onclick="document.getElementById('modal-config-club').classList.remove('active')">Cancelar</button>
