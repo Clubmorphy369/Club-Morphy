@@ -460,9 +460,7 @@ function iniciarEscuchaCurso() {
 
         // Migración única (solo admin)
         if (currentUser && currentUser.esAdmin && !migracionRealizada) {
-            // 🔧 FIX EXTRA: marcar migración ANTES del await para evitar carrera
             migracionRealizada = true;
-
             let migrado = false;
             curso.clases.forEach(c => {
                 c.temas.forEach(t => {
@@ -1069,7 +1067,6 @@ async function solicitarAccesoTema(claseId, temaId) {
     }
 }
 
-// 🔧 FIX EXTRA: guardas para evitar crash si la clase/tema no existe
 async function aprobarSolicitud(solicitudId, claseId, uid, email, tipo = 'clase', temaId = null) {
     if (!currentUser?.esAdmin) return;
     try {
@@ -1129,7 +1126,6 @@ async function aprobarSolicitud(solicitudId, claseId, uid, email, tipo = 'clase'
     }
 }
 
-// 🔧 FIX EXTRA: guardas para evitar crash si la clase/tema no existe
 async function rechazarSolicitud(solicitudId, uid, claseId, tipo = 'clase', temaId = null) {
     if (!currentUser?.esAdmin) return;
     try {
@@ -1170,6 +1166,243 @@ async function rechazarSolicitud(solicitudId, uid, claseId, tipo = 'clase', tema
     }
 }
 
+// =============================================================
+// ⭐ PASO 5 — GESTIÓN MASIVA DE ACCESOS
+// =============================================================
+
+// Helper: ejecuta operaciones en lotes de 400 (límite Firestore = 500)
+async function ejecutarEnLotes(operaciones) {
+    const CHUNK = 400;
+    for (let i = 0; i < operaciones.length; i += CHUNK) {
+        const batch = db.batch();
+        operaciones.slice(i, i + CHUNK).forEach(fn => fn(batch));
+        await batch.commit();
+    }
+}
+
+// ⭐ Aprobar TODO el curso para un alumno
+async function aprobarTodoElCurso(uid, email) {
+    if (!currentUser?.esAdmin) return;
+
+    mostrarConfirmacion(
+        '🎓 Aprobar TODO el curso',
+        `¿Dar acceso completo a "${email}"? Se liberarán TODAS las clases publicadas y TODOS los temas bloqueados.`,
+        async () => {
+            try {
+                const operaciones = [];
+
+                // 1. Liberar todas las clases publicadas
+                for (const clase of curso.clases) {
+                    if (!clase.publicada) continue;
+                    const uidsActual = accesosEspeciales[clase.id] || [];
+                    if (!uidsActual.includes(uid)) {
+                        const nuevos = [...uidsActual, uid];
+                        operaciones.push(batch =>
+                            batch.set(
+                                db.collection('accesosEspeciales').doc(clase.id),
+                                { uids: nuevos },
+                                { merge: true }
+                            )
+                        );
+                    }
+                }
+
+                // 2. Liberar todos los temas bloqueados (recursivo)
+                function recorrerTemas(temas) {
+                    temas.forEach(t => {
+                        if (t.bloqueado && t.accesosTemaId) {
+                            const uidsTema = accesosTema[t.accesosTemaId] || [];
+                            if (!uidsTema.includes(uid)) {
+                                const nuevos = [...uidsTema, uid];
+                                operaciones.push(batch =>
+                                    batch.set(
+                                        db.collection('accesosTema').doc(t.accesosTemaId),
+                                        { uids: nuevos },
+                                        { merge: true }
+                                    )
+                                );
+                            }
+                        }
+                        if (t.subtemas && t.subtemas.length) recorrerTemas(t.subtemas);
+                    });
+                }
+                curso.clases.forEach(c => {
+                    if (c.publicada) recorrerTemas(c.temas || []);
+                });
+
+                // 3. Marcar todas las solicitudes pendientes del alumno como aprobadas
+                const solicitudesDelAlumno = await db.collection('solicitudesAcceso')
+                    .where('uid', '==', uid)
+                    .where('estado', '==', 'pendiente')
+                    .get();
+                solicitudesDelAlumno.forEach(doc => {
+                    operaciones.push(batch =>
+                        batch.update(doc.ref, { estado: 'aprobada' })
+                    );
+                });
+
+                // 4. Notificación al alumno
+                const notifRef = db.collection('notificaciones').doc();
+                operaciones.push(batch =>
+                    batch.set(notifRef, {
+                        paraUid: uid,
+                        mensaje: '🎓 El profesor te ha dado acceso a TODO el curso. ¡A disfrutar!',
+                        leida: false,
+                        tipo: 'aprobada_total',
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    })
+                );
+
+                if (operaciones.length === 0) {
+                    mostrarToast('ℹ️ No había nada que liberar (ya tenía acceso completo)', 'info');
+                    return;
+                }
+
+                await ejecutarEnLotes(operaciones);
+                mostrarToast(`✅ Curso completo liberado para ${email}`, 'success');
+                actualizarUI();
+            } catch (error) {
+                console.error(error);
+                mostrarToast('❌ Error al liberar el curso: ' + error.message, 'error');
+            }
+        }
+    );
+}
+window.aprobarTodoElCurso = aprobarTodoElCurso;
+
+// ⭐ Revocar TODO el curso de un alumno
+async function revocarTodoElCurso(uid, email) {
+    if (!currentUser?.esAdmin) return;
+
+    mostrarConfirmacion(
+        '🚫 Revocar TODO el curso',
+        `¿Quitar TODOS los accesos a "${email}"? Seguirá viendo la Clase 1 (pública), pero perderá el resto. Esta acción se puede revertir aprobando de nuevo.`,
+        async () => {
+            try {
+                const operaciones = [];
+
+                // 1. Quitar de todos los accesosEspeciales
+                for (const clase of curso.clases) {
+                    const uidsActual = accesosEspeciales[clase.id] || [];
+                    if (uidsActual.includes(uid)) {
+                        const nuevos = uidsActual.filter(id => id !== uid);
+                        operaciones.push(batch =>
+                            batch.set(
+                                db.collection('accesosEspeciales').doc(clase.id),
+                                { uids: nuevos },
+                                { merge: true }
+                            )
+                        );
+                    }
+                }
+
+                // 2. Quitar de todos los accesosTema (recursivo)
+                function recorrerTemas(temas) {
+                    temas.forEach(t => {
+                        if (t.accesosTemaId) {
+                            const uidsTema = accesosTema[t.accesosTemaId] || [];
+                            if (uidsTema.includes(uid)) {
+                                const nuevos = uidsTema.filter(id => id !== uid);
+                                operaciones.push(batch =>
+                                    batch.set(
+                                        db.collection('accesosTema').doc(t.accesosTemaId),
+                                        { uids: nuevos },
+                                        { merge: true }
+                                    )
+                                );
+                            }
+                        }
+                        if (t.subtemas && t.subtemas.length) recorrerTemas(t.subtemas);
+                    });
+                }
+                curso.clases.forEach(c => recorrerTemas(c.temas || []));
+
+                // 3. Notificación al alumno
+                const notifRef = db.collection('notificaciones').doc();
+                operaciones.push(batch =>
+                    batch.set(notifRef, {
+                        paraUid: uid,
+                        mensaje: '🚫 Tu acceso al curso ha sido revocado. Contacta al profesor si crees que es un error.',
+                        leida: false,
+                        tipo: 'revocada_total',
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    })
+                );
+
+                if (operaciones.length === 0) {
+                    mostrarToast('ℹ️ Este alumno no tenía accesos que revocar', 'info');
+                    return;
+                }
+
+                await ejecutarEnLotes(operaciones);
+                mostrarToast(`✅ Accesos revocados para ${email}`, 'success');
+                actualizarUI();
+            } catch (error) {
+                console.error(error);
+                mostrarToast('❌ Error al revocar: ' + error.message, 'error');
+            }
+        }
+    );
+}
+window.revocarTodoElCurso = revocarTodoElCurso;
+
+// ⭐ Panel de gestión de todos los alumnos
+async function abrirGestionAlumnos() {
+    if (!currentUser?.esAdmin) return;
+
+    // Crear el modal dinámicamente si no existe
+    let modal = document.getElementById('modal-gestion-alumnos');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.className = 'modal-overlay';
+        modal.id = 'modal-gestion-alumnos';
+        modal.setAttribute('role', 'dialog');
+        modal.setAttribute('aria-modal', 'true');
+        modal.innerHTML = `
+            <div class="modal-content">
+                <h3>🎓 Gestionar Alumnos</h3>
+                <p style="color:var(--texto-suave); font-size:0.85rem; margin-bottom:12px;">
+                    Aprobar TODO libera todas las clases publicadas y temas bloqueados.<br>
+                    Revocar TODO quita todos los accesos excepto la Clase 1.
+                </p>
+                <div id="gestion-alumnos-lista" class="user-access-list"></div>
+                <button class="btn" type="button" onclick="document.getElementById('modal-gestion-alumnos').classList.remove('active')">Cerrar</button>
+            </div>
+        `;
+        document.body.appendChild(modal);
+    }
+
+    const lista = document.getElementById('gestion-alumnos-lista');
+    lista.innerHTML = '<div class="loader" style="margin:20px auto;"></div>';
+    modal.classList.add('active');
+
+    const usuarios = await obtenerListaUsuarios();
+    const alumnos = usuarios.filter(u => u.uid !== ADMIN_UID);
+
+    if (alumnos.length === 0) {
+        lista.innerHTML = '<div class="no-users-msg">📭 No hay alumnos registrados.</div>';
+        return;
+    }
+
+    lista.innerHTML = alumnos.map(u => `
+        <div class="user-access-item">
+            <span class="user-email">${escapeHtml(u.email)}</span>
+            <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                <button class="btn btn-exito btn-small"
+                        onclick="aprobarTodoElCurso('${u.uid}','${escapeOnclick(u.email)}')">
+                    🎓 Aprobar TODO
+                </button>
+                <button class="btn btn-peligro btn-small"
+                        onclick="revocarTodoElCurso('${u.uid}','${escapeOnclick(u.email)}')">
+                    🚫 Revocar TODO
+                </button>
+            </div>
+        </div>
+    `).join('');
+}
+window.abrirGestionAlumnos = abrirGestionAlumnos;
+
+// ⭐ MODIFICADO: Modal de solicitudes con botón "🎓 Aprobar TODO"
 function abrirSolicitudesAdmin() {
     if (!currentUser?.esAdmin) return;
     const listaDiv = document.getElementById('solicitudes-lista');
@@ -1177,16 +1410,27 @@ function abrirSolicitudesAdmin() {
         listaDiv.innerHTML = '<div class="no-users-msg">📭 No hay solicitudes pendientes.</div>';
     } else {
         listaDiv.innerHTML = solicitudesPendientes.map(s => `
-            <div class="solicitud-item">
+            <div class="solicitud-item" style="flex-direction:column; align-items:stretch; gap:10px;">
                 <div>
                     <strong>${escapeHtml(s.email)}</strong><br>
                     <span style="font-size:0.85rem; color:var(--texto-suave);">Clase: ${escapeHtml(s.claseTitulo || 'Desconocida')}</span>
                     ${s.temaTitulo ? `<br><span style="font-size:0.85rem; color:var(--texto-suave);">Tema: ${escapeHtml(s.temaTitulo)}</span>` : ''}
                     <br><span class="estado-pendiente">⏳ Pendiente</span>
                 </div>
-                <div style="display:flex; gap:6px;">
-                    <button class="btn btn-exito btn-small" onclick="aprobarSolicitud('${s.id}','${s.claseId}','${s.uid}','${escapeOnclick(s.email)}','${s.tipo || 'clase'}','${s.temaId || ''}')">✅ Aprobar</button>
-                    <button class="btn btn-peligro btn-small" onclick="rechazarSolicitud('${s.id}','${s.uid}','${s.claseId}','${s.tipo || 'clase'}','${s.temaId || ''}')">❌ Rechazar</button>
+                <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                    <button class="btn btn-exito btn-small"
+                            onclick="aprobarSolicitud('${s.id}','${s.claseId}','${s.uid}','${escapeOnclick(s.email)}','${s.tipo || 'clase'}','${s.temaId || ''}')">
+                        ✅ Aprobar esta
+                    </button>
+                    <button class="btn btn-azul btn-small"
+                            onclick="aprobarTodoElCurso('${s.uid}','${escapeOnclick(s.email)}')"
+                            title="Libera TODAS las clases publicadas y temas bloqueados para este alumno">
+                        🎓 Aprobar TODO el curso
+                    </button>
+                    <button class="btn btn-peligro btn-small"
+                            onclick="rechazarSolicitud('${s.id}','${s.uid}','${s.claseId}','${s.tipo || 'clase'}','${s.temaId || ''}')">
+                        ❌ Rechazar
+                    </button>
                 </div>
             </div>
         `).join('');
@@ -2146,11 +2390,11 @@ document.addEventListener('keydown', (e) => {
 // ------------------------------------------------
 configurarDeteccionAutofill();
 suscribirDatosClub();
-console.log('✅ Club Morphy – Paso 3 + fixes extra completado');
+console.log('✅ Club Morphy – Paso 5 completado (Aprobar TODO / Revocar TODO)');
 
 // Exponer funciones globales
 window.mostrarLogin = mostrarLogin;
-window.cambiarCuenta = cambiarCuenta; // 🔧 FIX EXTRA: expuesta para el onclick inline
+window.cambiarCuenta = cambiarCuenta;
 window.confirmarCerrarSesion = confirmarCerrarSesion;
 window.cerrarSesionConfirmada = cerrarSesionConfirmada;
 window.agregarClase = agregarClase;
@@ -2196,6 +2440,11 @@ window.agregarSubtema = agregarSubtema;
 window.gestionarAccesosTema = gestionarAccesosTema;
 window.abrirPanelProgreso = abrirPanelProgreso;
 window.closeConfirm = closeConfirm;
+
+// ⭐ PASO 5: exports de las funciones nuevas
+window.aprobarTodoElCurso = aprobarTodoElCurso;
+window.revocarTodoElCurso = revocarTodoElCurso;
+window.abrirGestionAlumnos = abrirGestionAlumnos;
 
 // ===== REGISTRO DEL SERVICE WORKER =====
 if ('serviceWorker' in navigator) {
