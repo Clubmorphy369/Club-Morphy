@@ -412,11 +412,10 @@ function actualizarBadgeSolicitudes() {
     }
 }
 
-// 🔧 PASO 3 - Fix 1: arreglar logo
 function actualizarLogoClub() {
     const logoImg = document.getElementById('logo-club-img');
     if (datosClub.logoURL && datosClub.logoURL.trim()) {
-        logoImg.style.display = ''; // Limpiar inline display:none que pudo dejar onerror
+        logoImg.style.display = '';
         logoImg.src = datosClub.logoURL.trim();
         logoImg.classList.add('visible');
     } else {
@@ -461,6 +460,9 @@ function iniciarEscuchaCurso() {
 
         // Migración única (solo admin)
         if (currentUser && currentUser.esAdmin && !migracionRealizada) {
+            // 🔧 FIX EXTRA: marcar migración ANTES del await para evitar carrera
+            migracionRealizada = true;
+
             let migrado = false;
             curso.clases.forEach(c => {
                 c.temas.forEach(t => {
@@ -479,7 +481,6 @@ function iniciarEscuchaCurso() {
             if (migrado) {
                 await guardarCurso();
             }
-            migracionRealizada = true;
         }
 
         curso.clases.sort((a, b) => a.numero - b.numero);
@@ -635,7 +636,6 @@ async function gestionarAccesosTema(claseId, temaId) {
     modalAccesos.classList.add('active');
 }
 
-// 🔧 PASO 3 - Fix 4: revocar accesos al bloquear tema
 async function toggleBloqueoTema(claseId, temaId) {
     if (!currentUser?.esAdmin) return;
     const clase = curso.clases.find(c => c.id === claseId);
@@ -760,7 +760,9 @@ async function moverTemaAbajo(claseId, temaId) {
     mostrarToast('Orden actualizado', 'success');
 }
 
-// 🔧 PASO 3 - Fixes 2 y 3: renombrar sin prompt
+// ------------------------------------------------
+// ADMIN: RENOMBRAR CLASE / TEMA
+// ------------------------------------------------
 async function renombrarClase(id, nuevoNombre = null) {
     if (!currentUser?.esAdmin) return;
     if (!nuevoNombre || !nuevoNombre.trim()) return;
@@ -1067,6 +1069,7 @@ async function solicitarAccesoTema(claseId, temaId) {
     }
 }
 
+// 🔧 FIX EXTRA: guardas para evitar crash si la clase/tema no existe
 async function aprobarSolicitud(solicitudId, claseId, uid, email, tipo = 'clase', temaId = null) {
     if (!currentUser?.esAdmin) return;
     try {
@@ -1075,16 +1078,24 @@ async function aprobarSolicitud(solicitudId, claseId, uid, email, tipo = 'clase'
         let mensaje = '';
         if (tipo === 'tema' && temaId) {
             const clase = curso.clases.find(c => c.id === claseId);
+            if (!clase) {
+                mostrarToast('La clase ya no existe', 'error');
+                return;
+            }
             const tema = buscarTemaRecursivo(clase.temas, temaId);
-            if (tema && tema.accesosTemaId) {
+            if (!tema) {
+                mostrarToast('El tema ya no existe', 'error');
+                return;
+            }
+            if (tema.accesosTemaId) {
                 const uidsActual = accesosTema[tema.accesosTemaId] || [];
                 if (!uidsActual.includes(uid)) {
                     uidsActual.push(uid);
                     await db.collection('accesosTema').doc(tema.accesosTemaId).set({ uids: uidsActual }, { merge: true });
                 }
-                mensaje = `Tu solicitud de acceso al tema "${tema.titulo}" en la clase "${clase?.titulo || 'Clase'}" ha sido aprobada`;
+                mensaje = `Tu solicitud de acceso al tema "${tema.titulo}" en la clase "${clase.titulo}" ha sido aprobada`;
             } else {
-                mensaje = `Tu solicitud de acceso al tema en la clase "${clase?.titulo || 'Clase'}" ha sido aprobada`;
+                mensaje = `Tu solicitud de acceso al tema en la clase "${clase.titulo}" ha sido aprobada`;
             }
         } else {
             const uidsActual = accesosEspeciales[claseId] || [];
@@ -1093,7 +1104,11 @@ async function aprobarSolicitud(solicitudId, claseId, uid, email, tipo = 'clase'
                 await db.collection('accesosEspeciales').doc(claseId).set({ uids: uidsActual }, { merge: true });
             }
             const clase = curso.clases.find(c => c.id === claseId);
-            mensaje = `Tu solicitud de acceso a la clase "${clase?.titulo || 'Clase'}" ha sido aprobada`;
+            if (!clase) {
+                mostrarToast('La clase ya no existe', 'error');
+                return;
+            }
+            mensaje = `Tu solicitud de acceso a la clase "${clase.titulo}" ha sido aprobada`;
         }
 
         await db.collection('notificaciones').add({
@@ -1114,18 +1129,28 @@ async function aprobarSolicitud(solicitudId, claseId, uid, email, tipo = 'clase'
     }
 }
 
+// 🔧 FIX EXTRA: guardas para evitar crash si la clase/tema no existe
 async function rechazarSolicitud(solicitudId, uid, claseId, tipo = 'clase', temaId = null) {
     if (!currentUser?.esAdmin) return;
     try {
         await db.collection('solicitudesAcceso').doc(solicitudId).update({ estado: 'rechazada' });
 
         const clase = curso.clases.find(c => c.id === claseId);
+        if (!clase) {
+            mostrarToast('La clase ya no existe', 'error');
+            return;
+        }
+
         let mensaje = '';
         if (tipo === 'tema' && temaId) {
             const tema = buscarTemaRecursivo(clase.temas, temaId);
-            mensaje = `Tu solicitud de acceso al tema "${tema?.titulo || 'Tema'}" en la clase "${clase?.titulo || 'Clase'}" ha sido rechazada`;
+            if (!tema) {
+                mostrarToast('El tema ya no existe', 'error');
+                return;
+            }
+            mensaje = `Tu solicitud de acceso al tema "${tema.titulo}" en la clase "${clase.titulo}" ha sido rechazada`;
         } else {
-            mensaje = `Tu solicitud de acceso a la clase "${clase?.titulo || 'Clase'}" ha sido rechazada`;
+            mensaje = `Tu solicitud de acceso a la clase "${clase.titulo}" ha sido rechazada`;
         }
 
         await db.collection('notificaciones').add({
@@ -1967,7 +1992,6 @@ document.addEventListener('focusin', (event) => {
     }, 400);
 });
 
-// 🔧 PASO 3 - Fix 7: actualizar aria-label del botón 👁️
 document.getElementById('toggle-password').addEventListener('click', function() {
     const passInput = document.getElementById('password');
     const type = passInput.getAttribute('type') === 'password' ? 'text' : 'password';
@@ -2007,7 +2031,6 @@ document.getElementById('auth-form').addEventListener('submit', async (e) => {
     }
 });
 
-// 🔧 PASO 3 - Fix 8: cambiar autocomplete dinámicamente
 document.getElementById('switch-auth').addEventListener('click', (e) => {
     e.preventDefault();
     modoRegistro = !modoRegistro;
@@ -2020,7 +2043,6 @@ document.getElementById('switch-auth').addEventListener('click', (e) => {
     limpiarCampos();
 });
 
-// 🔧 PASO 3 - Fix 5: botón "¿Olvidaste tu contraseña?"
 document.getElementById('btn-forgot-password').addEventListener('click', async () => {
     const emailInput = document.getElementById('email');
     const email = emailInput.value.trim();
@@ -2061,7 +2083,6 @@ function configurarDeteccionAutofill() {
 // ------------------------------------------------
 // EVENTOS DE NAVEGACIÓN Y PERSISTENCIA
 // ------------------------------------------------
-// 🔧 PASO 3 - Fix 6: actualizar aria-expanded del sidebar
 hamburgerBtn.addEventListener('click', () => {
     sidebar.classList.toggle('open');
     sidebarOverlay.classList.toggle('active');
@@ -2111,18 +2132,12 @@ document.getElementById('search-input').addEventListener('input', (e) => {
     filtrarClases();
 });
 
-// 🔧 PASO 3 - Fix 9: cerrar modales con Escape
 document.addEventListener('keydown', (e) => {
     if (e.key !== 'Escape') return;
-
     const modalesAbiertos = document.querySelectorAll('.modal-overlay.active');
     if (modalesAbiertos.length === 0) return;
-
     const ultimoModal = modalesAbiertos[modalesAbiertos.length - 1];
-
-    // No cerrar el modal de confirmación si hay un callback pendiente
     if (ultimoModal.id === 'modal-confirm' && confirmCallback) return;
-
     ultimoModal.classList.remove('active');
 });
 
@@ -2131,10 +2146,11 @@ document.addEventListener('keydown', (e) => {
 // ------------------------------------------------
 configurarDeteccionAutofill();
 suscribirDatosClub();
-console.log('✅ Club Morphy – Mejoras de UX aplicadas (Paso 3 completado)');
+console.log('✅ Club Morphy – Paso 3 + fixes extra completado');
 
 // Exponer funciones globales
 window.mostrarLogin = mostrarLogin;
+window.cambiarCuenta = cambiarCuenta; // 🔧 FIX EXTRA: expuesta para el onclick inline
 window.confirmarCerrarSesion = confirmarCerrarSesion;
 window.cerrarSesionConfirmada = cerrarSesionConfirmada;
 window.agregarClase = agregarClase;
