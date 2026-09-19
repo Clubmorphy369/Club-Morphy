@@ -147,7 +147,11 @@
         <div class="modal-content">
             <h3>Solicitudes pendientes</h3>
             <div id="solicitudes-lista" class="solicitudes-list"></div>
-            <button class="btn" type="button" onclick="document.getElementById('modal-solicitudes-admin').classList.remove('active')">Cerrar</button>
+            <!-- ⭐ PASO 5: botón Gestionar Alumnos -->
+            <div class="modal-buttons" style="margin-top:15px;">
+                <button class="btn btn-azul" type="button" onclick="abrirGestionAlumnos()">🎓 Gestionar alumnos</button>
+                <button class="btn" type="button" onclick="document.getElementById('modal-solicitudes-admin').classList.remove('active')">Cerrar</button>
+            </div>
         </div>
     </div>
 
