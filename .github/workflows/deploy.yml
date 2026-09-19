@@ -59,7 +59,8 @@ jobs:
           npx firebase-tools@13 deploy \
             --only hosting,firestore:rules,firestore:indexes \
             --project club-morphy-6aa5c \
-            --non-interactive
+            --non-interactive \
+            --force
 
       - name: Notify success
         if: success()
