@@ -21,6 +21,7 @@ db.enablePersistence({ synchronizeTabs: true }).catch(err => console.warn('Offli
 
 const ADMIN_UID = 'FVnX1NOVgvavWnwnad75zBsRpBU2';
 let currentUser = null;
+let userProfile = null;
 let curso = { clases: [] };
 let temaAbiertoGlobal = null;
 let claseActivaId = null;
@@ -41,6 +42,7 @@ let unsubscribeClub = null;
 let unsubscribeCurso = null;
 let migracionRealizada = false;
 let terminoBusqueda = '';
+let modalCompletarPerfilYaMostrado = false;
 
 // ------------------------------------------------
 // VARIABLES GLOBALES Y REFERENCIAS A DOM
@@ -101,7 +103,6 @@ function escapeOnclick(str) {
               .replace(/"/g, '&quot;');
 }
 
-// Sanitización para el editor de texto enriquecido
 function sanitizeHtml(html) {
     if (!html) return '';
     return String(html)
@@ -171,6 +172,25 @@ function esUrlYouTubeValida(url) {
     return extraerYouTubeID(url) !== null;
 }
 
+// ⭐ FASE 3: Obtener el nombre a mostrar (fallback al email)
+function getNombreMostrar(user = currentUser, perfil = userProfile) {
+    if (!user) return '';
+    if (perfil && perfil.nombre && perfil.apellidos) {
+        return `${perfil.nombre} ${perfil.apellidos}`;
+    }
+    if (perfil && perfil.nombre) {
+        return perfil.nombre;
+    }
+    return user.email;
+}
+
+// ⭐ FASE 3: Obtener inicial para el avatar
+function getInicial(user = currentUser, perfil = userProfile) {
+    if (perfil && perfil.nombre) return perfil.nombre.charAt(0).toUpperCase();
+    if (user && user.email) return user.email.charAt(0).toUpperCase();
+    return '?';
+}
+
 // ------------------------------------------------
 // TOAST Y CONFIRMACIONES
 // ------------------------------------------------
@@ -208,7 +228,6 @@ async function registrarUsuarioEnColeccion(user, nombre = null, apellidos = null
     const doc = await userRef.get();
 
     if (!doc.exists) {
-        // ⭐ Usuario nuevo: guardar con nombre y apellidos
         const data = {
             uid: user.uid,
             email: user.email,
@@ -220,12 +239,10 @@ async function registrarUsuarioEnColeccion(user, nombre = null, apellidos = null
         };
         await userRef.set(data);
     } else {
-        // ⭐ Usuario existente: actualizar email si cambió
         const updates = {};
         if (doc.data().email !== user.email) {
             updates.email = user.email;
         }
-        // Si el usuario existente no tiene nombre y ahora sí lo trae, actualizar
         if (nombre && apellidos && !doc.data().nombre) {
             updates.nombre = nombre;
             updates.apellidos = apellidos;
@@ -236,6 +253,122 @@ async function registrarUsuarioEnColeccion(user, nombre = null, apellidos = null
         }
     }
 }
+
+// ⭐ FASE 3: Cargar el perfil del usuario desde Firestore
+async function cargarPerfilUsuario(uid) {
+    try {
+        const doc = await db.collection('usuarios').doc(uid).get();
+        if (doc.exists) {
+            return doc.data();
+        }
+        return null;
+    } catch (error) {
+        console.error('Error al cargar perfil:', error);
+        return null;
+    }
+}
+
+// ⭐ FASE 3: Actualizar UI del header con el nombre
+function actualizarHeaderUsuario() {
+    const nombreMostrar = getNombreMostrar();
+    userInfo.textContent = `👤 ${nombreMostrar}`;
+    userInfo.title = currentUser ? currentUser.email : '';
+}
+
+// ⭐ FASE 3: Modal "Completar perfil"
+function mostrarCompletarPerfil() {
+    if (modalCompletarPerfilYaMostrado) return;
+    modalCompletarPerfilYaMostrado = true;
+
+    // Eliminar modal previo si existe
+    document.getElementById('modal-completar-perfil')?.remove();
+
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay';
+    modal.id = 'modal-completar-perfil';
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-modal', 'true');
+    modal.innerHTML = `
+        <div class="modal-content" style="max-width: 450px;">
+            <div style="text-align:center; margin-bottom:16px;">
+                <div style="font-size:3rem;">👋</div>
+                <h3 style="color:var(--acento); margin-top:8px;">¡Bienvenido a Club Morphy!</h3>
+                <p style="font-size:0.9rem; color:var(--texto-suave); margin-top:8px;">
+                    Antes de continuar, cuéntanos cómo te llamas.
+                </p>
+            </div>
+
+            <label for="perfil-nombre">Nombre(s)</label>
+            <input id="perfil-nombre" type="text"
+                   placeholder="Ej: Juan Carlos"
+                   autocomplete="given-name"
+                   value="${escapeAttr(userProfile?.nombre || '')}">
+
+            <label for="perfil-apellidos">Apellidos</label>
+            <input id="perfil-apellidos" type="text"
+                   placeholder="Ej: Pérez García"
+                   autocomplete="family-name"
+                   value="${escapeAttr(userProfile?.apellidos || '')}">
+
+            <div class="modal-buttons" style="margin-top:20px;">
+                <button class="btn" type="button" onclick="cerrarCompletarPerfil()">Más tarde</button>
+                <button class="btn btn-azul" type="button" onclick="guardarPerfilUsuario()">Guardar y continuar</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+
+    setTimeout(() => {
+        document.getElementById('perfil-nombre')?.focus();
+    }, 100);
+}
+
+function cerrarCompletarPerfil() {
+    document.getElementById('modal-completar-perfil')?.remove();
+    // Permitir que se vuelva a mostrar en la próxima sesión
+    modalCompletarPerfilYaMostrado = false;
+}
+
+async function guardarPerfilUsuario() {
+    if (!currentUser) return;
+
+    const nombre = document.getElementById('perfil-nombre').value.trim();
+    const apellidos = document.getElementById('perfil-apellidos').value.trim();
+
+    if (!nombre || !apellidos) {
+        mostrarToast('Por favor escribe tu nombre y apellidos', 'error');
+        return;
+    }
+
+    const btnGuardar = document.querySelector('#modal-completar-perfil .btn-azul');
+    if (btnGuardar) {
+        btnGuardar.disabled = true;
+        btnGuardar.innerHTML = '<span class="loader"></span> Guardando...';
+    }
+
+    try {
+        await db.collection('usuarios').doc(currentUser.uid).update({
+            nombre: nombre,
+            apellidos: apellidos,
+            perfilCompletado: true
+        });
+
+        userProfile = { ...userProfile, nombre, apellidos, perfilCompletado: true };
+        actualizarHeaderUsuario();
+        cerrarCompletarPerfil();
+        mostrarToast(`¡Gracias, ${nombre}!`, 'success');
+    } catch (error) {
+        console.error('Error al guardar perfil:', error);
+        mostrarToast('Error al guardar. Intenta de nuevo.', 'error');
+        if (btnGuardar) {
+            btnGuardar.disabled = false;
+            btnGuardar.textContent = 'Guardar y continuar';
+        }
+    }
+}
+window.cerrarCompletarPerfil = cerrarCompletarPerfil;
+window.guardarPerfilUsuario = guardarPerfilUsuario;
+window.mostrarCompletarPerfil = mostrarCompletarPerfil;
 
 async function obtenerListaUsuarios() {
     try {
@@ -261,12 +394,16 @@ async function obtenerListaUsuarios() {
 
 function mostrarLogin() {
     if (currentUser) {
+        const nombreMostrar = getNombreMostrar();
         document.getElementById('modal-title').textContent = 'Tu cuenta';
         document.getElementById('current-session').style.display = 'block';
         document.getElementById('auth-form').style.display = 'none';
         document.getElementById('extra-controls').style.display = 'none';
-        document.getElementById('session-email').textContent = currentUser.email;
-        document.getElementById('session-avatar').textContent = currentUser.email.charAt(0).toUpperCase();
+        document.getElementById('session-email').innerHTML = `
+            <strong style="font-size:1.05rem;">${escapeHtml(nombreMostrar)}</strong><br>
+            <span style="font-size:0.8rem; color:var(--texto-suave);">${escapeHtml(currentUser.email)}</span>
+        `;
+        document.getElementById('session-avatar').textContent = getInicial();
     } else {
         document.getElementById('modal-title').textContent = 'Iniciar sesión';
         document.getElementById('current-session').style.display = 'none';
@@ -275,7 +412,6 @@ function mostrarLogin() {
         document.getElementById('btn-auth').textContent = 'Ingresar';
         modoRegistro = false;
 
-        // ⭐ Ocultar campos de nombre (modo login)
         const registerFields = document.getElementById('register-fields');
         if (registerFields) {
             registerFields.style.display = 'none';
@@ -290,7 +426,6 @@ function limpiarCampos() {
     document.getElementById('email').value = '';
     document.getElementById('password').value = '';
 
-    // ⭐ Limpiar campos nuevos si existen
     const nombreInput = document.getElementById('nombre');
     const apellidosInput = document.getElementById('apellidos');
     if (nombreInput) nombreInput.value = '';
@@ -974,7 +1109,7 @@ async function agregarSubtema(claseId, temaPadreId) {
 }
 
 // ------------------------------------------------
-// ADMIN: ELIMINAR TEMA (RECURSIVO) — CON CONFIRMACIÓN
+// ADMIN: ELIMINAR TEMA
 // ------------------------------------------------
 async function eliminarTema(claseId, temaId) {
     if (!currentUser?.esAdmin) return;
@@ -1281,6 +1416,7 @@ async function solicitarAcceso(claseId) {
             claseTitulo: clase.titulo,
             uid: currentUser.uid,
             email: currentUser.email,
+            nombreAlumno: getNombreMostrar(),
             estado: 'pendiente',
             tipo: 'clase',
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -1288,7 +1424,7 @@ async function solicitarAcceso(claseId) {
 
         await db.collection('notificaciones').add({
             paraUid: ADMIN_UID,
-            mensaje: `${currentUser.email} solicita acceso a "${clase.titulo}"`,
+            mensaje: `${getNombreMostrar()} solicita acceso a "${clase.titulo}"`,
             leida: false,
             tipo: 'solicitud_clase',
             claseId: claseId,
@@ -1329,6 +1465,7 @@ async function solicitarAccesoTema(claseId, temaId) {
         await db.collection('solicitudesAcceso').add({
             uid: currentUser.uid,
             email: currentUser.email,
+            nombreAlumno: getNombreMostrar(),
             claseId: claseId,
             claseTitulo: clase.titulo,
             temaId: temaId,
@@ -1340,7 +1477,7 @@ async function solicitarAccesoTema(claseId, temaId) {
 
         await db.collection('notificaciones').add({
             paraUid: ADMIN_UID,
-            mensaje: `${currentUser.email} solicita acceso al tema "${tema.titulo}" (Clase: ${clase.titulo})`,
+            mensaje: `${getNombreMostrar()} solicita acceso al tema "${tema.titulo}" (Clase: ${clase.titulo})`,
             leida: false,
             tipo: 'solicitud_tema',
             claseId: claseId,
@@ -1694,10 +1831,12 @@ function abrirSolicitudesAdmin() {
     if (solicitudesPendientes.length === 0) {
         listaDiv.innerHTML = '<div class="no-users-msg">📭 No hay solicitudes pendientes.</div>';
     } else {
-        listaDiv.innerHTML = solicitudesPendientes.map(s => `
+        listaDiv.innerHTML = solicitudesPendientes.map(s => {
+            const nombreAMostrar = s.nombreAlumno || s.email;
+            return `
             <div class="solicitud-item" style="flex-direction:column; align-items:stretch; gap:10px;">
                 <div>
-                    <strong>${escapeHtml(s.email)}</strong><br>
+                    <strong>${escapeHtml(nombreAMostrar)}</strong><br>
                     <span style="font-size:0.85rem; color:var(--texto-suave);">Clase: ${escapeHtml(s.claseTitulo || 'Desconocida')}</span>
                     ${s.temaTitulo ? `<br><span style="font-size:0.85rem; color:var(--texto-suave);">Tema: ${escapeHtml(s.temaTitulo)}</span>` : ''}
                     <br><span class="estado-pendiente">⏳ Pendiente</span>
@@ -1718,7 +1857,8 @@ function abrirSolicitudesAdmin() {
                     </button>
                 </div>
             </div>
-        `).join('');
+        `;
+        }).join('');
     }
     modalSolicitudesAdmin.classList.add('active');
 }
@@ -2508,9 +2648,16 @@ auth.onAuthStateChanged(async (user) => {
     if (user) {
         currentUser = { uid: user.uid, email: user.email, esAdmin: user.uid === ADMIN_UID };
         await registrarUsuarioEnColeccion(user);
+
+        // ⭐ FASE 3: Cargar el perfil del usuario
+        userProfile = await cargarPerfilUsuario(user.uid);
+
         btnLogin.style.display = 'none';
         btnLogout.style.display = 'inline-flex';
-        userInfo.textContent = `👤 ${user.email}`;
+
+        // ⭐ FASE 3: Mostrar nombre en lugar de email
+        actualizarHeaderUsuario();
+
         if (currentUser.esAdmin) {
             btnAdmin.style.display = 'inline-flex';
             modoAdmin = true;
@@ -2520,6 +2667,7 @@ auth.onAuthStateChanged(async (user) => {
             modoAdmin = false;
             document.body.classList.remove('modo-admin');
         }
+
         suscribirAccesosEspeciales();
         suscribirAccesosTema();
         suscribirNotificaciones();
@@ -2547,8 +2695,20 @@ auth.onAuthStateChanged(async (user) => {
             }, 100);
         }
         actualizarBotonDatosClub();
+
+        // ⭐ FASE 3: Mostrar modal de completar perfil si falta el nombre
+        // (No aplica al admin)
+        if (!currentUser.esAdmin && (!userProfile || !userProfile.nombre || !userProfile.apellidos)) {
+            setTimeout(() => mostrarCompletarPerfil(), 1500);
+        }
     } else {
         currentUser = null;
+        userProfile = null;
+        modalCompletarPerfilYaMostrado = false;
+
+        // Eliminar modal de completar perfil si estaba abierto
+        document.getElementById('modal-completar-perfil')?.remove();
+
         btnLogin.style.display = 'inline-flex';
         btnLogout.style.display = 'none';
         btnAdmin.style.display = 'none';
@@ -2621,7 +2781,6 @@ document.getElementById('auth-form').addEventListener('submit', async (e) => {
 
     if (!email || !pass) return mostrarToast('Falta tu correo o contraseña', 'error');
 
-    // ⭐ Validar nombre y apellidos solo en modo registro
     let nombre = '';
     let apellidos = '';
     if (modoRegistro) {
@@ -2641,6 +2800,11 @@ document.getElementById('auth-form').addEventListener('submit', async (e) => {
         if (modoRegistro) {
             const credencial = await auth.createUserWithEmailAndPassword(email, pass);
             await registrarUsuarioEnColeccion(credencial.user, nombre, apellidos);
+
+            // ⭐ FASE 3: Cargar el perfil recién creado
+            userProfile = await cargarPerfilUsuario(credencial.user.uid);
+            actualizarHeaderUsuario();
+
             mostrarToast(`¡Cuenta creada, ${nombre}! Ya tienes acceso.`, 'success');
             modoRegistro = false;
             document.getElementById('modal-title').textContent = 'Iniciar sesión';
@@ -2673,7 +2837,6 @@ document.getElementById('switch-auth').addEventListener('click', (e) => {
     const passInput = document.getElementById('password');
     passInput.setAttribute('autocomplete', modoRegistro ? 'new-password' : 'current-password');
 
-    // ⭐ Mostrar/ocultar campos de nombre según el modo
     const registerFields = document.getElementById('register-fields');
     if (registerFields) {
         registerFields.style.display = modoRegistro ? 'block' : 'none';
@@ -2785,7 +2948,7 @@ document.addEventListener('keydown', (e) => {
 // ------------------------------------------------
 configurarDeteccionAutofill();
 suscribirDatosClub();
-console.log('✅ Club Morphy – Fase 2 completada (nombre y apellidos)');
+console.log('✅ Club Morphy – Fase 3 completada (nombre en header + completar perfil)');
 
 // Exponer funciones globales
 window.mostrarLogin = mostrarLogin;
@@ -2848,6 +3011,11 @@ window.mostrarDonacion = mostrarDonacion;
 window.textEditorCmd = textEditorCmd;
 window.textEditorHr = textEditorHr;
 window.textEditorSave = textEditorSave;
+
+// Fase 3
+window.mostrarCompletarPerfil = mostrarCompletarPerfil;
+window.cerrarCompletarPerfil = cerrarCompletarPerfil;
+window.guardarPerfilUsuario = guardarPerfilUsuario;
 
 // ===== REGISTRO DEL SERVICE WORKER =====
 if ('serviceWorker' in navigator) {
