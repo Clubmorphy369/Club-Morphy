@@ -54,6 +54,7 @@ const modalSolicitudesAdmin = document.getElementById('modal-solicitudes-admin')
 const modalNotificaciones = document.getElementById('modal-notificaciones');
 const modalDatosClub = document.getElementById('modal-datos-club');
 const modalConfigClub = document.getElementById('modal-config-club');
+const modalDonacion = document.getElementById('modal-donacion');
 const btnLogin = document.getElementById('btn-login');
 const btnLogout = document.getElementById('btn-logout');
 const btnAdmin = document.getElementById('btn-admin');
@@ -427,13 +428,114 @@ function actualizarLogoClub() {
 
 function actualizarBotonDatosClub() {
     const btn = document.getElementById('btn-datos-club');
+    const btnDonar = document.getElementById('btn-donar');
+
     if (!currentUser) {
         btn.style.display = 'none';
+        if (btnDonar) btnDonar.style.display = 'none';
         return;
     }
+
     const tieneDatos = datosClub.telefono || datosClub.direccion || datosClub.emailContacto || datosClub.horarios || datosClub.web;
     btn.style.display = tieneDatos ? 'inline-flex' : 'none';
+
+    // ⭐ Donación: mostrar solo si hay datos configurados
+    if (btnDonar) {
+        const tieneDonacion = datosClub.donacionTitular || datosClub.donacionBanco ||
+                              datosClub.donacionTarjeta || datosClub.donacionCuenta ||
+                              datosClub.donacionClabe;
+        btnDonar.style.display = tieneDonacion ? 'inline-flex' : 'none';
+    }
 }
+
+// ------------------------------------------------
+// ⭐ DONACIÓN VOLUNTARIA
+// ------------------------------------------------
+async function copiarAlPortapapeles(texto, btn) {
+    const originalText = btn.textContent;
+    try {
+        await navigator.clipboard.writeText(texto);
+        btn.textContent = '✓';
+        btn.style.color = 'var(--exito)';
+        setTimeout(() => {
+            btn.textContent = originalText;
+            btn.style.color = '';
+        }, 1500);
+        mostrarToast('📋 Copiado al portapapeles', 'success');
+    } catch (err) {
+        // Fallback para navegadores viejos o contextos sin HTTPS
+        try {
+            const textarea = document.createElement('textarea');
+            textarea.value = texto;
+            textarea.style.position = 'fixed';
+            textarea.style.opacity = '0';
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+            btn.textContent = '✓';
+            setTimeout(() => { btn.textContent = originalText; }, 1500);
+            mostrarToast('📋 Copiado al portapapeles', 'success');
+        } catch (e) {
+            mostrarToast('No se pudo copiar. Selecciona el texto manualmente.', 'error');
+        }
+    }
+}
+
+function mostrarDonacion() {
+    const contenedor = document.getElementById('donacion-contenido');
+    const d = datosClub;
+
+    const tieneAlgo = d.donacionTitular || d.donacionBanco ||
+                      d.donacionTarjeta || d.donacionCuenta ||
+                      d.donacionClabe || d.donacionNota;
+
+    if (!tieneAlgo) {
+        contenedor.innerHTML = '<p style="text-align:center; color:var(--texto-suave);">Aún no hay datos de donación configurados.</p>';
+        document.getElementById('modal-donacion').classList.add('active');
+        return;
+    }
+
+    let html = '';
+    let contador = 0;
+
+    const makeCard = (icon, label, value) => {
+        if (!value || !value.trim()) return '';
+        contador++;
+        const id = `donacion-campo-${contador}`;
+        return `
+            <div class="donacion-item">
+                <div class="donacion-label">${icon} ${escapeHtml(label)}</div>
+                <div class="donacion-value">
+                    <span id="${id}" class="donacion-texto">${escapeHtml(value.trim())}</span>
+                    <button class="btn-copy" type="button" data-target="${id}" title="Copiar" aria-label="Copiar ${escapeHtml(label)}">📋</button>
+                </div>
+            </div>
+        `;
+    };
+
+    html += makeCard('👤', 'Titular', d.donacionTitular);
+    html += makeCard('🏦', 'Banco', d.donacionBanco);
+    html += makeCard('💳', 'Tarjeta de débito', d.donacionTarjeta);
+    html += makeCard('📄', 'Número de cuenta', d.donacionCuenta);
+    html += makeCard('🔢', 'CLABE interbancaria', d.donacionClabe);
+
+    if (d.donacionNota && d.donacionNota.trim()) {
+        html += `<div class="nota-debajo" style="margin-top:15px; text-align:center;">${escapeHtml(d.donacionNota.trim())}</div>`;
+    }
+
+    contenedor.innerHTML = html;
+
+    contenedor.querySelectorAll('.btn-copy').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const target = document.getElementById(btn.dataset.target);
+            if (target) copiarAlPortapapeles(target.textContent, btn);
+        });
+    });
+
+    document.getElementById('modal-donacion').classList.add('active');
+}
+window.mostrarDonacion = mostrarDonacion;
 
 // ------------------------------------------------
 // GESTIÓN DEL CURSO (CRUD) – escucha en tiempo real
@@ -458,7 +560,6 @@ function iniciarEscuchaCurso() {
             if (!c.temas) c.temas = [];
         });
 
-        // Migración única (solo admin)
         if (currentUser && currentUser.esAdmin && !migracionRealizada) {
             migracionRealizada = true;
             let migrado = false;
@@ -1167,10 +1268,9 @@ async function rechazarSolicitud(solicitudId, uid, claseId, tipo = 'clase', tema
 }
 
 // =============================================================
-// ⭐ PASO 5 — GESTIÓN MASIVA DE ACCESOS
+// ⭐ GESTIÓN MASIVA DE ACCESOS (Aprobar TODO / Revocar TODO)
 // =============================================================
 
-// Helper: ejecuta operaciones en lotes de 400 (límite Firestore = 500)
 async function ejecutarEnLotes(operaciones) {
     const CHUNK = 400;
     for (let i = 0; i < operaciones.length; i += CHUNK) {
@@ -1180,7 +1280,6 @@ async function ejecutarEnLotes(operaciones) {
     }
 }
 
-// ⭐ Aprobar TODO el curso para un alumno
 async function aprobarTodoElCurso(uid, email) {
     if (!currentUser?.esAdmin) return;
 
@@ -1191,7 +1290,6 @@ async function aprobarTodoElCurso(uid, email) {
             try {
                 const operaciones = [];
 
-                // 1. Liberar todas las clases publicadas
                 for (const clase of curso.clases) {
                     if (!clase.publicada) continue;
                     const uidsActual = accesosEspeciales[clase.id] || [];
@@ -1207,7 +1305,6 @@ async function aprobarTodoElCurso(uid, email) {
                     }
                 }
 
-                // 2. Liberar todos los temas bloqueados (recursivo)
                 function recorrerTemas(temas) {
                     temas.forEach(t => {
                         if (t.bloqueado && t.accesosTemaId) {
@@ -1230,7 +1327,6 @@ async function aprobarTodoElCurso(uid, email) {
                     if (c.publicada) recorrerTemas(c.temas || []);
                 });
 
-                // 3. Marcar todas las solicitudes pendientes del alumno como aprobadas
                 const solicitudesDelAlumno = await db.collection('solicitudesAcceso')
                     .where('uid', '==', uid)
                     .where('estado', '==', 'pendiente')
@@ -1241,7 +1337,6 @@ async function aprobarTodoElCurso(uid, email) {
                     );
                 });
 
-                // 4. Notificación al alumno
                 const notifRef = db.collection('notificaciones').doc();
                 operaciones.push(batch =>
                     batch.set(notifRef, {
@@ -1270,7 +1365,6 @@ async function aprobarTodoElCurso(uid, email) {
 }
 window.aprobarTodoElCurso = aprobarTodoElCurso;
 
-// ⭐ Revocar TODO el curso de un alumno
 async function revocarTodoElCurso(uid, email) {
     if (!currentUser?.esAdmin) return;
 
@@ -1281,7 +1375,6 @@ async function revocarTodoElCurso(uid, email) {
             try {
                 const operaciones = [];
 
-                // 1. Quitar de todos los accesosEspeciales
                 for (const clase of curso.clases) {
                     const uidsActual = accesosEspeciales[clase.id] || [];
                     if (uidsActual.includes(uid)) {
@@ -1296,7 +1389,6 @@ async function revocarTodoElCurso(uid, email) {
                     }
                 }
 
-                // 2. Quitar de todos los accesosTema (recursivo)
                 function recorrerTemas(temas) {
                     temas.forEach(t => {
                         if (t.accesosTemaId) {
@@ -1317,7 +1409,6 @@ async function revocarTodoElCurso(uid, email) {
                 }
                 curso.clases.forEach(c => recorrerTemas(c.temas || []));
 
-                // 3. Notificación al alumno
                 const notifRef = db.collection('notificaciones').doc();
                 operaciones.push(batch =>
                     batch.set(notifRef, {
@@ -1346,11 +1437,9 @@ async function revocarTodoElCurso(uid, email) {
 }
 window.revocarTodoElCurso = revocarTodoElCurso;
 
-// ⭐ Panel de gestión de todos los alumnos
 async function abrirGestionAlumnos() {
     if (!currentUser?.esAdmin) return;
 
-    // Crear el modal dinámicamente si no existe
     let modal = document.getElementById('modal-gestion-alumnos');
     if (!modal) {
         modal = document.createElement('div');
@@ -1402,7 +1491,6 @@ async function abrirGestionAlumnos() {
 }
 window.abrirGestionAlumnos = abrirGestionAlumnos;
 
-// ⭐ MODIFICADO: Modal de solicitudes con botón "🎓 Aprobar TODO"
 function abrirSolicitudesAdmin() {
     if (!currentUser?.esAdmin) return;
     const listaDiv = document.getElementById('solicitudes-lista');
@@ -1527,6 +1615,14 @@ function abrirConfigClub() {
     document.getElementById('config-email-contacto').value = datosClub.emailContacto || '';
     document.getElementById('config-horarios').value = datosClub.horarios || '';
     document.getElementById('config-web').value = datosClub.web || '';
+
+    document.getElementById('config-donacion-titular').value = datosClub.donacionTitular || '';
+    document.getElementById('config-donacion-banco').value = datosClub.donacionBanco || '';
+    document.getElementById('config-donacion-tarjeta').value = datosClub.donacionTarjeta || '';
+    document.getElementById('config-donacion-cuenta').value = datosClub.donacionCuenta || '';
+    document.getElementById('config-donacion-clabe').value = datosClub.donacionClabe || '';
+    document.getElementById('config-donacion-nota').value = datosClub.donacionNota || '';
+
     modalConfigClub.classList.add('active');
 }
 
@@ -1539,6 +1635,13 @@ async function guardarConfigClub() {
         emailContacto: document.getElementById('config-email-contacto').value.trim(),
         horarios: document.getElementById('config-horarios').value.trim(),
         web: document.getElementById('config-web').value.trim(),
+
+        donacionTitular: document.getElementById('config-donacion-titular').value.trim(),
+        donacionBanco: document.getElementById('config-donacion-banco').value.trim(),
+        donacionTarjeta: document.getElementById('config-donacion-tarjeta').value.trim(),
+        donacionCuenta: document.getElementById('config-donacion-cuenta').value.trim(),
+        donacionClabe: document.getElementById('config-donacion-clabe').value.trim(),
+        donacionNota: document.getElementById('config-donacion-nota').value.trim(),
     };
     try {
         await db.collection('config').doc('club').set(nuevosDatos, { merge: true });
@@ -2211,6 +2314,8 @@ auth.onAuthStateChanged(async (user) => {
         document.getElementById('btn-notificaciones').style.display = 'none';
         document.getElementById('btn-solicitudes-admin').style.display = 'none';
         document.getElementById('btn-datos-club').style.display = 'none';
+        const btnDonar = document.getElementById('btn-donar');
+        if (btnDonar) btnDonar.style.display = 'none';
         document.getElementById('search-input').style.display = 'none';
         document.getElementById('search-input').value = '';
         terminoBusqueda = '';
@@ -2390,7 +2495,7 @@ document.addEventListener('keydown', (e) => {
 // ------------------------------------------------
 configurarDeteccionAutofill();
 suscribirDatosClub();
-console.log('✅ Club Morphy – Paso 5 completado (Aprobar TODO / Revocar TODO)');
+console.log('✅ Club Morphy – Donación + Aprobar TODO + Revocar TODO listos');
 
 // Exponer funciones globales
 window.mostrarLogin = mostrarLogin;
@@ -2441,10 +2546,13 @@ window.gestionarAccesosTema = gestionarAccesosTema;
 window.abrirPanelProgreso = abrirPanelProgreso;
 window.closeConfirm = closeConfirm;
 
-// ⭐ PASO 5: exports de las funciones nuevas
+// Gestión masiva
 window.aprobarTodoElCurso = aprobarTodoElCurso;
 window.revocarTodoElCurso = revocarTodoElCurso;
 window.abrirGestionAlumnos = abrirGestionAlumnos;
+
+// Donación
+window.mostrarDonacion = mostrarDonacion;
 
 // ===== REGISTRO DEL SERVICE WORKER =====
 if ('serviceWorker' in navigator) {
