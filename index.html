@@ -32,6 +32,7 @@
         <div class="header-right">
             <span id="user-info" style="font-size:0.9rem;"></span>
             <button class="btn" id="btn-datos-club" type="button" style="display:none;" onclick="mostrarDatosClub()">📋 <span class="btn-label">Contacto</span></button>
+            <button class="btn" id="btn-donar" type="button" style="display:none;" onclick="mostrarDonacion()">💝 <span class="btn-label">Donar</span></button>
             <button class="btn" id="btn-notificaciones" type="button" style="display:none; position:relative;" onclick="abrirNotificaciones()">
                 🔔 <span class="btn-label">Notif.</span> <span id="notif-badge" class="notification-badge" style="display:none;">0</span>
             </button>
@@ -92,7 +93,6 @@
 
                 <div id="autofill-warning" class="autofill-warning">⚠️ Parece que se rellenó automáticamente</div>
 
-                <!-- Botón olvidé mi contraseña -->
                 <div style="text-align:center; margin: 10px 0 4px;">
                     <button type="button" id="btn-forgot-password"
                             style="background:none; border:none; color:var(--acento-oscuro);
@@ -147,7 +147,6 @@
         <div class="modal-content">
             <h3>Solicitudes pendientes</h3>
             <div id="solicitudes-lista" class="solicitudes-list"></div>
-            <!-- ⭐ PASO 5: botón Gestionar Alumnos -->
             <div class="modal-buttons" style="margin-top:15px;">
                 <button class="btn btn-azul" type="button" onclick="abrirGestionAlumnos()">🎓 Gestionar alumnos</button>
                 <button class="btn" type="button" onclick="document.getElementById('modal-solicitudes-admin').classList.remove('active')">Cerrar</button>
@@ -174,6 +173,18 @@
         </div>
     </div>
 
+    <!-- ⭐ Modal de donación voluntaria -->
+    <div class="modal-overlay" id="modal-donacion" role="dialog" aria-modal="true" aria-labelledby="donacion-title">
+        <div class="modal-content">
+            <h3 id="donacion-title">💝 Donación Voluntaria</h3>
+            <p style="text-align:center; color:var(--texto-suave); font-size:0.9rem; margin-bottom:18px;">
+                Tu apoyo ayuda a mantener el curso gratuito. ¡Gracias! ♟️
+            </p>
+            <div id="donacion-contenido"></div>
+            <button class="btn" type="button" onclick="document.getElementById('modal-donacion').classList.remove('active')" style="margin-top:15px;">Cerrar</button>
+        </div>
+    </div>
+
     <!-- Modal configuración del club (admin) -->
     <div class="modal-overlay" id="modal-config-club" role="dialog" aria-modal="true">
         <div class="modal-content">
@@ -196,6 +207,33 @@
 
             <label for="config-web">Web</label>
             <input id="config-web" name="config-web" type="url" autocomplete="url">
+
+            <!-- ⭐ Sección de donación -->
+            <hr style="margin: 20px 0; border: none; border-top: 1px dashed var(--borde);">
+            <p style="color:var(--acento); font-weight:bold; margin-bottom:12px; font-family:'Playfair Display',serif; font-size:1.1rem;">
+                💝 Datos para donaciones
+            </p>
+            <p style="font-size:0.8rem; color:var(--texto-suave); margin-bottom:12px;">
+                Déjalos vacíos si no quieres mostrar el botón de donación.
+            </p>
+
+            <label for="config-donacion-titular">Titular</label>
+            <input id="config-donacion-titular" name="config-donacion-titular" type="text" placeholder="Nombre completo">
+
+            <label for="config-donacion-banco">Banco</label>
+            <input id="config-donacion-banco" name="config-donacion-banco" type="text" placeholder="BBVA, Santander, etc.">
+
+            <label for="config-donacion-tarjeta">Tarjeta de débito</label>
+            <input id="config-donacion-tarjeta" name="config-donacion-tarjeta" type="text" inputmode="numeric" placeholder="1234 5678 9012 3456">
+
+            <label for="config-donacion-cuenta">Número de cuenta</label>
+            <input id="config-donacion-cuenta" name="config-donacion-cuenta" type="text" inputmode="numeric" placeholder="Opcional">
+
+            <label for="config-donacion-clabe">CLABE interbancaria</label>
+            <input id="config-donacion-clabe" name="config-donacion-clabe" type="text" inputmode="numeric" placeholder="18 dígitos">
+
+            <label for="config-donacion-nota">Nota adicional (opcional)</label>
+            <input id="config-donacion-nota" name="config-donacion-nota" type="text" placeholder="Ej: Gracias por tu apoyo 🙏">
 
             <div class="modal-buttons">
                 <button class="btn btn-azul" type="button" onclick="guardarConfigClub()">Guardar</button>
