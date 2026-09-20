@@ -70,7 +70,7 @@ let claseActualGestion = null;
 // ------------------------------------------------
 function escapeHtml(str) {
     if (!str) return '';
-    return str.replace(/[&<>"']/g, function(m) {
+    return String(str).replace(/[&<>"']/g, function(m) {
         if (m === '&') return '&amp;';
         if (m === '<') return '&lt;';
         if (m === '>') return '&gt;';
@@ -82,7 +82,7 @@ function escapeHtml(str) {
 
 function escapeAttr(str) {
     if (!str) return '';
-    return str.replace(/["']/g, function(m) {
+    return String(str).replace(/["']/g, function(m) {
         if (m === '"') return '&quot;';
         if (m === "'") return '&#39;';
         return m;
@@ -96,7 +96,7 @@ function esUrlSegura(url) {
 
 function escapeOnclick(str) {
     if (!str) return '';
-    return str.replace(/\\/g, '\\\\')
+    return String(str).replace(/\\/g, '\\\\')
               .replace(/'/g, "\\'")
               .replace(/"/g, '&quot;');
 }
@@ -430,16 +430,15 @@ function actualizarBotonDatosClub() {
     const btn = document.getElementById('btn-datos-club');
     const btnDonar = document.getElementById('btn-donar');
 
+    // Contacto: requiere login
     if (!currentUser) {
         btn.style.display = 'none';
-        if (btnDonar) btnDonar.style.display = 'none';
-        return;
+    } else {
+        const tieneDatos = datosClub.telefono || datosClub.direccion || datosClub.emailContacto || datosClub.horarios || datosClub.web;
+        btn.style.display = tieneDatos ? 'inline-flex' : 'none';
     }
 
-    const tieneDatos = datosClub.telefono || datosClub.direccion || datosClub.emailContacto || datosClub.horarios || datosClub.web;
-    btn.style.display = tieneDatos ? 'inline-flex' : 'none';
-
-    // ⭐ Donación: mostrar solo si hay datos configurados
+    // ⭐ Donación: visible siempre si hay datos (aunque no esté logueado)
     if (btnDonar) {
         const tieneDonacion = datosClub.donacionTitular || datosClub.donacionBanco ||
                               datosClub.donacionTarjeta || datosClub.donacionCuenta ||
@@ -800,30 +799,45 @@ async function agregarSubtema(claseId, temaPadreId) {
 }
 
 // ------------------------------------------------
-// ADMIN: ELIMINAR TEMA (RECURSIVO)
+// ADMIN: ELIMINAR TEMA (RECURSIVO) — CON CONFIRMACIÓN
 // ------------------------------------------------
 async function eliminarTema(claseId, temaId) {
     if (!currentUser?.esAdmin) return;
     const clase = curso.clases.find(c => c.id === claseId);
     if (!clase) return;
+    const tema = buscarTemaRecursivo(clase.temas, temaId);
+    if (!tema) return;
 
-    function eliminarDeLista(temas) {
-        for (let i = 0; i < temas.length; i++) {
-            if (temas[i].id === temaId) {
-                temas.splice(i, 1);
-                return true;
-            }
-            if (temas[i].subtemas) {
-                if (eliminarDeLista(temas[i].subtemas)) return true;
-            }
-        }
-        return false;
+    const numSubtemas = tema.subtemas?.length || 0;
+    const numBloques = tema.bloques?.length || 0;
+    let advertencia = '';
+    if (numSubtemas > 0 || numBloques > 0) {
+        advertencia = ` Contiene ${numSubtemas} subtema${numSubtemas === 1 ? '' : 's'} y ${numBloques} bloque${numBloques === 1 ? '' : 's'}.`;
     }
-    eliminarDeLista(clase.temas);
-    reordenarTemasRecursivo(clase.temas);
-    await guardarCurso();
-    actualizarUI();
-    mostrarToast('Tema eliminado', 'success');
+
+    mostrarConfirmacion(
+        '🗑️ Eliminar tema',
+        `¿Seguro que quieres eliminar "${tema.titulo}"?${advertencia} Esta acción no se puede deshacer.`,
+        async () => {
+            function eliminarDeLista(temas) {
+                for (let i = 0; i < temas.length; i++) {
+                    if (temas[i].id === temaId) {
+                        temas.splice(i, 1);
+                        return true;
+                    }
+                    if (temas[i].subtemas) {
+                        if (eliminarDeLista(temas[i].subtemas)) return true;
+                    }
+                }
+                return false;
+            }
+            eliminarDeLista(clase.temas);
+            reordenarTemasRecursivo(clase.temas);
+            await guardarCurso();
+            actualizarUI();
+            mostrarToast('🗑️ Tema eliminado', 'success');
+        }
+    );
 }
 
 // ------------------------------------------------
@@ -1268,7 +1282,7 @@ async function rechazarSolicitud(solicitudId, uid, claseId, tipo = 'clase', tema
 }
 
 // =============================================================
-// ⭐ GESTIÓN MASIVA DE ACCESOS (Aprobar TODO / Revocar TODO)
+// GESTIÓN MASIVA DE ACCESOS (Aprobar TODO / Revocar TODO)
 // =============================================================
 
 async function ejecutarEnLotes(operaciones) {
@@ -1581,14 +1595,21 @@ async function marcarTodasNotificacionesLeidas() {
     }
 }
 
+// ⭐ ELIMINAR NOTIFICACIÓN — CON CONFIRMACIÓN
 async function eliminarNotificacion(notifId) {
-    try {
-        await db.collection('notificaciones').doc(notifId).delete();
-        mostrarToast('🗑️ Notificación eliminada', 'success');
-    } catch (error) {
-        console.error('❌ Error al eliminar notificación:', error);
-        mostrarToast('❌ Error al eliminar: ' + error.message, 'error');
-    }
+    mostrarConfirmacion(
+        '🗑️ Eliminar notificación',
+        '¿Seguro que quieres eliminar esta notificación?',
+        async () => {
+            try {
+                await db.collection('notificaciones').doc(notifId).delete();
+                mostrarToast('🗑️ Notificación eliminada', 'success');
+            } catch (error) {
+                console.error('❌ Error al eliminar notificación:', error);
+                mostrarToast('❌ Error al eliminar: ' + error.message, 'error');
+            }
+        }
+    );
 }
 
 // ------------------------------------------------
@@ -1673,12 +1694,28 @@ function agregarBloque(claseId, temaId, tipo) {
     guardarCurso().then(() => actualizarUI());
 }
 
+// ⭐ ELIMINAR BLOQUE — CON CONFIRMACIÓN
 function eliminarBloque(claseId, temaId, bloqueId) {
     const clase = curso.clases.find(c => c.id === claseId);
     const tema = buscarTemaRecursivo(clase.temas, temaId);
     if (!tema || !tema.bloques) return;
-    tema.bloques = tema.bloques.filter(b => b.id !== bloqueId);
-    guardarCurso().then(() => actualizarUI());
+    const bloque = tema.bloques.find(b => b.id === bloqueId);
+    if (!bloque) return;
+
+    const preview = bloque.tipo === 'enlace'
+        ? (bloque.label || 'sin etiqueta')
+        : (bloque.contenido || 'vacío');
+    const previewCorto = preview.length > 40 ? preview.substring(0, 40) + '...' : preview;
+
+    mostrarConfirmacion(
+        '🗑️ Eliminar bloque',
+        `¿Seguro que quieres eliminar este bloque de tipo "${bloque.tipo}"? Contenido: "${previewCorto}". Esta acción no se puede deshacer.`,
+        () => {
+            tema.bloques = tema.bloques.filter(b => b.id !== bloqueId);
+            guardarCurso().then(() => actualizarUI());
+            mostrarToast('🗑️ Bloque eliminado', 'success');
+        }
+    );
 }
 
 function moverBloqueArriba(claseId, temaId, bloqueId) {
@@ -1895,7 +1932,7 @@ function cerrarModalAccesos() {
 }
 
 // ------------------------------------------------
-// RENDERIZADO RECURSIVO DE TEMAS
+// RENDERIZADO RECURSIVO DE TEMAS (REDISEÑADO)
 // ------------------------------------------------
 function renderizarTemaRecursivo(tema, claseId, nivel = 0) {
     const accesible = temaAccesible(tema, currentUser);
@@ -1974,46 +2011,73 @@ function renderizarTemaRecursivo(tema, claseId, nivel = 0) {
         `;
     }
 
+    // ⭐ EDITOR DE BLOQUES REDISEÑADO
+    const TIPOS_BLOQUE = {
+        video:  { icon: '🎥', label: 'Video'  },
+        texto:  { icon: '📝', label: 'Texto'  },
+        iframe: { icon: '🔗', label: 'Iframe' },
+        imagen: { icon: '🖼️', label: 'Imagen' },
+        enlace: { icon: '🔗', label: 'Enlace' }
+    };
+
     const adminEditorHTML = (esAdmin && accesible) ? `
     <div class="solo-admin" style="margin-top:15px; padding-top:15px; border-top:1px solid var(--borde);">
-        <p style="color:var(--acento-claro); font-weight:bold;">🛠️ Editor de bloques</p>
+        <p style="color:var(--acento-claro); font-weight:bold;">
+            🛠️ Editor de bloques
+            <span style="color:var(--texto-suave); font-weight:400; font-size:0.85rem;">
+                (${(tema.bloques || []).length} bloque${(tema.bloques || []).length === 1 ? '' : 's'})
+            </span>
+        </p>
         <div id="bloques-editor-${tema.id}">
-            ${(tema.bloques || []).map(bloque => {
+            ${(tema.bloques || []).map((bloque, idx) => {
                 const escape = escapeHtml;
+                const info = TIPOS_BLOQUE[bloque.tipo] || TIPOS_BLOQUE.texto;
+                const previewRaw = bloque.tipo === 'enlace'
+                    ? (bloque.label || '(sin etiqueta)')
+                    : (bloque.contenido || '(vacío)');
+                const preview = escape(String(previewRaw).substring(0, 50));
                 return `
-                <div class="bloque-editor" data-bloque-id="${bloque.id}">
-                    <div class="bloque-campos">
-                        <select onchange="cambiarTipoBloque('${claseId}','${tema.id}','${bloque.id}', this.value)">
-                            <option value="video" ${bloque.tipo==='video'?'selected':''}>Video</option>
-                            <option value="texto" ${bloque.tipo==='texto'?'selected':''}>Texto</option>
-                            <option value="iframe" ${bloque.tipo==='iframe'?'selected':''}>Iframe</option>
-                            <option value="imagen" ${bloque.tipo==='imagen'?'selected':''}>Imagen</option>
-                            <option value="enlace" ${bloque.tipo==='enlace'?'selected':''}>Enlace</option>
-                        </select>
-                        ${bloque.tipo === 'enlace' ? `
-                            <input placeholder="Etiqueta" value="${escape(bloque.label||'')}" onchange="actualizarBloqueEnlace('${claseId}','${tema.id}','${bloque.id}', this.value, this.nextElementSibling.value)">
-                            <input placeholder="URL" value="${escape(bloque.url||'')}" onchange="actualizarBloqueEnlace('${claseId}','${tema.id}','${bloque.id}', this.previousElementSibling.value, this.value)">
-                        ` : `
-                            <input placeholder="Contenido" value="${escape(bloque.contenido||'')}" onchange="actualizarBloqueContenido('${claseId}','${tema.id}','${bloque.id}', this.value)">
-                        `}
-                        <button class="btn-reorder" onclick="moverBloqueArriba('${claseId}','${tema.id}','${bloque.id}')">↑</button>
-                        <button class="btn-reorder" onclick="moverBloqueAbajo('${claseId}','${tema.id}','${bloque.id}')">↓</button>
-                        <button class="btn btn-peligro btn-small" onclick="eliminarBloque('${claseId}','${tema.id}','${bloque.id}')">🗑️</button>
+                <div class="bloque-editor" data-bloque-id="${bloque.id}" data-tipo="${bloque.tipo}">
+                    <div class="bloque-header">
+                        <span class="bloque-icono">${info.icon}</span>
+                        <span class="bloque-tipo">${info.label}</span>
+                        <span class="bloque-numero">#${idx + 1}</span>
+                        <span class="bloque-preview" title="${preview}">${preview}</span>
                     </div>
-                    ${bloque.tipo === 'texto' ? `
-                        <div class="estilo-controls">
-                            <label>Tamaño: <input type="text" value="${escape(bloque.estilo?.fontSize||'')}" placeholder="1rem" onchange="actualizarBloqueEstilo('${claseId}','${tema.id}','${bloque.id}', 'fontSize', this.value)"></label>
-                            <label>Color: <input type="color" value="${escape(bloque.estilo?.color||'#000000')}" onchange="actualizarBloqueEstilo('${claseId}','${tema.id}','${bloque.id}', 'color', this.value)"></label>
-                            <label>Alineación:
-                                <select onchange="actualizarBloqueEstilo('${claseId}','${tema.id}','${bloque.id}', 'textAlign', this.value)">
-                                    <option value="left" ${bloque.estilo?.textAlign==='left'?'selected':''}>Izquierda</option>
-                                    <option value="center" ${bloque.estilo?.textAlign==='center'?'selected':''}>Centro</option>
-                                    <option value="right" ${bloque.estilo?.textAlign==='right'?'selected':''}>Derecha</option>
-                                </select>
-                            </label>
+                    <div class="bloque-body">
+                        <div class="bloque-campos">
+                            <select onchange="cambiarTipoBloque('${claseId}','${tema.id}','${bloque.id}', this.value)">
+                                <option value="video" ${bloque.tipo==='video'?'selected':''}>🎥 Video</option>
+                                <option value="texto" ${bloque.tipo==='texto'?'selected':''}>📝 Texto</option>
+                                <option value="iframe" ${bloque.tipo==='iframe'?'selected':''}>🔗 Iframe</option>
+                                <option value="imagen" ${bloque.tipo==='imagen'?'selected':''}>🖼️ Imagen</option>
+                                <option value="enlace" ${bloque.tipo==='enlace'?'selected':''}>🔗 Enlace</option>
+                            </select>
+                            ${bloque.tipo === 'enlace' ? `
+                                <input placeholder="Etiqueta" value="${escape(bloque.label||'')}" onchange="actualizarBloqueEnlace('${claseId}','${tema.id}','${bloque.id}', this.value, this.nextElementSibling.value)">
+                                <input placeholder="URL" value="${escape(bloque.url||'')}" onchange="actualizarBloqueEnlace('${claseId}','${tema.id}','${bloque.id}', this.previousElementSibling.value, this.value)">
+                            ` : `
+                                <input placeholder="Contenido" value="${escape(bloque.contenido||'')}" onchange="actualizarBloqueContenido('${claseId}','${tema.id}','${bloque.id}', this.value)">
+                            `}
+                            <button class="btn-reorder" onclick="moverBloqueArriba('${claseId}','${tema.id}','${bloque.id}')" title="Subir bloque">↑</button>
+                            <button class="btn-reorder" onclick="moverBloqueAbajo('${claseId}','${tema.id}','${bloque.id}')" title="Bajar bloque">↓</button>
+                            <button class="btn btn-peligro btn-small" onclick="eliminarBloque('${claseId}','${tema.id}','${bloque.id}')" title="Eliminar bloque">🗑️</button>
                         </div>
-                    ` : ''}
-                    <input placeholder="Nota al pie (opcional)" value="${escape(bloque.nota||'')}" onchange="actualizarBloqueNota('${claseId}','${tema.id}','${bloque.id}', this.value)">
+                        ${bloque.tipo === 'texto' ? `
+                            <div class="estilo-controls">
+                                <label>Tamaño: <input type="text" value="${escape(bloque.estilo?.fontSize||'')}" placeholder="1rem" onchange="actualizarBloqueEstilo('${claseId}','${tema.id}','${bloque.id}', 'fontSize', this.value)"></label>
+                                <label>Color: <input type="color" value="${escape(bloque.estilo?.color||'#000000')}" onchange="actualizarBloqueEstilo('${claseId}','${tema.id}','${bloque.id}', 'color', this.value)"></label>
+                                <label>Alineación:
+                                    <select onchange="actualizarBloqueEstilo('${claseId}','${tema.id}','${bloque.id}', 'textAlign', this.value)">
+                                        <option value="left" ${bloque.estilo?.textAlign==='left'?'selected':''}>Izquierda</option>
+                                        <option value="center" ${bloque.estilo?.textAlign==='center'?'selected':''}>Centro</option>
+                                        <option value="right" ${bloque.estilo?.textAlign==='right'?'selected':''}>Derecha</option>
+                                    </select>
+                                </label>
+                            </div>
+                        ` : ''}
+                        <input placeholder="Nota al pie (opcional)" value="${escape(bloque.nota||'')}" onchange="actualizarBloqueNota('${claseId}','${tema.id}','${bloque.id}', this.value)">
+                    </div>
                 </div>`;
             }).join('')}
         </div>
@@ -2024,10 +2088,18 @@ function renderizarTemaRecursivo(tema, claseId, nivel = 0) {
         <button class="btn btn-azul btn-small" onclick="agregarBloque('${claseId}','${tema.id}','enlace')">➕ Enlace</button>
     </div>` : '';
 
+    // ⭐ Badge de nivel para temas anidados
+    const nivelBadgeHTML = nivel > 0
+        ? `<span class="nivel-badge">Nivel ${nivel}</span>`
+        : '';
+
     const html = `
-    <div class="tema ${completado ? 'abierto' : ''} ${!accesible ? 'bloqueado' : ''}" data-tema-id="${tema.id}" style="margin-left: ${nivel * 20}px;">
+    <div class="tema ${completado ? 'abierto' : ''} ${!accesible ? 'bloqueado' : ''}"
+         data-tema-id="${tema.id}"
+         data-nivel="${Math.min(nivel, 4)}">
         <div class="tema-header" data-accion="toggle-tema" data-tema-id="${tema.id}">
             <span class="titulo-editable" data-accion="renombrarTema" data-clase="${claseId}" data-tema="${tema.id}">${tema.numero}. ${tema.titulo}</span>
+            ${nivelBadgeHTML}
             ${!accesible ? '<span>🔒</span>' : ''}
             ${completado ? '<span class="badge">✓</span>' : ''}
             <span style="flex:1;"></span>
@@ -2314,8 +2386,6 @@ auth.onAuthStateChanged(async (user) => {
         document.getElementById('btn-notificaciones').style.display = 'none';
         document.getElementById('btn-solicitudes-admin').style.display = 'none';
         document.getElementById('btn-datos-club').style.display = 'none';
-        const btnDonar = document.getElementById('btn-donar');
-        if (btnDonar) btnDonar.style.display = 'none';
         document.getElementById('search-input').style.display = 'none';
         document.getElementById('search-input').value = '';
         terminoBusqueda = '';
@@ -2495,7 +2565,7 @@ document.addEventListener('keydown', (e) => {
 // ------------------------------------------------
 configurarDeteccionAutofill();
 suscribirDatosClub();
-console.log('✅ Club Morphy – Donación + Aprobar TODO + Revocar TODO listos');
+console.log('✅ Club Morphy – Editor rediseñado + Confirmación al borrar');
 
 // Exponer funciones globales
 window.mostrarLogin = mostrarLogin;
