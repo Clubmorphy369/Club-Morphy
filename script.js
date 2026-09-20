@@ -845,6 +845,7 @@ function textEditorUpdateState() {
     });
 }
 
+// === FIN DE LA PARTE 1 ===
 // ------------------------------------------------
 // GESTIÓN DEL CURSO (CRUD)
 // ------------------------------------------------
@@ -2012,6 +2013,24 @@ function agregarBloque(claseId, temaId, tipo) {
         nota: ''
     };
     if (tipo === 'enlace') { nuevo.label = ''; nuevo.url = ''; }
+
+    // ⭐ FASE 5: Configuración inicial del bloque Tablero
+    if (tipo === 'tablero') {
+        nuevo.config = {
+            pgn: '',
+            modo: 'ejercicio',
+            colorHumano: 'w',
+            nivelSF: 5,
+            orientacion: 'auto'
+        };
+    }
+
+    // ⭐ FASE 5: Estructura inicial del bloque Consejo
+    if (tipo === 'consejo') {
+        nuevo.imagenURL = '';
+        nuevo.texto = '';
+    }
+
     tema.bloques.push(nuevo);
     guardarCurso().then(() => actualizarUI());
 }
@@ -2023,9 +2042,16 @@ function eliminarBloque(claseId, temaId, bloqueId) {
     const bloque = tema.bloques.find(b => b.id === bloqueId);
     if (!bloque) return;
 
-    const preview = bloque.tipo === 'enlace'
-        ? (bloque.label || 'sin etiqueta')
-        : (bloque.contenido || 'vacío');
+    let preview = '';
+    if (bloque.tipo === 'enlace') {
+        preview = bloque.label || 'sin etiqueta';
+    } else if (bloque.tipo === 'tablero') {
+        preview = 'Ejercicio de tablero';
+    } else if (bloque.tipo === 'consejo') {
+        preview = bloque.texto ? bloque.texto.substring(0, 40) : 'Consejo';
+    } else {
+        preview = bloque.contenido || 'vacío';
+    }
     const previewCorto = String(preview).length > 40 ? String(preview).substring(0, 40) + '...' : String(preview);
 
     mostrarConfirmacion(
@@ -2106,6 +2132,19 @@ function cambiarTipoBloque(claseId, temaId, bloqueId, nuevoTipo) {
         bloque.label = bloque.label || '';
         bloque.url = bloque.url || '';
         delete bloque.contenido;
+    } else if (nuevoTipo === 'tablero') {
+        bloque.config = bloque.config || {
+            pgn: '', modo: 'ejercicio', colorHumano: 'w', nivelSF: 5, orientacion: 'auto'
+        };
+        delete bloque.contenido;
+        delete bloque.label;
+        delete bloque.url;
+    } else if (nuevoTipo === 'consejo') {
+        bloque.imagenURL = bloque.imagenURL || '';
+        bloque.texto = bloque.texto || '';
+        delete bloque.contenido;
+        delete bloque.label;
+        delete bloque.url;
     } else {
         bloque.contenido = bloque.contenido || '';
         delete bloque.label;
@@ -2253,6 +2292,7 @@ function cerrarModalAccesos() {
     claseActualGestion = null;
 }
 
+// === FIN DE LA PARTE 2 ===
 // ------------------------------------------------
 // RENDERIZADO RECURSIVO DE TEMAS
 // ------------------------------------------------
@@ -2314,6 +2354,29 @@ function renderizarTemaRecursivo(tema, claseId, nivel = 0) {
                         html = `<a href="${escapeAttr(href)}" target="_blank" rel="noopener noreferrer" style="${estilosAdicionales}">${escapeHtml(bloque.label)}</a>`;
                         break;
                     }
+                    case 'tablero': {
+                        // ⭐ FASE 5: Bloque Tablero (entrenador de ajedrez)
+                        if (!bloque.config || !bloque.config.pgn || !bloque.config.pgn.trim()) return '';
+                        const cfg = bloque.config || {};
+                        html = `<div class="cm-tablero-bloque-alumno" data-bloque-id="${bloque.id}" data-pgn="${encodeURIComponent(cfg.pgn || '')}" data-modo="${escapeAttr(cfg.modo || 'ejercicio')}" data-color="${escapeAttr(cfg.colorHumano || 'w')}" data-nivel="${cfg.nivelSF || 5}" data-orientacion="${escapeAttr(cfg.orientacion || 'auto')}"></div>`;
+                        break;
+                    }
+                    case 'consejo': {
+                        // ⭐ FASE 5: Bloque Consejo (imagen + texto, ambos opcionales)
+                        const tieneImagen = bloque.imagenURL && bloque.imagenURL.trim();
+                        const tieneTexto = bloque.texto && bloque.texto.trim();
+                        if (!tieneImagen && !tieneTexto) return '';
+                        let htmlConsejo = '<div class="bloque-consejo">';
+                        if (tieneImagen) {
+                            htmlConsejo += `<img src="${escapeAttr(bloque.imagenURL.trim())}" alt="Consejo" onerror="this.style.display='none'">`;
+                        }
+                        if (tieneTexto) {
+                            htmlConsejo += `<div class="consejo-texto"><strong>💡 Consejo</strong>${escapeHtml(bloque.texto.trim())}</div>`;
+                        }
+                        htmlConsejo += '</div>';
+                        html = htmlConsejo;
+                        break;
+                    }
                 }
                 if (bloque.nota) html += `<div class="nota-debajo">${escapeHtml(bloque.nota)}</div>`;
                 return html;
@@ -2340,11 +2403,13 @@ function renderizarTemaRecursivo(tema, claseId, nivel = 0) {
     }
 
     const TIPOS_BLOQUE = {
-        video:  { icon: '🎥', label: 'Video'  },
-        texto:  { icon: '📝', label: 'Texto'  },
-        iframe: { icon: '🔗', label: 'Iframe' },
-        imagen: { icon: '🖼️', label: 'Imagen' },
-        enlace: { icon: '🔗', label: 'Enlace' }
+        video:   { icon: '🎥', label: 'Video'   },
+        texto:   { icon: '📝', label: 'Texto'   },
+        iframe:  { icon: '🔗', label: 'Iframe'  },
+        imagen:  { icon: '🖼️', label: 'Imagen'  },
+        enlace:  { icon: '🔗', label: 'Enlace'  },
+        tablero: { icon: '🎯', label: 'Tablero' },
+        consejo: { icon: '💡', label: 'Consejo' }
     };
 
     const adminEditorHTML = (esAdmin && accesible) ? `
@@ -2359,10 +2424,22 @@ function renderizarTemaRecursivo(tema, claseId, nivel = 0) {
             ${(tema.bloques || []).map((bloque, idx) => {
                 const escape = escapeHtml;
                 const info = TIPOS_BLOQUE[bloque.tipo] || TIPOS_BLOQUE.texto;
-                const previewRaw = bloque.tipo === 'enlace'
-                    ? (bloque.label || '(sin etiqueta)')
-                    : (bloque.contenido ? String(bloque.contenido).replace(/<[^>]+>/g, '').substring(0, 50) : '(vacío)');
+
+                // Preview específico por tipo de bloque
+                let previewRaw = '';
+                if (bloque.tipo === 'enlace') {
+                    previewRaw = bloque.label || '(sin etiqueta)';
+                } else if (bloque.tipo === 'tablero') {
+                    const cfg = bloque.config || {};
+                    const caps = cfg.pgn ? (cfg.pgn.match(/\[Event\s/g) || []).length : 0;
+                    previewRaw = caps > 0 ? `${caps} capítulo${caps === 1 ? '' : 's'} PGN` : '(sin PGN)';
+                } else if (bloque.tipo === 'consejo') {
+                    previewRaw = bloque.texto ? String(bloque.texto).substring(0, 50) : (bloque.imagenURL ? 'Imagen cargada' : '(vacío)');
+                } else {
+                    previewRaw = bloque.contenido ? String(bloque.contenido).replace(/<[^>]+>/g, '').substring(0, 50) : '(vacío)';
+                }
                 const preview = escape(String(previewRaw).substring(0, 50));
+
                 return `
                 <div class="bloque-editor" data-bloque-id="${bloque.id}" data-tipo="${bloque.tipo}">
                     <div class="bloque-header">
@@ -2379,11 +2456,14 @@ function renderizarTemaRecursivo(tema, claseId, nivel = 0) {
                                 <option value="iframe" ${bloque.tipo==='iframe'?'selected':''}>🔗 Iframe</option>
                                 <option value="imagen" ${bloque.tipo==='imagen'?'selected':''}>🖼️ Imagen</option>
                                 <option value="enlace" ${bloque.tipo==='enlace'?'selected':''}>🔗 Enlace</option>
+                                <option value="tablero" ${bloque.tipo==='tablero'?'selected':''}>🎯 Tablero</option>
+                                <option value="consejo" ${bloque.tipo==='consejo'?'selected':''}>💡 Consejo</option>
                             </select>
                             <button class="btn-reorder" onclick="moverBloqueArriba('${claseId}','${tema.id}','${bloque.id}')" title="Subir bloque">↑</button>
                             <button class="btn-reorder" onclick="moverBloqueAbajo('${claseId}','${tema.id}','${bloque.id}')" title="Bajar bloque">↓</button>
                             <button class="btn btn-peligro btn-small" onclick="eliminarBloque('${claseId}','${tema.id}','${bloque.id}')" title="Eliminar bloque">🗑️</button>
                         </div>
+
                         ${bloque.tipo === 'texto' ? `
                             ${buildTextEditorToolbar(bloque.id)}
                             <div class="bloque-texto-editor"
@@ -2397,6 +2477,64 @@ function renderizarTemaRecursivo(tema, claseId, nivel = 0) {
                         ` : bloque.tipo === 'enlace' ? `
                             <input placeholder="Etiqueta" value="${escape(bloque.label||'')}" onchange="actualizarBloqueEnlace('${claseId}','${tema.id}','${bloque.id}', this.value, this.nextElementSibling.value)">
                             <input placeholder="URL" value="${escape(bloque.url||'')}" onchange="actualizarBloqueEnlace('${claseId}','${tema.id}','${bloque.id}', this.previousElementSibling.value, this.value)">
+                        ` : bloque.tipo === 'tablero' ? `
+                            <div class="bloque-tablero-config" style="background:#fff7ed; border:1px dashed #fdba74; border-radius:8px; padding:10px; margin-top:6px;">
+                                <p style="font-size:0.78rem; color:#c2410c; font-weight:700; text-transform:uppercase; margin-bottom:8px;">🎯 Configuración del Tablero</p>
+                                <label style="display:block; font-size:0.75rem; color:#92400e; font-weight:700; text-transform:uppercase; margin-bottom:3px;">📋 PGN del estudio</label>
+                                <textarea placeholder="Pega aquí el PGN de tu estudio…" onchange="actualizarBloqueTablero('${claseId}','${tema.id}','${bloque.id}', 'pgn', this.value)" style="width:100%; min-height:90px; font-family:'Courier New',monospace; font-size:0.78rem; padding:8px; border:1px solid #fdba74; border-radius:6px; resize:vertical; background:white;">${escape((bloque.config||{}).pgn || '')}</textarea>
+                                <div style="display:flex; gap:6px; margin-top:6px; flex-wrap:wrap;">
+                                    <label style="background:white; border:1px solid #f59e0b; color:#92400e; padding:6px 12px; border-radius:6px; font-weight:700; font-size:0.78rem; cursor:pointer; display:inline-flex; align-items:center; gap:5px;">
+                                        📂 Subir archivo .pgn
+                                        <input type="file" accept=".pgn,.txt" style="display:none;" onchange="cargarPGNArchivoEnBloque('${claseId}','${tema.id}','${bloque.id}', event)">
+                                    </label>
+                                </div>
+                                <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:8px; margin-top:10px;">
+                                    <div>
+                                        <label style="display:block; font-size:0.72rem; color:#92400e; font-weight:700; text-transform:uppercase; margin-bottom:3px;">Modo</label>
+                                        <select onchange="actualizarBloqueTablero('${claseId}','${tema.id}','${bloque.id}', 'modo', this.value)" style="width:100%; padding:6px; border:1px solid #fdba74; border-radius:6px; font-size:0.82rem; background:white;">
+                                            <option value="ejercicio" ${((bloque.config||{}).modo||'ejercicio')==='ejercicio'?'selected':''}>🎯 Ejercicio</option>
+                                            <option value="ordenador" ${((bloque.config||{}).modo)==='ordenador'?'selected':''}>🤖 Jugar vs PC</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label style="display:block; font-size:0.72rem; color:#92400e; font-weight:700; text-transform:uppercase; margin-bottom:3px;">Humano juega</label>
+                                        <select onchange="actualizarBloqueTablero('${claseId}','${tema.id}','${bloque.id}', 'colorHumano', this.value)" style="width:100%; padding:6px; border:1px solid #fdba74; border-radius:6px; font-size:0.82rem; background:white;">
+                                            <option value="w" ${((bloque.config||{}).colorHumano||'w')==='w'?'selected':''}>♔ Blancas</option>
+                                            <option value="b" ${((bloque.config||{}).colorHumano)==='b'?'selected':''}>♚ Negras</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label style="display:block; font-size:0.72rem; color:#92400e; font-weight:700; text-transform:uppercase; margin-bottom:3px;">Nivel Stockfish</label>
+                                        <select onchange="actualizarBloqueTablero('${claseId}','${tema.id}','${bloque.id}', 'nivelSF', parseInt(this.value,10))" style="width:100%; padding:6px; border:1px solid #fdba74; border-radius:6px; font-size:0.82rem; background:white;">
+                                            <option value="1" ${((bloque.config||{}).nivelSF)==1?'selected':''}>1 — Principiante</option>
+                                            <option value="2" ${((bloque.config||{}).nivelSF)==2?'selected':''}>2 — Muy fácil</option>
+                                            <option value="3" ${((bloque.config||{}).nivelSF)==3?'selected':''}>3 — Fácil</option>
+                                            <option value="4" ${((bloque.config||{}).nivelSF)==4?'selected':''}>4 — Normal</option>
+                                            <option value="5" ${((bloque.config||{}).nivelSF||5)==5?'selected':''}>5 — Intermedio</option>
+                                            <option value="6" ${((bloque.config||{}).nivelSF)==6?'selected':''}>6 — Difícil</option>
+                                            <option value="7" ${((bloque.config||{}).nivelSF)==7?'selected':''}>7 — Muy difícil</option>
+                                            <option value="8" ${((bloque.config||{}).nivelSF)==8?'selected':''}>8 — Maestro</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label style="display:block; font-size:0.72rem; color:#92400e; font-weight:700; text-transform:uppercase; margin-bottom:3px;">Orientación</label>
+                                        <select onchange="actualizarBloqueTablero('${claseId}','${tema.id}','${bloque.id}', 'orientacion', this.value)" style="width:100%; padding:6px; border:1px solid #fdba74; border-radius:6px; font-size:0.82rem; background:white;">
+                                            <option value="auto" ${((bloque.config||{}).orientacion||'auto')==='auto'?'selected':''}>🔄 Auto</option>
+                                            <option value="white" ${((bloque.config||{}).orientacion)==='white'?'selected':''}>♔ Blancas abajo</option>
+                                            <option value="black" ${((bloque.config||{}).orientacion)==='black'?'selected':''}>♚ Negras abajo</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        ` : bloque.tipo === 'consejo' ? `
+                            <div class="bloque-consejo-config" style="background:#fffbeb; border:1px dashed #f59e0b; border-radius:8px; padding:10px; margin-top:6px;">
+                                <p style="font-size:0.78rem; color:#92400e; font-weight:700; text-transform:uppercase; margin-bottom:8px;">💡 Configuración del Consejo</p>
+                                <label style="display:block; font-size:0.75rem; color:#92400e; font-weight:700; text-transform:uppercase; margin-bottom:3px;">🖼️ URL de imagen (opcional)</label>
+                                <input type="url" placeholder="https://…/imagen.png" value="${escape(bloque.imagenURL||'')}" onchange="actualizarBloqueConsejo('${claseId}','${tema.id}','${bloque.id}', 'imagenURL', this.value)" style="width:100%; padding:8px; border:1px solid #f59e0b; border-radius:6px; font-size:0.82rem; background:white; margin-bottom:8px;">
+                                <label style="display:block; font-size:0.75rem; color:#92400e; font-weight:700; text-transform:uppercase; margin-bottom:3px;">📝 Texto del consejo (opcional)</label>
+                                <input type="text" placeholder="Ej: Controla el centro del tablero…" value="${escape(bloque.texto||'')}" onchange="actualizarBloqueConsejo('${claseId}','${tema.id}','${bloque.id}', 'texto', this.value)" style="width:100%; padding:8px; border:1px solid #f59e0b; border-radius:6px; font-size:0.82rem; background:white;">
+                                <p style="font-size:0.72rem; color:#92400e; margin-top:6px; font-style:italic;">ℹ️ Si no hay imagen ni texto, el alumno no verá nada aquí.</p>
+                            </div>
                         ` : `
                             <input placeholder="Contenido" value="${escape(bloque.contenido||'')}" onchange="actualizarBloqueContenido('${claseId}','${tema.id}','${bloque.id}', this.value)">
                         `}
@@ -2405,11 +2543,15 @@ function renderizarTemaRecursivo(tema, claseId, nivel = 0) {
                 </div>`;
             }).join('')}
         </div>
-        <button class="btn btn-azul btn-small" onclick="agregarBloque('${claseId}','${tema.id}','texto')">➕ Texto</button>
-        <button class="btn btn-azul btn-small" onclick="agregarBloque('${claseId}','${tema.id}','video')">➕ Video</button>
-        <button class="btn btn-azul btn-small" onclick="agregarBloque('${claseId}','${tema.id}','iframe')">➕ Iframe</button>
-        <button class="btn btn-azul btn-small" onclick="agregarBloque('${claseId}','${tema.id}','imagen')">➕ Imagen</button>
-        <button class="btn btn-azul btn-small" onclick="agregarBloque('${claseId}','${tema.id}','enlace')">➕ Enlace</button>
+        <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:8px;">
+            <button class="btn btn-azul btn-small" onclick="agregarBloque('${claseId}','${tema.id}','texto')">➕ Texto</button>
+            <button class="btn btn-azul btn-small" onclick="agregarBloque('${claseId}','${tema.id}','video')">➕ Video</button>
+            <button class="btn btn-azul btn-small" onclick="agregarBloque('${claseId}','${tema.id}','iframe')">➕ Iframe</button>
+            <button class="btn btn-azul btn-small" onclick="agregarBloque('${claseId}','${tema.id}','imagen')">➕ Imagen</button>
+            <button class="btn btn-azul btn-small" onclick="agregarBloque('${claseId}','${tema.id}','enlace')">➕ Enlace</button>
+            <button class="btn btn-azul btn-small" onclick="agregarBloque('${claseId}','${tema.id}','tablero')" style="background:linear-gradient(135deg,#0284c7,#0ea5e9);color:white;border-color:#0ea5e9;">➕ 🎯 Tablero</button>
+            <button class="btn btn-azul btn-small" onclick="agregarBloque('${claseId}','${tema.id}','consejo')" style="background:linear-gradient(135deg,#d97706,#f59e0b);color:white;border-color:#f59e0b;">➕ 💡 Consejo</button>
+        </div>
     </div>` : '';
 
     const nivelBadgeHTML = nivel > 0
@@ -2527,6 +2669,9 @@ function actualizarUI() {
         }, 50);
     }
 
+    // ⭐ FASE 5: Inicializar tableros después de renderizar
+    setTimeout(() => inicializarTablerosEntrenador(), 100);
+
     guardarEstadoNavegacion();
 }
 
@@ -2556,8 +2701,16 @@ function renderizarContenido(clase) {
             temaDiv.classList.toggle('abierto');
             temaAbiertoGlobal = temaDiv.classList.contains('abierto') ? temaId : null;
             guardarEstadoNavegacion();
+
+            // ⭐ FASE 5: Inicializar tableros cuando se abre un tema
+            if (temaDiv.classList.contains('abierto')) {
+                setTimeout(() => inicializarTablerosEntrenador(), 100);
+            }
         });
     });
+
+    // ⭐ FASE 5: Inicializar tableros de temas ya abiertos
+    setTimeout(() => inicializarTablerosEntrenador(), 100);
 }
 
 async function agregarTema(claseId) {
@@ -2639,6 +2792,83 @@ function activarEdicion(span) {
     };
     input.addEventListener('blur', guardar);
     input.addEventListener('keypress', (e) => { if (e.key === 'Enter') { e.preventDefault(); input.blur(); } });
+}
+
+// ------------------------------------------------
+// ⭐ FASE 5: FUNCIONES AUXILIARES DEL ENTRENADOR
+// ------------------------------------------------
+
+// Inicializa todos los bloques tablero que estén en el DOM actual
+function inicializarTablerosEntrenador() {
+    if (!window.Entrenador) {
+        console.warn('[Fase 5] Entrenador no está cargado');
+        return;
+    }
+    const bloques = document.querySelectorAll('.cm-tablero-bloque-alumno');
+    bloques.forEach(bloqueEl => {
+        // Evitar re-inicializar el mismo bloque
+        if (bloqueEl.dataset.inicializado === 'true') return;
+        try {
+            const config = {
+                pgn: decodeURIComponent(bloqueEl.dataset.pgn || ''),
+                modo: bloqueEl.dataset.modo || 'ejercicio',
+                colorHumano: bloqueEl.dataset.color || 'w',
+                nivelSF: parseInt(bloqueEl.dataset.nivel || '5', 10),
+                orientacion: bloqueEl.dataset.orientacion || 'auto'
+            };
+            if (!config.pgn || !config.pgn.trim()) return;
+
+            const contexto = {
+                esAdmin: !!(currentUser && currentUser.esAdmin),
+                uid: currentUser ? currentUser.uid : null,
+                nombreTema: bloqueEl.closest('.tema')?.querySelector('.titulo-editable')?.textContent || '',
+                onCompletado: () => {
+                    console.log('[Fase 5] Tablero completado por el alumno');
+                }
+            };
+            window.Entrenador.render(bloqueEl, config, contexto);
+            bloqueEl.dataset.inicializado = 'true';
+        } catch (err) {
+            console.error('[Fase 5] Error al inicializar tablero:', err);
+        }
+    });
+}
+
+// Actualiza un campo específico de la configuración del bloque tablero
+function actualizarBloqueTablero(claseId, temaId, bloqueId, campo, valor) {
+    const clase = curso.clases.find(c => c.id === claseId);
+    if (!clase) return;
+    const tema = buscarTemaRecursivo(clase.temas, temaId);
+    const bloque = tema?.bloques?.find(b => b.id === bloqueId);
+    if (!bloque || bloque.tipo !== 'tablero') return;
+    if (!bloque.config) bloque.config = { pgn: '', modo: 'ejercicio', colorHumano: 'w', nivelSF: 5, orientacion: 'auto' };
+    bloque.config[campo] = valor;
+    guardarCurso().then(() => actualizarUI());
+}
+
+// Actualiza el consejo (imagen y texto)
+function actualizarBloqueConsejo(claseId, temaId, bloqueId, campo, valor) {
+    const clase = curso.clases.find(c => c.id === claseId);
+    if (!clase) return;
+    const tema = buscarTemaRecursivo(clase.temas, temaId);
+    const bloque = tema?.bloques?.find(b => b.id === bloqueId);
+    if (!bloque || bloque.tipo !== 'consejo') return;
+    if (campo === 'imagenURL') bloque.imagenURL = valor;
+    if (campo === 'texto') bloque.texto = valor;
+    guardarCurso().then(() => actualizarUI());
+}
+
+// Carga el PGN desde un archivo .pgn en el bloque tablero
+function cargarPGNArchivoEnBloque(claseId, temaId, bloqueId, event) {
+    const file = event.target.files && event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+        const pgn = ev.target.result;
+        actualizarBloqueTablero(claseId, temaId, bloqueId, 'pgn', pgn);
+        mostrarToast('📂 PGN cargado desde archivo', 'success');
+    };
+    reader.readAsText(file);
 }
 
 // ------------------------------------------------
@@ -2948,7 +3178,7 @@ document.addEventListener('keydown', (e) => {
 // ------------------------------------------------
 configurarDeteccionAutofill();
 suscribirDatosClub();
-console.log('✅ Club Morphy – Fase 3 completada (nombre en header + completar perfil)');
+console.log('✅ Club Morphy – Fase 5 completada (bloques Tablero + Consejo integrados)');
 
 // Exponer funciones globales
 window.mostrarLogin = mostrarLogin;
@@ -3017,6 +3247,12 @@ window.mostrarCompletarPerfil = mostrarCompletarPerfil;
 window.cerrarCompletarPerfil = cerrarCompletarPerfil;
 window.guardarPerfilUsuario = guardarPerfilUsuario;
 
+// ⭐ FASE 5: Funciones del entrenador
+window.inicializarTablerosEntrenador = inicializarTablerosEntrenador;
+window.actualizarBloqueTablero = actualizarBloqueTablero;
+window.actualizarBloqueConsejo = actualizarBloqueConsejo;
+window.cargarPGNArchivoEnBloque = cargarPGNArchivoEnBloque;
+
 // ===== REGISTRO DEL SERVICE WORKER =====
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
@@ -3035,3 +3271,4 @@ if ('serviceWorker' in navigator) {
       .catch(err => console.error('❌ Error al registrar el Service Worker:', err));
   });
 }
+// === FIN DEL ARCHIVO ===
