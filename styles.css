@@ -321,6 +321,12 @@ body {
 .tema.abierto { border-color: var(--acento); box-shadow: 0 6px 28px rgba(0,0,0,0.08), 0 0 15px rgba(14,165,233,0.15); }
 .tema.bloqueado { opacity: 0.7; }
 
+/* ⭐ Temas anidados con colores por nivel */
+.tema[data-nivel="1"] { margin-left: 15px; border-left: 4px solid #10b981; }
+.tema[data-nivel="2"] { margin-left: 30px; border-left: 4px solid #f59e0b; }
+.tema[data-nivel="3"] { margin-left: 45px; border-left: 4px solid #8b5cf6; }
+.tema[data-nivel="4"] { margin-left: 60px; border-left: 4px solid #ec4899; }
+
 .tema-header {
     padding: 16px 20px;
     background: var(--surface2);
@@ -367,6 +373,18 @@ body {
     border-left: 2px dashed var(--borde);
     padding-left: 15px;
     margin-top: 10px;
+}
+
+.nivel-badge {
+    font-size: 0.65rem;
+    background: var(--surface2);
+    color: var(--texto-suave);
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    flex-shrink: 0;
 }
 
 /* ============================================================
@@ -763,15 +781,84 @@ code {
 }
 
 /* ============================================================
-   EDITOR DE BLOQUES
+   ⭐ EDITOR DE BLOQUES REDISEÑADO
    ============================================================ */
 .bloque-editor {
     border: 1px solid var(--borde);
-    border-radius: 8px;
-    padding: 10px;
-    margin-bottom: 10px;
+    border-radius: 10px;
+    margin-bottom: 12px;
     background: var(--bg);
+    overflow: hidden;
+    transition: box-shadow 0.2s;
 }
+
+.bloque-editor:hover {
+    box-shadow: 0 3px 12px rgba(0,0,0,0.08);
+}
+
+/* Colores por tipo de bloque */
+.bloque-editor[data-tipo="video"] { border-left: 5px solid #ef4444; }
+.bloque-editor[data-tipo="texto"] { border-left: 5px solid #3b82f6; }
+.bloque-editor[data-tipo="iframe"] { border-left: 5px solid #10b981; }
+.bloque-editor[data-tipo="imagen"] { border-left: 5px solid #8b5cf6; }
+.bloque-editor[data-tipo="enlace"] { border-left: 5px solid #f59e0b; }
+
+.bloque-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    background: var(--surface);
+    border-bottom: 1px solid var(--borde);
+    flex-wrap: wrap;
+}
+
+.bloque-editor[data-tipo="video"] .bloque-header { background: rgba(239, 68, 68, 0.08); }
+.bloque-editor[data-tipo="texto"] .bloque-header { background: rgba(59, 130, 246, 0.08); }
+.bloque-editor[data-tipo="iframe"] .bloque-header { background: rgba(16, 185, 129, 0.08); }
+.bloque-editor[data-tipo="imagen"] .bloque-header { background: rgba(139, 92, 246, 0.08); }
+.bloque-editor[data-tipo="enlace"] .bloque-header { background: rgba(245, 158, 11, 0.08); }
+
+.bloque-icono {
+    font-size: 1.2rem;
+    flex-shrink: 0;
+}
+
+.bloque-tipo {
+    color: var(--texto);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-size: 0.72rem;
+    flex-shrink: 0;
+}
+
+.bloque-numero {
+    background: var(--texto);
+    color: white;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 0.68rem;
+    flex-shrink: 0;
+}
+
+.bloque-preview {
+    flex: 1;
+    color: var(--texto-suave);
+    font-weight: 400;
+    font-size: 0.75rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-family: 'Courier New', monospace;
+    min-width: 0;
+}
+
+.bloque-body {
+    padding: 12px;
+}
+
 .bloque-campos {
     display: flex;
     flex-wrap: wrap;
@@ -786,6 +873,7 @@ code {
 .bloque-campos input {
     max-width: 100%;
 }
+
 .estilo-controls {
     display: flex;
     flex-wrap: wrap;
@@ -835,7 +923,7 @@ code {
 }
 
 /* ============================================================
-   ⭐ DONACIÓN VOLUNTARIA
+   DONACIÓN VOLUNTARIA
    ============================================================ */
 .donacion-item {
     background: var(--bg);
@@ -901,7 +989,7 @@ code {
 }
 
 /* ============================================================
-   MENSAJE DE DONACIÓN (nuevo)
+   MENSAJE DE DONACIÓN
    ============================================================ */
 .donacion-mensaje {
     background: linear-gradient(135deg, rgba(14, 165, 233, 0.06), rgba(14, 165, 233, 0.02));
@@ -1026,6 +1114,29 @@ button, .btn, .btn-small, .btn-reorder, .btn-icon, .btn-copy,
         padding: 16px;
         gap: 20px;
         max-height: none;
+    }
+
+    /* ⭐ Temas anidados en móvil: menos sangría */
+    .tema[data-nivel="1"] { margin-left: 8px; }
+    .tema[data-nivel="2"] { margin-left: 16px; }
+    .tema[data-nivel="3"] { margin-left: 24px; }
+    .tema[data-nivel="4"] { margin-left: 32px; }
+
+    /* ⭐ Headers de bloques en móvil */
+    .bloque-header {
+        gap: 6px;
+        padding: 8px 10px;
+    }
+    .bloque-preview {
+        font-size: 0.72rem;
+        flex-basis: 100%;
+        order: 10;
+        padding-top: 4px;
+        white-space: normal;
+        word-break: break-all;
+    }
+    .bloque-tipo {
+        font-size: 0.68rem;
     }
 
     /* Inputs */
