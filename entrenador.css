@@ -1,0 +1,873 @@
+/* ============================================================
+   ENTRENADOR DE AJEDREZ — Club Morphy (Fase 5)
+   Todos los estilos están prefijados con .cm-tablero- para
+   evitar colisiones con styles.css de la academia.
+   ============================================================ */
+
+.cm-tablero-wrap {
+    /* Variables scoped al bloque del entrenador */
+    --cm-acento: #0ea5e9;
+    --cm-acento-oscuro: #0284c7;
+    --cm-bg: #ffffff;
+    --cm-surface: #f1f5f9;
+    --cm-surface2: #e2e8f0;
+    --cm-texto: #1e293b;
+    --cm-texto-suave: #64748b;
+    --cm-borde: #cbd5e1;
+    --cm-exito: #16a34a;
+    --cm-peligro: #dc2626;
+    --cm-warning: #f59e0b;
+    --cm-alternativa: #8b5cf6;
+    --cm-ordenador: #f59e0b;
+    --cm-elo: #d97706;
+    --cm-elo-subida: #16a34a;
+    --cm-elo-bajada: #dc2626;
+
+    font-family: 'Lato', 'Segoe UI', system-ui, sans-serif;
+    color: var(--cm-texto);
+    line-height: 1.6;
+    box-sizing: border-box;
+}
+
+.cm-tablero-wrap *,
+.cm-tablero-wrap *::before,
+.cm-tablero-wrap *::after {
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* ============================================================
+   CONTENEDORES GENERALES
+   ============================================================ */
+.cm-tablero-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 14px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.cm-tablero-titulo {
+    font-size: 1.1rem;
+    color: var(--cm-acento);
+    margin-bottom: 12px;
+    font-weight: 700;
+}
+
+.cm-tablero-meta {
+    color: var(--cm-texto-suave);
+    font-size: 0.85rem;
+    margin-bottom: 10px;
+}
+
+/* ============================================================
+   BOTONES
+   ============================================================ */
+.cm-tablero-btn {
+    background: var(--cm-acento);
+    color: #fff;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 0.9rem;
+    min-height: 42px;
+    font-family: inherit;
+    transition: opacity 0.2s, transform 0.1s;
+}
+.cm-tablero-btn:hover { opacity: 0.9; }
+.cm-tablero-btn:active { transform: scale(0.97); }
+.cm-tablero-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.cm-tablero-btn-sec {
+    background: var(--cm-surface2);
+    color: var(--cm-texto);
+}
+.cm-tablero-btn-peligro { background: var(--cm-peligro); color: #fff; }
+.cm-tablero-btn-alternativa {
+    background: var(--cm-alternativa);
+    color: #fff;
+    font-size: 0.82rem;
+    padding: 6px 10px;
+    min-height: 34px;
+}
+.cm-tablero-btn-ordenador {
+    background: var(--cm-ordenador);
+    color: #1e293b;
+}
+.cm-tablero-btn-elo {
+    background: var(--cm-elo);
+    color: #fff;
+    font-size: 0.85rem;
+}
+
+/* ============================================================
+   INPUTS Y SELECTS
+   ============================================================ */
+.cm-tablero-select {
+    padding: 8px 12px;
+    border: 1px solid var(--cm-borde);
+    border-radius: 8px;
+    font-size: 0.9rem;
+    background: #fff;
+    min-height: 38px;
+    font-family: inherit;
+    color: var(--cm-texto);
+}
+.cm-tablero-textarea {
+    width: 100%;
+    min-height: 130px;
+    padding: 10px;
+    border: 1px solid var(--cm-borde);
+    border-radius: 8px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.8rem;
+    resize: vertical;
+    color: var(--cm-texto);
+}
+
+/* ============================================================
+   FILA DE BOTONES
+   ============================================================ */
+.cm-tablero-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+    margin-top: 10px;
+}
+
+/* ============================================================
+   SELECTOR DE VISTA (Entrenador / Alumno)
+   ============================================================ */
+.cm-tablero-vista-selector {
+    display: flex;
+    gap: 6px;
+    background: #fff;
+    border-radius: 30px;
+    padding: 5px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    margin-bottom: 14px;
+    max-width: 500px;
+}
+.cm-tablero-vista-selector button {
+    flex: 1;
+    background: transparent;
+    color: var(--cm-texto-suave);
+    padding: 10px;
+    border-radius: 30px;
+    border: none;
+    font-size: 0.85rem;
+    font-weight: 600;
+    min-height: 38px;
+    cursor: pointer;
+    font-family: inherit;
+}
+.cm-tablero-vista-selector button.active {
+    background: var(--cm-acento);
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(14, 165, 233, 0.3);
+}
+
+/* ============================================================
+   PANEL ELO (cabecera y detalle)
+   ============================================================ */
+.cm-tablero-elo-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    border: 2px solid var(--cm-elo);
+    border-radius: 12px;
+    padding: 12px 16px;
+    margin-bottom: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.cm-tablero-elo-header:hover {
+    box-shadow: 0 4px 16px rgba(217, 119, 6, 0.3);
+    transform: translateY(-1px);
+}
+.cm-tablero-elo-header .cm-icono { font-size: 2rem; }
+.cm-tablero-elo-header .cm-datos { flex: 1; }
+.cm-tablero-elo-header .cm-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #92400e;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+.cm-tablero-elo-header .cm-numero {
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: var(--cm-elo);
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+}
+.cm-tablero-elo-header .cm-cambio {
+    font-size: 0.85rem;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-variant-numeric: tabular-nums;
+}
+.cm-tablero-elo-header .cm-cambio.subida { background: #dcfce7; color: var(--cm-elo-subida); }
+.cm-tablero-elo-header .cm-cambio.bajada { background: #fee2e2; color: var(--cm-elo-bajada); }
+.cm-tablero-elo-header .cm-cambio.neutral { background: var(--cm-surface2); color: var(--cm-texto-suave); }
+
+.cm-tablero-elo-panel {
+    background: #fff;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 14px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+.cm-tablero-elo-panel.cm-hidden { display: none; }
+.cm-tablero-elo-panel h3 {
+    font-size: 1rem;
+    color: var(--cm-elo);
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.cm-tablero-elo-panel h3 button {
+    background: transparent;
+    color: var(--cm-texto-suave);
+    border: 1px solid var(--cm-borde);
+    padding: 4px 10px;
+    font-size: 0.75rem;
+    min-height: auto;
+    font-weight: 600;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: inherit;
+}
+
+.cm-tablero-estudio-item {
+    background: var(--cm-surface);
+    border-radius: 10px;
+    padding: 12px;
+    margin-bottom: 10px;
+    border-left: 4px solid var(--cm-acento);
+}
+.cm-tablero-estudio-item .cm-nombre {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    font-weight: 700;
+    font-size: 0.9rem;
+}
+.cm-tablero-estudio-item .cm-elo-numero {
+    font-size: 1.1rem;
+    color: var(--cm-elo);
+    font-variant-numeric: tabular-nums;
+}
+.cm-tablero-barra-elo {
+    height: 8px;
+    background: var(--cm-surface2);
+    border-radius: 10px;
+    overflow: hidden;
+    position: relative;
+}
+.cm-tablero-barra-elo .cm-relleno {
+    height: 100%;
+    background: linear-gradient(90deg, #fbbf24, #f59e0b, #d97706);
+    border-radius: 10px;
+    transition: width 0.5s ease;
+}
+.cm-tablero-estudio-meta {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    color: var(--cm-texto-suave);
+    margin-top: 4px;
+}
+
+.cm-tablero-historial-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--cm-borde);
+    font-size: 0.82rem;
+}
+.cm-tablero-historial-item:last-child { border-bottom: none; }
+.cm-tablero-historial-item .cm-razon {
+    color: var(--cm-texto-suave);
+    font-size: 0.75rem;
+    margin-top: 2px;
+}
+.cm-tablero-historial-item .cm-delta {
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    font-size: 0.95rem;
+}
+.cm-tablero-historial-item .cm-delta.positivo { color: var(--cm-elo-subida); }
+.cm-tablero-historial-item .cm-delta.negativo { color: var(--cm-elo-bajada); }
+
+/* ============================================================
+   LAYOUT: TABLERO + PANEL LATERAL
+   ============================================================ */
+.cm-tablero-game {
+    display: grid;
+    grid-template-columns: minmax(280px, 500px) 1fr;
+    gap: 20px;
+    align-items: start;
+}
+@media (max-width: 800px) {
+    .cm-tablero-game { grid-template-columns: 1fr; }
+}
+
+/* ============================================================
+   TABLERO
+   ============================================================ */
+.cm-tablero-board-wrap {
+    position: relative;
+    width: 100%;
+    padding-bottom: 100%;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    touch-action: none;
+}
+.cm-tablero-board {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    grid-template-rows: repeat(8, 1fr);
+    background: #b58863;
+    touch-action: none;
+}
+
+.cm-tablero-square {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+    touch-action: none;
+    overflow: hidden;
+}
+.cm-tablero-square.light { background: #f0d9b5; }
+.cm-tablero-square.dark { background: #b58863; }
+.cm-tablero-square.selected { background: #7fc97f !important; }
+.cm-tablero-square.legal-move::after {
+    content: '';
+    position: absolute;
+    width: 28%;
+    height: 28%;
+    background: rgba(0, 0, 0, 0.25);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 3;
+}
+.cm-tablero-square.legal-capture::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    box-shadow: inset 0 0 0 4px rgba(0, 0, 0, 0.4);
+    pointer-events: none;
+    z-index: 3;
+}
+.cm-tablero-square.check {
+    background: radial-gradient(circle, #ff0000 0%, #ff6666 50%, transparent 70%) !important;
+}
+.cm-tablero-square.last-move { background: #ffff99 !important; }
+.cm-tablero-square.error-shake { animation: cm-tablero-shake 0.3s ease; }
+@keyframes cm-tablero-shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+}
+
+.cm-tablero-piece {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 88%;
+    height: 88%;
+    object-fit: contain;
+    pointer-events: none;
+    z-index: 2;
+    display: block;
+}
+
+.cm-tablero-coord {
+    position: absolute;
+    font-size: 10px;
+    font-weight: 700;
+    pointer-events: none;
+    z-index: 1;
+    opacity: 0.75;
+}
+.cm-tablero-coord-file { bottom: 2px; right: 4px; }
+.cm-tablero-coord-rank { top: 2px; left: 4px; }
+.cm-tablero-square.light .cm-tablero-coord { color: #b58863; }
+.cm-tablero-square.dark .cm-tablero-coord { color: #f0d9b5; }
+
+/* ============================================================
+   STATUS / MENSAJES
+   ============================================================ */
+.cm-tablero-status {
+    font-size: 0.95rem;
+    font-weight: 600;
+    padding: 10px 14px;
+    border-radius: 8px;
+    background: var(--cm-surface);
+    margin-bottom: 10px;
+    min-height: 42px;
+    display: flex;
+    align-items: center;
+}
+.cm-tablero-status.ok { background: #dcfce7; color: var(--cm-exito); }
+.cm-tablero-status.bad { background: #fee2e2; color: var(--cm-peligro); }
+.cm-tablero-status.info { background: #dbeafe; color: #1e40af; }
+.cm-tablero-status.alt { background: #ede9fe; color: var(--cm-alternativa); }
+.cm-tablero-status.ordenador { background: #fef3c7; color: #92400e; }
+.cm-tablero-status.elo {
+    background: #fef3c7;
+    color: var(--cm-elo);
+    font-weight: 800;
+}
+
+/* ============================================================
+   PANEL CONFIGURACIÓN (solo admin)
+   ============================================================ */
+.cm-tablero-config-panel {
+    background: #fff7ed;
+    border: 1px solid #fdba74;
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 12px;
+    font-size: 0.88rem;
+}
+.cm-tablero-config-panel.cm-hidden { display: none; }
+.cm-tablero-config-panel .cm-titulo-config {
+    color: #c2410c;
+    font-weight: 700;
+    margin-bottom: 10px;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+}
+.cm-tablero-config-panel .cm-fila {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+}
+.cm-tablero-config-panel label {
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: var(--cm-texto);
+    min-width: 110px;
+}
+.cm-tablero-config-panel select { flex: 1; min-width: 130px; }
+
+.cm-tablero-engine-status {
+    font-size: 0.75rem;
+    color: var(--cm-texto-suave);
+    text-align: right;
+    margin-top: 4px;
+}
+.cm-tablero-engine-status.ready { color: var(--cm-exito); }
+.cm-tablero-engine-status.loading { color: var(--cm-ordenador); }
+
+/* ============================================================
+   VARIANTES (editor admin)
+   ============================================================ */
+.cm-tablero-variantes-editor {
+    background: #f5f3ff;
+    border: 1px solid #c4b5fd;
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 12px;
+}
+.cm-tablero-variantes-editor.cm-hidden { display: none; }
+.cm-tablero-variantes-editor .cm-titulo {
+    color: var(--cm-alternativa);
+    font-weight: 700;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.cm-tablero-variante-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    background: #fff;
+    border-radius: 6px;
+    margin-bottom: 6px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.82rem;
+}
+.cm-tablero-variante-item .cm-texto {
+    flex: 1;
+    word-break: break-word;
+    line-height: 1.5;
+}
+.cm-tablero-variante-item .cm-btn-del {
+    background: #fee2e2;
+    color: var(--cm-peligro);
+    border: 1px solid #fca5a5;
+    padding: 4px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 700;
+    min-height: 30px;
+    font-family: inherit;
+}
+.cm-tablero-variante-item .cm-btn-del:hover {
+    background: var(--cm-peligro);
+    color: #fff;
+}
+.cm-tablero-variante-item .cm-badge-principal {
+    background: var(--cm-alternativa);
+    color: #fff;
+    font-size: 0.65rem;
+    padding: 2px 6px;
+    border-radius: 8px;
+    font-weight: 700;
+}
+
+/* ============================================================
+   PROGRESO DE VARIANTES (admin puede verlo, alumno no)
+   ============================================================ */
+.cm-tablero-variants-progress {
+    background: #f5f3ff;
+    border: 1px solid #c4b5fd;
+    border-radius: 8px;
+    padding: 10px 12px;
+    margin-bottom: 10px;
+    font-size: 0.85rem;
+}
+.cm-tablero-variants-progress.cm-hidden { display: none; }
+.cm-tablero-variants-progress .cm-titulo {
+    color: var(--cm-alternativa);
+    font-weight: 700;
+    margin-bottom: 8px;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    display: flex;
+    justify-content: space-between;
+}
+.cm-tablero-variants-progress .cm-dots {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+}
+.cm-tablero-variants-progress .cm-dot {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: #fff;
+    border: 2px solid #c4b5fd;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    color: var(--cm-alternativa);
+    font-weight: 700;
+}
+.cm-tablero-variants-progress .cm-dot.done {
+    background: var(--cm-exito);
+    border-color: var(--cm-exito);
+    color: #fff;
+}
+.cm-tablero-variants-progress .cm-dot.current {
+    border-color: var(--cm-alternativa);
+    background: var(--cm-alternativa);
+    color: #fff;
+    animation: cm-tablero-pulse 1.5s infinite;
+}
+@keyframes cm-tablero-pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.15); }
+}
+
+/* ============================================================
+   ALTERNATIVAS DISPONIBLES (para alumno)
+   ============================================================ */
+.cm-tablero-alternativas-panel {
+    background: #f5f3ff;
+    border: 1px solid #c4b5fd;
+    border-radius: 8px;
+    padding: 10px 12px;
+    margin-bottom: 10px;
+}
+.cm-tablero-alternativas-panel.cm-hidden { display: none; }
+.cm-tablero-alternativas-panel .cm-titulo {
+    color: var(--cm-alternativa);
+    font-weight: 700;
+    margin-bottom: 6px;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+}
+.cm-tablero-alternativas-lista {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+.cm-tablero-alternativas-lista button {
+    background: #fff;
+    color: var(--cm-alternativa);
+    border: 1px solid var(--cm-alternativa);
+    padding: 6px 10px;
+    font-size: 0.8rem;
+    min-height: auto;
+    border-radius: 6px;
+    font-family: 'Courier New', monospace;
+    font-weight: 700;
+    cursor: pointer;
+}
+.cm-tablero-alternativas-lista button:hover {
+    background: var(--cm-alternativa);
+    color: #fff;
+}
+
+/* ============================================================
+   AUTO-AVANCE
+   ============================================================ */
+.cm-tablero-auto-avance {
+    background: #ecfdf5;
+    border: 1px solid #a7f3d0;
+    border-radius: 8px;
+    padding: 10px 12px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.cm-tablero-auto-avance.cm-hidden { display: none; }
+.cm-tablero-auto-avance input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    accent-color: var(--cm-exito);
+}
+.cm-tablero-auto-avance label {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--cm-texto);
+    cursor: pointer;
+    flex: 1;
+}
+
+/* ============================================================
+   LISTA DE MOVIMIENTOS
+   ============================================================ */
+.cm-tablero-moves {
+    background: var(--cm-surface);
+    padding: 10px 12px;
+    border-radius: 8px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.85rem;
+    min-height: 60px;
+    word-break: break-all;
+    line-height: 1.8;
+    margin-bottom: 10px;
+    color: var(--cm-texto);
+}
+.cm-tablero-moves .done { color: var(--cm-exito); font-weight: 700; }
+.cm-tablero-moves .computadora { color: var(--cm-ordenador); font-weight: 700; }
+
+/* ============================================================
+   LISTA DE CAPÍTULOS
+   ============================================================ */
+.cm-tablero-chapter-list {
+    max-height: 380px;
+    overflow-y: auto;
+    border: 1px solid var(--cm-borde);
+    border-radius: 8px;
+    background: #fff;
+}
+.cm-tablero-chapter-item {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--cm-borde);
+    cursor: pointer;
+    font-size: 0.88rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+}
+.cm-tablero-chapter-item:last-child { border-bottom: none; }
+.cm-tablero-chapter-item:hover { background: var(--cm-surface); }
+.cm-tablero-chapter-item.active {
+    background: #dbeafe;
+    font-weight: 600;
+    color: #1e40af;
+}
+.cm-tablero-chapter-item.done::after {
+    content: '✓';
+    color: var(--cm-exito);
+    font-weight: bold;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+}
+.cm-tablero-chapter-item .cm-badges {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+    flex-shrink: 0;
+}
+.cm-tablero-chapter-item .cm-badge {
+    font-size: 0.68rem;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 10px;
+    white-space: nowrap;
+}
+.cm-tablero-chapter-item .cm-badge.alt {
+    color: var(--cm-alternativa);
+    background: #ede9fe;
+}
+.cm-tablero-chapter-item .cm-badge.ejercicio {
+    color: var(--cm-acento);
+    background: #dbeafe;
+}
+.cm-tablero-chapter-item .cm-badge.ordenador {
+    color: #92400e;
+    background: #fef3c7;
+}
+.cm-tablero-chapter-item .cm-badge.elo {
+    color: var(--cm-elo);
+    background: #fef3c7;
+}
+
+/* ============================================================
+   UTILIDADES
+   ============================================================ */
+.cm-tablero-hidden { display: none !important; }
+.cm-tablero-progress-info {
+    font-size: 0.85rem;
+    color: var(--cm-texto-suave);
+    margin-top: 8px;
+    text-align: center;
+}
+.cm-tablero-error-msg {
+    color: var(--cm-peligro);
+    font-size: 0.85rem;
+    padding: 8px;
+    background: #fee2e2;
+    border-radius: 6px;
+    margin-top: 8px;
+}
+
+/* ============================================================
+   TOAST
+   ============================================================ */
+.cm-tablero-toast {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(120%);
+    background: #1e293b;
+    color: #fff;
+    padding: 12px 22px;
+    border-radius: 30px;
+    font-size: 0.9rem;
+    z-index: 9999;
+    opacity: 0;
+    transition: opacity 0.3s, transform 0.3s;
+    pointer-events: none;
+    max-width: 90%;
+    text-align: center;
+    font-family: 'Lato', 'Segoe UI', sans-serif;
+}
+.cm-tablero-toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+.cm-tablero-toast.elo-up {
+    background: linear-gradient(135deg, #16a34a, #22c55e);
+}
+.cm-tablero-toast.elo-down {
+    background: linear-gradient(135deg, #dc2626, #ef4444);
+}
+
+/* ============================================================
+   MODAL DE ANÁLISIS (overlay)
+   ============================================================ */
+.cm-tablero-modal-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    overflow-y: auto;
+}
+.cm-tablero-modal-content {
+    background: #fff;
+    border-radius: 16px;
+    padding: 24px;
+    max-width: 520px;
+    width: 100%;
+    margin: auto;
+    color: var(--cm-texto);
+}
+.cm-tablero-modal-content h3 {
+    margin-bottom: 12px;
+    font-size: 1.15rem;
+}
+.cm-tablero-modal-content p {
+    color: var(--cm-texto-suave);
+    font-size: 0.9rem;
+    margin-bottom: 16px;
+    line-height: 1.6;
+}
+.cm-tablero-modal-acciones {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+}
+
+/* ============================================================
+   BOTONES ADMIN (para el editor dentro del bloque)
+   ============================================================ */
+.cm-tablero-btn-admin {
+    background: var(--cm-acento);
+    color: #fff;
+    border: none;
+    padding: 8px 14px;
+    border-radius: 6px;
+    font-weight: 700;
+    cursor: pointer;
+    font-size: 0.82rem;
+    min-height: 38px;
+    font-family: inherit;
+}
+.cm-tablero-btn-admin:hover { opacity: 0.9; }
+
+/* ============================================================
+   RESPONSIVE (móvil)
+   ============================================================ */
+@media (max-width: 600px) {
+    .cm-tablero-elo-header .cm-numero { font-size: 1.4rem; }
+    .cm-tablero-elo-header .cm-icono { font-size: 1.5rem; }
+    .cm-tablero-chapter-list { max-height: 300px; }
+    .cm-tablero-modal-content { padding: 18px; }
+    .cm-tablero-variante-item { font-size: 0.75rem; }
+    .cm-tablero-moves { font-size: 0.78rem; }
+}
