@@ -3,7 +3,7 @@
 // =============================================================
 
 // ⚠️ Sube la versión cuando hagas cambios importantes
-const CACHE_NAME = 'club-morphy-v5';
+const CACHE_NAME = 'club-morphy-v6';
 const OFFLINE_URL = '/Club-Morphy/offline.html';
 
 const STATIC_ASSETS = [
@@ -11,7 +11,9 @@ const STATIC_ASSETS = [
     '/Club-Morphy/index.html',
     '/Club-Morphy/offline.html',
     '/Club-Morphy/styles.css',
+    '/Club-Morphy/entrenador.css',
     '/Club-Morphy/script.js',
+    '/Club-Morphy/entrenador.js',
     '/Club-Morphy/manifest.json',
     '/Club-Morphy/assets/android-chrome-192x192.png',
     '/Club-Morphy/assets/android-chrome-512x512.png',
@@ -80,6 +82,9 @@ self.addEventListener('fetch', event => {
         'identitytoolkit.googleapis.com',
         'firestore.googleapis.com',
         'firebasestorage.googleapis.com',
+        'cdnjs.cloudflare.com',
+        'wikimedia.org',
+        'wikipedia.org',
     ];
 
     if (ignoredHosts.some(host => url.hostname.includes(host))) {
