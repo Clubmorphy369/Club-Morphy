@@ -835,6 +835,72 @@ code {
 }
 
 /* ============================================================
+   ⭐ DONACIÓN VOLUNTARIA
+   ============================================================ */
+.donacion-item {
+    background: var(--bg);
+    border: 1px solid var(--borde);
+    border-left: 3px solid var(--acento);
+    border-radius: 8px;
+    padding: 12px 14px;
+    margin-bottom: 10px;
+}
+
+.donacion-label {
+    font-size: 0.78rem;
+    color: var(--texto-suave);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+}
+
+.donacion-value {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.donacion-texto {
+    font-family: 'Courier New', monospace;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--texto);
+    word-break: break-all;
+    flex: 1;
+}
+
+.btn-copy {
+    background: var(--surface);
+    border: 1px solid var(--borde);
+    color: var(--acento);
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: var(--transicion);
+    min-width: 44px;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    touch-action: manipulation;
+}
+
+.btn-copy:hover {
+    background: var(--acento);
+    color: white;
+    border-color: var(--acento);
+    transform: scale(1.05);
+}
+
+.btn-copy:active {
+    transform: scale(0.95);
+}
+
+/* ============================================================
    SCROLL TÁCTIL SUAVE (iOS)
    ============================================================ */
 .sidebar, .content, .modal-content, .user-access-list, .solicitudes-list, .notificaciones-list {
@@ -843,10 +909,9 @@ code {
 
 /* ============================================================
    TOUCH-ACTION: SOLO EN ELEMENTOS INTERACTIVOS
-   (antes estaba en * que bloqueaba el zoom)
    ============================================================ */
-button, .btn, .btn-small, .btn-reorder, .btn-icon, .clase-item,
-.tema-header, .hamburger, .toggle-password-btn, a {
+button, .btn, .btn-small, .btn-reorder, .btn-icon, .btn-copy,
+.clase-item, .tema-header, .hamburger, .toggle-password-btn, a {
     touch-action: manipulation;
 }
 
@@ -864,7 +929,6 @@ button, .btn, .btn-small, .btn-reorder, .btn-icon, .clase-item,
 
 /* ============================================================
    MEDIA QUERIES — MÓVIL (≤ 768px)
-   Consolidado: antes había 3 bloques separados
    ============================================================ */
 @media (max-width: 768px) {
     /* Layout principal */
@@ -890,7 +954,7 @@ button, .btn, .btn-small, .btn-reorder, .btn-icon, .clase-item,
     .header-right { gap: 6px; }
     .header-right .btn { padding: 8px 12px; font-size: 0.8rem; }
 
-    /* Botones táctiles: mínimo 44px para accesibilidad */
+    /* Botones táctiles */
     .btn, .btn-small, .clase-item, .tema-header button {
         min-height: 44px;
         min-width: 44px;
@@ -912,10 +976,10 @@ button, .btn, .btn-small, .btn-reorder, .btn-icon, .clase-item,
     .tema.abierto .tema-body {
         padding: 16px;
         gap: 20px;
-        max-height: none; /* Antes era 80vh, causaba scroll interno */
+        max-height: none;
     }
 
-    /* Inputs: 16px para evitar zoom en iOS */
+    /* Inputs */
     input, textarea { font-size: 16px; padding: 14px 16px; }
     .input-row { flex-direction: column; align-items: stretch; gap: 12px; }
     .input-row input { min-width: auto; }
@@ -955,4 +1019,5 @@ button, .btn, .btn-small, .btn-reorder, .btn-icon, .clase-item,
     .header-right .btn .btn-label { display: none; }
     .header-right .btn { padding: 10px 12px; font-size: 1.2rem; gap: 2px; }
     #user-info { max-width: 100px; }
+    .donacion-texto { font-size: 0.9rem; }
 }
