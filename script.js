@@ -101,7 +101,7 @@ function escapeOnclick(str) {
               .replace(/"/g, '&quot;');
 }
 
-// ⭐ Sanitización para el editor de texto enriquecido
+// Sanitización para el editor de texto enriquecido
 function sanitizeHtml(html) {
     if (!html) return '';
     return String(html)
@@ -202,19 +202,37 @@ window.closeConfirm = closeConfirm;
 // ------------------------------------------------
 // AUTENTICACIÓN Y USUARIOS
 // ------------------------------------------------
-async function registrarUsuarioEnColeccion(user) {
+async function registrarUsuarioEnColeccion(user, nombre = null, apellidos = null) {
     if (!user) return;
     const userRef = db.collection('usuarios').doc(user.uid);
     const doc = await userRef.get();
+
     if (!doc.exists) {
-        await userRef.set({
+        // ⭐ Usuario nuevo: guardar con nombre y apellidos
+        const data = {
             uid: user.uid,
             email: user.email,
+            nombre: nombre || '',
+            apellidos: apellidos || '',
+            perfilCompletado: !!(nombre && apellidos),
+            asignadoPorAdmin: false,
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
+        };
+        await userRef.set(data);
     } else {
+        // ⭐ Usuario existente: actualizar email si cambió
+        const updates = {};
         if (doc.data().email !== user.email) {
-            await userRef.update({ email: user.email });
+            updates.email = user.email;
+        }
+        // Si el usuario existente no tiene nombre y ahora sí lo trae, actualizar
+        if (nombre && apellidos && !doc.data().nombre) {
+            updates.nombre = nombre;
+            updates.apellidos = apellidos;
+            updates.perfilCompletado = true;
+        }
+        if (Object.keys(updates).length > 0) {
+            await userRef.update(updates);
         }
     }
 }
@@ -223,7 +241,16 @@ async function obtenerListaUsuarios() {
     try {
         const snapshot = await db.collection('usuarios').get();
         const users = [];
-        snapshot.forEach(doc => { users.push({ uid: doc.id, email: doc.data().email }); });
+        snapshot.forEach(doc => {
+            const d = doc.data();
+            users.push({
+                uid: doc.id,
+                email: d.email,
+                nombre: d.nombre || '',
+                apellidos: d.apellidos || '',
+                perfilCompletado: d.perfilCompletado || false
+            });
+        });
         users.sort((a, b) => (a.email || '').localeCompare(b.email || ''));
         return users;
     } catch (error) {
@@ -247,6 +274,13 @@ function mostrarLogin() {
         document.getElementById('extra-controls').style.display = 'block';
         document.getElementById('btn-auth').textContent = 'Ingresar';
         modoRegistro = false;
+
+        // ⭐ Ocultar campos de nombre (modo login)
+        const registerFields = document.getElementById('register-fields');
+        if (registerFields) {
+            registerFields.style.display = 'none';
+        }
+
         limpiarCampos();
     }
     modalLogin.classList.add('active');
@@ -255,6 +289,13 @@ function mostrarLogin() {
 function limpiarCampos() {
     document.getElementById('email').value = '';
     document.getElementById('password').value = '';
+
+    // ⭐ Limpiar campos nuevos si existen
+    const nombreInput = document.getElementById('nombre');
+    const apellidosInput = document.getElementById('apellidos');
+    if (nombreInput) nombreInput.value = '';
+    if (apellidosInput) apellidosInput.value = '';
+
     document.getElementById('autofill-warning').style.display = 'none';
     document.getElementById('email').focus();
 }
@@ -547,9 +588,9 @@ function mostrarDonacion() {
 }
 window.mostrarDonacion = mostrarDonacion;
 
-// =============================================================
-// ⭐ EDITOR DE TEXTO ENRIQUECIDO
-// =============================================================
+// ------------------------------------------------
+// EDITOR DE TEXTO ENRIQUECIDO
+// ------------------------------------------------
 let activeTextEditor = null;
 let activeTextEditorIds = { claseId: null, temaId: null, bloqueId: null };
 
@@ -840,9 +881,10 @@ async function gestionarAccesosTema(claseId, temaId) {
     } else {
         listaDiv.innerHTML = usuarios.map(user => {
             const checked = uidsActual.includes(user.uid);
+            const displayName = user.nombre ? `${user.nombre} ${user.apellidos}` : user.email;
             return `
                 <div class="user-access-item">
-                    <span class="user-email">${escapeHtml(user.email)}</span>
+                    <span class="user-email">${escapeHtml(displayName)}</span>
                     <label class="toggle-switch">
                         <input type="checkbox" data-uid="${user.uid}" ${checked ? 'checked' : ''}>
                         <span class="slider"></span>
@@ -1414,9 +1456,9 @@ async function rechazarSolicitud(solicitudId, uid, claseId, tipo = 'clase', tema
     }
 }
 
-// =============================================================
+// ------------------------------------------------
 // GESTIÓN MASIVA DE ACCESOS
-// =============================================================
+// ------------------------------------------------
 async function ejecutarEnLotes(operaciones) {
     const CHUNK = 400;
     for (let i = 0; i < operaciones.length; i += CHUNK) {
@@ -1619,9 +1661,17 @@ async function abrirGestionAlumnos() {
         return;
     }
 
-    lista.innerHTML = alumnos.map(u => `
+    lista.innerHTML = alumnos.map(u => {
+        const tieneNombre = u.nombre && u.apellidos;
+        const displayName = tieneNombre ? `${u.nombre} ${u.apellidos}` : u.email;
+        return `
         <div class="user-access-item">
-            <span class="user-email">${escapeHtml(u.email)}</span>
+            <div style="flex:1; min-width:0;">
+                <span class="user-email" style="display:block; ${!tieneNombre ? 'color:var(--texto-suave); font-style:italic;' : ''}">
+                    ${escapeHtml(displayName)}
+                </span>
+                ${tieneNombre ? `<span style="font-size:0.75rem; color:var(--texto-suave);">${escapeHtml(u.email)}</span>` : ''}
+            </div>
             <div style="display:flex; gap:6px; flex-wrap:wrap;">
                 <button class="btn btn-exito btn-small"
                         onclick="aprobarTodoElCurso('${u.uid}','${escapeOnclick(u.email)}')">
@@ -1633,7 +1683,8 @@ async function abrirGestionAlumnos() {
                 </button>
             </div>
         </div>
-    `).join('');
+    `;
+    }).join('');
 }
 window.abrirGestionAlumnos = abrirGestionAlumnos;
 
@@ -1835,7 +1886,7 @@ function eliminarBloque(claseId, temaId, bloqueId) {
     const preview = bloque.tipo === 'enlace'
         ? (bloque.label || 'sin etiqueta')
         : (bloque.contenido || 'vacío');
-    const previewCorto = preview.length > 40 ? preview.substring(0, 40) + '...' : preview;
+    const previewCorto = String(preview).length > 40 ? String(preview).substring(0, 40) + '...' : String(preview);
 
     mostrarConfirmacion(
         '🗑️ Eliminar bloque',
@@ -2033,9 +2084,10 @@ async function gestionarAccesosClase(claseId) {
     } else {
         listaDiv.innerHTML = usuarios.map(user => {
             const checked = uidsAutorizados.includes(user.uid);
+            const displayName = user.nombre ? `${user.nombre} ${user.apellidos}` : user.email;
             return `
                 <div class="user-access-item">
-                    <span class="user-email">${escapeHtml(user.email)}</span>
+                    <span class="user-email">${escapeHtml(displayName)}</span>
                     <label class="toggle-switch">
                         <input type="checkbox" data-uid="${user.uid}" ${checked ? 'checked' : ''}>
                         <span class="slider"></span>
@@ -2062,7 +2114,7 @@ function cerrarModalAccesos() {
 }
 
 // ------------------------------------------------
-// RENDERIZADO RECURSIVO DE TEMAS (CON EDITOR DE TEXTO)
+// RENDERIZADO RECURSIVO DE TEMAS
 // ------------------------------------------------
 function renderizarTemaRecursivo(tema, claseId, nivel = 0) {
     const accesible = temaAccesible(tema, currentUser);
@@ -2091,7 +2143,6 @@ function renderizarTemaRecursivo(tema, claseId, nivel = 0) {
                         break;
                     case 'texto': {
                         if (!bloque.contenido) return '';
-                        // ⭐ Detectar si es HTML (editor nuevo) o texto plano (bloques antiguos)
                         const esHtml = /<[a-z][\s\S]*>/i.test(bloque.contenido);
                         if (esHtml) {
                             const contenidoSanitizado = sanitizeHtml(bloque.contenido);
@@ -2148,7 +2199,6 @@ function renderizarTemaRecursivo(tema, claseId, nivel = 0) {
         `;
     }
 
-    // ⭐ EDITOR DE BLOQUES
     const TIPOS_BLOQUE = {
         video:  { icon: '🎥', label: 'Video'  },
         texto:  { icon: '📝', label: 'Texto'  },
@@ -2534,7 +2584,6 @@ document.addEventListener('focusin', (event) => {
     const target = event.target;
     if (!target.closest) return;
 
-    // ⭐ Detectar foco en editor de texto enriquecido
     if (target.classList?.contains('bloque-texto-editor')) {
         const bloqueId = target.dataset.bloque;
         const temaId = target.dataset.tema;
@@ -2555,7 +2604,6 @@ document.addEventListener('focusin', (event) => {
     }, 400);
 });
 
-// ⭐ Actualizar estado de botones del toolbar al cambiar la selección
 document.addEventListener('selectionchange', textEditorUpdateState);
 
 document.getElementById('toggle-password').addEventListener('click', function() {
@@ -2570,18 +2618,37 @@ document.getElementById('auth-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     const email = document.getElementById('email').value.trim();
     const pass = document.getElementById('password').value.trim();
+
     if (!email || !pass) return mostrarToast('Falta tu correo o contraseña', 'error');
+
+    // ⭐ Validar nombre y apellidos solo en modo registro
+    let nombre = '';
+    let apellidos = '';
+    if (modoRegistro) {
+        nombre = document.getElementById('nombre').value.trim();
+        apellidos = document.getElementById('apellidos').value.trim();
+
+        if (!nombre || !apellidos) {
+            return mostrarToast('Por favor escribe tu nombre y apellidos', 'error');
+        }
+    }
+
     const btnAuth = document.getElementById('btn-auth');
     btnAuth.disabled = true;
     btnAuth.innerHTML = '<span class="loader"></span> Procesando...';
+
     try {
         if (modoRegistro) {
             const credencial = await auth.createUserWithEmailAndPassword(email, pass);
-            await registrarUsuarioEnColeccion(credencial.user);
-            mostrarToast('¡Cuenta creada! Ya tienes acceso.', 'success');
+            await registrarUsuarioEnColeccion(credencial.user, nombre, apellidos);
+            mostrarToast(`¡Cuenta creada, ${nombre}! Ya tienes acceso.`, 'success');
             modoRegistro = false;
             document.getElementById('modal-title').textContent = 'Iniciar sesión';
             document.getElementById('btn-auth').textContent = 'Ingresar';
+
+            const registerFields = document.getElementById('register-fields');
+            if (registerFields) registerFields.style.display = 'none';
+
             limpiarCampos();
         } else {
             const credencial = await auth.signInWithEmailAndPassword(email, pass);
@@ -2605,6 +2672,12 @@ document.getElementById('switch-auth').addEventListener('click', (e) => {
 
     const passInput = document.getElementById('password');
     passInput.setAttribute('autocomplete', modoRegistro ? 'new-password' : 'current-password');
+
+    // ⭐ Mostrar/ocultar campos de nombre según el modo
+    const registerFields = document.getElementById('register-fields');
+    if (registerFields) {
+        registerFields.style.display = modoRegistro ? 'block' : 'none';
+    }
 
     limpiarCampos();
 });
@@ -2712,7 +2785,7 @@ document.addEventListener('keydown', (e) => {
 // ------------------------------------------------
 configurarDeteccionAutofill();
 suscribirDatosClub();
-console.log('✅ Club Morphy – Editor de texto enriquecido listo');
+console.log('✅ Club Morphy – Fase 2 completada (nombre y apellidos)');
 
 // Exponer funciones globales
 window.mostrarLogin = mostrarLogin;
