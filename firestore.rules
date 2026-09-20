@@ -40,10 +40,18 @@ service cloud.firestore {
     match /usuarios/{uid} {
       allow read: if isAuthenticated();
       allow create: if isOwner(uid);
+      // ⭐ FASE 3: Ahora permite actualizar nombre, apellidos, etc.
       allow update: if isAdmin()
                     || (isOwner(uid)
                         && request.resource.data.diff(resource.data)
-                            .affectedKeys().hasOnly(['email', 'uid']));
+                            .affectedKeys().hasOnly([
+                              'email',
+                              'uid',
+                              'nombre',
+                              'apellidos',
+                              'perfilCompletado',
+                              'asignadoPorAdmin'
+                            ]));
       allow delete: if isAdmin();
     }
 
@@ -115,13 +123,29 @@ service cloud.firestore {
                     );
 
       allow update: if isAuthenticated()
-                    && (isAdmin() || request.auth.uid == resource.data.paraUid)
+                    && (isAdmin() || request.auth.uid == request.resource.data.paraUid)
                     && request.resource.data.diff(resource.data)
                         .affectedKeys().hasOnly(['leida']);
 
       allow delete: if isAdmin()
                     || (isAuthenticated()
                         && request.auth.uid == resource.data.paraUid);
+    }
+
+    // ============================
+    // ⭐ ELO (NUEVO - FASE 1)
+    // ============================
+    match /elo/{uid} {
+      allow read: if isAuthenticated() && (isOwner(uid) || isAdmin());
+      allow write: if isOwner(uid) || isAdmin();
+    }
+
+    // ============================
+    // ⭐ ESTADÍSTICAS (NUEVO - FASE 1)
+    // ============================
+    match /estadisticas/{uid} {
+      allow read: if isAuthenticated() && (isOwner(uid) || isAdmin());
+      allow write: if isOwner(uid) || isAdmin();
     }
 
     // ============================
