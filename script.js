@@ -101,6 +101,20 @@ function escapeOnclick(str) {
               .replace(/"/g, '&quot;');
 }
 
+// ⭐ Sanitización para el editor de texto enriquecido
+function sanitizeHtml(html) {
+    if (!html) return '';
+    return String(html)
+        .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+        .replace(/<iframe\b[^>]*>.*?<\/iframe>/gi, '')
+        .replace(/<object\b[^>]*>.*?<\/object>/gi, '')
+        .replace(/<embed\b[^>]*>/gi, '')
+        .replace(/\son\w+\s*=\s*"[^"]*"/gi, '')
+        .replace(/\son\w+\s*=\s*'[^']*'/gi, '')
+        .replace(/\son\w+\s*=\s*[^\s>]+/gi, '')
+        .replace(/javascript:/gi, '');
+}
+
 // ------------------------------------------------
 // PERSISTENCIA DE NAVEGACIÓN (sessionStorage)
 // ------------------------------------------------
@@ -430,7 +444,6 @@ function actualizarBotonDatosClub() {
     const btn = document.getElementById('btn-datos-club');
     const btnDonar = document.getElementById('btn-donar');
 
-    // Contacto: requiere login
     if (!currentUser) {
         btn.style.display = 'none';
     } else {
@@ -438,7 +451,6 @@ function actualizarBotonDatosClub() {
         btn.style.display = tieneDatos ? 'inline-flex' : 'none';
     }
 
-    // ⭐ Donación: visible siempre si hay datos (aunque no esté logueado)
     if (btnDonar) {
         const tieneDonacion = datosClub.donacionTitular || datosClub.donacionBanco ||
                               datosClub.donacionTarjeta || datosClub.donacionCuenta ||
@@ -448,7 +460,7 @@ function actualizarBotonDatosClub() {
 }
 
 // ------------------------------------------------
-// ⭐ DONACIÓN VOLUNTARIA
+// DONACIÓN VOLUNTARIA
 // ------------------------------------------------
 async function copiarAlPortapapeles(texto, btn) {
     const originalText = btn.textContent;
@@ -462,7 +474,6 @@ async function copiarAlPortapapeles(texto, btn) {
         }, 1500);
         mostrarToast('📋 Copiado al portapapeles', 'success');
     } catch (err) {
-        // Fallback para navegadores viejos o contextos sin HTTPS
         try {
             const textarea = document.createElement('textarea');
             textarea.value = texto;
@@ -536,8 +547,130 @@ function mostrarDonacion() {
 }
 window.mostrarDonacion = mostrarDonacion;
 
+// =============================================================
+// ⭐ EDITOR DE TEXTO ENRIQUECIDO
+// =============================================================
+let activeTextEditor = null;
+let activeTextEditorIds = { claseId: null, temaId: null, bloqueId: null };
+
+function buildTextEditorToolbar(bloqueId) {
+    return `
+    <div class="text-editor-toolbar" data-editor-toolbar="${bloqueId}">
+        <div class="toolbar-group">
+            <button type="button" class="toolbar-btn" onclick="textEditorCmd('undo')" title="Deshacer">↶</button>
+            <button type="button" class="toolbar-btn" onclick="textEditorCmd('redo')" title="Rehacer">↷</button>
+        </div>
+        <div class="toolbar-group">
+            <select class="toolbar-select" onchange="textEditorCmd('fontName', this.value); this.value='';">
+                <option value="">Fuente…</option>
+                <option value="Lato">Lato</option>
+                <option value="Georgia">Georgia</option>
+                <option value="Arial">Arial</option>
+                <option value="Times New Roman">Times New Roman</option>
+                <option value="Courier New">Courier New</option>
+                <option value="Verdana">Verdana</option>
+                <option value="Playfair Display">Playfair Display</option>
+            </select>
+            <select class="toolbar-select toolbar-select-sm" onchange="textEditorCmd('fontSize', this.value); this.value='';">
+                <option value="">Tamaño…</option>
+                <option value="1">Pequeño</option>
+                <option value="3">Normal</option>
+                <option value="5">Grande</option>
+                <option value="7">Enorme</option>
+            </select>
+        </div>
+        <div class="toolbar-group">
+            <button type="button" class="toolbar-btn" data-cmd="bold" onclick="textEditorCmd('bold')" title="Negrita"><b>B</b></button>
+            <button type="button" class="toolbar-btn" data-cmd="italic" onclick="textEditorCmd('italic')" title="Cursiva"><i>I</i></button>
+            <button type="button" class="toolbar-btn" data-cmd="underline" onclick="textEditorCmd('underline')" title="Subrayado"><u>U</u></button>
+            <button type="button" class="toolbar-btn" data-cmd="strikeThrough" onclick="textEditorCmd('strikeThrough')" title="Tachado"><s>S</s></button>
+        </div>
+        <div class="toolbar-group">
+            <label class="toolbar-color" title="Color de texto">
+                <span>A</span>
+                <input type="color" value="#1e293b" onchange="textEditorCmd('foreColor', this.value)">
+            </label>
+            <label class="toolbar-color" title="Resaltar">
+                <span>🖍</span>
+                <input type="color" value="#ffff00" onchange="textEditorCmd('hiliteColor', this.value)">
+            </label>
+            <button type="button" class="toolbar-btn" onclick="textEditorCmd('hiliteColor', 'transparent')" title="Quitar resaltado">🚫</button>
+        </div>
+        <div class="toolbar-group">
+            <button type="button" class="toolbar-btn" data-cmd="justifyLeft" onclick="textEditorCmd('justifyLeft')" title="Izquierda">⬅</button>
+            <button type="button" class="toolbar-btn" data-cmd="justifyCenter" onclick="textEditorCmd('justifyCenter')" title="Centro">↔</button>
+            <button type="button" class="toolbar-btn" data-cmd="justifyRight" onclick="textEditorCmd('justifyRight')" title="Derecha">➡</button>
+            <button type="button" class="toolbar-btn" data-cmd="justifyFull" onclick="textEditorCmd('justifyFull')" title="Justificar">☰</button>
+        </div>
+        <div class="toolbar-group">
+            <button type="button" class="toolbar-btn" data-cmd="insertUnorderedList" onclick="textEditorCmd('insertUnorderedList')" title="Lista">•</button>
+            <button type="button" class="toolbar-btn" data-cmd="insertOrderedList" onclick="textEditorCmd('insertOrderedList')" title="Lista numerada">1.</button>
+            <button type="button" class="toolbar-btn" onclick="textEditorCmd('outdent')" title="Menos sangría">⇤</button>
+            <button type="button" class="toolbar-btn" onclick="textEditorCmd('indent')" title="Más sangría">⇥</button>
+        </div>
+        <div class="toolbar-group">
+            <button type="button" class="toolbar-btn" onclick="textEditorHr()" title="Línea horizontal">─</button>
+            <button type="button" class="toolbar-btn toolbar-btn-danger" onclick="textEditorCmd('removeFormat')" title="Quitar formato">✕</button>
+        </div>
+    </div>`;
+}
+
+function setActiveTextEditor(element, claseId, temaId, bloqueId) {
+    activeTextEditor = element;
+    activeTextEditorIds = { claseId, temaId, bloqueId };
+}
+
+function textEditorCmd(cmd, value) {
+    if (!activeTextEditor) return;
+    activeTextEditor.focus();
+    try {
+        document.execCommand('styleWithCSS', false, true);
+        document.execCommand(cmd, false, value || null);
+    } catch (e) { console.warn(e); }
+    textEditorSave();
+    textEditorUpdateState();
+}
+window.textEditorCmd = textEditorCmd;
+
+function textEditorHr() {
+    if (!activeTextEditor) return;
+    activeTextEditor.focus();
+    document.execCommand('insertHTML', false, '<hr>');
+    textEditorSave();
+}
+window.textEditorHr = textEditorHr;
+
+function textEditorSave() {
+    if (!activeTextEditor || !activeTextEditorIds.bloqueId) return;
+    const { claseId, temaId, bloqueId } = activeTextEditorIds;
+    const clase = curso.clases.find(c => c.id === claseId);
+    if (!clase) return;
+    const tema = buscarTemaRecursivo(clase.temas, temaId);
+    if (!tema) return;
+    if (!tema.bloques) return;
+    const bloque = tema.bloques.find(b => b.id === bloqueId);
+    if (!bloque) return;
+    bloque.contenido = sanitizeHtml(activeTextEditor.innerHTML);
+    guardarCurso();
+}
+window.textEditorSave = textEditorSave;
+
+function textEditorUpdateState() {
+    document.querySelectorAll('[data-editor-toolbar]').forEach(toolbar => {
+        const editor = toolbar.parentElement?.querySelector('.bloque-texto-editor');
+        if (!editor) return;
+        const isActive = document.activeElement === editor || editor.contains(document.activeElement);
+        toolbar.querySelectorAll('[data-cmd]').forEach(btn => {
+            if (!isActive) { btn.classList.remove('active'); return; }
+            try {
+                btn.classList.toggle('active', document.queryCommandState(btn.dataset.cmd));
+            } catch (e) { /* ignorar */ }
+        });
+    });
+}
+
 // ------------------------------------------------
-// GESTIÓN DEL CURSO (CRUD) – escucha en tiempo real
+// GESTIÓN DEL CURSO (CRUD)
 // ------------------------------------------------
 function iniciarEscuchaCurso() {
     if (unsubscribeCurso) unsubscribeCurso();
@@ -1282,9 +1415,8 @@ async function rechazarSolicitud(solicitudId, uid, claseId, tipo = 'clase', tema
 }
 
 // =============================================================
-// GESTIÓN MASIVA DE ACCESOS (Aprobar TODO / Revocar TODO)
+// GESTIÓN MASIVA DE ACCESOS
 // =============================================================
-
 async function ejecutarEnLotes(operaciones) {
     const CHUNK = 400;
     for (let i = 0; i < operaciones.length; i += CHUNK) {
@@ -1595,7 +1727,6 @@ async function marcarTodasNotificacionesLeidas() {
     }
 }
 
-// ⭐ ELIMINAR NOTIFICACIÓN — CON CONFIRMACIÓN
 async function eliminarNotificacion(notifId) {
     mostrarConfirmacion(
         '🗑️ Eliminar notificación',
@@ -1694,7 +1825,6 @@ function agregarBloque(claseId, temaId, tipo) {
     guardarCurso().then(() => actualizarUI());
 }
 
-// ⭐ ELIMINAR BLOQUE — CON CONFIRMACIÓN
 function eliminarBloque(claseId, temaId, bloqueId) {
     const clase = curso.clases.find(c => c.id === claseId);
     const tema = buscarTemaRecursivo(clase.temas, temaId);
@@ -1932,7 +2062,7 @@ function cerrarModalAccesos() {
 }
 
 // ------------------------------------------------
-// RENDERIZADO RECURSIVO DE TEMAS (REDISEÑADO)
+// RENDERIZADO RECURSIVO DE TEMAS (CON EDITOR DE TEXTO)
 // ------------------------------------------------
 function renderizarTemaRecursivo(tema, claseId, nivel = 0) {
     const accesible = temaAccesible(tema, currentUser);
@@ -1961,10 +2091,17 @@ function renderizarTemaRecursivo(tema, claseId, nivel = 0) {
                         break;
                     case 'texto': {
                         if (!bloque.contenido) return '';
-                        const est = bloque.estilo || {};
-                        const textoSanitizado = escapeHtml(bloque.contenido);
-                        const textoConSaltos = textoSanitizado.replace(/\n/g, '<br>');
-                        html = `<div class="bloque-texto" style="font-size:${escapeHtml(est.fontSize)||'inherit'}; color:${escapeHtml(est.color)||'inherit'}; text-align:${escapeHtml(est.textAlign)||'left'};">${textoConSaltos}</div>`;
+                        // ⭐ Detectar si es HTML (editor nuevo) o texto plano (bloques antiguos)
+                        const esHtml = /<[a-z][\s\S]*>/i.test(bloque.contenido);
+                        if (esHtml) {
+                            const contenidoSanitizado = sanitizeHtml(bloque.contenido);
+                            html = `<div class="bloque-texto">${contenidoSanitizado}</div>`;
+                        } else {
+                            const textoSanitizado = escapeHtml(bloque.contenido);
+                            const textoConSaltos = textoSanitizado.replace(/\n/g, '<br>');
+                            const est = bloque.estilo || {};
+                            html = `<div class="bloque-texto" style="font-size:${escapeHtml(est.fontSize)||'inherit'}; color:${escapeHtml(est.color)||'inherit'}; text-align:${escapeHtml(est.textAlign)||'left'};">${textoConSaltos}</div>`;
+                        }
                         break;
                     }
                     case 'imagen': {
@@ -2011,7 +2148,7 @@ function renderizarTemaRecursivo(tema, claseId, nivel = 0) {
         `;
     }
 
-    // ⭐ EDITOR DE BLOQUES REDISEÑADO
+    // ⭐ EDITOR DE BLOQUES
     const TIPOS_BLOQUE = {
         video:  { icon: '🎥', label: 'Video'  },
         texto:  { icon: '📝', label: 'Texto'  },
@@ -2034,7 +2171,7 @@ function renderizarTemaRecursivo(tema, claseId, nivel = 0) {
                 const info = TIPOS_BLOQUE[bloque.tipo] || TIPOS_BLOQUE.texto;
                 const previewRaw = bloque.tipo === 'enlace'
                     ? (bloque.label || '(sin etiqueta)')
-                    : (bloque.contenido || '(vacío)');
+                    : (bloque.contenido ? String(bloque.contenido).replace(/<[^>]+>/g, '').substring(0, 50) : '(vacío)');
                 const preview = escape(String(previewRaw).substring(0, 50));
                 return `
                 <div class="bloque-editor" data-bloque-id="${bloque.id}" data-tipo="${bloque.tipo}">
@@ -2053,30 +2190,27 @@ function renderizarTemaRecursivo(tema, claseId, nivel = 0) {
                                 <option value="imagen" ${bloque.tipo==='imagen'?'selected':''}>🖼️ Imagen</option>
                                 <option value="enlace" ${bloque.tipo==='enlace'?'selected':''}>🔗 Enlace</option>
                             </select>
-                            ${bloque.tipo === 'enlace' ? `
-                                <input placeholder="Etiqueta" value="${escape(bloque.label||'')}" onchange="actualizarBloqueEnlace('${claseId}','${tema.id}','${bloque.id}', this.value, this.nextElementSibling.value)">
-                                <input placeholder="URL" value="${escape(bloque.url||'')}" onchange="actualizarBloqueEnlace('${claseId}','${tema.id}','${bloque.id}', this.previousElementSibling.value, this.value)">
-                            ` : `
-                                <input placeholder="Contenido" value="${escape(bloque.contenido||'')}" onchange="actualizarBloqueContenido('${claseId}','${tema.id}','${bloque.id}', this.value)">
-                            `}
                             <button class="btn-reorder" onclick="moverBloqueArriba('${claseId}','${tema.id}','${bloque.id}')" title="Subir bloque">↑</button>
                             <button class="btn-reorder" onclick="moverBloqueAbajo('${claseId}','${tema.id}','${bloque.id}')" title="Bajar bloque">↓</button>
                             <button class="btn btn-peligro btn-small" onclick="eliminarBloque('${claseId}','${tema.id}','${bloque.id}')" title="Eliminar bloque">🗑️</button>
                         </div>
                         ${bloque.tipo === 'texto' ? `
-                            <div class="estilo-controls">
-                                <label>Tamaño: <input type="text" value="${escape(bloque.estilo?.fontSize||'')}" placeholder="1rem" onchange="actualizarBloqueEstilo('${claseId}','${tema.id}','${bloque.id}', 'fontSize', this.value)"></label>
-                                <label>Color: <input type="color" value="${escape(bloque.estilo?.color||'#000000')}" onchange="actualizarBloqueEstilo('${claseId}','${tema.id}','${bloque.id}', 'color', this.value)"></label>
-                                <label>Alineación:
-                                    <select onchange="actualizarBloqueEstilo('${claseId}','${tema.id}','${bloque.id}', 'textAlign', this.value)">
-                                        <option value="left" ${bloque.estilo?.textAlign==='left'?'selected':''}>Izquierda</option>
-                                        <option value="center" ${bloque.estilo?.textAlign==='center'?'selected':''}>Centro</option>
-                                        <option value="right" ${bloque.estilo?.textAlign==='right'?'selected':''}>Derecha</option>
-                                    </select>
-                                </label>
-                            </div>
-                        ` : ''}
-                        <input placeholder="Nota al pie (opcional)" value="${escape(bloque.nota||'')}" onchange="actualizarBloqueNota('${claseId}','${tema.id}','${bloque.id}', this.value)">
+                            ${buildTextEditorToolbar(bloque.id)}
+                            <div class="bloque-texto-editor"
+                                 contenteditable="true"
+                                 spellcheck="true"
+                                 data-placeholder="Escribe el texto aquí…"
+                                 data-clase="${claseId}"
+                                 data-tema="${tema.id}"
+                                 data-bloque="${bloque.id}"
+                                 oninput="textEditorSave()">${bloque.contenido || ''}</div>
+                        ` : bloque.tipo === 'enlace' ? `
+                            <input placeholder="Etiqueta" value="${escape(bloque.label||'')}" onchange="actualizarBloqueEnlace('${claseId}','${tema.id}','${bloque.id}', this.value, this.nextElementSibling.value)">
+                            <input placeholder="URL" value="${escape(bloque.url||'')}" onchange="actualizarBloqueEnlace('${claseId}','${tema.id}','${bloque.id}', this.previousElementSibling.value, this.value)">
+                        ` : `
+                            <input placeholder="Contenido" value="${escape(bloque.contenido||'')}" onchange="actualizarBloqueContenido('${claseId}','${tema.id}','${bloque.id}', this.value)">
+                        `}
+                        <input placeholder="Nota al pie (opcional)" value="${escape(bloque.nota||'')}" onchange="actualizarBloqueNota('${claseId}','${tema.id}','${bloque.id}', this.value)" style="margin-top:10px;">
                     </div>
                 </div>`;
             }).join('')}
@@ -2088,7 +2222,6 @@ function renderizarTemaRecursivo(tema, claseId, nivel = 0) {
         <button class="btn btn-azul btn-small" onclick="agregarBloque('${claseId}','${tema.id}','enlace')">➕ Enlace</button>
     </div>` : '';
 
-    // ⭐ Badge de nivel para temas anidados
     const nivelBadgeHTML = nivel > 0
         ? `<span class="nivel-badge">Nivel ${nivel}</span>`
         : '';
@@ -2400,6 +2533,17 @@ auth.onAuthStateChanged(async (user) => {
 document.addEventListener('focusin', (event) => {
     const target = event.target;
     if (!target.closest) return;
+
+    // ⭐ Detectar foco en editor de texto enriquecido
+    if (target.classList?.contains('bloque-texto-editor')) {
+        const bloqueId = target.dataset.bloque;
+        const temaId = target.dataset.tema;
+        const claseId = target.dataset.clase;
+        if (bloqueId && temaId && claseId) {
+            setActiveTextEditor(target, claseId, temaId, bloqueId);
+        }
+    }
+
     const modalContent = target.closest('.modal-content');
     if (!modalContent) return;
     setTimeout(() => {
@@ -2410,6 +2554,9 @@ document.addEventListener('focusin', (event) => {
         }
     }, 400);
 });
+
+// ⭐ Actualizar estado de botones del toolbar al cambiar la selección
+document.addEventListener('selectionchange', textEditorUpdateState);
 
 document.getElementById('toggle-password').addEventListener('click', function() {
     const passInput = document.getElementById('password');
@@ -2565,7 +2712,7 @@ document.addEventListener('keydown', (e) => {
 // ------------------------------------------------
 configurarDeteccionAutofill();
 suscribirDatosClub();
-console.log('✅ Club Morphy – Editor rediseñado + Confirmación al borrar');
+console.log('✅ Club Morphy – Editor de texto enriquecido listo');
 
 // Exponer funciones globales
 window.mostrarLogin = mostrarLogin;
@@ -2623,6 +2770,11 @@ window.abrirGestionAlumnos = abrirGestionAlumnos;
 
 // Donación
 window.mostrarDonacion = mostrarDonacion;
+
+// Editor de texto
+window.textEditorCmd = textEditorCmd;
+window.textEditorHr = textEditorHr;
+window.textEditorSave = textEditorSave;
 
 // ===== REGISTRO DEL SERVICE WORKER =====
 if ('serviceWorker' in navigator) {
