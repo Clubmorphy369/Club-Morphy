@@ -172,7 +172,6 @@ function esUrlYouTubeValida(url) {
     return extraerYouTubeID(url) !== null;
 }
 
-// ⭐ FASE 3: Obtener el nombre a mostrar (fallback al email)
 function getNombreMostrar(user = currentUser, perfil = userProfile) {
     if (!user) return '';
     if (perfil && perfil.nombre && perfil.apellidos) {
@@ -184,7 +183,6 @@ function getNombreMostrar(user = currentUser, perfil = userProfile) {
     return user.email;
 }
 
-// ⭐ FASE 3: Obtener inicial para el avatar
 function getInicial(user = currentUser, perfil = userProfile) {
     if (perfil && perfil.nombre) return perfil.nombre.charAt(0).toUpperCase();
     if (user && user.email) return user.email.charAt(0).toUpperCase();
@@ -254,7 +252,6 @@ async function registrarUsuarioEnColeccion(user, nombre = null, apellidos = null
     }
 }
 
-// ⭐ FASE 3: Cargar el perfil del usuario desde Firestore
 async function cargarPerfilUsuario(uid) {
     try {
         const doc = await db.collection('usuarios').doc(uid).get();
@@ -268,19 +265,16 @@ async function cargarPerfilUsuario(uid) {
     }
 }
 
-// ⭐ FASE 3: Actualizar UI del header con el nombre
 function actualizarHeaderUsuario() {
     const nombreMostrar = getNombreMostrar();
     userInfo.textContent = `👤 ${nombreMostrar}`;
     userInfo.title = currentUser ? currentUser.email : '';
 }
 
-// ⭐ FASE 3: Modal "Completar perfil"
 function mostrarCompletarPerfil() {
     if (modalCompletarPerfilYaMostrado) return;
     modalCompletarPerfilYaMostrado = true;
 
-    // Eliminar modal previo si existe
     document.getElementById('modal-completar-perfil')?.remove();
 
     const modal = document.createElement('div');
@@ -325,7 +319,6 @@ function mostrarCompletarPerfil() {
 
 function cerrarCompletarPerfil() {
     document.getElementById('modal-completar-perfil')?.remove();
-    // Permitir que se vuelva a mostrar en la próxima sesión
     modalCompletarPerfilYaMostrado = false;
 }
 
@@ -468,6 +461,7 @@ function traducirErrorFirebase(codigo) {
     return mensajes[codigo] || 'Ocurrió un problema. Inténtalo de nuevo en unos segundos.';
 }
 
+// === FIN DE LA PARTE 1/4 ===
 // ------------------------------------------------
 // SUSCRIPCIONES EN TIEMPO REAL (Firestore)
 // ------------------------------------------------
@@ -845,7 +839,7 @@ function textEditorUpdateState() {
     });
 }
 
-// === FIN DE LA PARTE 1 ===
+// === FIN DE LA PARTE 2/4 ===
 // ------------------------------------------------
 // GESTIÓN DEL CURSO (CRUD)
 // ------------------------------------------------
@@ -1997,6 +1991,7 @@ async function guardarConfigClub() {
     }
 }
 
+// === FIN DE LA PARTE 3/4 ===
 // ------------------------------------------------
 // BLOQUES (EDITOR)
 // ------------------------------------------------
@@ -2292,7 +2287,6 @@ function cerrarModalAccesos() {
     claseActualGestion = null;
 }
 
-// === FIN DE LA PARTE 2 ===
 // ------------------------------------------------
 // RENDERIZADO RECURSIVO DE TEMAS
 // ------------------------------------------------
@@ -2355,14 +2349,12 @@ function renderizarTemaRecursivo(tema, claseId, nivel = 0) {
                         break;
                     }
                     case 'tablero': {
-                        // ⭐ FASE 5: Bloque Tablero (entrenador de ajedrez)
                         if (!bloque.config || !bloque.config.pgn || !bloque.config.pgn.trim()) return '';
                         const cfg = bloque.config || {};
-                        html = `<div class="cm-tablero-bloque-alumno" data-bloque-id="${bloque.id}" data-pgn="${encodeURIComponent(cfg.pgn || '')}" data-modo="${escapeAttr(cfg.modo || 'ejercicio')}" data-color="${escapeAttr(cfg.colorHumano || 'w')}" data-nivel="${cfg.nivelSF || 5}" data-orientacion="${escapeAttr(cfg.orientacion || 'auto')}"></div>`;
+                        html = `<div class="cm-tablero-bloque-alumno" data-bloque-id="${bloque.id}" data-clase="${claseId}" data-tema="${tema.id}" data-pgn="${encodeURIComponent(cfg.pgn || '')}" data-modo="${escapeAttr(cfg.modo || 'ejercicio')}" data-color="${escapeAttr(cfg.colorHumano || 'w')}" data-nivel="${cfg.nivelSF || 5}" data-orientacion="${escapeAttr(cfg.orientacion || 'auto')}"></div>`;
                         break;
                     }
                     case 'consejo': {
-                        // ⭐ FASE 5: Bloque Consejo (imagen + texto, ambos opcionales)
                         const tieneImagen = bloque.imagenURL && bloque.imagenURL.trim();
                         const tieneTexto = bloque.texto && bloque.texto.trim();
                         if (!tieneImagen && !tieneTexto) return '';
@@ -2425,7 +2417,6 @@ function renderizarTemaRecursivo(tema, claseId, nivel = 0) {
                 const escape = escapeHtml;
                 const info = TIPOS_BLOQUE[bloque.tipo] || TIPOS_BLOQUE.texto;
 
-                // Preview específico por tipo de bloque
                 let previewRaw = '';
                 if (bloque.tipo === 'enlace') {
                     previewRaw = bloque.label || '(sin etiqueta)';
@@ -2702,7 +2693,7 @@ function renderizarContenido(clase) {
             temaAbiertoGlobal = temaDiv.classList.contains('abierto') ? temaId : null;
             guardarEstadoNavegacion();
 
-            // ⭐ FASE 5: Inicializar tableros cuando se abre un tema
+            // ⭐ FASE 5: Inicializar tableros al abrir tema
             if (temaDiv.classList.contains('abierto')) {
                 setTimeout(() => inicializarTablerosEntrenador(), 100);
             }
@@ -2798,7 +2789,6 @@ function activarEdicion(span) {
 // ⭐ FASE 5: FUNCIONES AUXILIARES DEL ENTRENADOR
 // ------------------------------------------------
 
-// Inicializa todos los bloques tablero que estén en el DOM actual
 function inicializarTablerosEntrenador() {
     if (!window.Entrenador) {
         console.warn('[Fase 5] Entrenador no está cargado');
@@ -2806,7 +2796,6 @@ function inicializarTablerosEntrenador() {
     }
     const bloques = document.querySelectorAll('.cm-tablero-bloque-alumno');
     bloques.forEach(bloqueEl => {
-        // Evitar re-inicializar el mismo bloque
         if (bloqueEl.dataset.inicializado === 'true') return;
         try {
             const config = {
@@ -2818,12 +2807,20 @@ function inicializarTablerosEntrenador() {
             };
             if (!config.pgn || !config.pgn.trim()) return;
 
+            const claseId = bloqueEl.dataset.clase;
+            const temaId = bloqueEl.dataset.tema;
+            const bloqueId = bloqueEl.dataset.bloqueId;
+
             const contexto = {
                 esAdmin: !!(currentUser && currentUser.esAdmin),
                 uid: currentUser ? currentUser.uid : null,
                 nombreTema: bloqueEl.closest('.tema')?.querySelector('.titulo-editable')?.textContent || '',
                 onCompletado: () => {
-                    console.log('[Fase 5] Tablero completado por el alumno');
+                    console.log('[Fase 5] Tablero completado');
+                },
+                // ⭐ NUEVO: callback para guardar variantes desde el editor visual
+                onGuardarVariante: (data) => {
+                    guardarVarianteEnFirestore(claseId, temaId, bloqueId, data);
                 }
             };
             window.Entrenador.render(bloqueEl, config, contexto);
@@ -2834,7 +2831,6 @@ function inicializarTablerosEntrenador() {
     });
 }
 
-// Actualiza un campo específico de la configuración del bloque tablero
 function actualizarBloqueTablero(claseId, temaId, bloqueId, campo, valor) {
     const clase = curso.clases.find(c => c.id === claseId);
     if (!clase) return;
@@ -2846,7 +2842,6 @@ function actualizarBloqueTablero(claseId, temaId, bloqueId, campo, valor) {
     guardarCurso().then(() => actualizarUI());
 }
 
-// Actualiza el consejo (imagen y texto)
 function actualizarBloqueConsejo(claseId, temaId, bloqueId, campo, valor) {
     const clase = curso.clases.find(c => c.id === claseId);
     if (!clase) return;
@@ -2858,7 +2853,6 @@ function actualizarBloqueConsejo(claseId, temaId, bloqueId, campo, valor) {
     guardarCurso().then(() => actualizarUI());
 }
 
-// Carga el PGN desde un archivo .pgn en el bloque tablero
 function cargarPGNArchivoEnBloque(claseId, temaId, bloqueId, event) {
     const file = event.target.files && event.target.files[0];
     if (!file) return;
@@ -2871,6 +2865,44 @@ function cargarPGNArchivoEnBloque(claseId, temaId, bloqueId, event) {
     reader.readAsText(file);
 }
 
+// ⭐ NUEVA: guarda la variante que el maestro agregó en el editor visual
+function guardarVarianteEnFirestore(claseId, temaId, bloqueId, data) {
+    if (!currentUser?.esAdmin) return;
+    const clase = curso.clases.find(c => c.id === claseId);
+    if (!clase) return;
+    const tema = buscarTemaRecursivo(clase.temas, temaId);
+    const bloque = tema?.bloques?.find(b => b.id === bloqueId);
+    if (!bloque || bloque.tipo !== 'tablero') return;
+
+    const { capituloIdx, pgnCapitulo, nuevoNumLineas } = data;
+    if (!pgnCapitulo) return;
+
+    // Separar el PGN completo en capítulos y reemplazar solo el capítulo modificado
+    const pgnOriginal = (bloque.config || {}).pgn || '';
+    const bloques = pgnOriginal.split(/(?=\[Event\s)/i).filter(b => b.trim());
+
+    if (capituloIdx < 0 || capituloIdx >= bloques.length) {
+        console.warn('[Fase 5] Índice de capítulo fuera de rango');
+        return;
+    }
+
+    bloques[capituloIdx] = pgnCapitulo.trim();
+    const pgnActualizado = bloques.join('\n\n');
+
+    // Actualizar la config del bloque
+    if (!bloque.config) bloque.config = {};
+    bloque.config.pgn = pgnActualizado;
+
+    // Guardar en Firestore
+    guardarCurso().then(() => {
+        mostrarToast('💾 Variante guardada en el bloque', 'success');
+        console.log(`[Fase 5] Variante guardada. Capítulo ${capituloIdx + 1} ahora tiene ${nuevoNumLineas} solución(es).`);
+    }).catch(err => {
+        console.error('[Fase 5] Error al guardar variante:', err);
+        mostrarToast('Error al guardar la variante', 'error');
+    });
+}
+
 // ------------------------------------------------
 // EVENTOS DE AUTENTICACIÓN Y CARGA INICIAL
 // ------------------------------------------------
@@ -2879,13 +2911,11 @@ auth.onAuthStateChanged(async (user) => {
         currentUser = { uid: user.uid, email: user.email, esAdmin: user.uid === ADMIN_UID };
         await registrarUsuarioEnColeccion(user);
 
-        // ⭐ FASE 3: Cargar el perfil del usuario
         userProfile = await cargarPerfilUsuario(user.uid);
 
         btnLogin.style.display = 'none';
         btnLogout.style.display = 'inline-flex';
 
-        // ⭐ FASE 3: Mostrar nombre en lugar de email
         actualizarHeaderUsuario();
 
         if (currentUser.esAdmin) {
@@ -2926,8 +2956,6 @@ auth.onAuthStateChanged(async (user) => {
         }
         actualizarBotonDatosClub();
 
-        // ⭐ FASE 3: Mostrar modal de completar perfil si falta el nombre
-        // (No aplica al admin)
         if (!currentUser.esAdmin && (!userProfile || !userProfile.nombre || !userProfile.apellidos)) {
             setTimeout(() => mostrarCompletarPerfil(), 1500);
         }
@@ -2936,7 +2964,6 @@ auth.onAuthStateChanged(async (user) => {
         userProfile = null;
         modalCompletarPerfilYaMostrado = false;
 
-        // Eliminar modal de completar perfil si estaba abierto
         document.getElementById('modal-completar-perfil')?.remove();
 
         btnLogin.style.display = 'inline-flex';
@@ -3031,7 +3058,6 @@ document.getElementById('auth-form').addEventListener('submit', async (e) => {
             const credencial = await auth.createUserWithEmailAndPassword(email, pass);
             await registrarUsuarioEnColeccion(credencial.user, nombre, apellidos);
 
-            // ⭐ FASE 3: Cargar el perfil recién creado
             userProfile = await cargarPerfilUsuario(credencial.user.uid);
             actualizarHeaderUsuario();
 
@@ -3178,7 +3204,7 @@ document.addEventListener('keydown', (e) => {
 // ------------------------------------------------
 configurarDeteccionAutofill();
 suscribirDatosClub();
-console.log('✅ Club Morphy – Fase 5 completada (bloques Tablero + Consejo integrados)');
+console.log('✅ Club Morphy – Fase 5 completada (bloques Tablero + Consejo + editor variantes)');
 
 // Exponer funciones globales
 window.mostrarLogin = mostrarLogin;
@@ -3252,6 +3278,7 @@ window.inicializarTablerosEntrenador = inicializarTablerosEntrenador;
 window.actualizarBloqueTablero = actualizarBloqueTablero;
 window.actualizarBloqueConsejo = actualizarBloqueConsejo;
 window.cargarPGNArchivoEnBloque = cargarPGNArchivoEnBloque;
+window.guardarVarianteEnFirestore = guardarVarianteEnFirestore;
 
 // ===== REGISTRO DEL SERVICE WORKER =====
 if ('serviceWorker' in navigator) {
