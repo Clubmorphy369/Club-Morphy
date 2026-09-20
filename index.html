@@ -176,12 +176,26 @@
     <!-- ⭐ Modal de donación voluntaria -->
     <div class="modal-overlay" id="modal-donacion" role="dialog" aria-modal="true" aria-labelledby="donacion-title">
         <div class="modal-content">
-            <h3 id="donacion-title">💝 Donación Voluntaria</h3>
-            <p style="text-align:center; color:var(--texto-suave); font-size:0.9rem; margin-bottom:18px;">
-                Tu apoyo ayuda a mantener el curso gratuito. ¡Gracias! ♟️
-            </p>
+            <h3 id="donacion-title">💝 Aportación Voluntaria</h3>
+            <div class="donacion-mensaje">
+                <p class="donacion-intro">
+                    <strong>Club Morphy</strong> es un proyecto <strong>sin fines de lucro</strong> que se mantiene gracias a personas como tú.
+                </p>
+                <p class="donacion-intro">
+                    Cada aportación voluntaria nos ayuda a:
+                </p>
+                <ul class="donacion-lista">
+                    <li>🌐 Mantener la página activa y los servidores en funcionamiento</li>
+                    <li>📚 Seguir creando nuevas clases, ejercicios y material didáctico</li>
+                    <li>🎥 Mejorar la calidad de los videos y recursos del curso</li>
+                    <li>♟️ Que el curso siga siendo <strong>gratuito para todos</strong></li>
+                </ul>
+                <p class="donacion-gracias">
+                    🙏 <em>Gracias por ser parte de esta comunidad y por apoyar al ajedrez.</em>
+                </p>
+            </div>
             <div id="donacion-contenido"></div>
-            <button class="btn" type="button" onclick="document.getElementById('modal-donacion').classList.remove('active')" style="margin-top:15px;">Cerrar</button>
+            <button class="btn" type="button" onclick="document.getElementById('modal-donacion').classList.remove('active')" style="margin-top:15px; width:100%;">Cerrar</button>
         </div>
     </div>
 
