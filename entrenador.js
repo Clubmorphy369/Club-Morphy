@@ -1,5 +1,608 @@
 /* ============================================================
-   ENTRENADOR DE AJEDREZ — Club Morphy (Fase 5)
+   ENTRENADOR DE AJEDREZ — Club Morphy (Fase 5 + editor variantes)
+   Prefijo .cm-tablero- para evitar colisiones con styles.css
+   ============================================================ */
+
+.cm-tablero-wrap {
+    --cm-acento: #0ea5e9;
+    --cm-acento-oscuro: #0284c7;
+    --cm-bg: #ffffff;
+    --cm-surface: #f1f5f9;
+    --cm-surface2: #e2e8f0;
+    --cm-texto: #1e293b;
+    --cm-texto-suave: #64748b;
+    --cm-borde: #cbd5e1;
+    --cm-exito: #16a34a;
+    --cm-peligro: #dc2626;
+    --cm-warning: #f59e0b;
+    --cm-alternativa: #8b5cf6;
+    --cm-ordenador: #f59e0b;
+    --cm-elo: #d97706;
+    --cm-elo-subida: #16a34a;
+    --cm-elo-bajada: #dc2626;
+    --cm-edicion: #f97316;
+
+    font-family: 'Lato', 'Segoe UI', system-ui, sans-serif;
+    color: var(--cm-texto);
+    line-height: 1.6;
+    box-sizing: border-box;
+}
+
+.cm-tablero-wrap *,
+.cm-tablero-wrap *::before,
+.cm-tablero-wrap *::after {
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* ============================================================
+   CONTENEDORES GENERALES
+   ============================================================ */
+.cm-tablero-card { background: #fff; border-radius: 12px; padding: 16px; margin-bottom: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+.cm-tablero-titulo { font-size: 1.1rem; color: var(--cm-acento); margin-bottom: 12px; font-weight: 700; }
+.cm-tablero-meta { color: var(--cm-texto-suave); font-size: 0.85rem; margin-bottom: 10px; }
+
+/* ============================================================
+   BOTONES
+   ============================================================ */
+.cm-tablero-btn {
+    background: var(--cm-acento); color: #fff; border: none;
+    padding: 10px 16px; border-radius: 8px; font-weight: 600;
+    cursor: pointer; font-size: 0.9rem; min-height: 42px;
+    font-family: inherit; transition: opacity 0.2s, transform 0.1s;
+}
+.cm-tablero-btn:hover { opacity: 0.9; }
+.cm-tablero-btn:active { transform: scale(0.97); }
+.cm-tablero-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.cm-tablero-btn-sec { background: var(--cm-surface2); color: var(--cm-texto); }
+.cm-tablero-btn-peligro { background: var(--cm-peligro); color: #fff; }
+.cm-tablero-btn-alternativa { background: var(--cm-alternativa); color: #fff; font-size: 0.82rem; padding: 6px 10px; min-height: 34px; }
+.cm-tablero-btn-ordenador { background: var(--cm-ordenador); color: #1e293b; }
+.cm-tablero-btn-elo { background: var(--cm-elo); color: #fff; font-size: 0.85rem; }
+.cm-tablero-btn-admin {
+    background: linear-gradient(135deg, #f97316, #fb923c);
+    color: white; border: none;
+    padding: 10px 16px; border-radius: 8px;
+    font-weight: 700; cursor: pointer; font-size: 0.85rem;
+    min-height: 40px; font-family: inherit;
+    display: inline-flex; align-items: center; gap: 6px;
+    box-shadow: 0 2px 8px rgba(249, 115, 22, 0.3);
+}
+.cm-tablero-btn-admin:hover { box-shadow: 0 4px 16px rgba(249, 115, 22, 0.5); transform: translateY(-1px); }
+.cm-tablero-btn-guardar {
+    background: linear-gradient(135deg, #16a34a, #22c55e);
+    color: white; border: none;
+    padding: 10px 18px; border-radius: 8px;
+    font-weight: 700; cursor: pointer; font-size: 0.88rem;
+    min-height: 42px; font-family: inherit;
+    display: inline-flex; align-items: center; gap: 6px;
+    box-shadow: 0 2px 8px rgba(22, 163, 74, 0.35);
+}
+.cm-tablero-btn-guardar:hover { box-shadow: 0 4px 16px rgba(22, 163, 74, 0.55); transform: translateY(-1px); }
+
+/* ============================================================
+   INPUTS Y SELECTS
+   ============================================================ */
+.cm-tablero-select {
+    padding: 8px 12px; border: 1px solid var(--cm-borde);
+    border-radius: 8px; font-size: 0.9rem;
+    background: #fff; min-height: 38px;
+    font-family: inherit; color: var(--cm-texto);
+}
+.cm-tablero-textarea {
+    width: 100%; min-height: 130px; padding: 10px;
+    border: 1px solid var(--cm-borde); border-radius: 8px;
+    font-family: 'Courier New', monospace; font-size: 0.8rem;
+    resize: vertical; color: var(--cm-texto);
+}
+.cm-tablero-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 10px; }
+
+/* ============================================================
+   MODALES (agregados a <body>, requieren variables propias)
+   ============================================================ */
+.cm-tablero-modal-overlay {
+    --cm-acento: #0ea5e9;
+    --cm-acento-oscuro: #0284c7;
+    --cm-bg: #ffffff;
+    --cm-surface: #f1f5f9;
+    --cm-surface2: #e2e8f0;
+    --cm-texto: #1e293b;
+    --cm-texto-suave: #64748b;
+    --cm-borde: #cbd5e1;
+    --cm-exito: #16a34a;
+    --cm-peligro: #dc2626;
+    --cm-warning: #f59e0b;
+
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    overflow-y: auto;
+    font-family: 'Lato', 'Segoe UI', system-ui, sans-serif;
+    color: var(--cm-texto);
+}
+.cm-tablero-modal-overlay *,
+.cm-tablero-modal-overlay *::before,
+.cm-tablero-modal-overlay *::after {
+    box-sizing: border-box;
+}
+.cm-tablero-modal-content {
+    background: #fff; border-radius: 16px; padding: 24px;
+    max-width: 520px; width: 100%; margin: auto;
+    color: var(--cm-texto);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+}
+.cm-tablero-modal-content h3 { margin-bottom: 12px; font-size: 1.15rem; color: var(--cm-peligro); }
+.cm-tablero-modal-content p { color: var(--cm-texto-suave); font-size: 0.9rem; margin-bottom: 16px; line-height: 1.6; }
+.cm-tablero-modal-acciones { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; }
+.cm-tablero-modal-acciones .cm-tablero-btn { padding: 10px 18px; font-size: 0.88rem; }
+
+/* ============================================================
+   INDICADOR DE MODO (siempre visible para admin)
+   ============================================================ */
+.cm-tablero-modo-indicator {
+    padding: 12px 16px;
+    border-radius: 10px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: all 0.3s;
+    border: 2px solid transparent;
+}
+.cm-tablero-modo-indicator.normal {
+    background: linear-gradient(135deg, #e0f2fe, #bae6fd);
+    border-color: #0ea5e9;
+    color: #075985;
+}
+.cm-tablero-modo-indicator.editing {
+    background: linear-gradient(135deg, #fed7aa, #fdba74);
+    border-color: var(--cm-edicion);
+    color: #7c2d12;
+    animation: cm-tablero-pulse-edit 1.5s infinite;
+    box-shadow: 0 0 20px rgba(249, 115, 22, 0.4);
+}
+.cm-tablero-modo-indicator.editing strong {
+    font-size: 1rem;
+    letter-spacing: 0.5px;
+}
+@keyframes cm-tablero-pulse-edit {
+    0%, 100% { box-shadow: 0 0 20px rgba(249, 115, 22, 0.4); }
+    50% { box-shadow: 0 0 30px rgba(249, 115, 22, 0.7); }
+}
+
+/* Cuando el bloque entero está en modo edición */
+.cm-tablero-wrap.cm-editando .cm-tablero-board-wrap {
+    outline: 3px solid var(--cm-edicion);
+    outline-offset: 3px;
+    box-shadow: 0 0 30px rgba(249, 115, 22, 0.5);
+}
+.cm-tablero-wrap.cm-editando .cm-tablero-board {
+    cursor: crosshair;
+}
+.cm-tablero-wrap.cm-editando .cm-tablero-square {
+    cursor: crosshair;
+}
+
+/* ============================================================
+   BARRA DE EDICIÓN DE VARIANTES
+   ============================================================ */
+.cm-tablero-edit-toolbar {
+    background: linear-gradient(135deg, #fff7ed, #ffedd5);
+    border: 2px dashed var(--cm-edicion);
+    border-radius: 10px;
+    padding: 12px;
+    margin-bottom: 12px;
+    display: none;
+    gap: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+}
+.cm-tablero-edit-toolbar.active {
+    display: flex;
+}
+.cm-tablero-edit-info {
+    width: 100%;
+    text-align: center;
+    font-size: 0.82rem;
+    color: #7c2d12;
+    font-weight: 700;
+    margin-bottom: 6px;
+    letter-spacing: 0.3px;
+}
+
+/* ============================================================
+   SELECTOR DE VISTA
+   ============================================================ */
+.cm-tablero-vista-selector {
+    display: flex; gap: 6px; background: #fff; border-radius: 30px;
+    padding: 5px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    margin-bottom: 14px; max-width: 500px;
+}
+.cm-tablero-vista-selector button {
+    flex: 1; background: transparent; color: var(--cm-texto-suave);
+    padding: 10px; border-radius: 30px; border: none;
+    font-size: 0.85rem; font-weight: 600;
+    min-height: 38px; cursor: pointer; font-family: inherit;
+}
+.cm-tablero-vista-selector button.active {
+    background: var(--cm-acento); color: #fff;
+    box-shadow: 0 2px 8px rgba(14, 165, 233, 0.3);
+}
+
+/* ============================================================
+   ELO
+   ============================================================ */
+.cm-tablero-elo-header {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    border: 2px solid var(--cm-elo); border-radius: 12px;
+    padding: 12px 16px; margin-bottom: 14px; cursor: pointer;
+    transition: all 0.2s;
+}
+.cm-tablero-elo-header:hover { box-shadow: 0 4px 16px rgba(217, 119, 6, 0.3); transform: translateY(-1px); }
+.cm-tablero-elo-header .cm-icono { font-size: 2rem; }
+.cm-tablero-elo-header .cm-datos { flex: 1; }
+.cm-tablero-elo-header .cm-label {
+    font-size: 0.7rem; font-weight: 700; color: #92400e;
+    text-transform: uppercase; letter-spacing: 1px;
+}
+.cm-tablero-elo-header .cm-numero {
+    font-size: 1.8rem; font-weight: 800; color: var(--cm-elo);
+    font-variant-numeric: tabular-nums; line-height: 1;
+}
+.cm-tablero-elo-header .cm-cambio {
+    font-size: 0.85rem; font-weight: 700;
+    padding: 4px 10px; border-radius: 20px;
+    font-variant-numeric: tabular-nums;
+}
+.cm-tablero-elo-header .cm-cambio.subida { background: #dcfce7; color: var(--cm-elo-subida); }
+.cm-tablero-elo-header .cm-cambio.bajada { background: #fee2e2; color: var(--cm-elo-bajada); }
+.cm-tablero-elo-header .cm-cambio.neutral { background: var(--cm-surface2); color: var(--cm-texto-suave); }
+
+.cm-tablero-elo-panel {
+    background: #fff; border-radius: 12px; padding: 16px;
+    margin-bottom: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+.cm-tablero-elo-panel.cm-hidden { display: none; }
+.cm-tablero-elo-panel h3 {
+    font-size: 1rem; color: var(--cm-elo); margin-bottom: 12px;
+    display: flex; align-items: center; justify-content: space-between;
+}
+.cm-tablero-elo-panel h3 button {
+    background: transparent; color: var(--cm-texto-suave);
+    border: 1px solid var(--cm-borde); padding: 4px 10px;
+    font-size: 0.75rem; min-height: auto; font-weight: 600;
+    border-radius: 6px; cursor: pointer; font-family: inherit;
+}
+.cm-tablero-estudio-item {
+    background: var(--cm-surface); border-radius: 10px; padding: 12px;
+    margin-bottom: 10px; border-left: 4px solid var(--cm-acento);
+}
+.cm-tablero-estudio-item .cm-nombre {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 8px; font-weight: 700; font-size: 0.9rem;
+}
+.cm-tablero-estudio-item .cm-elo-numero {
+    font-size: 1.1rem; color: var(--cm-elo);
+    font-variant-numeric: tabular-nums;
+}
+.cm-tablero-barra-elo {
+    height: 8px; background: var(--cm-surface2); border-radius: 10px;
+    overflow: hidden; position: relative;
+}
+.cm-tablero-barra-elo .cm-relleno {
+    height: 100%;
+    background: linear-gradient(90deg, #fbbf24, #f59e0b, #d97706);
+    border-radius: 10px; transition: width 0.5s ease;
+}
+.cm-tablero-estudio-meta {
+    display: flex; justify-content: space-between;
+    font-size: 0.75rem; color: var(--cm-texto-suave); margin-top: 4px;
+}
+.cm-tablero-historial-item {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 8px 10px; border-bottom: 1px solid var(--cm-borde);
+    font-size: 0.82rem;
+}
+.cm-tablero-historial-item:last-child { border-bottom: none; }
+.cm-tablero-historial-item .cm-razon { color: var(--cm-texto-suave); font-size: 0.75rem; margin-top: 2px; }
+.cm-tablero-historial-item .cm-delta { font-weight: 800; font-variant-numeric: tabular-nums; font-size: 0.95rem; }
+.cm-tablero-historial-item .cm-delta.positivo { color: var(--cm-elo-subida); }
+.cm-tablero-historial-item .cm-delta.negativo { color: var(--cm-elo-bajada); }
+
+/* ============================================================
+   LAYOUT
+   ============================================================ */
+.cm-tablero-game {
+    display: grid;
+    grid-template-columns: minmax(280px, 500px) 1fr;
+    gap: 20px; align-items: start;
+}
+@media (max-width: 800px) { .cm-tablero-game { grid-template-columns: 1fr; } }
+
+/* ============================================================
+   TABLERO
+   ============================================================ */
+.cm-tablero-board-wrap {
+    position: relative; width: 100%; padding-bottom: 100%;
+    border-radius: 8px; overflow: hidden;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15); touch-action: none;
+}
+.cm-tablero-board {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    grid-template-rows: repeat(8, 1fr);
+    background: #b58863; touch-action: none;
+}
+.cm-tablero-square {
+    position: relative; display: flex; align-items: center; justify-content: center;
+    width: 100%; height: 100%; cursor: pointer;
+    touch-action: none; overflow: hidden;
+}
+.cm-tablero-square.light { background: #f0d9b5; }
+.cm-tablero-square.dark { background: #b58863; }
+.cm-tablero-square.selected { background: #7fc97f !important; }
+.cm-tablero-square.legal-move::after {
+    content: ''; position: absolute; width: 28%; height: 28%;
+    background: rgba(0,0,0,0.25); border-radius: 50%;
+    pointer-events: none; z-index: 3;
+}
+.cm-tablero-square.legal-capture::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+    box-shadow: inset 0 0 0 4px rgba(0,0,0,0.4);
+    pointer-events: none; z-index: 3;
+}
+.cm-tablero-square.check {
+    background: radial-gradient(circle, #ff0000 0%, #ff6666 50%, transparent 70%) !important;
+}
+.cm-tablero-square.last-move { background: #ffff99 !important; }
+.cm-tablero-square.error-shake { animation: cm-tablero-shake 0.3s ease; }
+@keyframes cm-tablero-shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+}
+.cm-tablero-piece {
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 88%; height: 88%; object-fit: contain;
+    pointer-events: none; z-index: 2; display: block;
+}
+.cm-tablero-coord {
+    position: absolute; font-size: 10px; font-weight: 700;
+    pointer-events: none; z-index: 1; opacity: 0.75;
+}
+.cm-tablero-coord-file { bottom: 2px; right: 4px; }
+.cm-tablero-coord-rank { top: 2px; left: 4px; }
+.cm-tablero-square.light .cm-tablero-coord { color: #b58863; }
+.cm-tablero-square.dark .cm-tablero-coord { color: #f0d9b5; }
+
+/* ============================================================
+   STATUS
+   ============================================================ */
+.cm-tablero-status {
+    font-size: 0.95rem; font-weight: 600;
+    padding: 10px 14px; border-radius: 8px;
+    background: var(--cm-surface); margin-bottom: 10px;
+    min-height: 42px; display: flex; align-items: center;
+}
+.cm-tablero-status.ok { background: #dcfce7; color: var(--cm-exito); }
+.cm-tablero-status.bad { background: #fee2e2; color: var(--cm-peligro); }
+.cm-tablero-status.info { background: #dbeafe; color: #1e40af; }
+.cm-tablero-status.alt { background: #ede9fe; color: var(--cm-alternativa); }
+.cm-tablero-status.ordenador { background: #fef3c7; color: #92400e; }
+.cm-tablero-status.elo { background: #fef3c7; color: var(--cm-elo); font-weight: 800; }
+
+/* ============================================================
+   CONFIG PANEL (admin)
+   ============================================================ */
+.cm-tablero-config-panel {
+    background: #fff7ed; border: 1px solid #fdba74;
+    border-radius: 8px; padding: 12px;
+    margin-bottom: 12px; font-size: 0.88rem;
+}
+.cm-tablero-config-panel.cm-hidden { display: none; }
+.cm-tablero-config-panel .cm-titulo-config {
+    color: #c2410c; font-weight: 700;
+    margin-bottom: 10px; font-size: 0.8rem; text-transform: uppercase;
+}
+.cm-tablero-config-panel .cm-fila {
+    display: flex; gap: 8px; align-items: center;
+    flex-wrap: wrap; margin-bottom: 10px;
+}
+.cm-tablero-config-panel label {
+    font-weight: 600; font-size: 0.85rem;
+    color: var(--cm-texto); min-width: 110px;
+}
+.cm-tablero-config-panel select { flex: 1; min-width: 130px; }
+.cm-tablero-engine-status {
+    font-size: 0.75rem; color: var(--cm-texto-suave);
+    text-align: right; margin-top: 4px;
+}
+.cm-tablero-engine-status.ready { color: var(--cm-exito); }
+.cm-tablero-engine-status.loading { color: var(--cm-ordenador); }
+
+/* ============================================================
+   VARIANTES (lista del admin)
+   ============================================================ */
+.cm-tablero-variantes-editor {
+    background: #f5f3ff; border: 1px solid #c4b5fd;
+    border-radius: 8px; padding: 12px; margin-bottom: 12px;
+}
+.cm-tablero-variantes-editor.cm-hidden { display: none; }
+.cm-tablero-variantes-editor .cm-titulo {
+    color: var(--cm-alternativa); font-weight: 700;
+    font-size: 0.8rem; text-transform: uppercase; margin-bottom: 10px;
+    display: flex; justify-content: space-between; align-items: center;
+}
+.cm-tablero-variante-item {
+    display: flex; justify-content: space-between; align-items: center;
+    gap: 8px; padding: 8px 10px; background: #fff;
+    border-radius: 6px; margin-bottom: 6px;
+    font-family: 'Courier New', monospace; font-size: 0.82rem;
+}
+.cm-tablero-variante-item .cm-texto { flex: 1; word-break: break-word; line-height: 1.5; }
+.cm-tablero-variante-item .cm-btn-del {
+    background: #fee2e2; color: var(--cm-peligro);
+    border: 1px solid #fca5a5; padding: 4px 10px;
+    border-radius: 5px; cursor: pointer;
+    font-size: 0.85rem; font-weight: 700;
+    min-height: 30px; font-family: inherit;
+}
+.cm-tablero-variante-item .cm-btn-del:hover { background: var(--cm-peligro); color: #fff; }
+.cm-tablero-variante-item .cm-badge-principal {
+    background: var(--cm-alternativa); color: #fff;
+    font-size: 0.65rem; padding: 2px 6px;
+    border-radius: 8px; font-weight: 700;
+}
+
+/* ============================================================
+   PROGRESO VARIANTES
+   ============================================================ */
+.cm-tablero-variants-progress {
+    background: #f5f3ff; border: 1px solid #c4b5fd;
+    border-radius: 8px; padding: 10px 12px;
+    margin-bottom: 10px; font-size: 0.85rem;
+}
+.cm-tablero-variants-progress.cm-hidden { display: none; }
+.cm-tablero-variants-progress .cm-titulo {
+    color: var(--cm-alternativa); font-weight: 700;
+    margin-bottom: 8px; font-size: 0.78rem; text-transform: uppercase;
+    display: flex; justify-content: space-between;
+}
+.cm-tablero-variants-progress .cm-dots { display: flex; gap: 4px; flex-wrap: wrap; }
+.cm-tablero-variants-progress .cm-dot {
+    width: 22px; height: 22px; border-radius: 50%;
+    background: #fff; border: 2px solid #c4b5fd;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.7rem; color: var(--cm-alternativa); font-weight: 700;
+}
+.cm-tablero-variants-progress .cm-dot.done {
+    background: var(--cm-exito); border-color: var(--cm-exito); color: #fff;
+}
+.cm-tablero-variants-progress .cm-dot.current {
+    border-color: var(--cm-alternativa);
+    background: var(--cm-alternativa); color: #fff;
+    animation: cm-tablero-pulse 1.5s infinite;
+}
+@keyframes cm-tablero-pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.15); }
+}
+
+/* ============================================================
+   AUTO-AVANCE
+   ============================================================ */
+.cm-tablero-auto-avance {
+    background: #ecfdf5; border: 1px solid #a7f3d0;
+    border-radius: 8px; padding: 10px 12px;
+    margin-bottom: 10px;
+    display: flex; align-items: center; gap: 10px;
+}
+.cm-tablero-auto-avance.cm-hidden { display: none; }
+.cm-tablero-auto-avance input[type="checkbox"] {
+    width: 20px; height: 20px; cursor: pointer;
+    accent-color: var(--cm-exito); flex-shrink: 0;
+}
+.cm-tablero-auto-avance label {
+    font-weight: 600; font-size: 0.9rem;
+    color: var(--cm-texto); cursor: pointer; flex: 1;
+}
+
+/* ============================================================
+   MOVIMIENTOS
+   ============================================================ */
+.cm-tablero-moves {
+    background: var(--cm-surface); padding: 10px 12px;
+    border-radius: 8px; font-family: 'Courier New', monospace;
+    font-size: 0.85rem; min-height: 60px;
+    word-break: break-all; line-height: 1.8;
+    margin-bottom: 10px; color: var(--cm-texto);
+}
+.cm-tablero-moves .done { color: var(--cm-exito); font-weight: 700; }
+.cm-tablero-moves .computadora { color: var(--cm-ordenador); font-weight: 700; }
+
+/* ============================================================
+   LISTA DE CAPÍTULOS
+   ============================================================ */
+.cm-tablero-chapter-list {
+    max-height: 380px; overflow-y: auto;
+    border: 1px solid var(--cm-borde);
+    border-radius: 8px; background: #fff;
+}
+.cm-tablero-chapter-item {
+    padding: 10px 14px; border-bottom: 1px solid var(--cm-borde);
+    cursor: pointer; font-size: 0.88rem;
+    display: flex; justify-content: space-between; align-items: center; gap: 8px;
+}
+.cm-tablero-chapter-item:last-child { border-bottom: none; }
+.cm-tablero-chapter-item:hover { background: var(--cm-surface); }
+.cm-tablero-chapter-item.active { background: #dbeafe; font-weight: 600; color: #1e40af; }
+.cm-tablero-chapter-item.done::after {
+    content: '✓'; color: var(--cm-exito);
+    font-weight: bold; font-size: 1.1rem; flex-shrink: 0;
+}
+.cm-tablero-chapter-item .cm-badges { display: flex; gap: 4px; align-items: center; flex-shrink: 0; }
+.cm-tablero-chapter-item .cm-badge {
+    font-size: 0.68rem; font-weight: 700;
+    padding: 2px 7px; border-radius: 10px; white-space: nowrap;
+}
+.cm-tablero-chapter-item .cm-badge.alt { color: var(--cm-alternativa); background: #ede9fe; }
+.cm-tablero-chapter-item .cm-badge.ejercicio { color: var(--cm-acento); background: #dbeafe; }
+.cm-tablero-chapter-item .cm-badge.ordenador { color: #92400e; background: #fef3c7; }
+.cm-tablero-chapter-item .cm-badge.elo { color: var(--cm-elo); background: #fef3c7; }
+
+/* ============================================================
+   UTILIDADES
+   ============================================================ */
+.cm-tablero-hidden { display: none !important; }
+.cm-tablero-progress-info { font-size: 0.85rem; color: var(--cm-texto-suave); margin-top: 8px; text-align: center; }
+.cm-tablero-error-msg {
+    color: var(--cm-peligro); font-size: 0.85rem;
+    padding: 8px; background: #fee2e2;
+    border-radius: 6px; margin-top: 8px;
+}
+
+/* ============================================================
+   TOAST
+   ============================================================ */
+.cm-tablero-toast {
+    position: fixed; bottom: 20px; left: 50%;
+    transform: translateX(-50%) translateY(120%);
+    background: #1e293b; color: #fff;
+    padding: 12px 22px; border-radius: 30px;
+    font-size: 0.9rem; z-index: 9999;
+    opacity: 0; transition: opacity 0.3s, transform 0.3s;
+    pointer-events: none; max-width: 90%;
+    text-align: center;
+    font-family: 'Lato', 'Segoe UI', sans-serif;
+}
+.cm-tablero-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.cm-tablero-toast.elo-up { background: linear-gradient(135deg, #16a34a, #22c55e); }
+.cm-tablero-toast.elo-down { background: linear-gradient(135deg, #dc2626, #ef4444); }
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width: 600px) {
+    .cm-tablero-elo-header .cm-numero { font-size: 1.4rem; }
+    .cm-tablero-elo-header .cm-icono { font-size: 1.5rem; }
+    .cm-tablero-chapter-list { max-height: 300px; }
+    .cm-tablero-modal-content { padding: 18px; }
+    .cm-tablero-variante-item { font-size: 0.75rem; }
+    .cm-tablero-moves { font-size: 0.78rem; }
+}
+/* ============================================================
+   ENTRENADOR DE AJEDREZ — Club Morphy (Fase 5 + editor variantes)
    Módulo encapsulado. Expone window.Entrenador con la API:
      - render(contenedor, config, contexto)
      - destroy(contenedor)
@@ -14,7 +617,6 @@
     // CONSTANTES GLOBALES DEL MÓDULO
     // ============================================================
 
-    // Piezas SVG (una sola vez, compartidas)
     const PIEZAS = {
         wp: 'https://upload.wikimedia.org/wikipedia/commons/4/45/Chess_plt45.svg',
         wn: 'https://upload.wikimedia.org/wikipedia/commons/7/70/Chess_nlt45.svg',
@@ -34,16 +636,13 @@
         bk: '♚', bq: '♛', br: '♜', bb: '♝', bn: '♞', bp: '♟'
     };
 
-    // ELO
     const ELO_INICIAL = 1200;
     const ELO_MIN = 100;
     const ELO_MAX = 3000;
     const ELO_STORAGE_KEY = 'entrenadorEloData_v2';
 
-    // Stockfish: ELO aproximado por nivel
     const ELO_BOT = { 1: 800, 2: 1000, 3: 1200, 4: 1400, 5: 1600, 6: 1800, 7: 2100, 8: 2400 };
 
-    // Configuración Stockfish por nivel
     const NIVELES_SF = {
         1: { skill: 0, depth: 1, movetime: 50, nombre: 'Principiante' },
         2: { skill: 2, depth: 1, movetime: 100, nombre: 'Muy fácil' },
@@ -55,10 +654,8 @@
         8: { skill: 20, depth: 16, movetime: 3000, nombre: 'Maestro' }
     };
 
-    // Valores de piezas (fallback minimax)
     const VALORES = { p: 100, n: 320, b: 330, r: 500, q: 900, k: 20000 };
 
-    // PGN de ejemplo
     const PGN_EJEMPLO = `[Event "Estudio: Capítulo 1"]
 [StudyName "Bloqueo"]
 [ChapterName "Capítulo 1"]
@@ -89,7 +686,7 @@
     }
 
     // ============================================================
-    // STOCKFISH GLOBAL (una sola instancia compartida)
+    // STOCKFISH GLOBAL
     // ============================================================
     const SF = {
         worker: null,
@@ -126,9 +723,7 @@
             }
         },
 
-        enviar(cmd) {
-            if (this.worker) this.worker.postMessage(cmd);
-        },
+        enviar(cmd) { if (this.worker) this.worker.postMessage(cmd); },
 
         esperar(pattern, timeout = 5000) {
             return new Promise((resolve, reject) => {
@@ -195,7 +790,7 @@
     };
 
     // ============================================================
-    // SISTEMA ELO (global, persistido en localStorage)
+    // SISTEMA ELO
     // ============================================================
     const ELO = {
         data: null,
@@ -279,7 +874,6 @@
         }
     };
 
-    // Cargar ELO una sola vez al inicializar el módulo
     ELO.cargar();
 
     // ============================================================
@@ -378,6 +972,65 @@
     }
 
     // ============================================================
+    // CONVERTIR ÁRBOL A PGN (para guardar variantes)
+    // ============================================================
+    function arbolAPGN(arbol, headers) {
+        // Convierte el árbol de nodos a texto PGN con variantes anidadas
+        let lineas = [];
+        if (headers) {
+            Object.keys(headers).forEach(k => {
+                lineas.push(`[${k} "${headers[k]}"]`);
+            });
+        }
+        lineas.push('');
+
+        function escribirNodo(nodo, profundidad) {
+            if (nodo.children.length === 0) return '';
+            const child = nodo.children[0];
+            const mv = child.move;
+            let texto = '';
+            const num = Math.floor(profundidad / 2) + 1;
+            const pre = mv.color === 'w' ? `${num}.` : `${num}...`;
+
+            // Escribir el nodo principal
+            texto += `${pre} ${mv.san} `;
+
+            // Variantes alternativas del padre (children[1..])
+            for (let i = 1; i < nodo.children.length; i++) {
+                const alt = nodo.children[i];
+                texto += `(${pre} ${alt.move.san} `;
+                texto += escribirDesdeNodo(alt, profundidad + 1);
+                texto += ') ';
+            }
+
+            texto += escribirNodo(child, profundidad + 1);
+            return texto;
+        }
+
+        function escribirDesdeNodo(nodo, profundidad) {
+            if (!nodo) return '';
+            let texto = '';
+            for (let i = 1; i < nodo.children.length; i++) {
+                const alt = nodo.children[i];
+                const num = Math.floor(profundidad / 2) + 1;
+                const pre = alt.move.color === 'w' ? `${num}.` : `${num}...`;
+                texto += `(${pre} ${alt.move.san} `;
+                texto += escribirDesdeNodo(alt, profundidad + 1);
+                texto += ') ';
+            }
+            if (nodo.children.length > 0) {
+                texto += escribirNodo(nodo.children[0], profundidad);
+            }
+            return texto;
+        }
+
+        const pgnText = escribirNodo(arbol, 0).trim() + ' *';
+        lineas.push(pgnText);
+        return lineas.join('\n');
+    }
+
+    // === FIN DE LA PARTE 1/3 ===
+     // ============================================================
     // CLASE PRINCIPAL: INSTANCIA DEL TABLERO
     // ============================================================
     class InstanciaTablero {
@@ -414,6 +1067,15 @@
             // Modo ordenador
             this.colorHumano = 'w';
 
+            // Auto-avance (solo alumnos)
+            this.autoAvance = false;
+
+            // ⭐ EDITOR DE VARIANTES (solo admin)
+            this.modoEdicionVariantes = false;
+            this.nodoEdicionActual = null;  // Nodo desde el que se está editando
+            this.historialEdicion = [];     // Historial de movimientos hechos en modo edición
+            this.arbolEdicionTemporal = null; // Árbol temporal que se va construyendo
+
             // ID counter para nodos del árbol
             this._idCounter = { v: 0, next() { return ++this.v; } };
 
@@ -426,7 +1088,6 @@
         init() {
             const cfg = this.config;
 
-            // Cargar PGN
             if (cfg.pgn) {
                 this.cargarCapitulosDesdePGN(cfg.pgn);
             }
@@ -437,19 +1098,14 @@
                 return;
             }
 
-            // Construir estructura HTML base
             this.construirEstructuraHTML();
-
-            // Cargar capítulo inicial
             this.cargarCapitulo(0);
 
-            // Cargar Stockfish solo si el modo es ordenador
             if (cfg.modo === 'ordenador') SF.init();
         }
 
         construirEstructuraHTML() {
             const esAdmin = !!this.contexto.esAdmin;
-            const cfg = this.config;
 
             this.contenedor.innerHTML = `
                 <div class="cm-tablero-wrap">
@@ -462,6 +1118,38 @@
                         </div>
                         <div>
                             <div class="cm-tablero-meta" data-rol="meta"></div>
+
+                            ${esAdmin ? `
+                            <div class="cm-tablero-modo-indicator normal" data-rol="modoIndicator">
+                                <span style="font-size:1.2rem;">🎯</span>
+                                <span>Modo <strong>NORMAL</strong> — el alumno resuelve el ejercicio</span>
+                            </div>
+                            ` : ''}
+
+                            ${esAdmin ? `
+                            <div class="cm-tablero-row" style="margin-bottom:12px;">
+                                <button class="cm-tablero-btn-admin" data-rol="btnEditarVariantes">
+                                    ✏️ Activar modo edición de variantes
+                                </button>
+                            </div>
+                            ` : ''}
+
+                            ${esAdmin ? `
+                            <div class="cm-tablero-edit-toolbar" data-rol="editToolbar">
+                                <div class="cm-tablero-edit-info" data-rol="editInfo">
+                                    ✏️ <strong>MODO EDICIÓN ACTIVO</strong> — Arrastra piezas para construir la variante
+                                </div>
+                                <button class="cm-tablero-btn-guardar" data-rol="btnGuardarVariante">
+                                    💾 Guardar variante
+                                </button>
+                                <button class="cm-tablero-btn cm-tablero-btn-sec" data-rol="btnDeshacerEdicion">
+                                    ↩️ Deshacer
+                                </button>
+                                <button class="cm-tablero-btn cm-tablero-btn-peligro" data-rol="btnDescartarEdicion">
+                                    🗑️ Descartar
+                                </button>
+                            </div>
+                            ` : ''}
 
                             <div class="cm-tablero-config-panel cm-tablero-hidden" data-rol="configPanel">
                                 <div class="cm-titulo-config">⚙️ Configuración (solo admin)</div>
@@ -523,6 +1211,13 @@
                             </div>
                             ` : ''}
 
+                            ${!esAdmin ? `
+                            <div class="cm-tablero-auto-avance" data-rol="autoAvancePanel">
+                                <input type="checkbox" id="${this.idInstancia}-autoAvance" data-rol="autoAvanceCheck">
+                                <label for="${this.idInstancia}-autoAvance">Avanzar al siguiente ejercicio automáticamente</label>
+                            </div>
+                            ` : ''}
+
                             <div class="cm-tablero-status info" data-rol="status">Cargando…</div>
 
                             <div class="cm-tablero-moves cm-tablero-hidden" data-rol="moves"></div>
@@ -544,7 +1239,7 @@
                 </div>
             `;
 
-            // Guardar referencias
+            // Referencias
             this.$board = this.contenedor.querySelector('[data-rol="board"]');
             this.$progressInfo = this.contenedor.querySelector('[data-rol="progressInfo"]');
             this.$meta = this.contenedor.querySelector('[data-rol="meta"]');
@@ -554,8 +1249,11 @@
             this.$variantesEditor = this.contenedor.querySelector('[data-rol="variantesEditor"]');
             this.$variantsProgress = this.contenedor.querySelector('[data-rol="variantsProgress"]');
             this.$engineStatus = this.contenedor.querySelector('[data-rol="engineStatus"]');
+            this.$modoIndicator = this.contenedor.querySelector('[data-rol="modoIndicator"]');
+            this.$editToolbar = this.contenedor.querySelector('[data-rol="editToolbar"]');
+            this.$editInfo = this.contenedor.querySelector('[data-rol="editInfo"]');
 
-            // Aplicar configuración inicial
+            // Aplicar config
             if (this.config.modo) {
                 const sel = this.contenedor.querySelector('[data-rol="configModo"]');
                 if (sel) sel.value = this.config.modo;
@@ -574,7 +1272,7 @@
                 if (sel) sel.value = this.config.orientacion;
             }
 
-            // Eventos de botones
+            // Eventos botones generales
             this._on('[data-rol="btnReiniciar"]', 'click', () => this.reiniciar());
             this._on('[data-rol="btnVoltear"]', 'click', () => this.voltear());
             this._on('[data-rol="btnPista"]', 'click', () => this.pista());
@@ -582,17 +1280,35 @@
             this._on('[data-rol="btnPrev"]', 'click', () => this.capituloAnterior());
             this._on('[data-rol="btnNext"]', 'click', () => this.capituloSiguiente());
 
-            // Eventos del config panel (admin)
+            // Config panel (admin)
             if (esAdmin) {
                 this._on('[data-rol="configModo"]', 'change', (e) => this.cambiarModo(e.target.value));
                 this._on('[data-rol="configColor"]', 'change', (e) => this.cambiarColor(e.target.value));
                 this._on('[data-rol="configNivel"]', 'change', (e) => this.cambiarNivel(e.target.value));
                 this._on('[data-rol="configOrientacion"]', 'change', (e) => this.cambiarOrientacion(e.target.value));
-                this.$configPanel.classList.remove('cm-tablero-hidden');
+                if (this.$configPanel) this.$configPanel.classList.remove('cm-tablero-hidden');
                 if (this.$variantesEditor) this.$variantesEditor.classList.remove('cm-tablero-hidden');
             }
 
-            // Escuchar cuando Stockfish esté listo
+            // ⭐ Eventos del editor de variantes (solo admin)
+            if (esAdmin) {
+                this._on('[data-rol="btnEditarVariantes"]', 'click', () => this.toggleModoEdicion());
+                this._on('[data-rol="btnGuardarVariante"]', 'click', () => this.guardarVarianteEdicion());
+                this._on('[data-rol="btnDeshacerEdicion"]', 'click', () => this.deshacerEdicion());
+                this._on('[data-rol="btnDescartarEdicion"]', 'click', () => this.descartarEdicion());
+            }
+
+            // ⭐ Auto-avance (solo alumnos)
+            if (!esAdmin) {
+                this._on('[data-rol="autoAvanceCheck"]', 'change', (e) => {
+                    this.autoAvance = e.target.checked;
+                    this.mostrarToast(
+                        e.target.checked ? '✅ Auto-avance activado' : '⏸️ Auto-avance desactivado',
+                        ''
+                    );
+                });
+            }
+
             document.addEventListener('cm-tablero-sf-ready', this._sfReadyHandler = () => {
                 this.actualizarEstadoMotor();
             });
@@ -654,7 +1370,8 @@
                 arbol,
                 numLineas: contarLineas(arbol),
                 completado: false,
-                orientacionAuto: turnoAuto
+                orientacionAuto: turnoAuto,
+                headersOriginales: headers
             };
         }
 
@@ -666,6 +1383,9 @@
             if (!this.capitulos[idx]) return;
             this.capituloActual = idx;
             const cap = this.capitulos[idx];
+
+            // Salir de modo edición si estaba activo
+            if (this.modoEdicionVariantes) this.desactivarModoEdicion(true);
 
             this.arbol = cap.arbol;
             this.nodoActual = this.arbol;
@@ -693,13 +1413,8 @@
 
             if (this.respuestaAutoTimeout) { clearTimeout(this.respuestaAutoTimeout); this.respuestaAutoTimeout = null; }
 
-            // Meta
-            const eloCap = ELO.obtenerCapitulo(cap.estudio, idx);
-            this.$meta.innerHTML = `<strong>Capítulo ${idx + 1} de ${this.capitulos.length}</strong> · ${escapeHtml(cap.estudio)} · 🏆 ELO ${eloCap}`;
-
-            // Config panel refleja el estado
+            this.actualizarMeta();
             this.sincronizarConfigPanel();
-
             this.construirTablero();
             this.dibujarPiezas();
             this.actualizarMovimientos();
@@ -713,6 +1428,14 @@
             } else {
                 this.setStatus('info', 'Tu turno. Encuentra la mejor jugada.');
             }
+        }
+
+        actualizarMeta() {
+            if (!this.$meta) return;
+            const cap = this.capitulos[this.capituloActual];
+            if (!cap) return;
+            const eloCap = ELO.obtenerCapitulo(cap.estudio, this.capituloActual);
+            this.$meta.innerHTML = `<strong>Capítulo ${this.capituloActual + 1} de ${this.capitulos.length}</strong> · ${escapeHtml(cap.estudio)} · 🏆 ELO ${eloCap}`;
         }
 
         sincronizarConfigPanel() {
@@ -806,7 +1529,6 @@
                 }
                 col++;
             }
-            // Jaque
             if (this.chess.in_check()) {
                 const turn = this.chess.turn();
                 const boardArr = this.chess.board();
@@ -820,7 +1542,6 @@
                     }
                 }
             }
-            // Última jugada
             const hist = this.chess.history({ verbose: true });
             if (hist.length > 0) {
                 const u = hist[hist.length - 1];
@@ -829,7 +1550,6 @@
                 if (f) f.classList.add('last-move');
                 if (t) t.classList.add('last-move');
             }
-            // Selección actual
             if (this.casillaSeleccionada) {
                 const s = this.$board.querySelector(`[data-square="${this.casillaSeleccionada}"]`);
                 if (s) s.classList.add('selected');
@@ -841,10 +1561,19 @@
         }
 
         // --------------------------------------------------------
-        // CLICK EN CASILLA
+        // CLICK EN CASILLA (con lógica dual: normal vs edición)
         // --------------------------------------------------------
         clickCasilla(sq) {
-            if (this.destroyed || this.bloqueado || this.esperandoRespuesta) return;
+            if (this.destroyed || this.bloqueado) return;
+
+            // ⭐ MODO EDICIÓN: sin restricciones de turno ni validación
+            if (this.modoEdicionVariantes) {
+                this.clickCasillaEdicion(sq);
+                return;
+            }
+
+            // Modo normal (alumno resolviendo)
+            if (this.esperandoRespuesta) return;
             const modo = this.config.modo || 'ejercicio';
 
             if (!this.casillaSeleccionada) {
@@ -885,7 +1614,6 @@
                 return;
             }
 
-            // Modo ejercicio: buscar en el árbol
             const from = this.casillaSeleccionada;
             const match = this.nodoActual.children.find(c =>
                 c.move.from === from && c.move.to === sq
@@ -937,6 +1665,271 @@
         }
 
         // --------------------------------------------------------
+        // MODO EDICIÓN: click libre sin validación
+        // --------------------------------------------------------
+        clickCasillaEdicion(sq) {
+            if (!this.casillaSeleccionada) {
+                const pieza = this.chess.get(sq);
+                if (!pieza) return;
+                if (pieza.color !== this.chess.turn()) {
+                    // Permitir seleccionar la pieza del otro color sólo si es para cambiarla
+                    // En modo edición dejamos mover SÓLO la pieza del turno actual
+                    this.mostrarToast(`Mueve las ${this.chess.turn() === 'w' ? 'blancas' : 'negras'} primero`, '');
+                    return;
+                }
+                this.casillaSeleccionada = sq;
+                this.dibujarPiezas();
+                return;
+            }
+            if (this.casillaSeleccionada === sq) {
+                this.casillaSeleccionada = null;
+                this.dibujarPiezas();
+                return;
+            }
+            const piezaDestino = this.chess.get(sq);
+            if (piezaDestino && piezaDestino.color === this.chess.turn()) {
+                this.casillaSeleccionada = sq;
+                this.dibujarPiezas();
+                return;
+            }
+            const movsLegales = this.chess.moves({ square: this.casillaSeleccionada, verbose: true });
+            const esLegal = movsLegales.some(m => m.to === sq);
+            if (!esLegal) {
+                const sqEl = this.$board.querySelector(`[data-square="${sq}"]`);
+                if (sqEl) {
+                    sqEl.classList.add('error-shake');
+                    setTimeout(() => sqEl.classList.remove('error-shake'), 300);
+                }
+                this.casillaSeleccionada = null;
+                this.dibujarPiezas();
+                return;
+            }
+
+            // Ejecutar el movimiento en modo edición
+            const from = this.casillaSeleccionada;
+            const mv = this.chess.move({ from, to: sq, promotion: 'q' });
+            if (!mv) return;
+            this.casillaSeleccionada = null;
+            this.historialEdicion.push({
+                from, to: sq, promotion: 'q',
+                san: mv.san, color: mv.color,
+                fenAntes: this.chess.history({ verbose: true }).slice(-1)[0] ? null : null
+            });
+            this.dibujarPiezas();
+            this.actualizarMovimientos();
+            this.actualizarEditInfo();
+
+            // Si es jaque mate, sugerimos guardar
+            if (this.chess.game_over()) {
+                this.setStatus('alt', '🏁 Posición final alcanzada. Puedes guardar la variante o seguir.');
+            }
+        }
+
+        actualizarEditInfo() {
+            if (!this.$editInfo) return;
+            const numMov = this.historialEdicion.length;
+            if (numMov === 0) {
+                this.$editInfo.innerHTML = '✏️ <strong>MODO EDICIÓN ACTIVO</strong> — Arrastra piezas para construir la variante';
+            } else {
+                const ultimos = this.historialEdicion.slice(-3).map(h => h.san).join(' ');
+                this.$editInfo.innerHTML = `✏️ <strong>MODO EDICIÓN</strong> · ${numMov} movimiento${numMov === 1 ? '' : 's'} · Últimos: ${escapeHtml(ultimos)}`;
+            }
+        }
+
+        // --------------------------------------------------------
+        // ACTIVAR/DESACTIVAR MODO EDICIÓN
+        // --------------------------------------------------------
+        toggleModoEdicion() {
+            if (this.modoEdicionVariantes) {
+                this.desactivarModoEdicion();
+            } else {
+                this.activarModoEdicion();
+            }
+        }
+
+        activarModoEdicion() {
+            if (!this.contexto.esAdmin) return;
+            this.modoEdicionVariantes = true;
+            this.historialEdicion = [];
+
+            // Reset del tablero a la posición inicial del capítulo
+            const cap = this.capitulos[this.capituloActual];
+            this.chess = new Chess(cap.fen);
+            this.casillaSeleccionada = null;
+            this.dibujarPiezas();
+            this.actualizarMovimientos();
+
+            // Actualizar UI
+            const wrap = this.contenedor.querySelector('.cm-tablero-wrap');
+            if (wrap) wrap.classList.add('cm-editando');
+            if (this.$modoIndicator) {
+                this.$modoIndicator.className = 'cm-tablero-modo-indicator editing';
+                this.$modoIndicator.innerHTML = '<span style="font-size:1.2rem;">✏️</span><span><strong>MODO EDICIÓN ACTIVO</strong> — movimientos libres, no cuentan para el alumno</span>';
+            }
+            if (this.$editToolbar) this.$editToolbar.classList.add('active');
+            const btn = this.contenedor.querySelector('[data-rol="btnEditarVariantes"]');
+            if (btn) btn.innerHTML = '🔒 Desactivar modo edición';
+
+            // Deshabilitar botones de ejercicio durante la edición
+            this._setBotonesEjercicioDisabled(true);
+
+            this.actualizarEditInfo();
+            this.setStatus('alt', '✏️ Modo edición: mueve piezas libremente para construir la variante.');
+        }
+
+        desactivarModoEdicion(silencioso = false) {
+            this.modoEdicionVariantes = false;
+            this.historialEdicion = [];
+
+            const wrap = this.contenedor.querySelector('.cm-tablero-wrap');
+            if (wrap) wrap.classList.remove('cm-editando');
+            if (this.$modoIndicator) {
+                this.$modoIndicator.className = 'cm-tablero-modo-indicator normal';
+                this.$modoIndicator.innerHTML = '<span style="font-size:1.2rem;">🎯</span><span>Modo <strong>NORMAL</strong> — el alumno resuelve el ejercicio</span>';
+            }
+            if (this.$editToolbar) this.$editToolbar.classList.remove('active');
+            const btn = this.contenedor.querySelector('[data-rol="btnEditarVariantes"]');
+            if (btn) btn.innerHTML = '✏️ Activar modo edición de variantes';
+
+            this._setBotonesEjercicioDisabled(false);
+
+            if (!silencioso) {
+                // Recargar el capítulo para volver a la posición inicial
+                this.cargarCapitulo(this.capituloActual);
+                this.mostrarToast('🔒 Modo edición desactivado', '');
+            }
+        }
+
+        _setBotonesEjercicioDisabled(disabled) {
+            const ids = ['btnPista', 'btnVerSol', 'btnPrev', 'btnNext', 'btnReiniciar'];
+            ids.forEach(rol => {
+                const el = this.contenedor.querySelector(`[data-rol="${rol}"]`);
+                if (el) el.disabled = disabled;
+            });
+        }
+
+        deshacerEdicion() {
+            if (!this.modoEdicionVariantes) return;
+            if (this.historialEdicion.length === 0) {
+                this.mostrarToast('No hay movimientos para deshacer', '');
+                return;
+            }
+            this.chess.undo();
+            this.historialEdicion.pop();
+            this.casillaSeleccionada = null;
+            this.dibujarPiezas();
+            this.actualizarMovimientos();
+            this.actualizarEditInfo();
+        }
+
+        descartarEdicion() {
+            if (!this.modoEdicionVariantes) return;
+            if (this.historialEdicion.length === 0) {
+                this.mostrarToast('No hay nada que descartar', '');
+                return;
+            }
+            this.abrirModalConfirmacion(
+                '⚠️ ¿Descartar la variante?',
+                'Se perderán todos los movimientos que has hecho en modo edición. ¿Continuar?',
+                () => {
+                    const cap = this.capitulos[this.capituloActual];
+                    this.chess = new Chess(cap.fen);
+                    this.historialEdicion = [];
+                    this.casillaSeleccionada = null;
+                    this.dibujarPiezas();
+                    this.actualizarMovimientos();
+                    this.actualizarEditInfo();
+                    this.mostrarToast('🗑️ Variante descartada', '');
+                }
+            );
+        }
+
+        // --------------------------------------------------------
+        // GUARDAR VARIANTE
+        // --------------------------------------------------------
+        guardarVarianteEdicion() {
+            if (!this.modoEdicionVariantes) return;
+            if (this.historialEdicion.length === 0) {
+                this.mostrarToast('⚠️ No hay movimientos para guardar', '');
+                return;
+            }
+
+            // Construir el nuevo camino de nodos desde el inicio
+            const cap = this.capitulos[this.capituloActual];
+            const fenInicial = cap.fen;
+            const nuevoCamino = [];
+            let chessTemp = new Chess(fenInicial);
+
+            for (const h of this.historialEdicion) {
+                const mv = chessTemp.move({ from: h.from, to: h.to, promotion: h.promotion });
+                if (!mv) continue;
+                nuevoCamino.push({
+                    move: { from: mv.from, to: mv.to, promotion: mv.promotion || 'q', san: mv.san, color: mv.color },
+                    fen: chessTemp.fen()
+                });
+            }
+
+            if (nuevoCamino.length === 0) {
+                this.mostrarToast('⚠️ No se pudieron procesar los movimientos', '');
+                return;
+            }
+
+            // Añadir la nueva variante al árbol
+            const nuevaVariante = this._construirNodosDesdeCamino(nuevoCamino, this.arbol);
+            this.arbol.children.push(nuevaVariante);
+
+            // Actualizar el capítulo
+            cap.arbol = this.arbol;
+            cap.numLineas = contarLineas(this.arbol);
+
+            // Recolectar hojas y refrescar UI
+            this.hojasTotales = recolectarHojas(this.arbol);
+            this.actualizarVariantesEditor();
+            this.actualizarVariantesProgreso();
+
+            // Salir de modo edición
+            this.desactivarModoEdicion(true);
+
+            // Notificar al padre para guardar en Firestore
+            if (this.contexto.onGuardarVariante) {
+                try {
+                    const pgnActualizado = arbolAPGN(this.arbol, cap.headersOriginales);
+                    this.contexto.onGuardarVariante({
+                        capituloIdx: this.capituloActual,
+                        pgnCapitulo: pgnActualizado,
+                        nuevoNumLineas: cap.numLineas
+                    });
+                } catch (e) {
+                    console.error('[Entrenador] Error al guardar variante:', e);
+                }
+            }
+
+            this.mostrarToast(`✅ Variante guardada (${cap.numLineas} solución${cap.numLineas === 1 ? '' : 'es'})`, 'elo-up');
+            this.setStatus('ok', `✅ Variante guardada. Ahora hay ${cap.numLineas} solución${cap.numLineas === 1 ? '' : 'es'}.`);
+            this.cargarCapitulo(this.capituloActual);
+        }
+
+        _construirNodosDesdeCamino(camino, arbolRaiz) {
+            // Crea una rama nueva de nodos a partir del camino
+            let padre = arbolRaiz;
+            let ultimoNodo = null;
+            for (const paso of camino) {
+                const nuevoNodo = {
+                    id: this._idCounter.next(),
+                    move: paso.move,
+                    fen: paso.fen,
+                    children: [],
+                    parent: padre
+                };
+                padre.children.push(nuevoNodo);
+                padre = nuevoNodo;
+                ultimoNodo = nuevoNodo;
+            }
+            return arbolRaiz.children[arbolRaiz.children.length - 1];
+        }
+
+        // === FIN DE LA PARTE 2/3 ===
+           // --------------------------------------------------------
         // RESPUESTA DEL RIVAL
         // --------------------------------------------------------
         jugarRespuestaRival() {
@@ -983,16 +1976,27 @@
                     if (cambioReal !== 0) {
                         this.mostrarToast(`🏆 Ejercicio resuelto · +${cambioReal} ELO`, 'elo-up');
                     }
-                    this.actualizarMetaELO();
+                    this.actualizarMeta();
                 }
-                // Notificar al padre (para marcar el bloque como "Visto")
                 if (this.contexto.onCompletado) {
                     try { this.contexto.onCompletado(); } catch (e) {}
                 }
+
+                // ⭐ Auto-avance al siguiente capítulo
+                if (this.autoAvance && this.capituloActual < this.capitulos.length - 1) {
+                    setTimeout(() => {
+                        if (!this.destroyed) {
+                            this.mostrarToast('⏭️ Avanzando al siguiente…', '');
+                            this.capituloSiguiente();
+                        }
+                    }, 2000);
+                } else if (this.autoAvance && this.capituloActual >= this.capitulos.length - 1) {
+                    this.mostrarToast('🎉 ¡Último ejercicio completado!', 'elo-up');
+                }
+
                 return;
             }
 
-            // Pasar a la siguiente variante
             const siguiente = this.hojasTotales.find(h => !this.hojasCompletadas.has(h.id));
             const desviacion = this.encontrarPuntoDesviacion(siguiente, this.hojasCompletadas);
             this.setStatus('alt', `✅ ${completadas}/${total}. Quedan ${total - completadas}.`);
@@ -1144,7 +2148,6 @@
             cap.completado = true;
             this.setStatus('ordenador', textoEstado);
 
-            // Cálculo simple del cambio ELO (el análisis profundo queda para Fase 5.6)
             const eloActual = ELO.obtenerCapitulo(cap.estudio, this.capituloActual);
             const cambio = ELO.calcular(eloActual, eloBot, resultado);
             if (cambio !== 0) {
@@ -1157,7 +2160,7 @@
                     const signo = cambioReal > 0 ? '+' : '';
                     this.mostrarToast(`🏆 ${signo}${cambioReal} ELO`, tipo);
                 }
-                this.actualizarMetaELO();
+                this.actualizarMeta();
             }
 
             if (this.contexto.onCompletado) {
@@ -1233,6 +2236,10 @@
         // ACCIONES UI
         // --------------------------------------------------------
         reiniciar() {
+            if (this.modoEdicionVariantes) {
+                this.mostrarToast('Desactiva el modo edición primero', '');
+                return;
+            }
             if (this.respuestaAutoTimeout) { clearTimeout(this.respuestaAutoTimeout); this.respuestaAutoTimeout = null; }
             this.cargarCapitulo(this.capituloActual);
         }
@@ -1244,6 +2251,7 @@
         }
 
         pista() {
+            if (this.modoEdicionVariantes) return;
             const modo = this.config.modo || 'ejercicio';
             if (modo !== 'ejercicio' || !this.nodoActual || this.nodoActual.children.length === 0) {
                 this.mostrarToast('No hay pista disponible', ''); return;
@@ -1253,7 +2261,7 @@
             const cap = this.capitulos[this.capituloActual];
             const cambio = ELO.aplicar(cap.estudio, this.capituloActual, -3, `Pista en ${cap.nombre}`);
             if (cambio !== 0) this.mostrarToast(`💡 Pista · ${cambio} ELO`, 'elo-down');
-            this.actualizarMetaELO();
+            this.actualizarMeta();
             this.setStatus('info', `💡 Pista: mueve de ${child.move.from} a ${child.move.to}`);
             const fromEl = this.$board.querySelector(`[data-square="${child.move.from}"]`);
             const toEl = this.$board.querySelector(`[data-square="${child.move.to}"]`);
@@ -1262,9 +2270,9 @@
         }
 
         verSolucion() {
+            if (this.modoEdicionVariantes) return;
             const modo = this.config.modo || 'ejercicio';
             if (modo !== 'ejercicio') return;
-            // Modal de confirmación
             this.abrirModalConfirmacion(
                 '⚠️ ¿Ver la solución?',
                 'Si muestras la solución, este ejercicio contará como fallido y tu ELO bajará −8 puntos. ¿Quieres continuar?',
@@ -1278,7 +2286,7 @@
             const cap = this.capitulos[this.capituloActual];
             const cambio = ELO.aplicar(cap.estudio, this.capituloActual, -8, `Solución vista en ${cap.nombre}`);
             if (cambio !== 0) this.mostrarToast(`❌ Solución vista · ${cambio} ELO`, 'elo-down');
-            this.actualizarMetaELO();
+            this.actualizarMeta();
             if (this.respuestaAutoTimeout) { clearTimeout(this.respuestaAutoTimeout); this.respuestaAutoTimeout = null; }
             this.chess = new Chess(this.arbol.fen);
             this.nodoActual = this.arbol;
@@ -1326,10 +2334,12 @@
         }
 
         capituloAnterior() {
+            if (this.modoEdicionVariantes) return;
             if (this.capituloActual > 0) this.cargarCapitulo(this.capituloActual - 1);
         }
 
         capituloSiguiente() {
+            if (this.modoEdicionVariantes) return;
             if (this.capituloActual < this.capitulos.length - 1) this.cargarCapitulo(this.capituloActual + 1);
         }
 
@@ -1337,12 +2347,14 @@
         // CONFIG PANEL (admin)
         // --------------------------------------------------------
         cambiarModo(nuevoModo) {
+            if (this.modoEdicionVariantes) return;
             this.config.modo = nuevoModo;
             this.sincronizarConfigPanel();
             this.mostrarToast(nuevoModo === 'ordenador' ? '🤖 Modo vs PC' : '🎯 Modo Ejercicio', '');
             this.cargarCapitulo(this.capituloActual);
         }
         cambiarColor(color) {
+            if (this.modoEdicionVariantes) return;
             this.config.colorHumano = color;
             this.mostrarToast(`Humano: ${color === 'w' ? '♔ Blancas' : '♚ Negras'}`, '');
             this.cargarCapitulo(this.capituloActual);
@@ -1352,6 +2364,7 @@
             this.mostrarToast(`Stockfish: Nv${nivel} (~${ELO_BOT[nivel]} ELO)`, '');
         }
         cambiarOrientacion(valor) {
+            if (this.modoEdicionVariantes) return;
             this.config.orientacion = valor;
             if (valor === 'auto') this.orientacion = this.orientacionAuto;
             else this.orientacion = valor;
@@ -1394,15 +2407,8 @@
                 `Progreso: ${completados} de ${this.capitulos.length} capítulos completados`;
             const btnPrev = this.contenedor.querySelector('[data-rol="btnPrev"]');
             const btnNext = this.contenedor.querySelector('[data-rol="btnNext"]');
-            if (btnPrev) btnPrev.disabled = this.capituloActual === 0;
-            if (btnNext) btnNext.disabled = this.capituloActual === this.capitulos.length - 1;
-        }
-
-        actualizarMetaELO() {
-            const cap = this.capitulos[this.capituloActual];
-            if (!cap) return;
-            const eloCap = ELO.obtenerCapitulo(cap.estudio, this.capituloActual);
-            this.$meta.innerHTML = `<strong>Capítulo ${this.capituloActual + 1} de ${this.capitulos.length}</strong> · ${escapeHtml(cap.estudio)} · 🏆 ELO ${eloCap}`;
+            if (btnPrev) btnPrev.disabled = this.capituloActual === 0 || this.modoEdicionVariantes;
+            if (btnNext) btnNext.disabled = this.capituloActual === this.capitulos.length - 1 || this.modoEdicionVariantes;
         }
 
         actualizarBotonesModo() {
@@ -1431,10 +2437,9 @@
                 const badge = esPrincipal ? '<span class="cm-badge-principal">Principal</span>' : '';
                 return `<div class="cm-tablero-variante-item">
                     <div class="cm-texto">${badge} ${escapeHtml(texto)}</div>
-                    <button class="cm-btn-del" ${esPrincipal ? 'disabled' : ''} data-variante="${idx}">${esPrincipal ? '—' : '🗑️'}</button>
+                    <button class="cm-btn-del" ${esPrincipal || this.modoEdicionVariantes ? 'disabled' : ''} data-variante="${idx}">${esPrincipal ? '—' : '🗑️'}</button>
                 </div>`;
             }).join('');
-            // Eventos de borrado (Fase 5.8 implementará guardar en Firestore)
             lista.querySelectorAll('[data-variante]').forEach(btn => {
                 btn.addEventListener('click', () => {
                     const idx = parseInt(btn.dataset.variante, 10);
@@ -1444,32 +2449,53 @@
         }
 
         eliminarVariante(indiceLinea) {
+            if (this.modoEdicionVariantes) return;
             const lineas = obtenerLineasCompletas(this.arbol);
             if (indiceLinea <= 0 || indiceLinea >= lineas.length) {
                 this.mostrarToast('No se puede eliminar la principal', ''); return;
             }
-            const lineaEliminar = lineas[indiceLinea];
-            let nodo = lineaEliminar[lineaEliminar.length - 1];
-            while (nodo && nodo.parent) {
-                const padre = nodo.parent;
-                if (padre.children.length > 1) {
-                    padre.children = padre.children.filter(c => c !== nodo);
-                    break;
+            this.abrirModalConfirmacion(
+                '🗑️ Eliminar variante',
+                '¿Seguro que quieres eliminar esta variante del ejercicio? Esta acción no se puede deshacer.',
+                () => {
+                    const lineaEliminar = lineas[indiceLinea];
+                    let nodo = lineaEliminar[lineaEliminar.length - 1];
+                    while (nodo && nodo.parent) {
+                        const padre = nodo.parent;
+                        if (padre.children.length > 1) {
+                            padre.children = padre.children.filter(c => c !== nodo);
+                            break;
+                        }
+                        if (padre === this.arbol) break;
+                        const abuelo = padre.parent;
+                        abuelo.children = abuelo.children.filter(c => c !== padre);
+                        nodo = abuelo;
+                    }
+                    if (this.arbol.children.length === 0) {
+                        this.mostrarToast('⚠️ No puedes eliminar todas las variantes', ''); return;
+                    }
+                    const cap = this.capitulos[this.capituloActual];
+                    cap.arbol = this.arbol;
+                    cap.numLineas = contarLineas(this.arbol);
+                    this.hojasTotales = recolectarHojas(this.arbol);
+                    this.actualizarVariantesEditor();
+                    this.actualizarVariantesProgreso();
+
+                    // Notificar al padre para guardar
+                    if (this.contexto.onGuardarVariante) {
+                        try {
+                            const pgnActualizado = arbolAPGN(this.arbol, cap.headersOriginales);
+                            this.contexto.onGuardarVariante({
+                                capituloIdx: this.capituloActual,
+                                pgnCapitulo: pgnActualizado,
+                                nuevoNumLineas: cap.numLineas
+                            });
+                        } catch (e) {}
+                    }
+                    this.mostrarToast('🗑️ Variante eliminada', '');
+                    this.cargarCapitulo(this.capituloActual);
                 }
-                if (padre === this.arbol) break;
-                const abuelo = padre.parent;
-                abuelo.children = abuelo.children.filter(c => c !== padre);
-                nodo = abuelo;
-            }
-            if (this.arbol.children.length === 0) {
-                this.mostrarToast('⚠️ No puedes eliminar todas las variantes', ''); return;
-            }
-            const cap = this.capitulos[this.capituloActual];
-            cap.arbol = this.arbol;
-            cap.numLineas = contarLineas(this.arbol);
-            this.actualizarVariantesEditor();
-            this.actualizarVariantesProgreso();
-            this.mostrarToast('🗑️ Variante eliminada', '');
+            );
         }
 
         actualizarVariantesProgreso() {
@@ -1520,12 +2546,6 @@
     const instancias = new WeakMap();
 
     window.Entrenador = {
-        /**
-         * Renderiza un tablero dentro de un contenedor.
-         * @param {HTMLElement} contenedor
-         * @param {Object} config - { pgn, modo, colorHumano, nivelSF, orientacion }
-         * @param {Object} contexto - { esAdmin, uid, nombreTema, onCompletado }
-         */
         render(contenedor, config, contexto) {
             if (!contenedor || !(contenedor instanceof HTMLElement)) {
                 console.warn('[Entrenador] Contenedor inválido'); return null;
@@ -1544,9 +2564,6 @@
             }
         },
 
-        /**
-         * Destruye la instancia del contenedor.
-         */
         destroy(contenedor) {
             if (instancias.has(contenedor)) {
                 instancias.get(contenedor).destroy();
@@ -1554,10 +2571,6 @@
             }
         },
 
-        /**
-         * Analiza un PGN y devuelve metadata (capítulos y soluciones).
-         * Útil para el editor admin (vista previa).
-         */
         analizarPGN(pgn) {
             if (!pgn || typeof pgn !== 'string') return { capitulos: 0, lineas: 0, errores: [] };
             const idCounter = { v: 0, next() { return ++this.v; } };
@@ -1581,29 +2594,19 @@
             return { capitulos: bloques.length, lineas: totalLineas, errores };
         },
 
-        /**
-         * Devuelve el ELO global del alumno.
-         */
         obtenerELO() {
             return ELO.data ? ELO.data.total : ELO_INICIAL;
         },
 
-        /**
-         * Fuerza la carga de Stockfish (útil para precalentar).
-         */
         initStockfish() {
             SF.init();
         },
 
-        /**
-         * Reinicia todo el ELO guardado en localStorage.
-         * (Solo para desarrollo / admin)
-         */
         reiniciarELO() {
             ELO.default();
             ELO.guardar();
         }
     };
 
-    console.log('✅ Entrenador cargado como módulo (Fase 5). API: window.Entrenador');
+    console.log('✅ Entrenador cargado como módulo (Fase 5 + editor variantes). API: window.Entrenador');
 })();
