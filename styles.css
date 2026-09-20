@@ -901,6 +901,55 @@ code {
 }
 
 /* ============================================================
+   MENSAJE DE DONACIÓN (nuevo)
+   ============================================================ */
+.donacion-mensaje {
+    background: linear-gradient(135deg, rgba(14, 165, 233, 0.06), rgba(14, 165, 233, 0.02));
+    border: 1px solid rgba(14, 165, 233, 0.2);
+    border-radius: 10px;
+    padding: 16px 18px;
+    margin-bottom: 20px;
+    text-align: left;
+}
+
+.donacion-intro {
+    font-size: 0.9rem;
+    color: var(--texto);
+    line-height: 1.6;
+    margin-bottom: 10px;
+    text-align: center;
+}
+
+.donacion-lista {
+    list-style: none;
+    padding: 0;
+    margin: 12px 0 14px;
+    text-align: left;
+}
+
+.donacion-lista li {
+    font-size: 0.85rem;
+    color: var(--texto-suave);
+    padding: 6px 0;
+    line-height: 1.5;
+    border-bottom: 1px dashed rgba(14, 165, 233, 0.15);
+}
+
+.donacion-lista li:last-child {
+    border-bottom: none;
+}
+
+.donacion-gracias {
+    text-align: center;
+    font-size: 0.88rem;
+    color: var(--acento-oscuro);
+    font-weight: 600;
+    margin-top: 10px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(14, 165, 233, 0.15);
+}
+
+/* ============================================================
    SCROLL TÁCTIL SUAVE (iOS)
    ============================================================ */
 .sidebar, .content, .modal-content, .user-access-list, .solicitudes-list, .notificaciones-list {
@@ -1020,4 +1069,6 @@ button, .btn, .btn-small, .btn-reorder, .btn-icon, .btn-copy,
     .header-right .btn { padding: 10px 12px; font-size: 1.2rem; gap: 2px; }
     #user-info { max-width: 100px; }
     .donacion-texto { font-size: 0.9rem; }
+    .donacion-intro { font-size: 0.85rem; }
+    .donacion-lista li { font-size: 0.8rem; }
 }
