@@ -2816,7 +2816,7 @@ function inicializarTablerosEntrenador() {
                 onCompletado: () => {
                     console.log('[Fase 5] Tablero completado');
                 },
-                // ⭐ NUEVO: cuando el admin guarda una variante
+                // ⭐ NUEVO: cuando el admin guarda una variante (autoguardado)
                 onGuardarVariante: (data) => {
                     guardarVarianteEnFirestore(claseId, temaId, bloqueId, data);
                 },
@@ -2871,7 +2871,7 @@ function cargarPGNArchivoEnBloque(claseId, temaId, bloqueId, event) {
     reader.readAsText(file);
 }
 
-// ⭐ NUEVA: guarda la variante que el maestro agregó en el editor visual
+// ⭐ Guarda la variante que el maestro agregó (autoguardado)
 function guardarVarianteEnFirestore(claseId, temaId, bloqueId, data) {
     if (!currentUser?.esAdmin) return;
     const clase = curso.clases.find(c => c.id === claseId);
@@ -2898,7 +2898,6 @@ function guardarVarianteEnFirestore(claseId, temaId, bloqueId, data) {
     bloque.config.pgn = pgnActualizado;
 
     guardarCurso().then(() => {
-        mostrarToast('💾 Variante guardada en el bloque', 'success');
         console.log(`[Fase 5] Variante guardada. Capítulo ${capituloIdx + 1} ahora tiene ${nuevoNumLineas} solución(es).`);
     }).catch(err => {
         console.error('[Fase 5] Error al guardar variante:', err);
@@ -2906,7 +2905,7 @@ function guardarVarianteEnFirestore(claseId, temaId, bloqueId, data) {
     });
 }
 
-// ⭐ NUEVA: guarda el PGN completo cuando el admin pulsa "💾 Guardar PGN"
+// ⭐ Guarda el PGN completo cuando el admin pulsa "💾 Guardar PGN"
 function guardarPGNEnFirestore(claseId, temaId, bloqueId, pgn) {
     if (!currentUser?.esAdmin) return;
     const clase = curso.clases.find(c => c.id === claseId);
@@ -2926,7 +2925,7 @@ function guardarPGNEnFirestore(claseId, temaId, bloqueId, pgn) {
     });
 }
 
-// ⭐ NUEVA: actualiza el PGN cuando el admin elimina un capítulo
+// ⭐ Actualiza el PGN cuando el admin elimina un capítulo
 function eliminarCapituloDeFirestore(claseId, temaId, bloqueId, pgnNuevo) {
     if (!currentUser?.esAdmin) return;
     const clase = curso.clases.find(c => c.id === claseId);
@@ -2945,6 +2944,36 @@ function eliminarCapituloDeFirestore(claseId, temaId, bloqueId, pgnNuevo) {
         mostrarToast('Error al eliminar el capítulo', 'error');
     });
 }
+
+// ------------------------------------------------
+// ⭐ BADGE DEL ELO EN EL HEADER
+// ------------------------------------------------
+function inicializarBadgeELO() {
+    const badge = document.getElementById('header-elo-badge');
+    const valor = document.getElementById('header-elo-value');
+    if (!badge || !valor) return;
+
+    if (window.Entrenador && typeof window.Entrenador.obtenerELO === 'function') {
+        valor.textContent = window.Entrenador.obtenerELO();
+        badge.style.display = 'inline-flex';
+    } else {
+        setTimeout(inicializarBadgeELO, 500);
+        return;
+    }
+
+    if (!window._cmBadgeELOListenerActivo) {
+        window._cmBadgeELOListenerActivo = true;
+        document.addEventListener('cm-tablero-elo-changed', (e) => {
+            const badgeEl = document.getElementById('header-elo-badge');
+            const valueEl = document.getElementById('header-elo-value');
+            if (!badgeEl || !valueEl) return;
+            valueEl.textContent = e.detail.total;
+            badgeEl.style.transform = 'scale(1.1)';
+            setTimeout(() => { badgeEl.style.transform = 'scale(1)'; }, 200);
+        });
+    }
+}
+window.inicializarBadgeELO = inicializarBadgeELO;
 
 // ------------------------------------------------
 // EVENTOS DE AUTENTICACIÓN Y CARGA INICIAL
@@ -2999,6 +3028,9 @@ auth.onAuthStateChanged(async (user) => {
         }
         actualizarBotonDatosClub();
 
+        // ⭐ Activar badge ELO en header
+        inicializarBadgeELO();
+
         if (!currentUser.esAdmin && (!userProfile || !userProfile.nombre || !userProfile.apellidos)) {
             setTimeout(() => mostrarCompletarPerfil(), 1500);
         }
@@ -3033,6 +3065,9 @@ auth.onAuthStateChanged(async (user) => {
         document.getElementById('search-input').value = '';
         terminoBusqueda = '';
         document.getElementById('btn-progreso').style.display = 'none';
+        // ⭐ Ocultar badge ELO al cerrar sesión
+        const badge = document.getElementById('header-elo-badge');
+        if (badge) badge.style.display = 'none';
         actualizarUI();
     }
 });
@@ -3247,7 +3282,7 @@ document.addEventListener('keydown', (e) => {
 // ------------------------------------------------
 configurarDeteccionAutofill();
 suscribirDatosClub();
-console.log('✅ Club Morphy – Fase 5 completa (tablero + consejo + editor variantes + pestañas + capítulos)');
+console.log('✅ Club Morphy – Fase 5 completa (tablero + consejo + editor variantes + pestañas + capítulos + badge ELO + autoguardado + Lichess)');
 
 // Exponer funciones globales
 window.mostrarLogin = mostrarLogin;
@@ -3324,6 +3359,7 @@ window.cargarPGNArchivoEnBloque = cargarPGNArchivoEnBloque;
 window.guardarVarianteEnFirestore = guardarVarianteEnFirestore;
 window.guardarPGNEnFirestore = guardarPGNEnFirestore;
 window.eliminarCapituloDeFirestore = eliminarCapituloDeFirestore;
+window.inicializarBadgeELO = inicializarBadgeELO;
 
 // ===== REGISTRO DEL SERVICE WORKER =====
 if ('serviceWorker' in navigator) {
