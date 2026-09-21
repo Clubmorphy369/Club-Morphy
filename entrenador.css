@@ -1,6 +1,7 @@
 /* ============================================================
    ENTRENADOR DE AJEDREZ — Club Morphy
-   Fase 5 + Editor con pestañas + Lista de capítulos
+   Fase 5 completa + Editor con pestañas + Lista de capítulos
+   + Autoguardado + Menú contextual + Responsividad total
    Prefijo .cm-tablero- para evitar colisiones con styles.css
    ============================================================ */
 
@@ -25,8 +26,6 @@
     --cm-elo-subida: #16a34a;
     --cm-elo-bajada: #dc2626;
     --cm-edicion: #f97316;
-    --cm-tab-activa: #0ea5e9;
-    --cm-tab-activa-edicion: #f97316;
 
     font-family: 'Lato', 'Segoe UI', system-ui, sans-serif;
     color: var(--cm-texto);
@@ -49,9 +48,6 @@
     grid-template-columns: minmax(280px, 500px) 1fr;
     gap: 20px;
     align-items: start;
-}
-@media (max-width: 800px) {
-    .cm-tablero-game { grid-template-columns: 1fr; }
 }
 
 /* ============================================================
@@ -281,7 +277,7 @@
 }
 
 /* ============================================================
-   INDICADOR DE MODO (NORMAL / EDICIÓN)
+   INDICADOR DE MODO
    ============================================================ */
 .cm-tablero-modo-indicator {
     padding: 12px 16px;
@@ -342,7 +338,7 @@
 }
 
 /* ============================================================
-   ⭐ LISTA DE CAPÍTULOS DEBAJO DEL TABLERO
+   BARRA DE CAPÍTULOS (debajo del tablero)
    ============================================================ */
 .cm-tablero-capitulos-bar {
     background: var(--cm-surface);
@@ -404,7 +400,7 @@
     box-shadow: 0 2px 8px rgba(14, 165, 233, 0.3);
 }
 .cm-tablero-capitulo-btn.active .cm-capitulo-num { color: white; }
-.cm-tablero-capitulo-num {
+.cm-capitulo-num {
     font-weight: 800;
     color: var(--cm-acento);
     font-size: 0.85rem;
@@ -430,6 +426,7 @@
     margin-left: 4px;
     transition: all 0.2s;
     flex-shrink: 0;
+    font-family: inherit;
 }
 .cm-tablero-capitulo-btn .cm-capitulo-del:hover {
     background: var(--cm-peligro);
@@ -445,7 +442,7 @@
 }
 
 /* ============================================================
-   ⭐ PESTAÑAS TIPO WORD (dentro del panel admin)
+   PESTAÑAS TIPO WORD
    ============================================================ */
 .cm-tablero-tabs {
     display: flex;
@@ -484,10 +481,6 @@
     border-bottom-color: var(--cm-acento);
     background: white;
 }
-.cm-tablero-tab.active.cm-tab-edicion {
-    color: var(--cm-edicion);
-    border-bottom-color: var(--cm-edicion);
-}
 .cm-tablero-tab-content {
     display: none;
 }
@@ -501,186 +494,7 @@
 }
 
 /* ============================================================
-   ⭐ EDITOR DE TEXTO ENRIQUECIDO CON PESTAÑAS
-   ============================================================ */
-.cm-tablero-text-editor {
-    border: 1px solid var(--cm-borde);
-    border-radius: 8px;
-    background: white;
-    overflow: hidden;
-}
-.cm-tablero-text-editor .cm-tablero-tabs {
-    background: var(--cm-surface);
-    border-bottom: 1px solid var(--cm-borde);
-    margin-bottom: 0;
-    padding: 0 4px;
-    border-radius: 0;
-}
-.cm-tablero-text-editor .cm-tablero-tab {
-    padding: 7px 12px;
-    font-size: 0.78rem;
-}
-.cm-tablero-toolbar-ribbon {
-    padding: 8px 10px;
-    background: #fafbfc;
-    border-bottom: 1px solid var(--cm-borde);
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    align-items: center;
-    min-height: 48px;
-}
-.cm-tablero-toolbar-group {
-    display: flex;
-    gap: 3px;
-    align-items: center;
-    padding-right: 8px;
-    border-right: 1px solid var(--cm-borde);
-}
-.cm-tablero-toolbar-group:last-child {
-    border-right: none;
-    padding-right: 0;
-}
-
-/* Botones de la toolbar */
-.cm-tablero-tool-btn {
-    background: white;
-    border: 1px solid var(--cm-borde);
-    color: var(--cm-texto);
-    min-width: 32px;
-    height: 32px;
-    padding: 0 8px;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 0.85rem;
-    font-family: inherit;
-    transition: all 0.15s;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-}
-.cm-tablero-tool-btn:hover {
-    background: var(--cm-surface2);
-    border-color: var(--cm-acento);
-    color: var(--cm-acento-oscuro);
-}
-.cm-tablero-tool-btn.active {
-    background: var(--cm-acento);
-    color: white;
-    border-color: var(--cm-acento);
-}
-.cm-tablero-tool-btn.danger:hover {
-    background: #fee2e2;
-    border-color: var(--cm-peligro);
-    color: var(--cm-peligro);
-}
-
-/* ⭐ Botones de alineación tipo Word (con SVG) */
-.cm-tablero-tool-btn.align-btn {
-    padding: 0 6px;
-    min-width: 34px;
-}
-.cm-tablero-tool-btn.align-btn svg {
-    width: 18px;
-    height: 18px;
-    display: block;
-    fill: currentColor;
-}
-.cm-tablero-tool-btn.align-btn.active svg {
-    fill: white;
-}
-
-/* Selects */
-.cm-tablero-tool-select {
-    background: white;
-    border: 1px solid var(--cm-borde);
-    padding: 0 8px;
-    height: 32px;
-    border-radius: 5px;
-    font-size: 0.78rem;
-    font-family: inherit;
-    color: var(--cm-texto);
-    cursor: pointer;
-    min-width: 90px;
-    max-width: 140px;
-}
-.cm-tablero-tool-select:hover { border-color: var(--cm-acento); }
-.cm-tablero-tool-select-sm { min-width: 70px; max-width: 90px; }
-
-/* Color picker */
-.cm-tablero-tool-color {
-    position: relative;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 32px;
-    height: 32px;
-    border: 1px solid var(--cm-borde);
-    border-radius: 5px;
-    background: white;
-    cursor: pointer;
-    overflow: hidden;
-    flex-shrink: 0;
-}
-.cm-tablero-tool-color:hover { border-color: var(--cm-acento); }
-.cm-tablero-tool-color span {
-    font-size: 0.85rem;
-    font-weight: 700;
-    pointer-events: none;
-    color: var(--cm-texto);
-    position: relative;
-    z-index: 1;
-}
-.cm-tablero-tool-color input[type="color"] {
-    position: absolute;
-    inset: -4px;
-    width: calc(100% + 8px);
-    height: calc(100% + 8px);
-    padding: 0;
-    border: none;
-    border-radius: 0;
-    cursor: pointer;
-    opacity: 0;
-}
-
-/* Área editable */
-.cm-tablero-edit-area {
-    min-height: 100px;
-    padding: 12px 14px;
-    background: white;
-    font-family: 'Lato', sans-serif;
-    font-size: 0.95rem;
-    line-height: 1.6;
-    color: var(--cm-texto);
-    outline: none;
-    transition: background 0.2s;
-    overflow-wrap: break-word;
-    word-wrap: break-word;
-}
-.cm-tablero-edit-area:focus {
-    background: #fefefe;
-    box-shadow: inset 0 0 0 2px rgba(14,165,233,0.15);
-}
-.cm-tablero-edit-area:empty::before {
-    content: attr(data-placeholder);
-    color: var(--cm-texto-suave);
-    font-style: italic;
-    pointer-events: none;
-}
-.cm-tablero-edit-area p { margin: 0 0 8px 0; }
-.cm-tablero-edit-area p:last-child { margin-bottom: 0; }
-.cm-tablero-edit-area ul,
-.cm-tablero-edit-area ol { padding-left: 24px; margin: 8px 0; }
-.cm-tablero-edit-area li { margin-bottom: 4px; }
-.cm-tablero-edit-area hr {
-    border: none;
-    border-top: 2px solid var(--cm-acento);
-    margin: 12px 0;
-}
-
-/* ============================================================
-   ⭐ PANEL ADMIN DEL BLOQUE TABLERO (con pestañas)
+   PANEL ADMIN DEL BLOQUE (con pestañas)
    ============================================================ */
 .cm-tablero-admin-block-panel {
     background: #fff7ed;
@@ -780,8 +594,6 @@
     background: #fef3c7;
     border-color: var(--cm-edicion);
 }
-
-/* Lista de capítulos detectados (dentro del panel admin) */
 .cm-tablero-admin-capitulos-list {
     max-height: 220px;
     overflow-y: auto;
@@ -836,7 +648,7 @@
 }
 
 /* ============================================================
-   CONFIG PANEL (modo, nivel, orientación)
+   CONFIG PANEL
    ============================================================ */
 .cm-tablero-config-panel {
     background: #fff7ed;
@@ -879,7 +691,7 @@
 .cm-tablero-engine-status.loading { color: var(--cm-ordenador); }
 
 /* ============================================================
-   VARIANTES (lista en admin)
+   VARIANTES (editor)
    ============================================================ */
 .cm-tablero-variantes-editor {
     background: #f5f3ff;
@@ -910,6 +722,12 @@
     margin-bottom: 6px;
     font-family: 'Courier New', monospace;
     font-size: 0.82rem;
+    cursor: context-menu;
+    user-select: none;
+    transition: background 0.15s;
+}
+.cm-tablero-variante-item:hover {
+    background: #faf5ff;
 }
 .cm-tablero-variante-item .cm-texto {
     flex: 1;
@@ -928,9 +746,13 @@
     min-height: 30px;
     font-family: inherit;
 }
-.cm-tablero-variante-item .cm-btn-del:hover {
+.cm-tablero-variante-item .cm-btn-del:hover:not(:disabled) {
     background: var(--cm-peligro);
     color: #fff;
+}
+.cm-tablero-variante-item .cm-btn-del:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
 }
 .cm-tablero-variante-item .cm-badge-principal {
     background: var(--cm-alternativa);
@@ -939,6 +761,11 @@
     padding: 2px 6px;
     border-radius: 8px;
     font-weight: 700;
+}
+
+/* Menú contextual de variantes */
+.cm-tablero-context-menu {
+    font-family: 'Lato', sans-serif;
 }
 
 /* ============================================================
@@ -1162,7 +989,7 @@
 .cm-tablero-historial-item .cm-delta.negativo { color: var(--cm-elo-bajada); }
 
 /* ============================================================
-   MODALES (agregados a <body>)
+   MODALES
    ============================================================ */
 .cm-tablero-modal-overlay {
     --cm-acento: #0ea5e9;
@@ -1316,35 +1143,240 @@
 .cm-tablero-toast.elo-down { background: linear-gradient(135deg, #dc2626, #ef4444); }
 
 /* ============================================================
-   RESPONSIVE
+   RESPONSIVE COMPLETO
    ============================================================ */
-@media (max-width: 600px) {
-    .cm-tablero-elo-header .cm-numero { font-size: 1.4rem; }
-    .cm-tablero-elo-header .cm-icono { font-size: 1.5rem; }
-    .cm-tablero-modal-content { padding: 18px; }
-    .cm-tablero-variante-item { font-size: 0.75rem; }
-    .cm-tablero-moves { font-size: 0.78rem; }
-    .cm-tablero-tab {
-        padding: 8px 10px;
-        font-size: 0.75rem;
+
+/* === TABLETS HORIZONTALES (hasta 1024px) === */
+@media (max-width: 1024px) {
+    .cm-tablero-game {
+        grid-template-columns: minmax(260px, 450px) 1fr;
+        gap: 16px;
     }
+    .cm-tablero-tab { padding: 8px 12px; font-size: 0.78rem; }
+    .cm-tablero-capitulo-btn { font-size: 0.78rem; padding: 6px 10px; }
+}
+
+/* === TABLETS VERTICALES Y MÓVILES GRANDES (hasta 800px) === */
+@media (max-width: 800px) {
+    .cm-tablero-game {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+    .cm-tablero-board-wrap {
+        max-width: 500px;
+        margin: 0 auto;
+    }
+    .cm-tablero-panel { gap: 12px; }
+    .cm-tablero-elo-header .cm-numero { font-size: 1.5rem; }
+    .cm-tablero-elo-header .cm-icono { font-size: 1.6rem; }
+
+    /* Modo computadora en celular: reorganizar en 2 columnas si cabe */
+    @media (min-width: 500px) {
+        .cm-tablero-game {
+            grid-template-columns: minmax(220px, 1fr) minmax(180px, 1fr);
+        }
+    }
+}
+
+/* === MÓVILES (hasta 600px) === */
+@media (max-width: 600px) {
+    .cm-tablero-wrap { font-size: 0.92rem; }
+    .cm-tablero-board-wrap { max-width: 100%; }
+
+    /* ELO */
+    .cm-tablero-elo-header { padding: 10px 12px; margin-bottom: 10px; }
+    .cm-tablero-elo-header .cm-numero { font-size: 1.3rem; }
+    .cm-tablero-elo-header .cm-icono { font-size: 1.4rem; }
+
+    /* Modales */
+    .cm-tablero-modal-content { padding: 18px; border-radius: 12px; }
+    .cm-tablero-modal-content h3 { font-size: 1.05rem; }
+    .cm-tablero-modal-content p { font-size: 0.85rem; }
+
+    /* Variantes */
+    .cm-tablero-variante-item { font-size: 0.75rem; padding: 8px 10px; }
+
+    /* Movimientos */
+    .cm-tablero-moves { font-size: 0.78rem; padding: 8px 10px; }
+
+    /* Pestañas */
+    .cm-tablero-tab {
+        padding: 10px 12px;
+        font-size: 0.78rem;
+        min-height: 42px;
+    }
+    .cm-tablero-tabs {
+        -webkit-overflow-scrolling: touch;
+    }
+    .cm-tablero-tabs::-webkit-scrollbar { height: 3px; }
+
+    /* Capítulos */
     .cm-tablero-capitulo-btn {
         font-size: 0.75rem;
-        padding: 6px 10px;
+        padding: 8px 10px;
+        min-height: 42px;
     }
-    .cm-tablero-toolbar-ribbon {
-        padding: 6px 8px;
-        gap: 6px;
+    .cm-tablero-capitulo-del {
+        width: 22px;
+        height: 22px;
+        font-size: 0.75rem;
     }
-    .cm-tablero-tool-btn {
-        min-width: 30px;
-        height: 30px;
+    .cm-tablero-capitulos-bar { padding: 8px 10px; }
+    .cm-tablero-capitulos-titulo { font-size: 0.72rem; }
+
+    /* Admin */
+    .cm-tablero-admin-row { grid-template-columns: 1fr; }
+    .cm-tablero-admin-upload-btn {
+        font-size: 0.78rem;
+        padding: 10px 12px;
+        min-height: 42px;
     }
-    .cm-tablero-tool-btn.align-btn svg {
-        width: 16px;
-        height: 16px;
+
+    /* Botones generales */
+    .cm-tablero-btn {
+        font-size: 0.85rem;
+        padding: 10px 14px;
+        min-height: 44px;
     }
-    .cm-tablero-admin-row {
-        grid-template-columns: 1fr;
+    .cm-tablero-btn-sec { font-size: 0.85rem; }
+
+    /* Status */
+    .cm-tablero-status {
+        font-size: 0.88rem;
+        padding: 10px 12px;
+        min-height: 44px;
     }
+
+    /* Toast */
+    .cm-tablero-toast {
+        bottom: 12px;
+        left: 12px;
+        right: 12px;
+        transform: translateX(0) translateY(120%);
+        padding: 12px 16px;
+        font-size: 0.85rem;
+        border-radius: 10px;
+    }
+    .cm-tablero-toast.show {
+        transform: translateX(0) translateY(0);
+    }
+
+    /* Modo indicator */
+    .cm-tablero-modo-indicator {
+        padding: 10px 12px;
+        font-size: 0.82rem;
+    }
+
+    /* Auto-avance */
+    .cm-tablero-auto-avance {
+        padding: 10px 12px;
+    }
+    .cm-tablero-auto-avance label { font-size: 0.85rem; }
+}
+
+/* === MÓVILES PEQUEÑOS (hasta 400px) === */
+@media (max-width: 400px) {
+    .cm-tablero-wrap { font-size: 0.88rem; }
+    .cm-tablero-elo-header .cm-numero { font-size: 1.1rem; }
+    .cm-tablero-elo-header .cm-icono { font-size: 1.2rem; }
+    .cm-tablero-tab { padding: 8px 8px; font-size: 0.72rem; }
+    .cm-tablero-capitulo-btn { font-size: 0.7rem; padding: 6px 8px; }
+    .cm-tablero-modal-content { padding: 14px; }
+    .cm-tablero-btn { font-size: 0.78rem; padding: 8px 12px; min-height: 42px; }
+    .cm-tablero-admin-capitulo-item { padding: 6px 8px; }
+    .cm-tablero-admin-capitulo-item .cm-cap-info strong { font-size: 0.78rem; }
+    .cm-tablero-admin-capitulo-item .cm-cap-info small { font-size: 0.7rem; }
+    .cm-tablero-variante-item { font-size: 0.72rem; }
+    .cm-tablero-status { font-size: 0.82rem; padding: 8px 10px; }
+}
+
+/* === PANTALLAS TÁCTILES (aumentar áreas de toque) === */
+@media (hover: none) and (pointer: coarse) {
+    .cm-tablero-btn,
+    .cm-tablero-capitulo-btn,
+    .cm-tablero-tab,
+    .cm-tablero-admin-upload-btn,
+    .cm-tablero-btn-admin,
+    .cm-tablero-btn-guardar {
+        min-height: 44px;
+    }
+    .cm-tablero-square {
+        touch-action: manipulation;
+    }
+    .cm-tablero-variante-item {
+        padding: 10px 12px;
+    }
+    .cm-tablero-capitulo-del {
+        width: 24px;
+        height: 24px;
+        font-size: 0.8rem;
+    }
+    /* Botones hover se convierten en tap */
+    .cm-tablero-capitulo-btn:hover {
+        border-color: var(--cm-borde);
+        transform: none;
+    }
+    .cm-tablero-btn:hover { opacity: 1; }
+    .cm-tablero-btn-admin:hover {
+        box-shadow: 0 2px 8px rgba(249, 115, 22, 0.3);
+        transform: none;
+    }
+    .cm-tablero-btn-guardar:hover {
+        box-shadow: 0 2px 8px rgba(22, 163, 74, 0.35);
+        transform: none;
+    }
+    .cm-tablero-elo-header:hover {
+        box-shadow: none;
+        transform: none;
+    }
+}
+
+/* === PANTALLAS HORIZONTALES EN MÓVIL (landscape) === */
+@media (max-height: 500px) and (orientation: landscape) {
+    .cm-tablero-board-wrap { max-width: 280px; margin: 0 auto; }
+    .cm-tablero-game {
+        grid-template-columns: 280px 1fr;
+        gap: 12px;
+    }
+    .cm-tablero-panel { gap: 8px; }
+    .cm-tablero-elo-header { padding: 8px 12px; }
+    .cm-tablero-elo-header .cm-numero { font-size: 1.2rem; }
+    .cm-tablero-modo-indicator { padding: 8px 10px; margin-bottom: 8px; font-size: 0.78rem; }
+    .cm-tablero-status { min-height: 36px; padding: 8px 12px; font-size: 0.85rem; }
+    .cm-tablero-btn { min-height: 38px; padding: 6px 12px; font-size: 0.8rem; }
+}
+
+/* === MODO COMPUTADORA EN CELULAR === */
+/* Cuando el usuario marca "Sitio de escritorio" en el navegador del móvil,
+   el viewport puede llegar a 800-1100px. Estas reglas aseguran que el
+   layout se vea bien incluso en ese caso. */
+@media (min-width: 801px) and (max-width: 1100px) and (pointer: coarse) {
+    .cm-tablero-game {
+        grid-template-columns: minmax(240px, 400px) 1fr;
+        gap: 14px;
+    }
+    .cm-tablero-board-wrap { max-width: 400px; margin: 0 auto; }
+}
+
+/* === EVITAR ZOOM AUTOMÁTICO EN INPUTS EN iOS === */
+@media (max-width: 800px) {
+    .cm-tablero-admin-input,
+    .cm-tablero-admin-select,
+    .cm-tablero-admin-textarea {
+        font-size: 16px;
+    }
+}
+
+/* === IMPRESIÓN (por si alguien quiere imprimir) === */
+@media print {
+    .cm-tablero-panel,
+    .cm-tablero-capitulos-bar,
+    .cm-tablero-toast,
+    .cm-tablero-modal-overlay,
+    .cm-tablero-context-menu {
+        display: none !important;
+    }
+    .cm-tablero-wrap { max-width: 100%; }
+    .cm-tablero-board-wrap { max-width: 500px; }
+    .cm-tablero-game { grid-template-columns: 1fr; }
 }
