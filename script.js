@@ -1991,7 +1991,6 @@ async function guardarConfigClub() {
     }
 }
 
-// === FIN DE LA PARTE 3/4 ===
 // ------------------------------------------------
 // BLOQUES (EDITOR)
 // ------------------------------------------------
@@ -2009,7 +2008,6 @@ function agregarBloque(claseId, temaId, tipo) {
     };
     if (tipo === 'enlace') { nuevo.label = ''; nuevo.url = ''; }
 
-    // ⭐ FASE 5: Configuración inicial del bloque Tablero
     if (tipo === 'tablero') {
         nuevo.config = {
             pgn: '',
@@ -2020,7 +2018,6 @@ function agregarBloque(claseId, temaId, tipo) {
         };
     }
 
-    // ⭐ FASE 5: Estructura inicial del bloque Consejo
     if (tipo === 'consejo') {
         nuevo.imagenURL = '';
         nuevo.texto = '';
@@ -2148,6 +2145,7 @@ function cambiarTipoBloque(claseId, temaId, bloqueId, nuevoTipo) {
     guardarCurso().then(() => actualizarUI());
 }
 
+// === FIN DE LA PARTE 3/4 ===
 // ------------------------------------------------
 // RENDERIZADO PRINCIPAL
 // ------------------------------------------------
@@ -2818,9 +2816,17 @@ function inicializarTablerosEntrenador() {
                 onCompletado: () => {
                     console.log('[Fase 5] Tablero completado');
                 },
-                // ⭐ NUEVO: callback para guardar variantes desde el editor visual
+                // ⭐ NUEVO: cuando el admin guarda una variante
                 onGuardarVariante: (data) => {
                     guardarVarianteEnFirestore(claseId, temaId, bloqueId, data);
+                },
+                // ⭐ NUEVO: cuando el admin pulsa "💾 Guardar PGN"
+                onGuardarPGN: (data) => {
+                    guardarPGNEnFirestore(claseId, temaId, bloqueId, data.pgn);
+                },
+                // ⭐ NUEVO: cuando el admin elimina un capítulo
+                onEliminarCapitulo: (data) => {
+                    eliminarCapituloDeFirestore(claseId, temaId, bloqueId, data.pgnNuevo);
                 }
             };
             window.Entrenador.render(bloqueEl, config, contexto);
@@ -2877,7 +2883,6 @@ function guardarVarianteEnFirestore(claseId, temaId, bloqueId, data) {
     const { capituloIdx, pgnCapitulo, nuevoNumLineas } = data;
     if (!pgnCapitulo) return;
 
-    // Separar el PGN completo en capítulos y reemplazar solo el capítulo modificado
     const pgnOriginal = (bloque.config || {}).pgn || '';
     const bloques = pgnOriginal.split(/(?=\[Event\s)/i).filter(b => b.trim());
 
@@ -2889,17 +2894,55 @@ function guardarVarianteEnFirestore(claseId, temaId, bloqueId, data) {
     bloques[capituloIdx] = pgnCapitulo.trim();
     const pgnActualizado = bloques.join('\n\n');
 
-    // Actualizar la config del bloque
     if (!bloque.config) bloque.config = {};
     bloque.config.pgn = pgnActualizado;
 
-    // Guardar en Firestore
     guardarCurso().then(() => {
         mostrarToast('💾 Variante guardada en el bloque', 'success');
         console.log(`[Fase 5] Variante guardada. Capítulo ${capituloIdx + 1} ahora tiene ${nuevoNumLineas} solución(es).`);
     }).catch(err => {
         console.error('[Fase 5] Error al guardar variante:', err);
         mostrarToast('Error al guardar la variante', 'error');
+    });
+}
+
+// ⭐ NUEVA: guarda el PGN completo cuando el admin pulsa "💾 Guardar PGN"
+function guardarPGNEnFirestore(claseId, temaId, bloqueId, pgn) {
+    if (!currentUser?.esAdmin) return;
+    const clase = curso.clases.find(c => c.id === claseId);
+    if (!clase) return;
+    const tema = buscarTemaRecursivo(clase.temas, temaId);
+    const bloque = tema?.bloques?.find(b => b.id === bloqueId);
+    if (!bloque || bloque.tipo !== 'tablero') return;
+
+    if (!bloque.config) bloque.config = {};
+    bloque.config.pgn = pgn;
+
+    guardarCurso().then(() => {
+        console.log(`[Fase 5] PGN guardado en Firestore (${claseId}/${temaId}/${bloqueId})`);
+    }).catch(err => {
+        console.error('[Fase 5] Error al guardar PGN:', err);
+        mostrarToast('Error al guardar el PGN', 'error');
+    });
+}
+
+// ⭐ NUEVA: actualiza el PGN cuando el admin elimina un capítulo
+function eliminarCapituloDeFirestore(claseId, temaId, bloqueId, pgnNuevo) {
+    if (!currentUser?.esAdmin) return;
+    const clase = curso.clases.find(c => c.id === claseId);
+    if (!clase) return;
+    const tema = buscarTemaRecursivo(clase.temas, temaId);
+    const bloque = tema?.bloques?.find(b => b.id === bloqueId);
+    if (!bloque || bloque.tipo !== 'tablero') return;
+
+    if (!bloque.config) bloque.config = {};
+    bloque.config.pgn = pgnNuevo;
+
+    guardarCurso().then(() => {
+        console.log(`[Fase 5] Capítulo eliminado y PGN actualizado en Firestore`);
+    }).catch(err => {
+        console.error('[Fase 5] Error al eliminar capítulo:', err);
+        mostrarToast('Error al eliminar el capítulo', 'error');
     });
 }
 
@@ -3204,7 +3247,7 @@ document.addEventListener('keydown', (e) => {
 // ------------------------------------------------
 configurarDeteccionAutofill();
 suscribirDatosClub();
-console.log('✅ Club Morphy – Fase 5 completada (bloques Tablero + Consejo + editor variantes)');
+console.log('✅ Club Morphy – Fase 5 completa (tablero + consejo + editor variantes + pestañas + capítulos)');
 
 // Exponer funciones globales
 window.mostrarLogin = mostrarLogin;
@@ -3279,6 +3322,8 @@ window.actualizarBloqueTablero = actualizarBloqueTablero;
 window.actualizarBloqueConsejo = actualizarBloqueConsejo;
 window.cargarPGNArchivoEnBloque = cargarPGNArchivoEnBloque;
 window.guardarVarianteEnFirestore = guardarVarianteEnFirestore;
+window.guardarPGNEnFirestore = guardarPGNEnFirestore;
+window.eliminarCapituloDeFirestore = eliminarCapituloDeFirestore;
 
 // ===== REGISTRO DEL SERVICE WORKER =====
 if ('serviceWorker' in navigator) {
