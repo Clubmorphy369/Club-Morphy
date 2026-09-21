@@ -32,6 +32,8 @@
         </div>
         <div class="header-right">
             <span id="user-info" style="font-size:0.9rem;"></span>
+            <!-- ⭐ NUEVO: Badge del ELO en el header -->
+            <span id="header-elo-badge" title="Tu ELO actual" style="display:none; background:linear-gradient(135deg,#fef3c7,#fde68a); border:2px solid #d97706; color:#92400e; font-weight:800; padding:4px 10px; border-radius:20px; font-size:0.82rem; transition: transform 0.2s;">🏆 <span id="header-elo-value">1200</span></span>
             <button class="btn" id="btn-datos-club" type="button" style="display:none;" onclick="mostrarDatosClub()">📋 <span class="btn-label">Contacto</span></button>
             <button class="btn" id="btn-donar" type="button" style="display:none;" onclick="mostrarDonacion()">❤️ <span class="btn-label">Donar</span></button>
             <button class="btn" id="btn-notificaciones" type="button" style="display:none; position:relative;" onclick="abrirNotificaciones()">
@@ -80,7 +82,7 @@
                 <button class="btn" type="button" onclick="cambiarCuenta()">Cambiar cuenta</button>
             </div>
             <form id="auth-form">
-                <!-- ⭐ NUEVOS CAMPOS: solo visibles en modo registro -->
+                <!-- NUEVOS CAMPOS: solo visibles en modo registro -->
                 <div id="register-fields" style="display: none;">
                     <label for="nombre">Nombre(s)</label>
                     <input id="nombre" name="nombre" type="text"
