@@ -40,6 +40,8 @@
                 🔔 <span class="btn-label">Notif.</span> <span id="notif-badge" class="notification-badge" style="display:none;">0</span>
             </button>
             <button class="btn" id="btn-progreso" type="button" style="display:none;" onclick="abrirPanelProgreso()">📊 <span class="btn-label">Progreso</span></button>
+            <!-- ⭐ v9: Botón de modo zen -->
+            <button class="btn" id="btn-zen" type="button" onclick="toggleModoZen()" title="Modo zen (sin distracciones)">🎯 <span class="btn-label">Zen</span></button>
             <button class="btn" id="btn-solicitudes-admin" type="button" style="display:none; position:relative;" onclick="abrirSolicitudesAdmin()">
                 📩 <span class="btn-label">Solicitudes</span> <span id="solicitudes-badge" class="notification-badge" style="display:none;">0</span>
             </button>
@@ -82,7 +84,7 @@
                 <button class="btn" type="button" onclick="cambiarCuenta()">Cambiar cuenta</button>
             </div>
             <form id="auth-form">
-                <!-- NUEVOS CAMPOS: solo visibles en modo registro -->
+                <!-- Campos de registro -->
                 <div id="register-fields" style="display: none;">
                     <label for="nombre">Nombre(s)</label>
                     <input id="nombre" name="nombre" type="text"
