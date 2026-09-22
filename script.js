@@ -44,6 +44,9 @@ let migracionRealizada = false;
 let terminoBusqueda = '';
 let modalCompletarPerfilYaMostrado = false;
 
+// ⭐ v10: Contador de escrituras activas del curso (evita race condition con onSnapshot)
+let _guardandoCursoContador = 0;
+
 // ⭐ v9: Modo zen (ocultar sidebar)
 let modoZen = false;
 
@@ -123,8 +126,6 @@ function sanitizeHtml(html) {
         .replace(/javascript:/gi, '');
 }
 
-// ⭐ v9: Conversión de URLs de Google Drive (duplicada desde entrenador.js
-// para que esté disponible aquí también)
 function convertirUrlImagen(url) {
     if (!url || typeof url !== 'string') return url;
     const u = url.trim();
@@ -141,15 +142,7 @@ function convertirUrlImagen(url) {
     return u;
 }
 
-// ------------------------------------------------
-// ⭐ v9: EXPOSICIÓN GLOBAL (al inicio, defensiva)
-// ------------------------------------------------
-// Se exponen TODAS las funciones antes de cualquier inicialización,
-// así aunque algo falle al cargar, los onclick del HTML siguen funcionando.
-
 function _exponerFuncionesGlobales() {
-    // (se completa al final del archivo, pero aquí va la primera pasada defensiva
-    // para las funciones críticas)
     window.escapeHtml = escapeHtml;
     window.escapeAttr = escapeAttr;
     window.escapeOnclick = escapeOnclick;
@@ -197,7 +190,6 @@ function cargarModoZen() {
 
 function aplicarModoZen() {
     document.body.classList.toggle('modo-zen', modoZen);
-    // Actualizar el botón si existe
     const btn = document.getElementById('btn-zen');
     if (btn) {
         btn.classList.toggle('activo', modoZen);
@@ -531,7 +523,6 @@ function traducirErrorFirebase(codigo) {
     return mensajes[codigo] || 'Ocurrió un problema. Inténtalo de nuevo en unos segundos.';
 }
 
-// === FIN DE LA PARTE 1/2 DE script.js ===
 // ------------------------------------------------
 // SUSCRIPCIONES EN TIEMPO REAL (Firestore)
 // ------------------------------------------------
@@ -628,7 +619,6 @@ function suscribirDatosClub() {
     }, error => console.warn('Error snapshot club:', error));
 }
 
-// ⭐ v9: Suscribir progreso de tableros del alumno
 function suscribirProgresoTableros() {
     if (!currentUser) {
         progresoTableros = {};
@@ -640,7 +630,6 @@ function suscribirProgresoTableros() {
         } else {
             progresoTableros = {};
         }
-        // Re-inicializar los tableros visibles para restaurar progreso
         if (typeof inicializarTablerosEntrenador === 'function') {
             setTimeout(() => inicializarTablerosEntrenador(), 100);
         }
@@ -910,7 +899,6 @@ function textEditorSave() {
     const bloque = tema.bloques.find(b => b.id === bloqueId);
     if (!bloque) return;
     bloque.contenido = sanitizeHtml(activeTextEditor.innerHTML);
-    // ⭐ v9: Debounce para no saturar Firestore
     _debouncedGuardarCurso();
 }
 window.textEditorSave = textEditorSave;
@@ -929,7 +917,6 @@ function textEditorUpdateState() {
     });
 }
 
-// ⭐ v9: Debounce del guardado del curso
 let _debounceGuardarCursoTimer = null;
 function _debouncedGuardarCurso() {
     if (_debounceGuardarCursoTimer) clearTimeout(_debounceGuardarCursoTimer);
@@ -946,6 +933,14 @@ function iniciarEscuchaCurso() {
     migracionRealizada = false;
 
     unsubscribeCurso = db.collection('config').doc('curso').onSnapshot(async (doc) => {
+        // ⭐ v10: Ignorar ecos de nuestras propias escrituras pendientes.
+        // Sin esta guarda, un snapshot viejo puede sobrescribir cambios recientes,
+        // especialmente si tienes la app abierta en celular + PC al mismo tiempo.
+        if (doc.metadata.hasPendingWrites || _guardandoCursoContador > 0) {
+            console.log('[Curso] Snapshot ignorado (escritura pendiente)');
+            return;
+        }
+
         if (doc.exists) {
             curso = doc.data();
         } else {
@@ -995,11 +990,17 @@ function iniciarEscuchaCurso() {
 }
 
 async function guardarCurso() {
+    // ⭐ v10: Marcamos que hay una escritura en vuelo.
+    // Mientras el contador sea > 0, el onSnapshot ignora los snapshots
+    // para no sobrescribir el estado local con datos viejos.
+    _guardandoCursoContador++;
     try {
         await db.collection('config').doc('curso').set(curso, { merge: true });
         localStorage.setItem('cursoBackup', JSON.stringify(curso));
     } catch (err) {
         mostrarToast('Error al guardar. Verifica tu conexión.', 'error');
+    } finally {
+        _guardandoCursoContador--;
     }
 }
 
@@ -1431,10 +1432,8 @@ async function marcarVisto(claseId, temaId) {
     actualizarUI();
 }
 
-// ⭐ v9: Guardar progreso de variante de tablero
 async function guardarProgresoVarianteEnFirestore({ claseId, temaId, bloqueId, capituloIdx, clave }) {
     if (!currentUser) return;
-    // Guardar local
     const key = `tablero_${claseId}_${temaId}_${bloqueId}_${clave}`;
     progresoTableros[key] = true;
     try {
@@ -1448,7 +1447,6 @@ async function guardarProgresoVarianteEnFirestore({ claseId, temaId, bloqueId, c
 }
 window.guardarProgresoVarianteEnFirestore = guardarProgresoVarianteEnFirestore;
 
-// ⭐ v9: Guardar capítulo completo
 async function guardarProgresoCapCompletoEnFirestore({ claseId, temaId, bloqueId, capituloIdx }) {
     if (!currentUser) return;
     const key = `tablero_cap_${claseId}_${temaId}_${bloqueId}_${capituloIdx}`;
@@ -1463,14 +1461,7 @@ async function guardarProgresoCapCompletoEnFirestore({ claseId, temaId, bloqueId
 }
 window.guardarProgresoCapCompletoEnFirestore = guardarProgresoCapCompletoEnFirestore;
 
-// ⭐ v9: Renombrar capítulo desde entrenador
 async function renombrarCapituloEnFirestore({ capituloIdx, nuevoNombre, pgnNuevo }) {
-    // Aquí el pgn completo llega desde el entrenador y hay que guardarlo
-    // en el bloque correspondiente. El entrenador ya modificó cap.headersOriginales.
-    // Como el entrenador llama a este callback con el pgnNuevo, hay que
-    // reescribir el contenido del bloque en Firestore.
-    // (El entrenador también guarda el PGN vía onGuardarVariante, así que
-    //  aquí solo hacemos logging para confirmar)
     console.log('[v9] Capítulo renombrado a:', nuevoNombre);
 }
 window.renombrarCapituloEnFirestore = renombrarCapituloEnFirestore;
@@ -2273,9 +2264,7 @@ function cambiarTipoBloque(claseId, temaId, bloqueId, nuevoTipo) {
     guardarCurso().then(() => actualizarUI());
 }
 
-// ================================================================
-// ⭐ v9: CONTINÚA EN LA PARTE 2B — la pego en el siguiente mensaje
-// ================================================================
+// === FIN DE LA PARTE 1/3 ===
 // ------------------------------------------------
 // RENDERIZADO PRINCIPAL
 // ------------------------------------------------
@@ -2462,7 +2451,6 @@ function renderizarTemaRecursivo(tema, claseId, nivel = 0) {
                         if (!esUrlSegura(bloque.contenido)) {
                             html = `<p style="color:var(--peligro); font-style:italic;">⚠️ Imagen no segura (URL no permitida)</p>`;
                         } else {
-                            // ⭐ v9: Convertir URLs de Drive automáticamente
                             const urlFinal = convertirUrlImagen(bloque.contenido);
                             const src = encodeURI(urlFinal);
                             html = `<img src="${escapeAttr(src)}" class="imagen-bloque" alt="Imagen" loading="lazy">`;
@@ -2490,7 +2478,6 @@ function renderizarTemaRecursivo(tema, claseId, nivel = 0) {
                         if (!tieneImagen && !tieneTexto) return '';
                         let htmlConsejo = '<div class="bloque-consejo">';
                         if (tieneImagen) {
-                            // ⭐ v9: Convertir URLs de Drive automáticamente
                             const urlFinal = convertirUrlImagen(bloque.imagenURL.trim());
                             htmlConsejo += `<img src="${escapeAttr(urlFinal)}" class="consejo-imagen" alt="Consejo" loading="lazy" onerror="this.style.display='none'">`;
                         }
@@ -2792,7 +2779,6 @@ function actualizarUI() {
         }, 50);
     }
 
-    // Inicializar tableros después de renderizar
     setTimeout(() => inicializarTablerosEntrenador(), 100);
 
     guardarEstadoNavegacion();
@@ -2915,10 +2901,9 @@ function activarEdicion(span) {
     input.addEventListener('keypress', (e) => { if (e.key === 'Enter') { e.preventDefault(); input.blur(); } });
 }
 
-// ================================================================
-// ⭐ v9: FUNCIONES AUXILIARES DEL ENTRENADOR (con nuevos callbacks)
-// ================================================================
-
+// ------------------------------------------------
+// FUNCIONES AUXILIARES DEL ENTRENADOR
+// ------------------------------------------------
 function inicializarTablerosEntrenador() {
     if (!window.Entrenador) {
         console.warn('[Fase 5] Entrenador no está cargado');
@@ -2945,8 +2930,6 @@ function inicializarTablerosEntrenador() {
                 esAdmin: !!(currentUser && currentUser.esAdmin),
                 uid: currentUser ? currentUser.uid : null,
                 nombreTema: bloqueEl.closest('.tema')?.querySelector('.titulo-editable')?.textContent || '',
-
-                // ⭐ v9: IDs para guardar progreso
                 claseId: claseId,
                 temaId: temaId,
                 bloqueId: bloqueId,
@@ -2954,19 +2937,15 @@ function inicializarTablerosEntrenador() {
                 onCompletado: () => {
                     console.log('[v9] Tablero completado');
                 },
-                // Autoguardado de variante (admin)
                 onGuardarVariante: (data) => {
                     guardarVarianteEnFirestore(claseId, temaId, bloqueId, data);
                 },
-                // Botón "💾 Guardar PGN"
                 onGuardarPGN: (data) => {
                     guardarPGNEnFirestore(claseId, temaId, bloqueId, data.pgn);
                 },
-                // Eliminar capítulo
                 onEliminarCapitulo: (data) => {
                     eliminarCapituloDeFirestore(claseId, temaId, bloqueId, data.pgnNuevo);
                 },
-                // ⭐ v9: Guardar progreso de variante resuelta
                 onGuardarProgresoVariante: (data) => {
                     guardarProgresoVarianteEnFirestore({
                         claseId: data.claseId,
@@ -2976,7 +2955,6 @@ function inicializarTablerosEntrenador() {
                         clave: data.clave
                     });
                 },
-                // ⭐ v9: Guardar capítulo completo
                 onGuardarProgresoCapCompleto: (data) => {
                     guardarProgresoCapCompletoEnFirestore({
                         claseId: data.claseId,
@@ -2985,9 +2963,7 @@ function inicializarTablerosEntrenador() {
                         capituloIdx: data.capituloIdx
                     });
                 },
-                // ⭐ v9: Renombrar capítulo
                 onRenombrarCapitulo: (data) => {
-                    // Persiste el PGN completo con el nuevo nombre
                     guardarPGNEnFirestore(claseId, temaId, bloqueId, data.pgnNuevo);
                 }
             };
@@ -3105,7 +3081,7 @@ function eliminarCapituloDeFirestore(claseId, temaId, bloqueId, pgnNuevo) {
 }
 
 // ------------------------------------------------
-// ⭐ BADGE DEL ELO EN EL HEADER
+// BADGE DEL ELO EN EL HEADER
 // ------------------------------------------------
 function inicializarBadgeELO() {
     const badge = document.getElementById('header-elo-badge');
@@ -3134,9 +3110,7 @@ function inicializarBadgeELO() {
 }
 window.inicializarBadgeELO = inicializarBadgeELO;
 
-// ================================================================
-// === FIN DE LA PARTE 2B ===
-// ================================================================
+// === FIN DE LA PARTE 2/3 ===
 // ------------------------------------------------
 // EVENTOS DE AUTENTICACIÓN Y CARGA INICIAL
 // ------------------------------------------------
@@ -3192,7 +3166,6 @@ auth.onAuthStateChanged(async (user) => {
             }
             actualizarBotonDatosClub();
 
-            // Activar badge ELO en header
             inicializarBadgeELO();
 
             if (!currentUser.esAdmin && (!userProfile || !userProfile.nombre || !userProfile.apellidos)) {
@@ -3234,7 +3207,6 @@ auth.onAuthStateChanged(async (user) => {
             terminoBusqueda = '';
             document.getElementById('btn-progreso').style.display = 'none';
 
-            // Ocultar badge ELO al cerrar sesión
             const badge = document.getElementById('header-elo-badge');
             if (badge) badge.style.display = 'none';
 
@@ -3275,7 +3247,6 @@ document.addEventListener('focusin', (event) => {
 
 document.addEventListener('selectionchange', textEditorUpdateState);
 
-// ⭐ v9: Guardas defensivas en todos los listeners del DOM
 const elTogglePassword = document.getElementById('toggle-password');
 if (elTogglePassword) {
     elTogglePassword.addEventListener('click', function() {
@@ -3470,9 +3441,7 @@ if (elSearchInput) {
     });
 }
 
-// Atajos de teclado
 document.addEventListener('keydown', (e) => {
-    // Escape: cerrar modal más reciente
     if (e.key === 'Escape') {
         const modalesAbiertos = document.querySelectorAll('.modal-overlay.active');
         if (modalesAbiertos.length === 0) return;
@@ -3481,7 +3450,6 @@ document.addEventListener('keydown', (e) => {
         ultimoModal.classList.remove('active');
     }
 
-    // ⭐ v9: Atajo Z para modo zen (solo si no hay input activo)
     if ((e.key === 'z' || e.key === 'Z') && !e.ctrlKey && !e.metaKey && !e.altKey) {
         const tag = document.activeElement?.tagName?.toLowerCase();
         if (tag === 'input' || tag === 'textarea' || document.activeElement?.isContentEditable) return;
@@ -3493,8 +3461,6 @@ document.addEventListener('keydown', (e) => {
 // ------------------------------------------------
 // INICIALIZACIÓN
 // ------------------------------------------------
-// ⭐ v9: exponer TODAS las funciones ANTES de cualquier inicialización
-// Esto garantiza que los onclick del HTML siempre encuentren las funciones
 window.mostrarLogin = mostrarLogin;
 window.cambiarCuenta = cambiarCuenta;
 window.confirmarCerrarSesion = confirmarCerrarSesion;
@@ -3597,12 +3563,12 @@ try {
     console.error('[Init] Error en suscribirDatosClub:', err);
 }
 
-console.log('✅ Club Morphy v9 – progreso por variante + comentarios + modo zen + Drive + renombrar capítulos');
+// ⭐ v10: Log final actualizado
+console.log('✅ Club Morphy v10 – fix race condition en guardado del curso');
 
 // ================================================================
 // REGISTRO DEL SERVICE WORKER
 // ================================================================
-// ⭐ v9: ruta corregida para Firebase Hosting (antes tenía /Club-Morphy/)
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
         navigator.serviceWorker.register('/sw.js')
@@ -3618,10 +3584,9 @@ if ('serviceWorker' in navigator) {
                 });
             })
             .catch(err => {
-                // Silencioso: si falla el SW, el sitio sigue funcionando sin PWA
                 console.warn('⚠️ Service Worker no disponible:', err.message);
             });
     });
 }
 
-// === FIN DEL ARCHIVO script.js v9 ===
+// === FIN DEL ARCHIVO script.js v10 ===
