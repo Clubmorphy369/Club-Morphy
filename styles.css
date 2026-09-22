@@ -1171,7 +1171,7 @@ button, .btn, .btn-small, .btn-reorder, .btn-icon, .btn-copy,
     .bloque-campos { flex-direction: column; align-items: stretch; }
     .bloque-campos > * { min-width: auto; }
 
-    /* ⭐ FASE 4: modal de progreso en móvil */
+    /* Modal de progreso en móvil */
     .modal-alumno { max-width: 95% !important; padding: 18px; }
     .alumno-header-modal { flex-direction: column; text-align: center; gap: 10px; }
     .elo-badge-modal { align-self: center; }
@@ -1195,7 +1195,7 @@ button, .btn, .btn-small, .btn-reorder, .btn-icon, .btn-copy,
 }
 
 /* ============================================================
-   ⭐ FASE 4 — PANEL DE PROGRESO DEL ALUMNO
+   FASE 4 — PANEL DE PROGRESO DEL ALUMNO
    ============================================================ */
 .modal-alumno {
     max-width: 620px !important;
@@ -1385,4 +1385,105 @@ button, .btn, .btn-small, .btn-reorder, .btn-icon, .btn-copy,
     transform: translateX(4px);
     box-shadow: 0 2px 8px rgba(0,0,0,0.05);
     cursor: pointer;
+}
+
+/* ============================================================
+   ⭐ v9: IMÁGENES ADAPTABLES
+   ============================================================ */
+
+/* Imágenes del bloque "imagen" — se adaptan al contenedor */
+.imagen-bloque {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    max-height: 500px;
+    margin: 12px auto;
+    border-radius: 10px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    object-fit: contain;
+    background: var(--surface);
+}
+
+/* Imágenes del bloque "consejo" — más compactas */
+.consejo-imagen {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    max-height: 400px;
+    margin: 8px auto 12px;
+    border-radius: 8px;
+    object-fit: contain;
+    background: var(--surface);
+}
+
+/* En móvil, dejarlas aún más contenidas */
+@media (max-width: 768px) {
+    .imagen-bloque {
+        max-height: 350px;
+        margin: 10px auto;
+    }
+    .consejo-imagen {
+        max-height: 280px;
+    }
+}
+
+/* ============================================================
+   ⭐ v9: MODO ZEN (ocultar sidebar sin distracciones)
+   ============================================================ */
+
+/* Transición suave al activar/desactivar */
+.sidebar {
+    transition: transform var(--transicion), width var(--transicion), opacity var(--transicion);
+}
+
+/* En desktop: el modo zen oculta completamente la sidebar */
+@media (min-width: 769px) {
+    body.modo-zen .sidebar {
+        display: none;
+    }
+    body.modo-zen .content {
+        padding: 32px 40px;
+    }
+}
+
+/* En móvil, el modo zen solo asegura que la sidebar esté cerrada */
+@media (max-width: 768px) {
+    body.modo-zen .sidebar {
+        transform: translateX(-100%);
+    }
+    body.modo-zen .sidebar.open {
+        transform: translateX(0);
+    }
+}
+
+/* ============================================================
+   ⭐ v9: BOTÓN ZEN en el header
+   ============================================================ */
+#btn-zen {
+    /* Hereda estilos base de .btn */
+}
+
+/* Estado activo (modo zen encendido) */
+#btn-zen.activo {
+    background: linear-gradient(135deg, #0284c7, #0ea5e9, #38bdf8);
+    color: white;
+    border-color: var(--acento-claro);
+    box-shadow: 0 3px 12px rgba(14, 165, 233, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+#btn-zen.activo:hover {
+    background: linear-gradient(135deg, #0ea5e9, #38bdf8, #0ea5e9);
+    box-shadow: 0 5px 20px rgba(14, 165, 233, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+/* En móvil: el botón zen es un icono cuadrado compacto */
+@media (max-width: 480px) {
+    #btn-zen {
+        padding: 10px 12px;
+        font-size: 1.1rem;
+    }
+    #btn-zen .btn-label {
+        display: none;
+    }
 }
