@@ -3,6 +3,10 @@
    Fase 5 completa + Editor con pestañas + Lista de capítulos
    + Autoguardado + Menú contextual + Responsividad total
    Prefijo .cm-tablero- para evitar colisiones con styles.css
+
+   v2 — Cambios:
+     - Fix @media anidado (compatibilidad universal)
+     - Eliminado código muerto (panel ELO antiguo, config-panel antiguo)
    ============================================================ */
 
 /* ============================================================
@@ -228,9 +232,6 @@
     color: var(--cm-texto);
 }
 .cm-tablero-btn-peligro { background: var(--cm-peligro); color: #fff; }
-.cm-tablero-btn-alternativa { background: var(--cm-alternativa); color: #fff; }
-.cm-tablero-btn-ordenador { background: var(--cm-ordenador); color: #1e293b; }
-.cm-tablero-btn-elo { background: var(--cm-elo); color: #fff; }
 
 .cm-tablero-btn-admin {
     background: linear-gradient(135deg, #f97316, #fb923c);
@@ -648,39 +649,8 @@
 }
 
 /* ============================================================
-   CONFIG PANEL
+   ENGINE STATUS
    ============================================================ */
-.cm-tablero-config-panel {
-    background: #fff7ed;
-    border: 1px solid #fdba74;
-    border-radius: 8px;
-    padding: 12px;
-    margin-bottom: 12px;
-    font-size: 0.88rem;
-}
-.cm-tablero-config-panel.cm-hidden { display: none; }
-.cm-tablero-config-panel .cm-titulo-config {
-    color: #c2410c;
-    font-weight: 700;
-    margin-bottom: 10px;
-    font-size: 0.78rem;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-.cm-tablero-config-panel .cm-fila {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-    flex-wrap: wrap;
-    margin-bottom: 10px;
-}
-.cm-tablero-config-panel label {
-    font-weight: 600;
-    font-size: 0.82rem;
-    color: var(--cm-texto);
-    min-width: 100px;
-}
-.cm-tablero-config-panel select { flex: 1; min-width: 130px; }
 .cm-tablero-engine-status {
     font-size: 0.75rem;
     color: var(--cm-texto-suave);
@@ -851,142 +821,6 @@
     cursor: pointer;
     flex: 1;
 }
-
-/* ============================================================
-   ELO
-   ============================================================ */
-.cm-tablero-elo-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-    border: 2px solid var(--cm-elo);
-    border-radius: 12px;
-    padding: 12px 16px;
-    margin-bottom: 14px;
-    cursor: pointer;
-    transition: all 0.2s;
-}
-.cm-tablero-elo-header:hover {
-    box-shadow: 0 4px 16px rgba(217, 119, 6, 0.3);
-    transform: translateY(-1px);
-}
-.cm-tablero-elo-header .cm-icono { font-size: 2rem; }
-.cm-tablero-elo-header .cm-datos { flex: 1; }
-.cm-tablero-elo-header .cm-label {
-    font-size: 0.7rem;
-    font-weight: 700;
-    color: #92400e;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-}
-.cm-tablero-elo-header .cm-numero {
-    font-size: 1.8rem;
-    font-weight: 800;
-    color: var(--cm-elo);
-    font-variant-numeric: tabular-nums;
-    line-height: 1;
-}
-.cm-tablero-elo-header .cm-cambio {
-    font-size: 0.85rem;
-    font-weight: 700;
-    padding: 4px 10px;
-    border-radius: 20px;
-    font-variant-numeric: tabular-nums;
-}
-.cm-tablero-elo-header .cm-cambio.subida { background: #dcfce7; color: var(--cm-elo-subida); }
-.cm-tablero-elo-header .cm-cambio.bajada { background: #fee2e2; color: var(--cm-elo-bajada); }
-.cm-tablero-elo-header .cm-cambio.neutral { background: var(--cm-surface2); color: var(--cm-texto-suave); }
-
-.cm-tablero-elo-panel {
-    background: #fff;
-    border-radius: 12px;
-    padding: 16px;
-    margin-bottom: 14px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-}
-.cm-tablero-elo-panel.cm-hidden { display: none; }
-.cm-tablero-elo-panel h3 {
-    font-size: 1rem;
-    color: var(--cm-elo);
-    margin-bottom: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-}
-.cm-tablero-elo-panel h3 button {
-    background: transparent;
-    color: var(--cm-texto-suave);
-    border: 1px solid var(--cm-borde);
-    padding: 4px 10px;
-    font-size: 0.75rem;
-    min-height: auto;
-    font-weight: 600;
-    border-radius: 6px;
-    cursor: pointer;
-    font-family: inherit;
-}
-.cm-tablero-estudio-item {
-    background: var(--cm-surface);
-    border-radius: 10px;
-    padding: 12px;
-    margin-bottom: 10px;
-    border-left: 4px solid var(--cm-acento);
-}
-.cm-tablero-estudio-item .cm-nombre {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 8px;
-    font-weight: 700;
-    font-size: 0.9rem;
-}
-.cm-tablero-estudio-item .cm-elo-numero {
-    font-size: 1.1rem;
-    color: var(--cm-elo);
-    font-variant-numeric: tabular-nums;
-}
-.cm-tablero-barra-elo {
-    height: 8px;
-    background: var(--cm-surface2);
-    border-radius: 10px;
-    overflow: hidden;
-}
-.cm-tablero-barra-elo .cm-relleno {
-    height: 100%;
-    background: linear-gradient(90deg, #fbbf24, #f59e0b, #d97706);
-    border-radius: 10px;
-    transition: width 0.5s ease;
-}
-.cm-tablero-estudio-meta {
-    display: flex;
-    justify-content: space-between;
-    font-size: 0.75rem;
-    color: var(--cm-texto-suave);
-    margin-top: 4px;
-}
-.cm-tablero-historial-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 8px 10px;
-    border-bottom: 1px solid var(--cm-borde);
-    font-size: 0.82rem;
-}
-.cm-tablero-historial-item:last-child { border-bottom: none; }
-.cm-tablero-historial-item .cm-razon {
-    color: var(--cm-texto-suave);
-    font-size: 0.75rem;
-    margin-top: 2px;
-}
-.cm-tablero-historial-item .cm-delta {
-    font-weight: 800;
-    font-variant-numeric: tabular-nums;
-    font-size: 0.95rem;
-}
-.cm-tablero-historial-item .cm-delta.positivo { color: var(--cm-elo-subida); }
-.cm-tablero-historial-item .cm-delta.negativo { color: var(--cm-elo-bajada); }
 
 /* ============================================================
    MODALES
@@ -1169,12 +1003,13 @@
     .cm-tablero-panel { gap: 12px; }
     .cm-tablero-elo-header .cm-numero { font-size: 1.5rem; }
     .cm-tablero-elo-header .cm-icono { font-size: 1.6rem; }
+}
 
-    /* Modo computadora en celular: reorganizar en 2 columnas si cabe */
-    @media (min-width: 500px) {
-        .cm-tablero-game {
-            grid-template-columns: minmax(220px, 1fr) minmax(180px, 1fr);
-        }
+/* ⭐ FIX: @media anidado aplanado — Modo computadora en celular */
+/* Cuando el viewport está entre 500px y 800px, reorganizar en 2 columnas */
+@media (min-width: 500px) and (max-width: 800px) {
+    .cm-tablero-game {
+        grid-template-columns: minmax(220px, 1fr) minmax(180px, 1fr);
     }
 }
 
