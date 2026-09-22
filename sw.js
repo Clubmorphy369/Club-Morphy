@@ -3,8 +3,8 @@
 // =============================================================
 
 // ⚠️ Sube la versión cuando hagas cambios importantes
-// ⭐ v7: estrategia network-first para HTML/JS/CSS + fix aviso primera visita
-const CACHE_NAME = 'club-morphy-v7';
+// ⭐ v8: estrategia network-first para HTML/JS/CSS + fix aviso primera visita
+const CACHE_NAME = 'club-morphy-v8';
 const OFFLINE_URL = '/Club-Morphy/offline.html';
 
 const STATIC_ASSETS = [
