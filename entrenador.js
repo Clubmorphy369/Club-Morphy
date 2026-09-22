@@ -3,6 +3,14 @@
    Fase 5 + Editor con pestañas + Lista de capítulos + Fix ELO admin
    + Autoguardado de variantes + Menú contextual + Importar Lichess
    + Reset ELO + Badge en header
+
+   ⭐ v9 — Cambios:
+     - Progreso por variante (persistido en Firestore)
+     - Modo edición persistente para admin
+     - Renombrar capítulos
+     - Conversión automática de URLs de Google Drive
+     - Comentarios en jugadas (clic derecho, estilo Lichess)
+
    API pública: window.Entrenador
    ============================================================ */
 
@@ -35,6 +43,9 @@
     const ELO_MIN = 100;
     const ELO_MAX = 3000;
     const ELO_STORAGE_KEY = 'entrenadorEloData_v2';
+
+    // ⭐ Clave para persistir el modo edición del admin
+    const MODO_EDICION_KEY = 'cm-tablero-modo-edicion-persistente';
 
     const ELO_BOT = { 1: 800, 2: 1000, 3: 1200, 4: 1400, 5: 1600, 6: 1800, 7: 2100, 8: 2400 };
 
@@ -100,6 +111,43 @@
         return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({
             '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
         }[c]));
+    }
+
+    // ⭐ NUEVO: Conversión automática de URLs de Google Drive a formato visible
+    // Acepta:
+    //   https://drive.google.com/file/d/FILE_ID/view?usp=sharing
+    //   https://drive.google.com/open?id=FILE_ID
+    //   https://drive.google.com/uc?id=FILE_ID
+    // Devuelve:
+    //   https://lh3.googleusercontent.com/d/FILE_ID
+    function convertirUrlImagen(url) {
+        if (!url || typeof url !== 'string') return url;
+        const u = url.trim();
+
+        // Drive: /file/d/ID/...
+        let m = u.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/);
+        if (m) return `https://lh3.googleusercontent.com/d/${m[1]}`;
+
+        // Drive: ?id=ID  o  uc?id=ID
+        m = u.match(/drive\.google\.com\/(?:open|uc)\?(?:[^&]*&)*id=([a-zA-Z0-9_-]+)/);
+        if (m) return `https://lh3.googleusercontent.com/d/${m[1]}`;
+
+        // Drive: thumbnail?id=ID
+        m = u.match(/drive\.google\.com\/thumbnail\?id=([a-zA-Z0-9_-]+)/);
+        if (m) return `https://lh3.googleusercontent.com/d/${m[1]}`;
+
+        // Ya está convertida o es otra URL: devolver como está
+        return u;
+    }
+
+    // ⭐ NUEVO: Hash estable para identificar una variante (línea de movimientos)
+    // Usa los SAN concatenados. Ejemplo: "e4 e5 Nf3"
+    function hashVariante(camino) {
+        if (!Array.isArray(camino) || camino.length === 0) return '';
+        return camino
+            .filter(n => n && n.move && n.move.san)
+            .map(n => n.move.san)
+            .join(' ');
     }
 
     // ============================================================
@@ -268,7 +316,7 @@
             this.data.historial = this.data.historial.slice(0, 50);
             this.guardar();
 
-            // ⭐ Evento global para el badge del header
+            // Evento global para el badge del header
             try {
                 document.dispatchEvent(new CustomEvent('cm-tablero-elo-changed', {
                     detail: { total: this.data.total, cambio: cambioReal }
@@ -306,20 +354,39 @@
 
     ELO.cargar();
 
+    // === FIN DE LA PARTE 1/4 ===
+     // ============================================================
+    // PGN PARSER (⭐ v9: con soporte de comentarios { texto })
     // ============================================================
-    // PGN PARSER
-    // ============================================================
+
+    // ⭐ MODIFICADO: ahora captura comentarios `{ ... }` y `; ...`
     function tokenizePGN(texto) {
         const tokens = [];
         let i = 0;
         while (i < texto.length) {
             const c = texto[i];
             if (c === '{') {
+                // ⭐ Comentario entre llaves
                 const end = texto.indexOf('}', i);
-                i = end >= 0 ? end + 1 : texto.length;
+                if (end >= 0) {
+                    const contenido = texto.slice(i + 1, end).trim();
+                    if (contenido) tokens.push({ type: 'comment', value: contenido });
+                    i = end + 1;
+                } else {
+                    i = texto.length;
+                }
             } else if (c === ';') {
+                // ⭐ Comentario de línea hasta el salto
                 const end = texto.indexOf('\n', i);
-                i = end >= 0 ? end + 1 : texto.length;
+                let contenido;
+                if (end >= 0) {
+                    contenido = texto.slice(i + 1, end).trim();
+                    i = end + 1;
+                } else {
+                    contenido = texto.slice(i + 1).trim();
+                    i = texto.length;
+                }
+                if (contenido) tokens.push({ type: 'comment', value: contenido });
             } else if (c === '(') { tokens.push({ type: 'open' }); i++; }
             else if (c === ')') { tokens.push({ type: 'close' }); i++; }
             else if (/\s/.test(c)) { i++; }
@@ -333,12 +400,21 @@
         return tokens;
     }
 
+    // ⭐ MODIFICADO: cada nodo del árbol ahora tiene campo `comentario`
     function construirArbolPGN(movText, fenInicial, idCounter) {
         const tokens = tokenizePGN(movText);
-        const root = { id: idCounter.next(), move: null, fen: fenInicial, children: [], parent: null };
+        const root = {
+            id: idCounter.next(),
+            move: null,
+            fen: fenInicial,
+            children: [],
+            parent: null,
+            comentario: ''   // ⭐ NUEVO
+        };
         let currentNode = root;
         let currentChess = new Chess(fenInicial);
         const savedStates = [];
+
         for (const tok of tokens) {
             if (tok.type === 'open') {
                 savedStates.push({ node: currentNode, chess: new Chess(currentChess.fen()) });
@@ -352,6 +428,15 @@
                     currentNode = saved.node;
                     currentChess = saved.chess;
                 }
+            } else if (tok.type === 'comment') {
+                // ⭐ Asociar comentario al nodo actual (la jugada previa)
+                if (currentNode && currentNode.move) {
+                    if (currentNode.comentario) {
+                        currentNode.comentario += ' ' + tok.value;
+                    } else {
+                        currentNode.comentario = tok.value;
+                    }
+                }
             } else if (tok.type === 'text') {
                 if (/^\d+\.+$/.test(tok.value)) continue;
                 if (/^(1-0|0-1|1\/2-1\/2|\*)$/.test(tok.value)) continue;
@@ -361,7 +446,7 @@
                     const mv = currentChess.move(san);
                     if (!mv) continue;
 
-                    // ⭐ FIX: Evitar hijos duplicados (variantes redundantes de Lichess)
+                    // Evitar hijos duplicados (variantes redundantes de Lichess)
                     const yaExiste = currentNode.children.find(c =>
                         c.move &&
                         c.move.from === mv.from &&
@@ -377,7 +462,8 @@
                             move: { from: mv.from, to: mv.to, promotion: mv.promotion || 'q', san: mv.san, color: mv.color },
                             fen: currentChess.fen(),
                             children: [],
-                            parent: currentNode
+                            parent: currentNode,
+                            comentario: ''   // ⭐ NUEVO
                         };
                         currentNode.children.push(newNode);
                         currentNode = newNode;
@@ -388,7 +474,7 @@
         return root;
     }
 
-    // ⭐ FIX: Elimina hijos duplicados de un árbol ya construido
+    // Elimina hijos duplicados de un árbol ya construido
     function limpiarArbolDuplicados(nodo) {
         if (!nodo.children || nodo.children.length === 0) return;
         const hijosUnicos = [];
@@ -431,8 +517,31 @@
         return resultado;
     }
 
+    // ⭐ NUEVO: cuenta cuántos comentarios tiene un árbol completo
+    function contarComentarios(nodo) {
+        if (!nodo) return 0;
+        let total = nodo.comentario ? 1 : 0;
+        if (nodo.children) {
+            nodo.children.forEach(c => { total += contarComentarios(c); });
+        }
+        return total;
+    }
+
+    // ⭐ NUEVO: obtiene el nodo padre para una variante dada su camino de SANs
+    function encontrarNodoPorCamino(arbol, caminoSans) {
+        if (!arbol || !Array.isArray(caminoSans) || caminoSans.length === 0) return arbol;
+        let actual = arbol;
+        for (const san of caminoSans) {
+            if (!actual.children) return null;
+            const siguiente = actual.children.find(c => c.move && c.move.san === san);
+            if (!siguiente) return null;
+            actual = siguiente;
+        }
+        return actual;
+    }
+
     // ============================================================
-    // ÁRBOL A PGN
+    // ÁRBOL A PGN (⭐ v9: incluye comentarios al exportar)
     // ============================================================
     function arbolAPGN(arbol, headers) {
         let lineas = [];
@@ -443,6 +552,12 @@
         }
         lineas.push('');
 
+        // ⭐ Helper: devuelve el comentario formateado (con espacio final)
+        function comentarioDeNodo(nodo) {
+            if (!nodo || !nodo.comentario) return '';
+            return `{ ${nodo.comentario} } `;
+        }
+
         function escribirDesdeNodo(nodo, profundidad) {
             if (!nodo) return '';
             let texto = '';
@@ -451,6 +566,7 @@
                 const num = Math.floor(profundidad / 2) + 1;
                 const pre = alt.move.color === 'w' ? `${num}.` : `${num}...`;
                 texto += `(${pre} ${alt.move.san} `;
+                texto += comentarioDeNodo(alt);  // ⭐ NUEVO
                 texto += escribirDesdeNodo(alt, profundidad + 1);
                 texto += ') ';
             }
@@ -469,10 +585,12 @@
             const pre = mv.color === 'w' ? `${num}.` : `${num}...`;
 
             texto += `${pre} ${mv.san} `;
+            texto += comentarioDeNodo(child);  // ⭐ NUEVO
 
             for (let i = 1; i < nodo.children.length; i++) {
                 const alt = nodo.children[i];
                 texto += `(${pre} ${alt.move.san} `;
+                texto += comentarioDeNodo(alt);  // ⭐ NUEVO
                 texto += escribirDesdeNodo(alt, profundidad + 1);
                 texto += ') ';
             }
@@ -486,7 +604,7 @@
         return lineas.join('\n');
     }
 
-    // === FIN DE LA PARTE 1/3 ===
+    // === FIN DE LA PARTE 2/4 ===
      // ============================================================
     // CLASE PRINCIPAL: INSTANCIA DEL TABLERO
     // ============================================================
@@ -498,7 +616,7 @@
             this.idInstancia = 'cm-' + (++_contadorInstancias);
             this.destroyed = false;
 
-            // ⭐ ¿Es admin? Si sí, bloqueamos cambios de ELO
+            // ¿Es admin?
             this.esModoAdmin = !!this.contexto.esAdmin;
             if (this.esModoAdmin) {
                 ELO.bloquearCambios = true;
@@ -530,16 +648,35 @@
             // Modo ordenador
             this.colorHumano = 'w';
 
-            // Auto-avance (solo alumnos)
+            // Auto-avance (alumnos)
             this.autoAvance = false;
 
-            // Editor de variantes (solo admin)
+            // Editor de variantes (admin)
             this.modoEdicionVariantes = false;
             this.historialEdicion = [];
+
+            // ⭐ v9: Modo edición persistente (leído de localStorage)
+            this.modoEdicionPersistente = false;
+            try {
+                this.modoEdicionPersistente =
+                    localStorage.getItem(MODO_EDICION_KEY) === 'true';
+            } catch (e) { /* ignorar */ }
+
+            // ⭐ v9: Progreso por variante (hashes ya resueltos)
+            this.progresoVariantes = new Set();
+            // ⭐ v9: Contexto para guardar progreso
+            this.claseIdContexto = this.contexto.claseId || null;
+            this.temaIdContexto = this.contexto.temaId || null;
+            this.bloqueIdContexto = this.contexto.bloqueId || null;
 
             // Callbacks externos
             this.onGuardarPGN = this.contexto.onGuardarPGN || null;
             this.onEliminarCapitulo = this.contexto.onEliminarCapitulo || null;
+            this.onGuardarVariante = this.contexto.onGuardarVariante || null;
+            // ⭐ NUEVOS callbacks
+            this.onGuardarProgresoVariante = this.contexto.onGuardarProgresoVariante || null;
+            this.onGuardarProgresoCapCompleto = this.contexto.onGuardarProgresoCapCompleto || null;
+            this.onRenombrarCapitulo = this.contexto.onRenombrarCapitulo || null;
 
             // ID counter
             this._idCounter = { v: 0, next() { return ++this.v; } };
@@ -563,6 +700,17 @@
             this.construirEstructuraHTML();
             this.cargarCapitulo(0);
             if (cfg.modo === 'ordenador') SF.init();
+
+            // ⭐ v9: Si es admin y el modo edición persistente está activo,
+            // activar automáticamente
+            if (this.esModoAdmin && this.modoEdicionPersistente) {
+                setTimeout(() => {
+                    if (!this.destroyed && !this.modoEdicionVariantes) {
+                        this.activarModoEdicion();
+                        this.mostrarToast('✏️ Modo edición persistente activado', '');
+                    }
+                }, 300);
+            }
         }
 
         // --------------------------------------------------------
@@ -580,7 +728,7 @@
                             </div>
                             <div class="cm-tablero-progress-info" data-rol="progressInfo"></div>
 
-                            <!-- ⭐ BARRA DE CAPÍTULOS (visible siempre) -->
+                            <!-- Barra de capítulos -->
                             <div class="cm-tablero-capitulos-bar" data-rol="capitulosBar">
                                 <div class="cm-tablero-capitulos-titulo">
                                     <span>📚 Capítulos del ejercicio</span>
@@ -603,6 +751,14 @@
                                 <button class="cm-tablero-btn-admin" data-rol="btnEditarVariantes" style="width:100%;">
                                     ✏️ Activar modo edición de variantes
                                 </button>
+                            </div>
+
+                            <!-- ⭐ v9: Check persistencia del modo edición -->
+                            <div class="cm-tablero-persist-check" data-rol="persistCheckWrap">
+                                <input type="checkbox" id="${this.idInstancia}-persist" data-rol="persistCheck">
+                                <label for="${this.idInstancia}-persist">
+                                    🔒 Mantener modo edición siempre activo
+                                </label>
                             </div>
 
                             <div class="cm-tablero-edit-toolbar" data-rol="editToolbar">
@@ -643,7 +799,7 @@
                             </div>
 
                             ${esAdmin ? `
-                            <!-- ⭐ PANEL ADMIN CON PESTAÑAS -->
+                            <!-- Panel admin con pestañas -->
                             <div class="cm-tablero-admin-block-panel" data-rol="adminBlockPanel">
                                 <div class="cm-tablero-tabs" data-rol="adminTabs">
                                     <button class="cm-tablero-tab active" data-tab="pgn">📋 PGN & Capítulos</button>
@@ -651,7 +807,6 @@
                                     <button class="cm-tablero-tab" data-tab="variantes">🌿 Variantes</button>
                                 </div>
 
-                                <!-- Pestaña PGN -->
                                 <div class="cm-tablero-tab-content active" data-tab-content="pgn">
                                     <label class="cm-tablero-admin-field-label">📋 PGN del estudio (con capítulos)</label>
                                     <textarea class="cm-tablero-admin-textarea" data-rol="pgnTextarea" placeholder="Pega aquí el PGN de tu estudio…">${escapeHtml((this.config || {}).pgn || '')}</textarea>
@@ -693,7 +848,6 @@
                                     </div>
                                 </div>
 
-                                <!-- Pestaña Configuración -->
                                 <div class="cm-tablero-tab-content" data-tab-content="config">
                                     <label class="cm-tablero-admin-field-label">Modo de juego</label>
                                     <select class="cm-tablero-admin-select" data-rol="configModo">
@@ -734,7 +888,6 @@
                                     <div class="cm-tablero-engine-status" data-rol="engineStatus">⏸️ Motor no inicializado</div>
                                 </div>
 
-                                <!-- Pestaña Variantes -->
                                 <div class="cm-tablero-tab-content" data-tab-content="variantes">
                                     <div class="cm-tablero-variantes-editor">
                                         <div class="cm-titulo">
@@ -759,7 +912,7 @@
                 </div>
             `;
 
-            // === Referencias ===
+            // Referencias
             this.$board = this.contenedor.querySelector('[data-rol="board"]');
             this.$progressInfo = this.contenedor.querySelector('[data-rol="progressInfo"]');
             this.$meta = this.contenedor.querySelector('[data-rol="meta"]');
@@ -775,15 +928,15 @@
             this.$pgnTextarea = this.contenedor.querySelector('[data-rol="pgnTextarea"]');
             this.$adminCapsLista = this.contenedor.querySelector('[data-rol="adminCapsLista"]');
             this.$numCaps = this.contenedor.querySelector('[data-rol="numCaps"]');
-            this.$variantesEditor = this.contenedor.querySelector('[data-rol="variantesEditor"]');
             this.$variantesLista = this.contenedor.querySelector('[data-rol="variantesLista"]');
             this.$variantsProgress = this.contenedor.querySelector('[data-rol="variantsProgress"]');
             this.$variantsDots = this.contenedor.querySelector('[data-rol="variantsDots"]');
             this.$variantsProgreso = this.contenedor.querySelector('[data-rol="variantsProgreso"]');
             this.$adminTabs = this.contenedor.querySelectorAll('[data-rol="adminTabs"] .cm-tablero-tab');
             this.$adminTabContents = this.contenedor.querySelectorAll('[data-tab-content]');
+            this.$persistCheck = this.contenedor.querySelector('[data-rol="persistCheck"]');
 
-            // === Config inicial ===
+            // Config inicial
             const selModo = this.contenedor.querySelector('[data-rol="configModo"]');
             const selColor = this.contenedor.querySelector('[data-rol="configColor"]');
             const selNivel = this.contenedor.querySelector('[data-rol="configNivel"]');
@@ -793,7 +946,7 @@
             if (selNivel) selNivel.value = this.config.nivelSF || 5;
             if (selOrient) selOrient.value = this.config.orientacion || 'auto';
 
-            // === Eventos principales ===
+            // Eventos principales
             this._on('[data-rol="btnReiniciar"]', 'click', () => this.reiniciar());
             this._on('[data-rol="btnVoltear"]', 'click', () => this.voltear());
             this._on('[data-rol="btnPista"]', 'click', () => this.pista());
@@ -809,13 +962,29 @@
                 });
             }
 
-            // Editor de variantes (admin)
+            // ⭐ v9: Modo edición persistente (admin)
             if (esAdmin) {
+                if (this.$persistCheck) {
+                    this.$persistCheck.checked = this.modoEdicionPersistente;
+                    this.$persistCheck.addEventListener('change', (e) => {
+                        this.modoEdicionPersistente = e.target.checked;
+                        try {
+                            localStorage.setItem(MODO_EDICION_KEY, e.target.checked ? 'true' : 'false');
+                        } catch (err) { /* ignorar */ }
+                        this.mostrarToast(
+                            e.target.checked
+                                ? '🔒 Modo edición persistente activado'
+                                : '🔓 Modo edición persistente desactivado',
+                            ''
+                        );
+                    });
+                }
+
                 this._on('[data-rol="btnEditarVariantes"]', 'click', () => this.toggleModoEdicion());
                 this._on('[data-rol="btnDeshacerEdicion"]', 'click', () => this.deshacerEdicion());
                 this._on('[data-rol="btnDescartarEdicion"]', 'click', () => this.descartarEdicion());
 
-                // Pestañas del panel admin
+                // Pestañas admin
                 this.$adminTabs.forEach(tab => {
                     tab.addEventListener('click', () => {
                         this.$adminTabs.forEach(t => t.classList.remove('active'));
@@ -834,10 +1003,8 @@
                     }
                 } catch (e) {}
 
-                // Botón Guardar PGN
                 this._on('[data-rol="btnGuardarPGN"]', 'click', () => this.guardarPGN());
 
-                // Input archivo PGN
                 const inputArchivo = this.contenedor.querySelector('[data-rol="inputArchivoPGN"]');
                 if (inputArchivo) {
                     inputArchivo.addEventListener('change', (e) => {
@@ -853,19 +1020,14 @@
                     });
                 }
 
-                // ⭐ Importar desde Lichess
                 this._on('[data-rol="btnImportarLichess"]', 'click', () => this.importarDesdeLichess());
-
-                // ⭐ Resetear ELO
                 this._on('[data-rol="btnResetELO"]', 'click', () => this.resetearELO());
 
-                // Config selects
                 this._on('[data-rol="configModo"]', 'change', (e) => this.cambiarModo(e.target.value));
                 this._on('[data-rol="configColor"]', 'change', (e) => this.cambiarColor(e.target.value));
                 this._on('[data-rol="configNivel"]', 'change', (e) => this.cambiarNivel(e.target.value));
                 this._on('[data-rol="configOrientacion"]', 'change', (e) => this.cambiarOrientacion(e.target.value));
 
-                // Textarea PGN: actualizar lista (debounced)
                 if (this.$pgnTextarea) {
                     let debounceTimer;
                     this.$pgnTextarea.addEventListener('input', () => {
@@ -937,7 +1099,7 @@
             if (!movText) return null;
             const arbol = construirArbolPGN(movText, fen, this._idCounter);
             if (!arbol.children.length) return null;
-            limpiarArbolDuplicados(arbol);  // ⭐ FIX
+            limpiarArbolDuplicados(arbol);
             const tempChess = new Chess(fen);
             const turnoAuto = tempChess.turn() === 'w' ? 'white' : 'black';
             return {
@@ -954,7 +1116,7 @@
         }
 
         // --------------------------------------------------------
-        // CARGAR CAPÍTULO
+        // CARGAR CAPÍTULO (⭐ v9: restaura progreso previo)
         // --------------------------------------------------------
         cargarCapitulo(idx) {
             idx = parseInt(idx, 10);
@@ -962,7 +1124,9 @@
             this.capituloActual = idx;
             const cap = this.capitulos[idx];
 
-            if (this.modoEdicionVariantes) this.desactivarModoEdicion(true);
+            if (this.modoEdicionVariantes && !this.modoEdicionPersistente) {
+                this.desactivarModoEdicion(true);
+            }
 
             this.arbol = cap.arbol;
             this.nodoActual = this.arbol;
@@ -978,7 +1142,10 @@
             }
 
             this.hojasTotales = recolectarHojas(this.arbol);
-            this.hojasCompletadas = new Set();
+
+            // ⭐ v9: Restaurar progreso previo del alumno
+            this._restaurarProgresoDeCapitulo();
+
             this.esperandoRespuesta = false;
             this.casillaSeleccionada = null;
             this.bloqueado = false;
@@ -1003,7 +1170,39 @@
             if (modo === 'ordenador') {
                 this.iniciarModoOrdenador();
             } else {
-                this.setStatus('info', 'Tu turno. Encuentra la mejor jugada.');
+                if (this.hojasCompletadas.size >= this.hojasTotales.length && this.hojasTotales.length > 0) {
+                    this.setStatus('ok', '🎉 Este capítulo ya estaba completado.');
+                } else if (this.hojasCompletadas.size > 0) {
+                    this.setStatus('info', `Retomando: ${this.hojasCompletadas.size}/${this.hojasTotales.length} soluciones ya resueltas.`);
+                } else {
+                    this.setStatus('info', 'Tu turno. Encuentra la mejor jugada.');
+                }
+            }
+        }
+
+        // ⭐ v9: Restaura el progreso previo de un capítulo
+        _restaurarProgresoDeCapitulo() {
+            this.hojasCompletadas = new Set();
+            if (!this.progresoVariantes || this.progresoVariantes.size === 0) return;
+
+            const cap = this.capitulos[this.capituloActual];
+            if (!cap) return;
+
+            // Recorrer todas las hojas y marcar las que ya están resueltas
+            const lineas = obtenerLineasCompletas(this.arbol);
+            const prefijo = `cap${this.capituloActual}_`;
+
+            lineas.forEach(linea => {
+                const hash = hashVariante(linea);
+                const clave = prefijo + hash;
+                if (this.progresoVariantes.has(clave)) {
+                    const hoja = linea[linea.length - 1];
+                    if (hoja) this.hojasCompletadas.add(hoja.id);
+                }
+            });
+
+            if (this.hojasTotales.length > 0 && this.hojasCompletadas.size >= this.hojasTotales.length) {
+                cap.completado = true;
             }
         }
 
@@ -1012,11 +1211,15 @@
             const cap = this.capitulos[this.capituloActual];
             if (!cap) return;
             const eloCap = ELO.obtenerCapitulo(cap.estudio, this.capituloActual);
-            this.$meta.innerHTML = `<strong>Capítulo ${this.capituloActual + 1} de ${this.capitulos.length}</strong> · ${escapeHtml(cap.estudio)} · 🏆 ELO ${eloCap}`;
+            const numComentarios = contarComentarios(cap.arbol || {});
+            const badgeComentarios = numComentarios > 0
+                ? ` · 💬 ${numComentarios}`
+                : '';
+            this.$meta.innerHTML = `<strong>Capítulo ${this.capituloActual + 1} de ${this.capitulos.length}</strong> · ${escapeHtml(cap.estudio)} · 🏆 ELO ${eloCap}${badgeComentarios}`;
         }
 
         // --------------------------------------------------------
-        // BARRA DE CAPÍTULOS
+        // BARRA DE CAPÍTULOS (⭐ v9: con botón ✏️ renombrar)
         // --------------------------------------------------------
         renderizarBarraCapitulos() {
             if (!this.$capsLista) return;
@@ -1026,6 +1229,9 @@
                 const activo = idx === this.capituloActual;
                 const completado = cap.completado;
                 const badge = completado ? '<span class="cm-capitulo-check">✓</span>' : '';
+                const renameBtn = esAdmin
+                    ? `<button class="cm-capitulo-rename" data-cap-rename="${idx}" title="Renombrar capítulo">✏️</button>`
+                    : '';
                 const delBtn = esAdmin
                     ? `<button class="cm-capitulo-del" data-cap-del="${idx}" title="Eliminar capítulo">✕</button>`
                     : '';
@@ -1034,6 +1240,7 @@
                         <span class="cm-capitulo-num">${idx + 1}.</span>
                         <span>${escapeHtml(cap.nombre.substring(0, 20))}${cap.nombre.length > 20 ? '…' : ''}</span>
                         ${badge}
+                        ${renameBtn}
                         ${delBtn}
                     </button>
                 `;
@@ -1042,6 +1249,7 @@
             this.$capsLista.querySelectorAll('[data-cap-idx]').forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     if (e.target.closest('[data-cap-del]')) return;
+                    if (e.target.closest('[data-cap-rename]')) return;
                     const idx = parseInt(btn.dataset.capIdx, 10);
                     if (idx !== this.capituloActual) this.cargarCapitulo(idx);
                 });
@@ -1055,12 +1263,113 @@
                         this.eliminarCapitulo(idx);
                     });
                 });
+
+                // ⭐ v9: Renombrar capítulo
+                this.$capsLista.querySelectorAll('[data-cap-rename]').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const idx = parseInt(btn.dataset.capRename, 10);
+                        this._abrirModalRenombrarCapitulo(idx);
+                    });
+                });
             }
 
             if (this.$capsProgreso) {
                 const completados = this.capitulos.filter(c => c.completado).length;
                 this.$capsProgreso.textContent = `${completados}/${this.capitulos.length}`;
             }
+        }
+
+        // ⭐ v9: Modal para renombrar capítulo
+        _abrirModalRenombrarCapitulo(idx) {
+            const cap = this.capitulos[idx];
+            if (!cap) return;
+
+            const overlay = document.createElement('div');
+            overlay.className = 'cm-tablero-modal-overlay';
+            overlay.innerHTML = `
+                <div class="cm-tablero-modal-content">
+                    <h3 style="color:var(--cm-acento);">✏️ Renombrar capítulo</h3>
+                    <p style="margin-bottom:12px;">Escribe el nuevo nombre para el capítulo ${idx + 1}:</p>
+                    <input type="text" class="cm-tablero-admin-input" data-rol="input-nombre-cap"
+                           value="${escapeHtml(cap.nombre)}" maxlength="120"
+                           style="width:100%; padding:10px 12px; font-size:1rem; margin-bottom:16px;">
+                    <div class="cm-tablero-modal-acciones">
+                        <button class="cm-tablero-btn cm-tablero-btn-sec" data-accion="cancelar">Cancelar</button>
+                        <button class="cm-tablero-btn" data-accion="guardar">💾 Guardar</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(overlay);
+
+            const input = overlay.querySelector('[data-rol="input-nombre-cap"]');
+            setTimeout(() => { input.focus(); input.select(); }, 100);
+
+            const cerrar = () => overlay.remove();
+
+            overlay.querySelector('[data-accion="cancelar"]').onclick = cerrar;
+            overlay.querySelector('[data-accion="guardar"]').onclick = () => {
+                const nuevoNombre = input.value.trim();
+                if (!nuevoNombre) {
+                    this.mostrarToast('⚠️ El nombre no puede estar vacío', 'error');
+                    return;
+                }
+                this.renombrarCapitulo(idx, nuevoNombre);
+                cerrar();
+            };
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) cerrar();
+            });
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    overlay.querySelector('[data-accion="guardar"]').click();
+                }
+            });
+        }
+
+        // ⭐ v9: Renombra un capítulo y persiste el cambio
+        renombrarCapitulo(idx, nuevoNombre) {
+            if (!this.esModoAdmin) return;
+            const cap = this.capitulos[idx];
+            if (!cap) return;
+            if (!nuevoNombre || !nuevoNombre.trim()) return;
+
+            const nombreLimpio = nuevoNombre.trim();
+            cap.nombre = nombreLimpio;
+
+            // Actualizar headers originales para que arbolAPGN los use
+            if (!cap.headersOriginales) cap.headersOriginales = {};
+            cap.headersOriginales.ChapterName = nombreLimpio;
+
+            // Reconstruir PGN completo
+            try {
+                const pgnNuevo = this._reconstruirPGNCompleto();
+                this.config.pgn = pgnNuevo;
+
+                // Persistir vía callback
+                if (this.contexto.onRenombrarCapitulo) {
+                    this.contexto.onRenombrarCapitulo({
+                        capituloIdx: idx,
+                        nuevoNombre: nombreLimpio,
+                        pgnNuevo
+                    });
+                } else if (this.onGuardarPGN) {
+                    // Fallback: usar el callback de guardar PGN
+                    this.onGuardarPGN({ pgn: pgnNuevo });
+                }
+            } catch (e) {
+                console.error('[Entrenador] Error al renombrar:', e);
+            }
+
+            this.renderizarBarraCapitulos();
+            this.actualizarListaAdminCaps();
+            this.actualizarMeta();
+            if (this.$pgnTextarea) {
+                this.$pgnTextarea.value = this.config.pgn || '';
+            }
+
+            this.mostrarToast(`✏️ Capítulo renombrado: "${nombreLimpio}"`, '');
         }
 
         eliminarCapitulo(idx) {
@@ -1121,7 +1430,7 @@
         }
 
         // --------------------------------------------------------
-        // LISTA ADMIN DE CAPÍTULOS (pestaña PGN)
+        // LISTA ADMIN DE CAPÍTULOS
         // --------------------------------------------------------
         actualizarListaAdminCaps() {
             if (!this.$adminCapsLista) return;
@@ -1262,7 +1571,7 @@
         }
 
         // --------------------------------------------------------
-        // ⭐ IMPORTAR DESDE LICHESS
+        // IMPORTAR DESDE LICHESS
         // --------------------------------------------------------
         async importarDesdeLichess() {
             const input = this.contenedor.querySelector('[data-rol="inputLichessURL"]');
@@ -1298,7 +1607,7 @@
         }
 
         // --------------------------------------------------------
-        // ⭐ RESETEAR ELO
+        // RESETEAR ELO
         // --------------------------------------------------------
         resetearELO() {
             this.abrirModalConfirmacion(
@@ -1483,8 +1792,11 @@
                 this.nodoActual = match;
                 this.casillaSeleccionada = null;
                 this.dibujarPiezas();
-                this.setStatus('ok', `✅ ${match.move.san}${esAlt ? ' (alternativa)' : ''}`);
+
+                const comentario = match.comentario ? ` 💬 ${match.comentario}` : '';
+                this.setStatus('ok', `✅ ${match.move.san}${esAlt ? ' (alternativa)' : ''}${comentario}`);
                 this.actualizarMovimientos();
+
                 if (this.nodoActual.children.length === 0) {
                     this.alCompletarHoja();
                     return;
@@ -1523,7 +1835,6 @@
             }
         }
 
-        // ⭐ Aplica ELO respetando modo admin
         aplicarCambioELOSeguro(estudio, capIdx, cambio, razon) {
             if (this.esModoAdmin) {
                 console.log(`[Entrenador] ELO bloqueado (admin): ${cambio > 0 ? '+' : ''}${cambio} - ${razon}`);
@@ -1583,7 +1894,7 @@
             this.actualizarMovimientos();
             this.actualizarEditInfo();
 
-            // ⭐ AUTOGUARDADO tras cada movimiento
+            // Autoguardado
             this._autoguardarVariante();
 
             if (this.chess.game_over()) {
@@ -1602,7 +1913,6 @@
             }
         }
 
-        // ⭐ AUTOGUARDADO de variante (llamado tras cada movimiento)
         _autoguardarVariante() {
             if (!this.modoEdicionVariantes) return;
             if (this.historialEdicion.length === 0) return;
@@ -1661,7 +1971,8 @@
                         move: paso.move,
                         fen: paso.fen,
                         children: [],
-                        parent: padre
+                        parent: padre,
+                        comentario: ''
                     };
                     padre.children.push(nuevoNodo);
                     padre = nuevoNodo;
@@ -1762,7 +2073,7 @@
             );
         }
 
-        // === FIN DE LA PARTE 2/3 ===
+        // === FIN DE LA PARTE 3/4 ===
 	        // --------------------------------------------------------
         // RESPUESTA DEL RIVAL
         // --------------------------------------------------------
@@ -1785,11 +2096,15 @@
         }
 
         // --------------------------------------------------------
-        // COMPLETAR HOJA
+        // ⭐ v9: COMPLETAR HOJA (con guardado de progreso por variante)
         // --------------------------------------------------------
         alCompletarHoja() {
             if (this.destroyed || !this.nodoActual) return;
             this.hojasCompletadas.add(this.nodoActual.id);
+
+            // ⭐ v9: Guardar esta variante específica como resuelta
+            this._guardarProgresoVarianteActual();
+
             this.actualizarVariantesProgreso();
             const total = this.hojasTotales.length;
             const completadas = this.hojasCompletadas.size;
@@ -1797,6 +2112,10 @@
             if (completadas >= total) {
                 this.setStatus('ok', `🎉 ¡Todas las ${total} soluciones completadas!`);
                 this.capitulos[this.capituloActual].completado = true;
+
+                // ⭐ v9: Marcar capítulo completo en progreso
+                this._guardarProgresoCapCompleto();
+
                 this.renderizarBarraCapitulos();
 
                 if (!this.eloAplicado && !this.esModoAdmin) {
@@ -1843,6 +2162,59 @@
                 this.irANodo(desviacion || this.arbol);
                 this.setStatus('info', 'Tu turno.');
             }, 1600);
+        }
+
+        // ⭐ v9: Guarda el progreso de la variante actual
+        _guardarProgresoVarianteActual() {
+            if (this.esModoAdmin) return;
+            if (!this.onGuardarProgresoVariante) return;
+            if (!this.claseIdContexto || !this.temaIdContexto || !this.bloqueIdContexto) return;
+
+            // Construir el camino desde la raíz hasta el nodo actual
+            const camino = [];
+            let n = this.nodoActual;
+            while (n && n.move) { camino.unshift(n); n = n.parent; }
+            if (camino.length === 0) return;
+
+            const hash = hashVariante(camino);
+            if (!hash) return;
+
+            const clave = `cap${this.capituloActual}_${hash}`;
+
+            // Añadir a la memoria local
+            this.progresoVariantes.add(clave);
+
+            // Persistir vía callback
+            try {
+                this.onGuardarProgresoVariante({
+                    claseId: this.claseIdContexto,
+                    temaId: this.temaIdContexto,
+                    bloqueId: this.bloqueIdContexto,
+                    capituloIdx: this.capituloActual,
+                    clave: clave,
+                    hash: hash
+                });
+            } catch (e) {
+                console.error('[Entrenador] Error al guardar progreso de variante:', e);
+            }
+        }
+
+        // ⭐ v9: Guarda que el capítulo completo se terminó
+        _guardarProgresoCapCompleto() {
+            if (this.esModoAdmin) return;
+            if (!this.onGuardarProgresoCapCompleto) return;
+            if (!this.claseIdContexto || !this.temaIdContexto || !this.bloqueIdContexto) return;
+
+            try {
+                this.onGuardarProgresoCapCompleto({
+                    claseId: this.claseIdContexto,
+                    temaId: this.temaIdContexto,
+                    bloqueId: this.bloqueIdContexto,
+                    capituloIdx: this.capituloActual
+                });
+            } catch (e) {
+                console.error('[Entrenador] Error al guardar progreso de capítulo:', e);
+            }
         }
 
         encontrarPuntoDesviacion(hojaObjetivo, completadas) {
@@ -2114,7 +2486,6 @@
             const modo = this.config.modo || 'ejercicio';
             if (modo !== 'ejercicio') return;
 
-            // ⭐ Admin: directo, sin confirmación
             if (this.esModoAdmin) {
                 this.mostrarToast('👁️ Solución mostrada (admin) — no afecta ELO', '');
                 this.ejecutarVerSolucion();
@@ -2275,6 +2646,7 @@
             this.$status.textContent = texto;
         }
 
+        // ⭐ v9: Movimientos con clic derecho para comentarios
         actualizarMovimientos() {
             if (!this.$moves) return;
             const hist = this.chess.history({ verbose: true });
@@ -2286,12 +2658,225 @@
             this.$moves.style.display = 'block';
             const modo = this.config.modo || 'ejercicio';
             const colorHumano = this.config.colorHumano || 'w';
+
+            // Reconstruir el camino de nodos del árbol correspondiente a los movimientos actuales
+            const nodosCamino = this._obtenerNodosDelCaminoActual();
+
             this.$moves.innerHTML = hist.map((m, i) => {
                 const n = Math.floor(i / 2) + 1;
                 const pre = m.color === 'w' ? `${n}.` : `${n}…`;
                 const esPC = modo === 'ordenador' && m.color !== colorHumano;
-                return `<span class="${esPC ? 'computadora' : 'done'}">${pre} ${m.san}</span>`;
+                const nodo = nodosCamino[i];
+                const tieneComentario = nodo && nodo.comentario;
+                const comentarioAttr = tieneComentario
+                    ? `title="${escapeHtml(nodo.comentario)}"`
+                    : '';
+                const icono = tieneComentario ? ' <span class="cm-mov-comentario-icon">💬</span>' : '';
+                const claseExtra = tieneComentario ? ' con-comentario' : '';
+                const idxNodo = nodo ? nodo.id : '';
+                return `<span class="cm-mov ${esPC ? 'computadora' : 'done'}${claseExtra}"
+                              data-mov-idx="${i}"
+                              data-nodo-id="${idxNodo}"
+                              ${comentarioAttr}>${pre} ${m.san}${icono}</span>`;
             }).join(' ');
+
+            // ⭐ v9: Añadir listener de clic derecho (solo admin)
+            if (this.esModoAdmin) {
+                this.$moves.querySelectorAll('.cm-mov').forEach(el => {
+                    el.style.cursor = 'context-menu';
+                    el.addEventListener('contextmenu', (e) => {
+                        e.preventDefault();
+                        const nodoId = el.dataset.nodoId;
+                        if (nodoId) {
+                            this._mostrarMenuContextoComentario(parseInt(nodoId, 10), e.clientX, e.clientY);
+                        }
+                    });
+                });
+            }
+        }
+
+        // ⭐ v9: Reconstruye el camino de nodos correspondiente al estado actual
+        _obtenerNodosDelCaminoActual() {
+            const camino = [];
+            let n = this.nodoActual;
+            while (n && n.move) {
+                camino.unshift(n);
+                n = n.parent;
+            }
+            return camino;
+        }
+
+        // ⭐ v9: Menú contextual para añadir/editar comentario (clic derecho)
+        _mostrarMenuContextoComentario(nodoId, x, y) {
+            document.querySelectorAll('.cm-tablero-context-menu').forEach(m => m.remove());
+
+            const nodo = this._encontrarNodoPorId(this.arbol, nodoId);
+            if (!nodo) return;
+
+            const tieneComentario = !!nodo.comentario;
+            const menu = document.createElement('div');
+            menu.className = 'cm-tablero-context-menu';
+            menu.style.cssText = `position:fixed; top:${y}px; left:${x}px; background:white; border:1px solid #cbd5e1; border-radius:8px; box-shadow:0 4px 20px rgba(0,0,0,0.15); z-index:10000; padding:4px; min-width:200px;`;
+
+            const opciones = [
+                {
+                    icon: tieneComentario ? '✏️' : '💬',
+                    label: tieneComentario ? 'Editar comentario' : 'Añadir comentario',
+                    action: () => this._mostrarModalComentario(nodoId)
+                }
+            ];
+
+            if (tieneComentario) {
+                opciones.push({
+                    icon: '🗑️',
+                    label: 'Eliminar comentario',
+                    action: () => this._eliminarComentarioNodo(nodoId),
+                    danger: true
+                });
+            }
+
+            menu.innerHTML = opciones.map((op, i) =>
+                `<button class="cm-tablero-context-item" data-op-idx="${i}"
+                         style="display:flex; align-items:center; gap:8px; width:100%; padding:8px 12px; background:none; border:none; text-align:left; cursor:pointer; border-radius:6px; font-size:0.85rem; color:${op.danger ? '#dc2626' : '#1e293b'}; font-family:inherit;">
+                    ${op.icon} ${op.label}
+                </button>`
+            ).join('');
+
+            document.body.appendChild(menu);
+
+            menu.querySelectorAll('[data-op-idx]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const i = parseInt(btn.dataset.opIdx, 10);
+                    opciones[i].action();
+                    menu.remove();
+                });
+                btn.addEventListener('mouseenter', () => { btn.style.background = '#f1f5f9'; });
+                btn.addEventListener('mouseleave', () => { btn.style.background = 'none'; });
+            });
+
+            setTimeout(() => {
+                const cerrar = (ev) => {
+                    if (!menu.contains(ev.target)) {
+                        menu.remove();
+                        document.removeEventListener('click', cerrar);
+                        document.removeEventListener('contextmenu', cerrar);
+                    }
+                };
+                document.addEventListener('click', cerrar);
+                document.addEventListener('contextmenu', cerrar);
+            }, 100);
+        }
+
+        // ⭐ v9: Busca un nodo por su ID en el árbol
+        _encontrarNodoPorId(nodo, id) {
+            if (!nodo) return null;
+            if (nodo.id === id) return nodo;
+            if (nodo.children) {
+                for (const hijo of nodo.children) {
+                    const found = this._encontrarNodoPorId(hijo, id);
+                    if (found) return found;
+                }
+            }
+            return null;
+        }
+
+        // ⭐ v9: Modal para escribir/editar un comentario
+        _mostrarModalComentario(nodoId) {
+            const nodo = this._encontrarNodoPorId(this.arbol, nodoId);
+            if (!nodo) return;
+
+            const sanMov = nodo.move ? nodo.move.san : '(inicio)';
+            const textoActual = nodo.comentario || '';
+
+            const overlay = document.createElement('div');
+            overlay.className = 'cm-tablero-modal-overlay';
+            overlay.innerHTML = `
+                <div class="cm-tablero-modal-content">
+                    <h3 style="color:var(--cm-acento);">💬 Comentario de la jugada</h3>
+                    <p style="margin-bottom:8px; font-size:0.85rem;">
+                        Jugada: <strong style="color:var(--cm-texto); font-family:'Courier New',monospace;">${escapeHtml(sanMov)}</strong>
+                    </p>
+                    <textarea class="cm-tablero-admin-textarea" data-rol="input-comentario"
+                              placeholder="Escribe tu comentario aquí (ej: esta jugada controla el centro)…"
+                              maxlength="500"
+                              style="width:100%; min-height:100px; padding:10px; font-size:0.9rem; margin-bottom:6px; font-family:'Lato',sans-serif; resize:vertical;">${escapeHtml(textoActual)}</textarea>
+                    <div style="font-size:0.72rem; color:var(--cm-texto-suave); text-align:right; margin-bottom:14px;">
+                        Máx. 500 caracteres
+                    </div>
+                    <div class="cm-tablero-modal-acciones">
+                        <button class="cm-tablero-btn cm-tablero-btn-sec" data-accion="cancelar">Cancelar</button>
+                        <button class="cm-tablero-btn" data-accion="guardar">💾 Guardar</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(overlay);
+
+            const textarea = overlay.querySelector('[data-rol="input-comentario"]');
+            setTimeout(() => { textarea.focus(); textarea.select(); }, 100);
+
+            const cerrar = () => overlay.remove();
+
+            overlay.querySelector('[data-accion="cancelar"]').onclick = cerrar;
+            overlay.querySelector('[data-accion="guardar"]').onclick = () => {
+                const nuevoComentario = textarea.value.trim();
+                this._guardarComentarioEnNodo(nodoId, nuevoComentario);
+                cerrar();
+            };
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) cerrar();
+            });
+            textarea.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+                    e.preventDefault();
+                    overlay.querySelector('[data-accion="guardar"]').click();
+                }
+            });
+        }
+
+        // ⭐ v9: Guarda un comentario en un nodo del árbol y persiste
+        _guardarComentarioEnNodo(nodoId, comentario) {
+            const nodo = this._encontrarNodoPorId(this.arbol, nodoId);
+            if (!nodo) return;
+
+            nodo.comentario = comentario || '';
+
+            const cap = this.capitulos[this.capituloActual];
+            cap.arbol = this.arbol;
+
+            // Persistir el PGN completo del capítulo
+            if (this.contexto.onGuardarVariante) {
+                try {
+                    const pgnActualizado = arbolAPGN(this.arbol, cap.headersOriginales);
+                    this.contexto.onGuardarVariante({
+                        capituloIdx: this.capituloActual,
+                        pgnCapitulo: pgnActualizado,
+                        nuevoNumLineas: cap.numLineas
+                    });
+                } catch (e) {
+                    console.error('[Entrenador] Error al guardar comentario:', e);
+                }
+            }
+
+            this.actualizarMovimientos();
+            this.actualizarMeta();
+
+            if (comentario) {
+                this.mostrarToast('💬 Comentario guardado', 'elo-up');
+            } else {
+                this.mostrarToast('🗑️ Comentario eliminado', '');
+            }
+        }
+
+        // ⭐ v9: Elimina el comentario de un nodo
+        _eliminarComentarioNodo(nodoId) {
+            const nodo = this._encontrarNodoPorId(this.arbol, nodoId);
+            if (!nodo || !nodo.comentario) return;
+
+            this.abrirModalConfirmacion(
+                '🗑️ Eliminar comentario',
+                `¿Eliminar el comentario de la jugada ${nodo.move ? nodo.move.san : ''}?`,
+                () => this._guardarComentarioEnNodo(nodoId, '')
+            );
         }
 
         actualizarProgreso() {
@@ -2315,7 +2900,7 @@
         }
 
         // --------------------------------------------------------
-        // VARIANTES EDITOR (con menú contextual)
+        // VARIANTES EDITOR
         // --------------------------------------------------------
         actualizarVariantesEditor() {
             if (!this.$variantesLista) return;
@@ -2326,7 +2911,8 @@
                 const texto = linea.map((nodo, j) => {
                     const num = Math.floor(j / 2) + 1;
                     const pre = nodo.move.color === 'w' ? `${num}.` : `${num}…`;
-                    return `${pre} ${nodo.move.san}`;
+                    const comentarioIcon = nodo.comentario ? ' 💬' : '';
+                    return `${pre} ${nodo.move.san}${comentarioIcon}`;
                 }).join(' ');
                 const esPrincipal = idx === 0;
                 const badge = esPrincipal ? '<span class="cm-badge-principal">Principal</span>' : '';
@@ -2336,7 +2922,6 @@
                 </div>`;
             }).join('');
 
-            // Click en botón 🗑️
             this.$variantesLista.querySelectorAll('[data-variante]').forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     e.stopPropagation();
@@ -2345,7 +2930,6 @@
                 });
             });
 
-            // ⭐ CLIC DERECHO: menú contextual
             this.$variantesLista.querySelectorAll('[data-variante-idx]').forEach(item => {
                 item.addEventListener('contextmenu', (e) => {
                     e.preventDefault();
@@ -2355,7 +2939,6 @@
             });
         }
 
-        // ⭐ Menú contextual al clic derecho en una variante
         mostrarMenuContextoVariante(idx, x, y) {
             document.querySelectorAll('.cm-tablero-context-menu').forEach(m => m.remove());
 
@@ -2426,7 +3009,6 @@
             }, 100);
         }
 
-        // ⭐ Convertir variante en principal
         convertirVarianteEnPrincipal(idx) {
             if (idx <= 0) return;
             const lineas = obtenerLineasCompletas(this.arbol);
@@ -2625,8 +3207,25 @@
         bloquearELO() { ELO.bloquearCambios = true; },
         permitirELO() { ELO.bloquearCambios = false; },
 
-        arbolAPGN(arbol, headers) { return arbolAPGN(arbol, headers); }
+        arbolAPGN(arbol, headers) { return arbolAPGN(arbol, headers); },
+
+        // ⭐ v9: Utilidad pública para convertir URLs de Drive
+        convertirUrlImagen(url) { return convertirUrlImagen(url); },
+
+        // ⭐ v9: Obtener/establecer el modo edición persistente globalmente
+        getModoEdicionPersistente() {
+            try {
+                return localStorage.getItem(MODO_EDICION_KEY) === 'true';
+            } catch (e) { return false; }
+        },
+
+        setModoEdicionPersistente(activo) {
+            try {
+                localStorage.setItem(MODO_EDICION_KEY, activo ? 'true' : 'false');
+                return true;
+            } catch (e) { return false; }
+        }
     };
 
-    console.log('✅ Entrenador cargado (Fase 5 completa + autoguardado + Lichess + responsive). API: window.Entrenador');
+    console.log('✅ Entrenador cargado (v9: progreso por variante + modo edición persistente + comentarios + Drive + renombrar capítulos). API: window.Entrenador');
 })();
