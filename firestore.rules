@@ -21,6 +21,11 @@ service cloud.firestore {
       return request.auth != null && request.auth.uid == uid;
     }
 
+    // ⭐ NUEVO: helper para validar strings con tamaño máximo
+    function isValidString(value, maxLen) {
+      return value is string && value.size() > 0 && value.size() <= maxLen;
+    }
+
     // ============================
     // CONFIG
     // ============================
@@ -39,19 +44,39 @@ service cloud.firestore {
     // ============================
     match /usuarios/{uid} {
       allow read: if isAuthenticated();
-      allow create: if isOwner(uid);
-      // ⭐ FASE 3: Ahora permite actualizar nombre, apellidos, etc.
+
+      // ⭐ MEJORADO: validación de tipos y tamaños al crear
+      allow create: if isOwner(uid)
+                    && request.resource.data.uid == uid
+                    && request.resource.data.email is string
+                    && request.resource.data.email.size() < 200
+                    && request.resource.data.nombre is string
+                    && request.resource.data.nombre.size() < 100
+                    && request.resource.data.apellidos is string
+                    && request.resource.data.apellidos.size() < 100
+                    && request.resource.data.perfilCompletado is bool
+                    && request.resource.data.asignadoPorAdmin is bool;
+
+      // ⭐ FIX CRÍTICO: quitado 'uid' y 'asignadoPorAdmin'
+      //             de la lista editable por el alumno.
+      //             Solo el admin puede tocarlos.
       allow update: if isAdmin()
                     || (isOwner(uid)
                         && request.resource.data.diff(resource.data)
                             .affectedKeys().hasOnly([
                               'email',
-                              'uid',
                               'nombre',
                               'apellidos',
-                              'perfilCompletado',
-                              'asignadoPorAdmin'
-                            ]));
+                              'perfilCompletado'
+                            ])
+                        && request.resource.data.email is string
+                        && request.resource.data.email.size() < 200
+                        && request.resource.data.nombre is string
+                        && request.resource.data.nombre.size() < 100
+                        && request.resource.data.apellidos is string
+                        && request.resource.data.apellidos.size() < 100
+                        && request.resource.data.perfilCompletado is bool);
+
       allow delete: if isAdmin();
     }
 
@@ -82,12 +107,30 @@ service cloud.firestore {
       allow read: if isAuthenticated()
                   && (isAdmin() || request.auth.uid == resource.data.uid);
 
+      // ⭐ MEJORADO: validación completa de tipos, tamaños y campos
       allow create: if isAuthenticated()
                     && request.auth.uid == request.resource.data.uid
                     && request.resource.data.estado == 'pendiente'
                     && request.resource.data.tipo in ['clase', 'tema']
                     && request.resource.data.email is string
-                    && request.resource.data.claseId is string;
+                    && request.resource.data.email.size() < 200
+                    && request.resource.data.claseId is string
+                    && request.resource.data.claseId.size() < 50
+                    && request.resource.data.claseTitulo is string
+                    && request.resource.data.claseTitulo.size() < 200
+                    && request.resource.data.nombreAlumno is string
+                    && request.resource.data.nombreAlumno.size() < 200
+                    && (
+                        // Si es solicitud de tema, debe traer temaId y temaTitulo
+                        (request.resource.data.tipo == 'tema'
+                          && request.resource.data.temaId is string
+                          && request.resource.data.temaId.size() < 50
+                          && request.resource.data.temaTitulo is string
+                          && request.resource.data.temaTitulo.size() < 200)
+                        ||
+                        // Si es de clase, no validamos tema (puede no venir)
+                        request.resource.data.tipo == 'clase'
+                       );
 
       allow update: if isAdmin();
 
@@ -103,9 +146,12 @@ service cloud.firestore {
       allow read: if isAuthenticated()
                   && (isAdmin() || request.auth.uid == resource.data.paraUid);
 
+      // ⭐ MEJORADO: límites de tamaño explícitos para todos los strings
       allow create: if isAuthenticated()
                     && request.resource.data.paraUid is string
+                    && request.resource.data.paraUid.size() < 100
                     && request.resource.data.mensaje is string
+                    && request.resource.data.mensaje.size() > 0
                     && request.resource.data.mensaje.size() < 500
                     && request.resource.data.leida == false
                     && request.resource.data.tipo in [
@@ -125,7 +171,8 @@ service cloud.firestore {
       allow update: if isAuthenticated()
                     && (isAdmin() || request.auth.uid == request.resource.data.paraUid)
                     && request.resource.data.diff(resource.data)
-                        .affectedKeys().hasOnly(['leida']);
+                        .affectedKeys().hasOnly(['leida'])
+                    && request.resource.data.leida is bool;
 
       allow delete: if isAdmin()
                     || (isAuthenticated()
@@ -133,7 +180,7 @@ service cloud.firestore {
     }
 
     // ============================
-    // ⭐ ELO (NUEVO - FASE 1)
+    // ELO (preparado para futuro uso)
     // ============================
     match /elo/{uid} {
       allow read: if isAuthenticated() && (isOwner(uid) || isAdmin());
@@ -141,7 +188,7 @@ service cloud.firestore {
     }
 
     // ============================
-    // ⭐ ESTADÍSTICAS (NUEVO - FASE 1)
+    // ESTADÍSTICAS (preparado para futuro uso)
     // ============================
     match /estadisticas/{uid} {
       allow read: if isAuthenticated() && (isOwner(uid) || isAdmin());
@@ -149,7 +196,7 @@ service cloud.firestore {
     }
 
     // ============================
-    // CATCH-ALL
+    // CATCH-ALL — deny by default
     // ============================
     match /{document=**} {
       allow read, write: if false;
