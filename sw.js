@@ -3,8 +3,8 @@
 // =============================================================
 
 // ⚠️ Sube la versión cuando hagas cambios importantes
-// ⭐ v8: estrategia network-first para HTML/JS/CSS + fix aviso primera visita
-const CACHE_NAME = 'club-morphy-v8';
+// ⭐ v9: progreso por variante + comentarios + modo zen + Drive + renombrar capítulos
+const CACHE_NAME = 'club-morphy-v9';
 const OFFLINE_URL = '/Club-Morphy/offline.html';
 
 const STATIC_ASSETS = [
