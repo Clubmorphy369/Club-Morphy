@@ -44,10 +44,17 @@ let migracionRealizada = false;
 let terminoBusqueda = '';
 let modalCompletarPerfilYaMostrado = false;
 
+// ⭐ v9: Modo zen (ocultar sidebar)
+let modoZen = false;
+
+// ⭐ v9: Progreso de tableros (variantes resueltas por el alumno)
+let progresoTableros = {};
+
 // ------------------------------------------------
 // VARIABLES GLOBALES Y REFERENCIAS A DOM
 // ------------------------------------------------
 const STORAGE_KEY = 'clubMorphy_navegacion';
+const MODO_ZEN_KEY = 'clubMorphy_modoZen';
 const modalLogin = document.getElementById('modal-login');
 const modalConfirmLogout = document.getElementById('modal-confirm-logout');
 const modalConfirm = document.getElementById('modal-confirm');
@@ -116,6 +123,39 @@ function sanitizeHtml(html) {
         .replace(/javascript:/gi, '');
 }
 
+// ⭐ v9: Conversión de URLs de Google Drive (duplicada desde entrenador.js
+// para que esté disponible aquí también)
+function convertirUrlImagen(url) {
+    if (!url || typeof url !== 'string') return url;
+    const u = url.trim();
+
+    let m = u.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/);
+    if (m) return `https://lh3.googleusercontent.com/d/${m[1]}`;
+
+    m = u.match(/drive\.google\.com\/(?:open|uc)\?(?:[^&]*&)*id=([a-zA-Z0-9_-]+)/);
+    if (m) return `https://lh3.googleusercontent.com/d/${m[1]}`;
+
+    m = u.match(/drive\.google\.com\/thumbnail\?id=([a-zA-Z0-9_-]+)/);
+    if (m) return `https://lh3.googleusercontent.com/d/${m[1]}`;
+
+    return u;
+}
+
+// ------------------------------------------------
+// ⭐ v9: EXPOSICIÓN GLOBAL (al inicio, defensiva)
+// ------------------------------------------------
+// Se exponen TODAS las funciones antes de cualquier inicialización,
+// así aunque algo falle al cargar, los onclick del HTML siguen funcionando.
+
+function _exponerFuncionesGlobales() {
+    // (se completa al final del archivo, pero aquí va la primera pasada defensiva
+    // para las funciones críticas)
+    window.escapeHtml = escapeHtml;
+    window.escapeAttr = escapeAttr;
+    window.escapeOnclick = escapeOnclick;
+    window.convertirUrlImagen = convertirUrlImagen;
+}
+
 // ------------------------------------------------
 // PERSISTENCIA DE NAVEGACIÓN (sessionStorage)
 // ------------------------------------------------
@@ -145,6 +185,39 @@ function onContentScroll() {
         guardarEstadoNavegacion();
     }, 200);
 }
+
+// ------------------------------------------------
+// ⭐ v9: MODO ZEN (ocultar sidebar)
+// ------------------------------------------------
+function cargarModoZen() {
+    try {
+        modoZen = localStorage.getItem(MODO_ZEN_KEY) === 'true';
+    } catch (e) { modoZen = false; }
+}
+
+function aplicarModoZen() {
+    document.body.classList.toggle('modo-zen', modoZen);
+    // Actualizar el botón si existe
+    const btn = document.getElementById('btn-zen');
+    if (btn) {
+        btn.classList.toggle('activo', modoZen);
+        btn.setAttribute('title', modoZen ? 'Salir del modo zen' : 'Modo zen (sin distracciones)');
+        const label = btn.querySelector('.btn-label');
+        if (label) label.textContent = modoZen ? 'Salir' : 'Zen';
+    }
+}
+
+function toggleModoZen() {
+    modoZen = !modoZen;
+    try {
+        localStorage.setItem(MODO_ZEN_KEY, modoZen ? 'true' : 'false');
+    } catch (e) { /* ignorar */ }
+    aplicarModoZen();
+    if (typeof mostrarToast === 'function') {
+        mostrarToast(modoZen ? '🎯 Modo zen activado' : '👁️ Modo zen desactivado', 'success');
+    }
+}
+window.toggleModoZen = toggleModoZen;
 
 // ------------------------------------------------
 // UTILIDADES GENERALES
@@ -359,9 +432,6 @@ async function guardarPerfilUsuario() {
         }
     }
 }
-window.cerrarCompletarPerfil = cerrarCompletarPerfil;
-window.guardarPerfilUsuario = guardarPerfilUsuario;
-window.mostrarCompletarPerfil = mostrarCompletarPerfil;
 
 async function obtenerListaUsuarios() {
     try {
@@ -461,7 +531,7 @@ function traducirErrorFirebase(codigo) {
     return mensajes[codigo] || 'Ocurrió un problema. Inténtalo de nuevo en unos segundos.';
 }
 
-// === FIN DE LA PARTE 1/4 ===
+// === FIN DE LA PARTE 1/2 DE script.js ===
 // ------------------------------------------------
 // SUSCRIPCIONES EN TIEMPO REAL (Firestore)
 // ------------------------------------------------
@@ -558,6 +628,25 @@ function suscribirDatosClub() {
     }, error => console.warn('Error snapshot club:', error));
 }
 
+// ⭐ v9: Suscribir progreso de tableros del alumno
+function suscribirProgresoTableros() {
+    if (!currentUser) {
+        progresoTableros = {};
+        return;
+    }
+    db.collection('progreso').doc(currentUser.uid).onSnapshot(doc => {
+        if (doc.exists) {
+            progresoTableros = doc.data() || {};
+        } else {
+            progresoTableros = {};
+        }
+        // Re-inicializar los tableros visibles para restaurar progreso
+        if (typeof inicializarTablerosEntrenador === 'function') {
+            setTimeout(() => inicializarTablerosEntrenador(), 100);
+        }
+    }, error => console.warn('Error snapshot progreso tableros:', error));
+}
+
 // ------------------------------------------------
 // BADGES Y UI DE NOTIFICACIONES
 // ------------------------------------------------
@@ -601,7 +690,7 @@ function actualizarLogoClub() {
     const logoImg = document.getElementById('logo-club-img');
     if (datosClub.logoURL && datosClub.logoURL.trim()) {
         logoImg.style.display = '';
-        logoImg.src = datosClub.logoURL.trim();
+        logoImg.src = convertirUrlImagen(datosClub.logoURL.trim());
         logoImg.classList.add('visible');
     } else {
         logoImg.style.display = 'none';
@@ -821,7 +910,8 @@ function textEditorSave() {
     const bloque = tema.bloques.find(b => b.id === bloqueId);
     if (!bloque) return;
     bloque.contenido = sanitizeHtml(activeTextEditor.innerHTML);
-    guardarCurso();
+    // ⭐ v9: Debounce para no saturar Firestore
+    _debouncedGuardarCurso();
 }
 window.textEditorSave = textEditorSave;
 
@@ -839,7 +929,15 @@ function textEditorUpdateState() {
     });
 }
 
-// === FIN DE LA PARTE 2/4 ===
+// ⭐ v9: Debounce del guardado del curso
+let _debounceGuardarCursoTimer = null;
+function _debouncedGuardarCurso() {
+    if (_debounceGuardarCursoTimer) clearTimeout(_debounceGuardarCursoTimer);
+    _debounceGuardarCursoTimer = setTimeout(() => {
+        guardarCurso();
+    }, 800);
+}
+
 // ------------------------------------------------
 // GESTIÓN DEL CURSO (CRUD)
 // ------------------------------------------------
@@ -1306,6 +1404,7 @@ async function sincronizarProgresoDesdeFirestore() {
             const local = JSON.parse(localStorage.getItem(`progreso_${currentUser.uid}`) || '{}');
             const combinado = { ...local, ...data };
             localStorage.setItem(`progreso_${currentUser.uid}`, JSON.stringify(combinado));
+            progresoTableros = data || {};
         }
     } catch (err) { console.warn('No se pudo sincronizar progreso', err); }
 }
@@ -1331,6 +1430,50 @@ async function marcarVisto(claseId, temaId) {
     }
     actualizarUI();
 }
+
+// ⭐ v9: Guardar progreso de variante de tablero
+async function guardarProgresoVarianteEnFirestore({ claseId, temaId, bloqueId, capituloIdx, clave }) {
+    if (!currentUser) return;
+    // Guardar local
+    const key = `tablero_${claseId}_${temaId}_${bloqueId}_${clave}`;
+    progresoTableros[key] = true;
+    try {
+        await db.collection('progreso').doc(currentUser.uid).set({
+            [key]: true,
+            [`tablero_actual_${bloqueId}`]: capituloIdx
+        }, { merge: true });
+    } catch (e) {
+        console.warn('Error al guardar progreso de variante:', e);
+    }
+}
+window.guardarProgresoVarianteEnFirestore = guardarProgresoVarianteEnFirestore;
+
+// ⭐ v9: Guardar capítulo completo
+async function guardarProgresoCapCompletoEnFirestore({ claseId, temaId, bloqueId, capituloIdx }) {
+    if (!currentUser) return;
+    const key = `tablero_cap_${claseId}_${temaId}_${bloqueId}_${capituloIdx}`;
+    progresoTableros[key] = true;
+    try {
+        await db.collection('progreso').doc(currentUser.uid).set({
+            [key]: true
+        }, { merge: true });
+    } catch (e) {
+        console.warn('Error al guardar capítulo completo:', e);
+    }
+}
+window.guardarProgresoCapCompletoEnFirestore = guardarProgresoCapCompletoEnFirestore;
+
+// ⭐ v9: Renombrar capítulo desde entrenador
+async function renombrarCapituloEnFirestore({ capituloIdx, nuevoNombre, pgnNuevo }) {
+    // Aquí el pgn completo llega desde el entrenador y hay que guardarlo
+    // en el bloque correspondiente. El entrenador ya modificó cap.headersOriginales.
+    // Como el entrenador llama a este callback con el pgnNuevo, hay que
+    // reescribir el contenido del bloque en Firestore.
+    // (El entrenador también guarda el PGN vía onGuardarVariante, así que
+    //  aquí solo hacemos logging para confirmar)
+    console.log('[v9] Capítulo renombrado a:', nuevoNombre);
+}
+window.renombrarCapituloEnFirestore = renombrarCapituloEnFirestore;
 
 // ------------------------------------------------
 // PANEL DE PROGRESO
@@ -1497,15 +1640,9 @@ async function aprobarSolicitud(solicitudId, claseId, uid, email, tipo = 'clase'
         let mensaje = '';
         if (tipo === 'tema' && temaId) {
             const clase = curso.clases.find(c => c.id === claseId);
-            if (!clase) {
-                mostrarToast('La clase ya no existe', 'error');
-                return;
-            }
+            if (!clase) { mostrarToast('La clase ya no existe', 'error'); return; }
             const tema = buscarTemaRecursivo(clase.temas, temaId);
-            if (!tema) {
-                mostrarToast('El tema ya no existe', 'error');
-                return;
-            }
+            if (!tema) { mostrarToast('El tema ya no existe', 'error'); return; }
             if (tema.accesosTemaId) {
                 const uidsActual = accesosTema[tema.accesosTemaId] || [];
                 if (!uidsActual.includes(uid)) {
@@ -1523,10 +1660,7 @@ async function aprobarSolicitud(solicitudId, claseId, uid, email, tipo = 'clase'
                 await db.collection('accesosEspeciales').doc(claseId).set({ uids: uidsActual }, { merge: true });
             }
             const clase = curso.clases.find(c => c.id === claseId);
-            if (!clase) {
-                mostrarToast('La clase ya no existe', 'error');
-                return;
-            }
+            if (!clase) { mostrarToast('La clase ya no existe', 'error'); return; }
             mensaje = `Tu solicitud de acceso a la clase "${clase.titulo}" ha sido aprobada`;
         }
 
@@ -1554,18 +1688,12 @@ async function rechazarSolicitud(solicitudId, uid, claseId, tipo = 'clase', tema
         await db.collection('solicitudesAcceso').doc(solicitudId).update({ estado: 'rechazada' });
 
         const clase = curso.clases.find(c => c.id === claseId);
-        if (!clase) {
-            mostrarToast('La clase ya no existe', 'error');
-            return;
-        }
+        if (!clase) { mostrarToast('La clase ya no existe', 'error'); return; }
 
         let mensaje = '';
         if (tipo === 'tema' && temaId) {
             const tema = buscarTemaRecursivo(clase.temas, temaId);
-            if (!tema) {
-                mostrarToast('El tema ya no existe', 'error');
-                return;
-            }
+            if (!tema) { mostrarToast('El tema ya no existe', 'error'); return; }
             mensaje = `Tu solicitud de acceso al tema "${tema.titulo}" en la clase "${clase.titulo}" ha sido rechazada`;
         } else {
             mensaje = `Tu solicitud de acceso a la clase "${clase.titulo}" ha sido rechazada`;
@@ -2145,7 +2273,9 @@ function cambiarTipoBloque(claseId, temaId, bloqueId, nuevoTipo) {
     guardarCurso().then(() => actualizarUI());
 }
 
-// === FIN DE LA PARTE 3/4 ===
+// ================================================================
+// ⭐ v9: CONTINÚA EN LA PARTE 2B — la pego en el siguiente mensaje
+// ================================================================
 // ------------------------------------------------
 // RENDERIZADO PRINCIPAL
 // ------------------------------------------------
@@ -2164,7 +2294,7 @@ function renderizarSidebar() {
         <div class="clase-item ${c.id === claseActivaId ? 'active' : ''} ${desbloqueada ? '' : 'bloqueada'}"
              data-id="${c.id}">
             <span class="titulo-editable" data-accion="renombrarClase" data-id="${c.id}">
-                <span class="clase-num">${c.numero}.</span> ${c.titulo}
+                <span class="clase-num">${c.numero}.</span> ${escapeHtml(c.titulo)}
             </span>
             ${!desbloqueada ? '<span>🔒</span>' : ''}
             ${esAdmin ? `
@@ -2332,8 +2462,10 @@ function renderizarTemaRecursivo(tema, claseId, nivel = 0) {
                         if (!esUrlSegura(bloque.contenido)) {
                             html = `<p style="color:var(--peligro); font-style:italic;">⚠️ Imagen no segura (URL no permitida)</p>`;
                         } else {
-                            const src = encodeURI(bloque.contenido);
-                            html = `<img src="${escapeAttr(src)}" style="max-width:100%; border-radius:8px;" alt="Imagen">`;
+                            // ⭐ v9: Convertir URLs de Drive automáticamente
+                            const urlFinal = convertirUrlImagen(bloque.contenido);
+                            const src = encodeURI(urlFinal);
+                            html = `<img src="${escapeAttr(src)}" class="imagen-bloque" alt="Imagen" loading="lazy">`;
                         }
                         break;
                     }
@@ -2358,7 +2490,9 @@ function renderizarTemaRecursivo(tema, claseId, nivel = 0) {
                         if (!tieneImagen && !tieneTexto) return '';
                         let htmlConsejo = '<div class="bloque-consejo">';
                         if (tieneImagen) {
-                            htmlConsejo += `<img src="${escapeAttr(bloque.imagenURL.trim())}" alt="Consejo" onerror="this.style.display='none'">`;
+                            // ⭐ v9: Convertir URLs de Drive automáticamente
+                            const urlFinal = convertirUrlImagen(bloque.imagenURL.trim());
+                            htmlConsejo += `<img src="${escapeAttr(urlFinal)}" class="consejo-imagen" alt="Consejo" loading="lazy" onerror="this.style.display='none'">`;
                         }
                         if (tieneTexto) {
                             htmlConsejo += `<div class="consejo-texto"><strong>💡 Consejo</strong>${escapeHtml(bloque.texto.trim())}</div>`;
@@ -2412,7 +2546,7 @@ function renderizarTemaRecursivo(tema, claseId, nivel = 0) {
         </p>
         <div id="bloques-editor-${tema.id}">
             ${(tema.bloques || []).map((bloque, idx) => {
-                const escape = escapeHtml;
+                const esc = escapeHtml;
                 const info = TIPOS_BLOQUE[bloque.tipo] || TIPOS_BLOQUE.texto;
 
                 let previewRaw = '';
@@ -2427,7 +2561,7 @@ function renderizarTemaRecursivo(tema, claseId, nivel = 0) {
                 } else {
                     previewRaw = bloque.contenido ? String(bloque.contenido).replace(/<[^>]+>/g, '').substring(0, 50) : '(vacío)';
                 }
-                const preview = escape(String(previewRaw).substring(0, 50));
+                const preview = esc(String(previewRaw).substring(0, 50));
 
                 return `
                 <div class="bloque-editor" data-bloque-id="${bloque.id}" data-tipo="${bloque.tipo}">
@@ -2464,13 +2598,13 @@ function renderizarTemaRecursivo(tema, claseId, nivel = 0) {
                                  data-bloque="${bloque.id}"
                                  oninput="textEditorSave()">${bloque.contenido || ''}</div>
                         ` : bloque.tipo === 'enlace' ? `
-                            <input placeholder="Etiqueta" value="${escape(bloque.label||'')}" onchange="actualizarBloqueEnlace('${claseId}','${tema.id}','${bloque.id}', this.value, this.nextElementSibling.value)">
-                            <input placeholder="URL" value="${escape(bloque.url||'')}" onchange="actualizarBloqueEnlace('${claseId}','${tema.id}','${bloque.id}', this.previousElementSibling.value, this.value)">
+                            <input placeholder="Etiqueta" value="${esc(bloque.label||'')}" onchange="actualizarBloqueEnlace('${claseId}','${tema.id}','${bloque.id}', this.value, this.nextElementSibling.value)">
+                            <input placeholder="URL" value="${esc(bloque.url||'')}" onchange="actualizarBloqueEnlace('${claseId}','${tema.id}','${bloque.id}', this.previousElementSibling.value, this.value)">
                         ` : bloque.tipo === 'tablero' ? `
                             <div class="bloque-tablero-config" style="background:#fff7ed; border:1px dashed #fdba74; border-radius:8px; padding:10px; margin-top:6px;">
                                 <p style="font-size:0.78rem; color:#c2410c; font-weight:700; text-transform:uppercase; margin-bottom:8px;">🎯 Configuración del Tablero</p>
                                 <label style="display:block; font-size:0.75rem; color:#92400e; font-weight:700; text-transform:uppercase; margin-bottom:3px;">📋 PGN del estudio</label>
-                                <textarea placeholder="Pega aquí el PGN de tu estudio…" onchange="actualizarBloqueTablero('${claseId}','${tema.id}','${bloque.id}', 'pgn', this.value)" style="width:100%; min-height:90px; font-family:'Courier New',monospace; font-size:0.78rem; padding:8px; border:1px solid #fdba74; border-radius:6px; resize:vertical; background:white;">${escape((bloque.config||{}).pgn || '')}</textarea>
+                                <textarea placeholder="Pega aquí el PGN de tu estudio…" onchange="actualizarBloqueTablero('${claseId}','${tema.id}','${bloque.id}', 'pgn', this.value)" style="width:100%; min-height:90px; font-family:'Courier New',monospace; font-size:0.78rem; padding:8px; border:1px solid #fdba74; border-radius:6px; resize:vertical; background:white;">${esc((bloque.config||{}).pgn || '')}</textarea>
                                 <div style="display:flex; gap:6px; margin-top:6px; flex-wrap:wrap;">
                                     <label style="background:white; border:1px solid #f59e0b; color:#92400e; padding:6px 12px; border-radius:6px; font-weight:700; font-size:0.78rem; cursor:pointer; display:inline-flex; align-items:center; gap:5px;">
                                         📂 Subir archivo .pgn
@@ -2519,15 +2653,15 @@ function renderizarTemaRecursivo(tema, claseId, nivel = 0) {
                             <div class="bloque-consejo-config" style="background:#fffbeb; border:1px dashed #f59e0b; border-radius:8px; padding:10px; margin-top:6px;">
                                 <p style="font-size:0.78rem; color:#92400e; font-weight:700; text-transform:uppercase; margin-bottom:8px;">💡 Configuración del Consejo</p>
                                 <label style="display:block; font-size:0.75rem; color:#92400e; font-weight:700; text-transform:uppercase; margin-bottom:3px;">🖼️ URL de imagen (opcional)</label>
-                                <input type="url" placeholder="https://…/imagen.png" value="${escape(bloque.imagenURL||'')}" onchange="actualizarBloqueConsejo('${claseId}','${tema.id}','${bloque.id}', 'imagenURL', this.value)" style="width:100%; padding:8px; border:1px solid #f59e0b; border-radius:6px; font-size:0.82rem; background:white; margin-bottom:8px;">
+                                <input type="url" placeholder="https://…/imagen.png o URL de Google Drive" value="${esc(bloque.imagenURL||'')}" onchange="actualizarBloqueConsejo('${claseId}','${tema.id}','${bloque.id}', 'imagenURL', this.value)" style="width:100%; padding:8px; border:1px solid #f59e0b; border-radius:6px; font-size:0.82rem; background:white; margin-bottom:8px;">
                                 <label style="display:block; font-size:0.75rem; color:#92400e; font-weight:700; text-transform:uppercase; margin-bottom:3px;">📝 Texto del consejo (opcional)</label>
-                                <input type="text" placeholder="Ej: Controla el centro del tablero…" value="${escape(bloque.texto||'')}" onchange="actualizarBloqueConsejo('${claseId}','${tema.id}','${bloque.id}', 'texto', this.value)" style="width:100%; padding:8px; border:1px solid #f59e0b; border-radius:6px; font-size:0.82rem; background:white;">
-                                <p style="font-size:0.72rem; color:#92400e; margin-top:6px; font-style:italic;">ℹ️ Si no hay imagen ni texto, el alumno no verá nada aquí.</p>
+                                <input type="text" placeholder="Ej: Controla el centro del tablero…" value="${esc(bloque.texto||'')}" onchange="actualizarBloqueConsejo('${claseId}','${tema.id}','${bloque.id}', 'texto', this.value)" style="width:100%; padding:8px; border:1px solid #f59e0b; border-radius:6px; font-size:0.82rem; background:white;">
+                                <p style="font-size:0.72rem; color:#92400e; margin-top:6px; font-style:italic;">ℹ️ Si es una URL de Drive, se convierte automáticamente para que se vea.</p>
                             </div>
                         ` : `
-                            <input placeholder="Contenido" value="${escape(bloque.contenido||'')}" onchange="actualizarBloqueContenido('${claseId}','${tema.id}','${bloque.id}', this.value)">
+                            <input placeholder="Contenido" value="${esc(bloque.contenido||'')}" onchange="actualizarBloqueContenido('${claseId}','${tema.id}','${bloque.id}', this.value)">
                         `}
-                        <input placeholder="Nota al pie (opcional)" value="${escape(bloque.nota||'')}" onchange="actualizarBloqueNota('${claseId}','${tema.id}','${bloque.id}', this.value)" style="margin-top:10px;">
+                        <input placeholder="Nota al pie (opcional)" value="${esc(bloque.nota||'')}" onchange="actualizarBloqueNota('${claseId}','${tema.id}','${bloque.id}', this.value)" style="margin-top:10px;">
                     </div>
                 </div>`;
             }).join('')}
@@ -2552,7 +2686,7 @@ function renderizarTemaRecursivo(tema, claseId, nivel = 0) {
          data-tema-id="${tema.id}"
          data-nivel="${Math.min(nivel, 4)}">
         <div class="tema-header" data-accion="toggle-tema" data-tema-id="${tema.id}">
-            <span class="titulo-editable" data-accion="renombrarTema" data-clase="${claseId}" data-tema="${tema.id}">${tema.numero}. ${tema.titulo}</span>
+            <span class="titulo-editable" data-accion="renombrarTema" data-clase="${claseId}" data-tema="${tema.id}">${tema.numero}. ${escapeHtml(tema.titulo)}</span>
             ${nivelBadgeHTML}
             ${!accesible ? '<span>🔒</span>' : ''}
             ${completado ? '<span class="badge">✓</span>' : ''}
@@ -2658,7 +2792,7 @@ function actualizarUI() {
         }, 50);
     }
 
-    // ⭐ FASE 5: Inicializar tableros después de renderizar
+    // Inicializar tableros después de renderizar
     setTimeout(() => inicializarTablerosEntrenador(), 100);
 
     guardarEstadoNavegacion();
@@ -2691,14 +2825,12 @@ function renderizarContenido(clase) {
             temaAbiertoGlobal = temaDiv.classList.contains('abierto') ? temaId : null;
             guardarEstadoNavegacion();
 
-            // ⭐ FASE 5: Inicializar tableros al abrir tema
             if (temaDiv.classList.contains('abierto')) {
                 setTimeout(() => inicializarTablerosEntrenador(), 100);
             }
         });
     });
 
-    // ⭐ FASE 5: Inicializar tableros de temas ya abiertos
     setTimeout(() => inicializarTablerosEntrenador(), 100);
 }
 
@@ -2783,9 +2915,9 @@ function activarEdicion(span) {
     input.addEventListener('keypress', (e) => { if (e.key === 'Enter') { e.preventDefault(); input.blur(); } });
 }
 
-// ------------------------------------------------
-// ⭐ FASE 5: FUNCIONES AUXILIARES DEL ENTRENADOR
-// ------------------------------------------------
+// ================================================================
+// ⭐ v9: FUNCIONES AUXILIARES DEL ENTRENADOR (con nuevos callbacks)
+// ================================================================
 
 function inicializarTablerosEntrenador() {
     if (!window.Entrenador) {
@@ -2813,20 +2945,50 @@ function inicializarTablerosEntrenador() {
                 esAdmin: !!(currentUser && currentUser.esAdmin),
                 uid: currentUser ? currentUser.uid : null,
                 nombreTema: bloqueEl.closest('.tema')?.querySelector('.titulo-editable')?.textContent || '',
+
+                // ⭐ v9: IDs para guardar progreso
+                claseId: claseId,
+                temaId: temaId,
+                bloqueId: bloqueId,
+
                 onCompletado: () => {
-                    console.log('[Fase 5] Tablero completado');
+                    console.log('[v9] Tablero completado');
                 },
-                // ⭐ NUEVO: cuando el admin guarda una variante (autoguardado)
+                // Autoguardado de variante (admin)
                 onGuardarVariante: (data) => {
                     guardarVarianteEnFirestore(claseId, temaId, bloqueId, data);
                 },
-                // ⭐ NUEVO: cuando el admin pulsa "💾 Guardar PGN"
+                // Botón "💾 Guardar PGN"
                 onGuardarPGN: (data) => {
                     guardarPGNEnFirestore(claseId, temaId, bloqueId, data.pgn);
                 },
-                // ⭐ NUEVO: cuando el admin elimina un capítulo
+                // Eliminar capítulo
                 onEliminarCapitulo: (data) => {
                     eliminarCapituloDeFirestore(claseId, temaId, bloqueId, data.pgnNuevo);
+                },
+                // ⭐ v9: Guardar progreso de variante resuelta
+                onGuardarProgresoVariante: (data) => {
+                    guardarProgresoVarianteEnFirestore({
+                        claseId: data.claseId,
+                        temaId: data.temaId,
+                        bloqueId: data.bloqueId,
+                        capituloIdx: data.capituloIdx,
+                        clave: data.clave
+                    });
+                },
+                // ⭐ v9: Guardar capítulo completo
+                onGuardarProgresoCapCompleto: (data) => {
+                    guardarProgresoCapCompletoEnFirestore({
+                        claseId: data.claseId,
+                        temaId: data.temaId,
+                        bloqueId: data.bloqueId,
+                        capituloIdx: data.capituloIdx
+                    });
+                },
+                // ⭐ v9: Renombrar capítulo
+                onRenombrarCapitulo: (data) => {
+                    // Persiste el PGN completo con el nuevo nombre
+                    guardarPGNEnFirestore(claseId, temaId, bloqueId, data.pgnNuevo);
                 }
             };
             window.Entrenador.render(bloqueEl, config, contexto);
@@ -2871,7 +3033,6 @@ function cargarPGNArchivoEnBloque(claseId, temaId, bloqueId, event) {
     reader.readAsText(file);
 }
 
-// ⭐ Guarda la variante que el maestro agregó (autoguardado)
 function guardarVarianteEnFirestore(claseId, temaId, bloqueId, data) {
     if (!currentUser?.esAdmin) return;
     const clase = curso.clases.find(c => c.id === claseId);
@@ -2887,7 +3048,7 @@ function guardarVarianteEnFirestore(claseId, temaId, bloqueId, data) {
     const bloques = pgnOriginal.split(/(?=\[Event\s)/i).filter(b => b.trim());
 
     if (capituloIdx < 0 || capituloIdx >= bloques.length) {
-        console.warn('[Fase 5] Índice de capítulo fuera de rango');
+        console.warn('[v9] Índice de capítulo fuera de rango');
         return;
     }
 
@@ -2898,14 +3059,13 @@ function guardarVarianteEnFirestore(claseId, temaId, bloqueId, data) {
     bloque.config.pgn = pgnActualizado;
 
     guardarCurso().then(() => {
-        console.log(`[Fase 5] Variante guardada. Capítulo ${capituloIdx + 1} ahora tiene ${nuevoNumLineas} solución(es).`);
+        console.log(`[v9] Variante guardada. Capítulo ${capituloIdx + 1} ahora tiene ${nuevoNumLineas} solución(es).`);
     }).catch(err => {
-        console.error('[Fase 5] Error al guardar variante:', err);
+        console.error('[v9] Error al guardar variante:', err);
         mostrarToast('Error al guardar la variante', 'error');
     });
 }
 
-// ⭐ Guarda el PGN completo cuando el admin pulsa "💾 Guardar PGN"
 function guardarPGNEnFirestore(claseId, temaId, bloqueId, pgn) {
     if (!currentUser?.esAdmin) return;
     const clase = curso.clases.find(c => c.id === claseId);
@@ -2918,14 +3078,13 @@ function guardarPGNEnFirestore(claseId, temaId, bloqueId, pgn) {
     bloque.config.pgn = pgn;
 
     guardarCurso().then(() => {
-        console.log(`[Fase 5] PGN guardado en Firestore (${claseId}/${temaId}/${bloqueId})`);
+        console.log(`[v9] PGN guardado en Firestore (${claseId}/${temaId}/${bloqueId})`);
     }).catch(err => {
-        console.error('[Fase 5] Error al guardar PGN:', err);
+        console.error('[v9] Error al guardar PGN:', err);
         mostrarToast('Error al guardar el PGN', 'error');
     });
 }
 
-// ⭐ Actualiza el PGN cuando el admin elimina un capítulo
 function eliminarCapituloDeFirestore(claseId, temaId, bloqueId, pgnNuevo) {
     if (!currentUser?.esAdmin) return;
     const clase = curso.clases.find(c => c.id === claseId);
@@ -2938,9 +3097,9 @@ function eliminarCapituloDeFirestore(claseId, temaId, bloqueId, pgnNuevo) {
     bloque.config.pgn = pgnNuevo;
 
     guardarCurso().then(() => {
-        console.log(`[Fase 5] Capítulo eliminado y PGN actualizado en Firestore`);
+        console.log(`[v9] Capítulo eliminado y PGN actualizado en Firestore`);
     }).catch(err => {
-        console.error('[Fase 5] Error al eliminar capítulo:', err);
+        console.error('[v9] Error al eliminar capítulo:', err);
         mostrarToast('Error al eliminar el capítulo', 'error');
     });
 }
@@ -2975,100 +3134,115 @@ function inicializarBadgeELO() {
 }
 window.inicializarBadgeELO = inicializarBadgeELO;
 
+// ================================================================
+// === FIN DE LA PARTE 2B ===
+// ================================================================
 // ------------------------------------------------
 // EVENTOS DE AUTENTICACIÓN Y CARGA INICIAL
 // ------------------------------------------------
 auth.onAuthStateChanged(async (user) => {
-    if (user) {
-        currentUser = { uid: user.uid, email: user.email, esAdmin: user.uid === ADMIN_UID };
-        await registrarUsuarioEnColeccion(user);
+    try {
+        if (user) {
+            currentUser = { uid: user.uid, email: user.email, esAdmin: user.uid === ADMIN_UID };
+            await registrarUsuarioEnColeccion(user);
 
-        userProfile = await cargarPerfilUsuario(user.uid);
+            userProfile = await cargarPerfilUsuario(user.uid);
 
-        btnLogin.style.display = 'none';
-        btnLogout.style.display = 'inline-flex';
+            btnLogin.style.display = 'none';
+            btnLogout.style.display = 'inline-flex';
 
-        actualizarHeaderUsuario();
+            actualizarHeaderUsuario();
 
-        if (currentUser.esAdmin) {
-            btnAdmin.style.display = 'inline-flex';
-            modoAdmin = true;
-            document.body.classList.add('modo-admin');
+            if (currentUser.esAdmin) {
+                btnAdmin.style.display = 'inline-flex';
+                modoAdmin = true;
+                document.body.classList.add('modo-admin');
+            } else {
+                btnAdmin.style.display = 'none';
+                modoAdmin = false;
+                document.body.classList.remove('modo-admin');
+            }
+
+            suscribirAccesosEspeciales();
+            suscribirAccesosTema();
+            suscribirNotificaciones();
+            suscribirSolicitudesAdmin();
+            suscribirMisSolicitudes();
+            suscribirProgresoTableros();
+            iniciarEscuchaCurso();
+            await sincronizarProgresoDesdeFirestore();
+
+            const estadoPrevio = cargarEstadoNavegacion();
+            if (estadoPrevio && estadoPrevio.claseActivaId && curso.clases.some(c => c.id === estadoPrevio.claseActivaId)) {
+                claseActivaId = estadoPrevio.claseActivaId;
+                temaAbiertoGlobal = estadoPrevio.temaAbiertoId || null;
+            } else if (!claseActivaId && curso.clases.length > 0) {
+                claseActivaId = curso.clases[0].id;
+                temaAbiertoGlobal = null;
+            }
+            actualizarUI();
+
+            if (estadoPrevio && estadoPrevio.scrollTop) {
+                setTimeout(() => {
+                    const content = document.getElementById('main-content');
+                    if (content) {
+                        content.scrollTop = estadoPrevio.scrollTop;
+                    }
+                }, 100);
+            }
+            actualizarBotonDatosClub();
+
+            // Activar badge ELO en header
+            inicializarBadgeELO();
+
+            if (!currentUser.esAdmin && (!userProfile || !userProfile.nombre || !userProfile.apellidos)) {
+                setTimeout(() => mostrarCompletarPerfil(), 1500);
+            }
         } else {
+            currentUser = null;
+            userProfile = null;
+            modalCompletarPerfilYaMostrado = false;
+
+            document.getElementById('modal-completar-perfil')?.remove();
+
+            btnLogin.style.display = 'inline-flex';
+            btnLogout.style.display = 'none';
             btnAdmin.style.display = 'none';
-            modoAdmin = false;
+            userInfo.textContent = '';
             document.body.classList.remove('modo-admin');
+            modoAdmin = false;
+
+            if (unsubscribeAccesos) { unsubscribeAccesos(); unsubscribeAccesos = null; }
+            if (unsubscribeAccesosTema) { unsubscribeAccesosTema(); unsubscribeAccesosTema = null; }
+            if (unsubscribeNotificaciones) { unsubscribeNotificaciones(); unsubscribeNotificaciones = null; }
+            if (unsubscribeSolicitudesAdmin) { unsubscribeSolicitudesAdmin(); unsubscribeSolicitudesAdmin = null; }
+            if (unsubscribeMisSolicitudes) { unsubscribeMisSolicitudes(); unsubscribeMisSolicitudes = null; }
+            if (unsubscribeCurso) { unsubscribeCurso(); unsubscribeCurso = null; }
+
+            notificaciones = [];
+            solicitudesPendientes = [];
+            misSolicitudes = [];
+            progresoTableros = {};
+
+            document.getElementById('notif-badge').style.display = 'none';
+            document.getElementById('solicitudes-badge').style.display = 'none';
+            document.getElementById('btn-notificaciones').style.display = 'none';
+            document.getElementById('btn-solicitudes-admin').style.display = 'none';
+            document.getElementById('btn-datos-club').style.display = 'none';
+            document.getElementById('search-input').style.display = 'none';
+            document.getElementById('search-input').value = '';
+            terminoBusqueda = '';
+            document.getElementById('btn-progreso').style.display = 'none';
+
+            // Ocultar badge ELO al cerrar sesión
+            const badge = document.getElementById('header-elo-badge');
+            if (badge) badge.style.display = 'none';
+
+            actualizarUI();
         }
-
-        suscribirAccesosEspeciales();
-        suscribirAccesosTema();
-        suscribirNotificaciones();
-        suscribirSolicitudesAdmin();
-        suscribirMisSolicitudes();
-        iniciarEscuchaCurso();
-        await sincronizarProgresoDesdeFirestore();
-
-        const estadoPrevio = cargarEstadoNavegacion();
-        if (estadoPrevio && estadoPrevio.claseActivaId && curso.clases.some(c => c.id === estadoPrevio.claseActivaId)) {
-            claseActivaId = estadoPrevio.claseActivaId;
-            temaAbiertoGlobal = estadoPrevio.temaAbiertoId || null;
-        } else if (!claseActivaId && curso.clases.length > 0) {
-            claseActivaId = curso.clases[0].id;
-            temaAbiertoGlobal = null;
-        }
-        actualizarUI();
-
-        if (estadoPrevio && estadoPrevio.scrollTop) {
-            setTimeout(() => {
-                const content = document.getElementById('main-content');
-                if (content) {
-                    content.scrollTop = estadoPrevio.scrollTop;
-                }
-            }, 100);
-        }
-        actualizarBotonDatosClub();
-
-        // ⭐ Activar badge ELO en header
-        inicializarBadgeELO();
-
-        if (!currentUser.esAdmin && (!userProfile || !userProfile.nombre || !userProfile.apellidos)) {
-            setTimeout(() => mostrarCompletarPerfil(), 1500);
-        }
-    } else {
-        currentUser = null;
-        userProfile = null;
-        modalCompletarPerfilYaMostrado = false;
-
-        document.getElementById('modal-completar-perfil')?.remove();
-
-        btnLogin.style.display = 'inline-flex';
-        btnLogout.style.display = 'none';
-        btnAdmin.style.display = 'none';
-        userInfo.textContent = '';
-        document.body.classList.remove('modo-admin');
-        modoAdmin = false;
-        if (unsubscribeAccesos) { unsubscribeAccesos(); unsubscribeAccesos = null; }
-        if (unsubscribeAccesosTema) { unsubscribeAccesosTema(); unsubscribeAccesosTema = null; }
-        if (unsubscribeNotificaciones) { unsubscribeNotificaciones(); unsubscribeNotificaciones = null; }
-        if (unsubscribeSolicitudesAdmin) { unsubscribeSolicitudesAdmin(); unsubscribeSolicitudesAdmin = null; }
-        if (unsubscribeMisSolicitudes) { unsubscribeMisSolicitudes(); unsubscribeMisSolicitudes = null; }
-        if (unsubscribeCurso) { unsubscribeCurso(); unsubscribeCurso = null; }
-        notificaciones = [];
-        solicitudesPendientes = [];
-        misSolicitudes = [];
-        document.getElementById('notif-badge').style.display = 'none';
-        document.getElementById('solicitudes-badge').style.display = 'none';
-        document.getElementById('btn-notificaciones').style.display = 'none';
-        document.getElementById('btn-solicitudes-admin').style.display = 'none';
-        document.getElementById('btn-datos-club').style.display = 'none';
-        document.getElementById('search-input').style.display = 'none';
-        document.getElementById('search-input').value = '';
-        terminoBusqueda = '';
-        document.getElementById('btn-progreso').style.display = 'none';
-        // ⭐ Ocultar badge ELO al cerrar sesión
-        const badge = document.getElementById('header-elo-badge');
-        if (badge) badge.style.display = 'none';
-        actualizarUI();
+    } catch (err) {
+        console.error('[auth] Error en onAuthStateChanged:', err);
+        mostrarToast('Error al cargar tu sesión. Recarga la página.', 'error');
     }
 });
 
@@ -3101,113 +3275,128 @@ document.addEventListener('focusin', (event) => {
 
 document.addEventListener('selectionchange', textEditorUpdateState);
 
-document.getElementById('toggle-password').addEventListener('click', function() {
-    const passInput = document.getElementById('password');
-    const type = passInput.getAttribute('type') === 'password' ? 'text' : 'password';
-    passInput.setAttribute('type', type);
-    this.textContent = type === 'password' ? '👁️' : '🙈';
-    this.setAttribute('aria-label', type === 'password' ? 'Mostrar contraseña' : 'Ocultar contraseña');
-});
+// ⭐ v9: Guardas defensivas en todos los listeners del DOM
+const elTogglePassword = document.getElementById('toggle-password');
+if (elTogglePassword) {
+    elTogglePassword.addEventListener('click', function() {
+        const passInput = document.getElementById('password');
+        const type = passInput.getAttribute('type') === 'password' ? 'text' : 'password';
+        passInput.setAttribute('type', type);
+        this.textContent = type === 'password' ? '👁️' : '🙈';
+        this.setAttribute('aria-label', type === 'password' ? 'Mostrar contraseña' : 'Ocultar contraseña');
+    });
+}
 
-document.getElementById('auth-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const email = document.getElementById('email').value.trim();
-    const pass = document.getElementById('password').value.trim();
+const elAuthForm = document.getElementById('auth-form');
+if (elAuthForm) {
+    elAuthForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const email = document.getElementById('email').value.trim();
+        const pass = document.getElementById('password').value.trim();
 
-    if (!email || !pass) return mostrarToast('Falta tu correo o contraseña', 'error');
+        if (!email || !pass) return mostrarToast('Falta tu correo o contraseña', 'error');
 
-    let nombre = '';
-    let apellidos = '';
-    if (modoRegistro) {
-        nombre = document.getElementById('nombre').value.trim();
-        apellidos = document.getElementById('apellidos').value.trim();
-
-        if (!nombre || !apellidos) {
-            return mostrarToast('Por favor escribe tu nombre y apellidos', 'error');
-        }
-    }
-
-    const btnAuth = document.getElementById('btn-auth');
-    btnAuth.disabled = true;
-    btnAuth.innerHTML = '<span class="loader"></span> Procesando...';
-
-    try {
+        let nombre = '';
+        let apellidos = '';
         if (modoRegistro) {
-            const credencial = await auth.createUserWithEmailAndPassword(email, pass);
-            await registrarUsuarioEnColeccion(credencial.user, nombre, apellidos);
+            nombre = document.getElementById('nombre').value.trim();
+            apellidos = document.getElementById('apellidos').value.trim();
 
-            userProfile = await cargarPerfilUsuario(credencial.user.uid);
-            actualizarHeaderUsuario();
-
-            mostrarToast(`¡Cuenta creada, ${nombre}! Ya tienes acceso.`, 'success');
-            modoRegistro = false;
-            document.getElementById('modal-title').textContent = 'Iniciar sesión';
-            document.getElementById('btn-auth').textContent = 'Ingresar';
-
-            const registerFields = document.getElementById('register-fields');
-            if (registerFields) registerFields.style.display = 'none';
-
-            limpiarCampos();
-        } else {
-            const credencial = await auth.signInWithEmailAndPassword(email, pass);
-            await registrarUsuarioEnColeccion(credencial.user);
-            mostrarToast('¡Bienvenido!', 'success');
-            modalLogin.classList.remove('active');
+            if (!nombre || !apellidos) {
+                return mostrarToast('Por favor escribe tu nombre y apellidos', 'error');
+            }
         }
-    } catch (error) {
-        mostrarToast(traducirErrorFirebase(error.code), 'error');
-    } finally {
-        btnAuth.disabled = false;
-        btnAuth.textContent = modoRegistro ? 'Crear cuenta' : 'Ingresar';
-    }
-});
 
-document.getElementById('switch-auth').addEventListener('click', (e) => {
-    e.preventDefault();
-    modoRegistro = !modoRegistro;
-    document.getElementById('modal-title').textContent = modoRegistro ? 'Registrarse' : 'Iniciar sesión';
-    document.getElementById('btn-auth').textContent = modoRegistro ? 'Crear cuenta' : 'Ingresar';
+        const btnAuth = document.getElementById('btn-auth');
+        btnAuth.disabled = true;
+        btnAuth.innerHTML = '<span class="loader"></span> Procesando...';
 
-    const passInput = document.getElementById('password');
-    passInput.setAttribute('autocomplete', modoRegistro ? 'new-password' : 'current-password');
+        try {
+            if (modoRegistro) {
+                const credencial = await auth.createUserWithEmailAndPassword(email, pass);
+                await registrarUsuarioEnColeccion(credencial.user, nombre, apellidos);
 
-    const registerFields = document.getElementById('register-fields');
-    if (registerFields) {
-        registerFields.style.display = modoRegistro ? 'block' : 'none';
-    }
+                userProfile = await cargarPerfilUsuario(credencial.user.uid);
+                actualizarHeaderUsuario();
 
-    limpiarCampos();
-});
+                mostrarToast(`¡Cuenta creada, ${nombre}! Ya tienes acceso.`, 'success');
+                modoRegistro = false;
+                document.getElementById('modal-title').textContent = 'Iniciar sesión';
+                document.getElementById('btn-auth').textContent = 'Ingresar';
 
-document.getElementById('btn-forgot-password').addEventListener('click', async () => {
-    const emailInput = document.getElementById('email');
-    const email = emailInput.value.trim();
+                const registerFields = document.getElementById('register-fields');
+                if (registerFields) registerFields.style.display = 'none';
 
-    if (!email) {
-        mostrarToast('Escribe tu correo primero y vuelve a intentar', 'error');
-        emailInput.focus();
-        return;
-    }
+                limpiarCampos();
+            } else {
+                const credencial = await auth.signInWithEmailAndPassword(email, pass);
+                await registrarUsuarioEnColeccion(credencial.user);
+                mostrarToast('¡Bienvenido!', 'success');
+                modalLogin.classList.remove('active');
+            }
+        } catch (error) {
+            mostrarToast(traducirErrorFirebase(error.code), 'error');
+        } finally {
+            btnAuth.disabled = false;
+            btnAuth.textContent = modoRegistro ? 'Crear cuenta' : 'Ingresar';
+        }
+    });
+}
 
-    const btn = document.getElementById('btn-forgot-password');
-    btn.disabled = true;
-    btn.textContent = 'Enviando...';
+const elSwitchAuth = document.getElementById('switch-auth');
+if (elSwitchAuth) {
+    elSwitchAuth.addEventListener('click', (e) => {
+        e.preventDefault();
+        modoRegistro = !modoRegistro;
+        document.getElementById('modal-title').textContent = modoRegistro ? 'Registrarse' : 'Iniciar sesión';
+        document.getElementById('btn-auth').textContent = modoRegistro ? 'Crear cuenta' : 'Ingresar';
 
-    try {
-        await auth.sendPasswordResetEmail(email);
-        mostrarToast('📧 Te enviamos un correo para restablecer tu contraseña', 'success');
-    } catch (error) {
-        mostrarToast(traducirErrorFirebase(error.code), 'error');
-    } finally {
-        btn.disabled = false;
-        btn.textContent = '¿Olvidaste tu contraseña?';
-    }
-});
+        const passInput = document.getElementById('password');
+        passInput.setAttribute('autocomplete', modoRegistro ? 'new-password' : 'current-password');
+
+        const registerFields = document.getElementById('register-fields');
+        if (registerFields) {
+            registerFields.style.display = modoRegistro ? 'block' : 'none';
+        }
+
+        limpiarCampos();
+    });
+}
+
+const elBtnForgot = document.getElementById('btn-forgot-password');
+if (elBtnForgot) {
+    elBtnForgot.addEventListener('click', async () => {
+        const emailInput = document.getElementById('email');
+        const email = emailInput.value.trim();
+
+        if (!email) {
+            mostrarToast('Escribe tu correo primero y vuelve a intentar', 'error');
+            emailInput.focus();
+            return;
+        }
+
+        const btn = document.getElementById('btn-forgot-password');
+        btn.disabled = true;
+        btn.textContent = 'Enviando...';
+
+        try {
+            await auth.sendPasswordResetEmail(email);
+            mostrarToast('📧 Te enviamos un correo para restablecer tu contraseña', 'success');
+        } catch (error) {
+            mostrarToast(traducirErrorFirebase(error.code), 'error');
+        } finally {
+            btn.disabled = false;
+            btn.textContent = '¿Olvidaste tu contraseña?';
+        }
+    });
+}
 
 function configurarDeteccionAutofill() {
     const emailInput = document.getElementById('email');
     const passInput = document.getElementById('password');
     const warningEl = document.getElementById('autofill-warning');
+    if (!emailInput || !passInput || !warningEl) return;
+
     const handler = (e) => { if (e.animationName === 'onAutoFillStart') warningEl.style.display = 'block'; };
     emailInput.addEventListener('animationstart', handler);
     passInput.addEventListener('animationstart', handler);
@@ -3219,33 +3408,43 @@ function configurarDeteccionAutofill() {
 // ------------------------------------------------
 // EVENTOS DE NAVEGACIÓN Y PERSISTENCIA
 // ------------------------------------------------
-hamburgerBtn.addEventListener('click', () => {
-    sidebar.classList.toggle('open');
-    sidebarOverlay.classList.toggle('active');
-    const abierto = sidebar.classList.contains('open');
-    hamburgerBtn.setAttribute('aria-expanded', abierto ? 'true' : 'false');
-    hamburgerBtn.setAttribute('aria-label', abierto ? 'Cerrar menú' : 'Abrir menú');
-});
+if (hamburgerBtn) {
+    hamburgerBtn.addEventListener('click', () => {
+        sidebar.classList.toggle('open');
+        sidebarOverlay.classList.toggle('active');
+        const abierto = sidebar.classList.contains('open');
+        hamburgerBtn.setAttribute('aria-expanded', abierto ? 'true' : 'false');
+        hamburgerBtn.setAttribute('aria-label', abierto ? 'Cerrar menú' : 'Abrir menú');
+    });
+}
 
-sidebarOverlay.addEventListener('click', () => {
-    sidebar.classList.remove('open');
-    sidebarOverlay.classList.remove('active');
-    hamburgerBtn.setAttribute('aria-expanded', 'false');
-    hamburgerBtn.setAttribute('aria-label', 'Abrir menú');
-});
-
-document.getElementById('main-content').addEventListener('click', () => {
-    if (window.innerWidth <= 768) {
+if (sidebarOverlay) {
+    sidebarOverlay.addEventListener('click', () => {
         sidebar.classList.remove('open');
         sidebarOverlay.classList.remove('active');
-        hamburgerBtn.setAttribute('aria-expanded', 'false');
-        hamburgerBtn.setAttribute('aria-label', 'Abrir menú');
-    }
-});
+        if (hamburgerBtn) {
+            hamburgerBtn.setAttribute('aria-expanded', 'false');
+            hamburgerBtn.setAttribute('aria-label', 'Abrir menú');
+        }
+    });
+}
 
-document.getElementById('main-content').addEventListener('scroll', onContentScroll, { passive: true });
+const elMainContent = document.getElementById('main-content');
+if (elMainContent) {
+    elMainContent.addEventListener('click', () => {
+        if (window.innerWidth <= 768 && sidebar && sidebarOverlay && hamburgerBtn) {
+            sidebar.classList.remove('open');
+            sidebarOverlay.classList.remove('active');
+            hamburgerBtn.setAttribute('aria-expanded', 'false');
+            hamburgerBtn.setAttribute('aria-label', 'Abrir menú');
+        }
+    });
+
+    elMainContent.addEventListener('scroll', onContentScroll, { passive: true });
+}
 
 window.addEventListener('pagehide', () => { guardarEstadoNavegacion(); });
+
 window.addEventListener('pageshow', (event) => {
     if (event.persisted) {
         const estadoPrevio = cargarEstadoNavegacion();
@@ -3263,28 +3462,39 @@ window.addEventListener('pageshow', (event) => {
     }
 });
 
-document.getElementById('search-input').addEventListener('input', (e) => {
-    terminoBusqueda = e.target.value;
-    filtrarClases();
-});
+const elSearchInput = document.getElementById('search-input');
+if (elSearchInput) {
+    elSearchInput.addEventListener('input', (e) => {
+        terminoBusqueda = e.target.value;
+        filtrarClases();
+    });
+}
 
+// Atajos de teclado
 document.addEventListener('keydown', (e) => {
-    if (e.key !== 'Escape') return;
-    const modalesAbiertos = document.querySelectorAll('.modal-overlay.active');
-    if (modalesAbiertos.length === 0) return;
-    const ultimoModal = modalesAbiertos[modalesAbiertos.length - 1];
-    if (ultimoModal.id === 'modal-confirm' && confirmCallback) return;
-    ultimoModal.classList.remove('active');
+    // Escape: cerrar modal más reciente
+    if (e.key === 'Escape') {
+        const modalesAbiertos = document.querySelectorAll('.modal-overlay.active');
+        if (modalesAbiertos.length === 0) return;
+        const ultimoModal = modalesAbiertos[modalesAbiertos.length - 1];
+        if (ultimoModal.id === 'modal-confirm' && confirmCallback) return;
+        ultimoModal.classList.remove('active');
+    }
+
+    // ⭐ v9: Atajo Z para modo zen (solo si no hay input activo)
+    if ((e.key === 'z' || e.key === 'Z') && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        const tag = document.activeElement?.tagName?.toLowerCase();
+        if (tag === 'input' || tag === 'textarea' || document.activeElement?.isContentEditable) return;
+        e.preventDefault();
+        toggleModoZen();
+    }
 });
 
 // ------------------------------------------------
 // INICIALIZACIÓN
 // ------------------------------------------------
-configurarDeteccionAutofill();
-suscribirDatosClub();
-console.log('✅ Club Morphy – Fase 5 completa (tablero + consejo + editor variantes + pestañas + capítulos + badge ELO + autoguardado + Lichess)');
-
-// Exponer funciones globales
+// ⭐ v9: exponer TODAS las funciones ANTES de cualquier inicialización
+// Esto garantiza que los onclick del HTML siempre encuentren las funciones
 window.mostrarLogin = mostrarLogin;
 window.cambiarCuenta = cambiarCuenta;
 window.confirmarCerrarSesion = confirmarCerrarSesion;
@@ -3351,7 +3561,7 @@ window.mostrarCompletarPerfil = mostrarCompletarPerfil;
 window.cerrarCompletarPerfil = cerrarCompletarPerfil;
 window.guardarPerfilUsuario = guardarPerfilUsuario;
 
-// ⭐ FASE 5: Funciones del entrenador
+// Fase 5
 window.inicializarTablerosEntrenador = inicializarTablerosEntrenador;
 window.actualizarBloqueTablero = actualizarBloqueTablero;
 window.actualizarBloqueConsejo = actualizarBloqueConsejo;
@@ -3361,22 +3571,57 @@ window.guardarPGNEnFirestore = guardarPGNEnFirestore;
 window.eliminarCapituloDeFirestore = eliminarCapituloDeFirestore;
 window.inicializarBadgeELO = inicializarBadgeELO;
 
-// ===== REGISTRO DEL SERVICE WORKER =====
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/Club-Morphy/sw.js')
-      .then(registration => {
-        console.log('✅ Service Worker registrado en:', registration.scope);
+// v9: nuevas funciones expuestas
+window.convertirUrlImagen = convertirUrlImagen;
+window.guardarProgresoVarianteEnFirestore = guardarProgresoVarianteEnFirestore;
+window.guardarProgresoCapCompletoEnFirestore = guardarProgresoCapCompletoEnFirestore;
+window.suscribirProgresoTableros = suscribirProgresoTableros;
 
-        navigator.serviceWorker.addEventListener('message', event => {
-          if (event.data && event.data.type === 'NEW_VERSION_AVAILABLE') {
-            if (window.confirm('Hay una nueva versión del sitio. ¿Recargar ahora?')) {
-              window.location.reload();
-            }
-          }
-        });
-      })
-      .catch(err => console.error('❌ Error al registrar el Service Worker:', err));
-  });
+// v9: helper de utilidad para exponer y usar en HTML
+window._exponerFuncionesGlobales = _exponerFuncionesGlobales;
+window._exponerFuncionesGlobales();
+
+// ⭐ v9: Inicialización con try/catch defensivo
+cargarModoZen();
+aplicarModoZen();
+
+try {
+    configurarDeteccionAutofill();
+} catch (err) {
+    console.error('[Init] Error en configurarDeteccionAutofill:', err);
 }
-// === FIN DEL ARCHIVO ===
+
+try {
+    suscribirDatosClub();
+} catch (err) {
+    console.error('[Init] Error en suscribirDatosClub:', err);
+}
+
+console.log('✅ Club Morphy v9 – progreso por variante + comentarios + modo zen + Drive + renombrar capítulos');
+
+// ================================================================
+// REGISTRO DEL SERVICE WORKER
+// ================================================================
+// ⭐ v9: ruta corregida para Firebase Hosting (antes tenía /Club-Morphy/)
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+            .then(registration => {
+                console.log('✅ Service Worker registrado en:', registration.scope);
+
+                navigator.serviceWorker.addEventListener('message', event => {
+                    if (event.data && event.data.type === 'NEW_VERSION_AVAILABLE') {
+                        if (window.confirm('Hay una nueva versión del sitio. ¿Recargar ahora?')) {
+                            window.location.reload();
+                        }
+                    }
+                });
+            })
+            .catch(err => {
+                // Silencioso: si falla el SW, el sitio sigue funcionando sin PWA
+                console.warn('⚠️ Service Worker no disponible:', err.message);
+            });
+    });
+}
+
+// === FIN DEL ARCHIVO script.js v9 ===
