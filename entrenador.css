@@ -4,9 +4,12 @@
    + Autoguardado + Menú contextual + Responsividad total
    Prefijo .cm-tablero- para evitar colisiones con styles.css
 
-   v2 — Cambios:
-     - Fix @media anidado (compatibilidad universal)
-     - Eliminado código muerto (panel ELO antiguo, config-panel antiguo)
+   v9 — Cambios:
+     - Estilos para check de modo edición persistente
+     - Estilos para botón ✏️ renombrar capítulos
+     - Estilos para movimientos con comentarios (💬)
+     - Estilos para modal de comentarios
+     - Ajuste de imágenes al contenedor
    ============================================================ */
 
 /* ============================================================
@@ -182,6 +185,9 @@
 .cm-tablero-status.ordenador { background: #fef3c7; color: #92400e; }
 .cm-tablero-status.elo { background: #fef3c7; color: var(--cm-elo); font-weight: 800; }
 
+/* ============================================================
+   ⭐ v9: HISTORIAL DE MOVIMIENTOS (con soporte de comentarios)
+   ============================================================ */
 .cm-tablero-moves {
     background: var(--cm-surface);
     padding: 10px 12px;
@@ -192,9 +198,46 @@
     word-break: break-all;
     line-height: 1.8;
     color: var(--cm-texto);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    align-items: center;
 }
-.cm-tablero-moves .done { color: var(--cm-exito); font-weight: 700; }
-.cm-tablero-moves .computadora { color: var(--cm-ordenador); font-weight: 700; }
+
+/* ⭐ v9: Cada movimiento individual es un span clicable */
+.cm-tablero-moves .cm-mov {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    transition: background 0.15s;
+    cursor: default;
+    white-space: nowrap;
+}
+
+.cm-tablero-moves .cm-mov.done { color: var(--cm-exito); font-weight: 700; }
+.cm-tablero-moves .cm-mov.computadora { color: var(--cm-ordenador); font-weight: 700; }
+
+/* ⭐ v9: Movimientos con comentario — destacados */
+.cm-tablero-moves .cm-mov.con-comentario {
+    background: #fef3c7;
+    border: 1px solid #fde68a;
+    padding: 1px 6px;
+}
+
+.cm-tablero-moves .cm-mov.con-comentario:hover {
+    background: #fde68a;
+    border-color: var(--cm-warning);
+}
+
+.cm-tablero-moves .cm-mov-comentario-icon {
+    font-size: 0.75rem;
+    opacity: 0.85;
+    line-height: 1;
+}
+
+/* Tooltip nativo del title="" ya funciona, no requiere CSS extra */
 
 .cm-tablero-row {
     display: flex;
@@ -313,6 +356,43 @@
 }
 
 /* ============================================================
+   ⭐ v9: CHECK DE PERSISTENCIA DEL MODO EDICIÓN
+   ============================================================ */
+.cm-tablero-persist-check {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    background: #fef3c7;
+    border: 2px solid #fcd34d;
+    border-radius: 8px;
+    margin-bottom: 12px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #78350f;
+    transition: background 0.2s;
+}
+
+.cm-tablero-persist-check:hover {
+    background: #fde68a;
+}
+
+.cm-tablero-persist-check input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    accent-color: var(--cm-edicion);
+    flex-shrink: 0;
+}
+
+.cm-tablero-persist-check label {
+    cursor: pointer;
+    flex: 1;
+    user-select: none;
+    line-height: 1.3;
+}
+
+/* ============================================================
    BARRA DE EDICIÓN DE VARIANTES
    ============================================================ */
 .cm-tablero-edit-toolbar {
@@ -412,6 +492,41 @@
     font-size: 0.9rem;
 }
 .cm-tablero-capitulo-btn.active .cm-capitulo-check { color: white; }
+
+/* Botón ✏️ renombrar capítulo */
+.cm-tablero-capitulo-btn .cm-capitulo-rename {
+    background: #fef3c7;
+    color: #92400e;
+    border: none;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    font-size: 0.65rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: 4px;
+    transition: all 0.2s;
+    flex-shrink: 0;
+    font-family: inherit;
+    padding: 0;
+}
+.cm-tablero-capitulo-btn .cm-capitulo-rename:hover {
+    background: var(--cm-warning);
+    color: white;
+    transform: scale(1.15);
+}
+.cm-tablero-capitulo-btn.active .cm-capitulo-rename {
+    background: rgba(255,255,255,0.4);
+    color: #7c2d12;
+}
+.cm-tablero-capitulo-btn.active .cm-capitulo-rename:hover {
+    background: var(--cm-warning);
+    color: white;
+}
+
+/* Botón ✕ eliminar capítulo */
 .cm-tablero-capitulo-btn .cm-capitulo-del {
     background: #fee2e2;
     color: var(--cm-peligro);
@@ -428,6 +543,7 @@
     transition: all 0.2s;
     flex-shrink: 0;
     font-family: inherit;
+    padding: 0;
 }
 .cm-tablero-capitulo-btn .cm-capitulo-del:hover {
     background: var(--cm-peligro);
@@ -733,7 +849,7 @@
     font-weight: 700;
 }
 
-/* Menú contextual de variantes */
+/* Menú contextual de variantes y comentarios */
 .cm-tablero-context-menu {
     font-family: 'Lato', sans-serif;
 }
@@ -929,6 +1045,27 @@
     display: block;
 }
 
+/* ⭐ v9: Estilo de textarea dentro de modales (para comentarios) */
+.cm-tablero-modal-content .cm-tablero-admin-textarea {
+    font-family: 'Lato', sans-serif;
+    font-size: 0.9rem;
+    border: 1px solid var(--cm-borde);
+    min-height: 100px;
+}
+.cm-tablero-modal-content .cm-tablero-admin-textarea:focus {
+    border-color: var(--cm-acento);
+    box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.15);
+}
+
+/* ⭐ v9: Input de texto en modales (para renombrar capítulos) */
+.cm-tablero-modal-content .cm-tablero-admin-input {
+    border: 1px solid var(--cm-borde);
+}
+.cm-tablero-modal-content .cm-tablero-admin-input:focus {
+    border-color: var(--cm-acento);
+    box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.15);
+}
+
 /* ============================================================
    UTILIDADES
    ============================================================ */
@@ -1001,12 +1138,9 @@
         margin: 0 auto;
     }
     .cm-tablero-panel { gap: 12px; }
-    .cm-tablero-elo-header .cm-numero { font-size: 1.5rem; }
-    .cm-tablero-elo-header .cm-icono { font-size: 1.6rem; }
 }
 
-/* ⭐ FIX: @media anidado aplanado — Modo computadora en celular */
-/* Cuando el viewport está entre 500px y 800px, reorganizar en 2 columnas */
+/* Modo computadora en celular: 2 columnas si cabe */
 @media (min-width: 500px) and (max-width: 800px) {
     .cm-tablero-game {
         grid-template-columns: minmax(220px, 1fr) minmax(180px, 1fr);
@@ -1018,11 +1152,6 @@
     .cm-tablero-wrap { font-size: 0.92rem; }
     .cm-tablero-board-wrap { max-width: 100%; }
 
-    /* ELO */
-    .cm-tablero-elo-header { padding: 10px 12px; margin-bottom: 10px; }
-    .cm-tablero-elo-header .cm-numero { font-size: 1.3rem; }
-    .cm-tablero-elo-header .cm-icono { font-size: 1.4rem; }
-
     /* Modales */
     .cm-tablero-modal-content { padding: 18px; border-radius: 12px; }
     .cm-tablero-modal-content h3 { font-size: 1.05rem; }
@@ -1031,8 +1160,9 @@
     /* Variantes */
     .cm-tablero-variante-item { font-size: 0.75rem; padding: 8px 10px; }
 
-    /* Movimientos */
-    .cm-tablero-moves { font-size: 0.78rem; padding: 8px 10px; }
+    /* Movimientos (⭐ v9) */
+    .cm-tablero-moves { font-size: 0.78rem; padding: 8px 10px; gap: 3px; }
+    .cm-tablero-moves .cm-mov { padding: 2px 5px; }
 
     /* Pestañas */
     .cm-tablero-tab {
@@ -1051,7 +1181,8 @@
         padding: 8px 10px;
         min-height: 42px;
     }
-    .cm-tablero-capitulo-del {
+    .cm-tablero-capitulo-del,
+    .cm-tablero-capitulo-rename {
         width: 22px;
         height: 22px;
         font-size: 0.75rem;
@@ -1102,6 +1233,12 @@
         font-size: 0.82rem;
     }
 
+    /* ⭐ v9: Check de persistencia */
+    .cm-tablero-persist-check {
+        padding: 8px 10px;
+        font-size: 0.78rem;
+    }
+
     /* Auto-avance */
     .cm-tablero-auto-avance {
         padding: 10px 12px;
@@ -1112,8 +1249,6 @@
 /* === MÓVILES PEQUEÑOS (hasta 400px) === */
 @media (max-width: 400px) {
     .cm-tablero-wrap { font-size: 0.88rem; }
-    .cm-tablero-elo-header .cm-numero { font-size: 1.1rem; }
-    .cm-tablero-elo-header .cm-icono { font-size: 1.2rem; }
     .cm-tablero-tab { padding: 8px 8px; font-size: 0.72rem; }
     .cm-tablero-capitulo-btn { font-size: 0.7rem; padding: 6px 8px; }
     .cm-tablero-modal-content { padding: 14px; }
@@ -1123,6 +1258,7 @@
     .cm-tablero-admin-capitulo-item .cm-cap-info small { font-size: 0.7rem; }
     .cm-tablero-variante-item { font-size: 0.72rem; }
     .cm-tablero-status { font-size: 0.82rem; padding: 8px 10px; }
+    .cm-tablero-moves { font-size: 0.72rem; }
 }
 
 /* === PANTALLAS TÁCTILES (aumentar áreas de toque) === */
@@ -1141,7 +1277,8 @@
     .cm-tablero-variante-item {
         padding: 10px 12px;
     }
-    .cm-tablero-capitulo-del {
+    .cm-tablero-capitulo-del,
+    .cm-tablero-capitulo-rename {
         width: 24px;
         height: 24px;
         font-size: 0.8rem;
@@ -1160,9 +1297,11 @@
         box-shadow: 0 2px 8px rgba(22, 163, 74, 0.35);
         transform: none;
     }
-    .cm-tablero-elo-header:hover {
-        box-shadow: none;
-        transform: none;
+
+    /* ⭐ v9: En táctil, el clic derecho no existe. Los comentarios se activan con long press */
+    .cm-tablero-moves .cm-mov.con-comentario {
+        cursor: pointer;
+        -webkit-touch-callout: none;
     }
 }
 
@@ -1174,17 +1313,13 @@
         gap: 12px;
     }
     .cm-tablero-panel { gap: 8px; }
-    .cm-tablero-elo-header { padding: 8px 12px; }
-    .cm-tablero-elo-header .cm-numero { font-size: 1.2rem; }
     .cm-tablero-modo-indicator { padding: 8px 10px; margin-bottom: 8px; font-size: 0.78rem; }
     .cm-tablero-status { min-height: 36px; padding: 8px 12px; font-size: 0.85rem; }
     .cm-tablero-btn { min-height: 38px; padding: 6px 12px; font-size: 0.8rem; }
+    .cm-tablero-persist-check { padding: 6px 10px; font-size: 0.75rem; }
 }
 
 /* === MODO COMPUTADORA EN CELULAR === */
-/* Cuando el usuario marca "Sitio de escritorio" en el navegador del móvil,
-   el viewport puede llegar a 800-1100px. Estas reglas aseguran que el
-   layout se vea bien incluso en ese caso. */
 @media (min-width: 801px) and (max-width: 1100px) and (pointer: coarse) {
     .cm-tablero-game {
         grid-template-columns: minmax(240px, 400px) 1fr;
@@ -1202,7 +1337,7 @@
     }
 }
 
-/* === IMPRESIÓN (por si alguien quiere imprimir) === */
+/* === IMPRESIÓN === */
 @media print {
     .cm-tablero-panel,
     .cm-tablero-capitulos-bar,
