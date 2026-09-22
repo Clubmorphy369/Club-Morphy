@@ -3,8 +3,8 @@
 // =============================================================
 
 // ⚠️ Sube la versión cuando hagas cambios importantes
-// ⭐ v9: progreso por variante + comentarios + modo zen + Drive + renombrar capítulos
-const CACHE_NAME = 'club-morphy-v9';
+// ⭐ v10: progreso por variante + comentarios + modo zen + Drive + renombrar capítulos
+const CACHE_NAME = 'club-morphy-v10';
 const OFFLINE_URL = '/Club-Morphy/offline.html';
 
 const STATIC_ASSETS = [
