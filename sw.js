@@ -3,7 +3,8 @@
 // =============================================================
 
 // ⚠️ Sube la versión cuando hagas cambios importantes
-const CACHE_NAME = 'club-morphy-v6';
+// ⭐ v7: estrategia network-first para HTML/JS/CSS + fix aviso primera visita
+const CACHE_NAME = 'club-morphy-v7';
 const OFFLINE_URL = '/Club-Morphy/offline.html';
 
 const STATIC_ASSETS = [
@@ -21,16 +22,23 @@ const STATIC_ASSETS = [
     '/Club-Morphy/assets/favicon.ico',
 ];
 
+// ⭐ Flag para saber si había una versión previa instalada
+let habiaCachePrevia = false;
+
 // ============================
 // INSTALL
 // ============================
 self.addEventListener('install', event => {
     console.log('[SW] Instalando versión:', CACHE_NAME);
     event.waitUntil(
-        caches.open(CACHE_NAME).then(cache => {
-            console.log('[SW] Precaching assets');
-            return cache.addAll(STATIC_ASSETS).catch(err => {
-                console.warn('[SW] Algunos assets fallaron al precachear:', err);
+        caches.keys().then(keys => {
+            // ⭐ ¿Ya existía alguna caché de club-morphy antes?
+            habiaCachePrevia = keys.some(key => key.startsWith('club-morphy-'));
+            return caches.open(CACHE_NAME).then(cache => {
+                console.log('[SW] Precaching assets');
+                return cache.addAll(STATIC_ASSETS).catch(err => {
+                    console.warn('[SW] Algunos assets fallaron al precachear:', err);
+                });
             });
         })
     );
@@ -54,12 +62,15 @@ self.addEventListener('activate', event => {
     );
     self.clients.claim();
 
-    // Avisar a las pestañas abiertas que hay nueva versión
-    self.clients.matchAll().then(clients => {
-        clients.forEach(client => {
-            client.postMessage({ type: 'NEW_VERSION_AVAILABLE' });
+    // ⭐ Solo avisar a las pestañas si ESTA instalación es una actualización real
+    // (no la primera vez que el usuario abre la página)
+    if (habiaCachePrevia) {
+        self.clients.matchAll().then(clients => {
+            clients.forEach(client => {
+                client.postMessage({ type: 'NEW_VERSION_AVAILABLE' });
+            });
         });
-    });
+    }
 });
 
 // ============================
@@ -94,31 +105,53 @@ self.addEventListener('fetch', event => {
     // 3️⃣ Ignorar solicitudes que no sean del mismo origen
     if (url.origin !== self.location.origin) return;
 
-    // 4️⃣ Estrategia: Cache First con fallback a red
+    // ⭐ 4️⃣ Decidir estrategia según tipo de recurso
+    //    - HTML / JS / CSS  → NETWORK FIRST (siempre la última versión)
+    //    - resto (iconos)   → CACHE FIRST    (rápido, cambian poco)
+    const esHtml = /\.html?$/i.test(url.pathname);
+    const esJs = /\.js$/i.test(url.pathname);
+    const esCss = /\.css$/i.test(url.pathname);
+    const esRaiz = url.pathname === '/Club-Morphy/' || url.pathname === '/Club-Morphy';
+
+    if (esHtml || esJs || esCss || esRaiz) {
+        // 🚀 NETWORK FIRST: intenta red; si falla, usa cache; si no hay cache, offline.html
+        event.respondWith(
+            fetch(request)
+                .then(response => {
+                    if (response && response.status === 200 && response.type === 'basic') {
+                        const clone = response.clone();
+                        caches.open(CACHE_NAME).then(cache => cache.put(request, clone));
+                    }
+                    return response;
+                })
+                .catch(() => {
+                    return caches.match(request).then(cached => {
+                        if (cached) return cached;
+                        if (request.mode === 'navigate') {
+                            return caches.match(OFFLINE_URL)
+                                .then(offlinePage => offlinePage || caches.match('/Club-Morphy/index.html'));
+                        }
+                        return new Response('', {
+                            status: 408,
+                            statusText: 'Sin conexión'
+                        });
+                    });
+                })
+        );
+        return;
+    }
+
+    // 📦 CACHE FIRST: para iconos, manifest, offline.html (cambian poco)
     event.respondWith(
         caches.match(request).then(cached => {
-            if (cached) {
-                fetch(request)
-                    .then(response => {
-                        if (response && response.status === 200 && response.type === 'basic') {
-                            caches.open(CACHE_NAME).then(cache => {
-                                cache.put(request, response.clone());
-                            });
-                        }
-                    })
-                    .catch(() => { /* offline: ignorar */ });
-                return cached;
-            }
-
+            if (cached) return cached;
             return fetch(request)
                 .then(response => {
                     if (!response || response.status !== 200 || response.type !== 'basic') {
                         return response;
                     }
-                    const responseClone = response.clone();
-                    caches.open(CACHE_NAME).then(cache => {
-                        cache.put(request, responseClone);
-                    });
+                    const clone = response.clone();
+                    caches.open(CACHE_NAME).then(cache => cache.put(request, clone));
                     return response;
                 })
                 .catch(() => {
