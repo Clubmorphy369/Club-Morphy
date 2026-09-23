@@ -1485,6 +1485,29 @@ button, .btn, .btn-small, .btn-reorder, .btn-icon, .btn-copy,
     overflow: hidden;
     display: flex;
     flex-direction: column;
+    max-height: 90vh;
+}
+
+/* ⭐ FIX: la sección de configuración hace scroll interno */
+.modal-juego-ia-content .juego-ia-setup {
+    flex: 1;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    min-height: 0;
+}
+
+/* ⭐ FIX: el preview queda fijo arriba de los botones */
+.modal-juego-ia-content .juego-ia-preview {
+    flex-shrink: 0;
+}
+
+/* ⭐ FIX: las acciones (Cancelar + Empezar) siempre visibles al pie */
+.modal-juego-ia-content .juego-ia-acciones {
+    flex-shrink: 0;
+    position: sticky;
+    bottom: 0;
+    z-index: 2;
+    box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.06);
 }
 
 .juego-ia-setup {
