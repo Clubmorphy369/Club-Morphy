@@ -1171,7 +1171,6 @@ button, .btn, .btn-small, .btn-reorder, .btn-icon, .btn-copy,
     .bloque-campos { flex-direction: column; align-items: stretch; }
     .bloque-campos > * { min-width: auto; }
 
-    /* Modal de progreso en móvil */
     .modal-alumno { max-width: 95% !important; padding: 18px; }
     .alumno-header-modal { flex-direction: column; text-align: center; gap: 10px; }
     .elo-badge-modal { align-self: center; }
@@ -1388,10 +1387,8 @@ button, .btn, .btn-small, .btn-reorder, .btn-icon, .btn-copy,
 }
 
 /* ============================================================
-   ⭐ v9: IMÁGENES ADAPTABLES
+   v9: IMÁGENES ADAPTABLES
    ============================================================ */
-
-/* Imágenes del bloque "imagen" — se adaptan al contenedor */
 .imagen-bloque {
     display: block;
     max-width: 100%;
@@ -1404,7 +1401,6 @@ button, .btn, .btn-small, .btn-reorder, .btn-icon, .btn-copy,
     background: var(--surface);
 }
 
-/* Imágenes del bloque "consejo" — más compactas */
 .consejo-imagen {
     display: block;
     max-width: 100%;
@@ -1416,54 +1412,31 @@ button, .btn, .btn-small, .btn-reorder, .btn-icon, .btn-copy,
     background: var(--surface);
 }
 
-/* En móvil, dejarlas aún más contenidas */
 @media (max-width: 768px) {
-    .imagen-bloque {
-        max-height: 350px;
-        margin: 10px auto;
-    }
-    .consejo-imagen {
-        max-height: 280px;
-    }
+    .imagen-bloque { max-height: 350px; margin: 10px auto; }
+    .consejo-imagen { max-height: 280px; }
 }
 
 /* ============================================================
-   ⭐ v9: MODO ZEN (ocultar sidebar sin distracciones)
+   v9: MODO ZEN
    ============================================================ */
-
-/* Transición suave al activar/desactivar */
 .sidebar {
     transition: transform var(--transicion), width var(--transicion), opacity var(--transicion);
 }
 
-/* En desktop: el modo zen oculta completamente la sidebar */
 @media (min-width: 769px) {
-    body.modo-zen .sidebar {
-        display: none;
-    }
-    body.modo-zen .content {
-        padding: 32px 40px;
-    }
+    body.modo-zen .sidebar { display: none; }
+    body.modo-zen .content { padding: 32px 40px; }
 }
 
-/* En móvil, el modo zen solo asegura que la sidebar esté cerrada */
 @media (max-width: 768px) {
-    body.modo-zen .sidebar {
-        transform: translateX(-100%);
-    }
-    body.modo-zen .sidebar.open {
-        transform: translateX(0);
-    }
+    body.modo-zen .sidebar { transform: translateX(-100%); }
+    body.modo-zen .sidebar.open { transform: translateX(0); }
 }
 
 /* ============================================================
-   ⭐ v9: BOTÓN ZEN en el header
+   v9: BOTÓN ZEN
    ============================================================ */
-#btn-zen {
-    /* Hereda estilos base de .btn */
-}
-
-/* Estado activo (modo zen encendido) */
 #btn-zen.activo {
     background: linear-gradient(135deg, #0284c7, #0ea5e9, #38bdf8);
     color: white;
@@ -1477,13 +1450,675 @@ button, .btn, .btn-small, .btn-reorder, .btn-icon, .btn-copy,
     box-shadow: 0 5px 20px rgba(14, 165, 233, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.4);
 }
 
-/* En móvil: el botón zen es un icono cuadrado compacto */
 @media (max-width: 480px) {
-    #btn-zen {
-        padding: 10px 12px;
-        font-size: 1.1rem;
+    #btn-zen { padding: 10px 12px; font-size: 1.1rem; }
+    #btn-zen .btn-label { display: none; }
+}
+
+/* ============================================================
+   ⭐ v12: BOTÓN "JUGAR VS IA"
+   ============================================================ */
+.btn-jugar-ia {
+    background: linear-gradient(135deg, #7c3aed, #a855f7, #c084fc);
+    border: 1px solid #c084fc;
+    color: white;
+    font-weight: 800;
+    box-shadow: 0 3px 14px rgba(168, 85, 247, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+}
+
+.btn-jugar-ia:hover {
+    background: linear-gradient(135deg, #a855f7, #c084fc, #a855f7);
+    border-color: #e9d5ff;
+    color: white;
+    box-shadow: 0 5px 22px rgba(168, 85, 247, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+    transform: translateY(-2px);
+}
+
+/* ============================================================
+   ⭐ v12: MODAL DE CONFIGURACIÓN DEL JUEGO IA
+   ============================================================ */
+.modal-juego-ia-content {
+    max-width: 720px !important;
+    width: 95% !important;
+    padding: 0 !important;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.juego-ia-setup {
+    padding: 26px 28px 22px;
+    background: linear-gradient(160deg, #faf5ff 0%, #f3e8ff 100%);
+}
+
+.juego-ia-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 22px;
+    padding-bottom: 16px;
+    border-bottom: 2px dashed #c084fc;
+}
+
+.juego-ia-header-icon {
+    font-size: 2.4rem;
+    line-height: 1;
+}
+
+.juego-ia-header-text {
+    flex: 1;
+    min-width: 0;
+}
+
+.juego-ia-header-text h3 {
+    color: #7c3aed;
+    font-family: 'Playfair Display', serif;
+    font-size: 1.35rem;
+    margin: 0 0 2px 0;
+    padding: 0;
+    border: none;
+    text-shadow: none;
+}
+
+.juego-ia-header-text p {
+    font-size: 0.82rem;
+    color: #6b21a8;
+    margin: 0;
+}
+
+.juego-ia-seccion {
+    margin-bottom: 20px;
+}
+
+.juego-ia-seccion-label {
+    display: block;
+    font-size: 0.72rem;
+    font-weight: 800;
+    color: #7c3aed;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-bottom: 10px;
+}
+
+.juego-ia-niveles {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 8px;
+}
+
+.juego-ia-nivel-btn {
+    background: white;
+    border: 2px solid #e9d5ff;
+    border-radius: 10px;
+    padding: 10px 12px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #6b21a8;
+    transition: all 0.2s;
+    text-align: left;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.juego-ia-nivel-btn:hover {
+    border-color: #c084fc;
+    background: #faf5ff;
+    transform: translateY(-1px);
+}
+
+.juego-ia-nivel-btn.activo {
+    background: linear-gradient(135deg, #7c3aed, #a855f7);
+    border-color: #7c3aed;
+    color: white;
+    box-shadow: 0 4px 14px rgba(124, 58, 237, 0.4);
+}
+
+.juego-ia-nivel-btn .nivel-num {
+    font-size: 1rem;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.juego-ia-nivel-btn .nivel-elo {
+    font-size: 0.72rem;
+    opacity: 0.85;
+    font-weight: 600;
+}
+
+.juego-ia-nivel-btn .nivel-nombre {
+    font-size: 0.7rem;
+    opacity: 0.75;
+    font-weight: 500;
+}
+
+.juego-ia-colores {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.juego-ia-color-btn {
+    flex: 1;
+    min-width: 90px;
+    background: white;
+    border: 2px solid #e9d5ff;
+    border-radius: 10px;
+    padding: 12px 14px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #6b21a8;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.juego-ia-color-btn:hover {
+    border-color: #c084fc;
+    background: #faf5ff;
+    transform: translateY(-1px);
+}
+
+.juego-ia-color-btn.activo {
+    background: linear-gradient(135deg, #7c3aed, #a855f7);
+    border-color: #7c3aed;
+    color: white;
+    box-shadow: 0 4px 14px rgba(124, 58, 237, 0.4);
+}
+
+.juego-ia-color-btn .pieza {
+    font-size: 1.4rem;
+    line-height: 1;
+}
+
+.juego-ia-tiempos {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    gap: 8px;
+}
+
+.juego-ia-tiempo-btn {
+    background: white;
+    border: 2px solid #e9d5ff;
+    border-radius: 10px;
+    padding: 10px 12px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #6b21a8;
+    transition: all 0.2s;
+    text-align: center;
+}
+
+.juego-ia-tiempo-btn:hover {
+    border-color: #c084fc;
+    background: #faf5ff;
+    transform: translateY(-1px);
+}
+
+.juego-ia-tiempo-btn.activo {
+    background: linear-gradient(135deg, #7c3aed, #a855f7);
+    border-color: #7c3aed;
+    color: white;
+    box-shadow: 0 4px 14px rgba(124, 58, 237, 0.4);
+}
+
+.juego-ia-acciones {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    padding: 18px 28px;
+    background: white;
+    border-top: 1px solid #e9d5ff;
+    flex-wrap: wrap;
+}
+
+.juego-ia-btn-cancelar {
+    background: var(--surface);
+    border: 1px solid var(--borde);
+    color: var(--texto-suave);
+    padding: 11px 22px;
+    border-radius: 8px;
+    font-family: inherit;
+    font-weight: 700;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.juego-ia-btn-cancelar:hover {
+    background: var(--surface2);
+    color: var(--texto);
+}
+
+.juego-ia-btn-empezar {
+    background: linear-gradient(135deg, #7c3aed, #a855f7);
+    border: none;
+    color: white;
+    padding: 11px 26px;
+    border-radius: 8px;
+    font-family: inherit;
+    font-weight: 800;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 4px 14px rgba(124, 58, 237, 0.4);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.juego-ia-btn-empezar:hover {
+    box-shadow: 0 6px 22px rgba(124, 58, 237, 0.6);
+    transform: translateY(-2px);
+}
+
+.juego-ia-btn-empezar:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Vista previa (dentro del modal) */
+.juego-ia-preview {
+    padding: 18px 28px;
+    background: #faf5ff;
+    border-top: 1px dashed #c084fc;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    font-size: 0.85rem;
+    color: #6b21a8;
+}
+
+.juego-ia-preview .preview-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.juego-ia-preview .preview-item strong {
+    color: #7c3aed;
+}
+
+/* Sala de juego: contenedor cuando ya está activa la partida */
+.juego-ia-sala {
+    padding: 0;
+    background: white;
+    flex: 1;
+    overflow-y: auto;
+    max-height: 88vh;
+}
+
+@media (max-width: 768px) {
+    .juego-ia-setup { padding: 20px 18px 16px; }
+    .juego-ia-header-icon { font-size: 2rem; }
+    .juego-ia-header-text h3 { font-size: 1.15rem; }
+    .juego-ia-acciones { padding: 14px 18px; }
+    .juego-ia-btn-empezar { flex: 1; }
+    .juego-ia-preview { padding: 14px 18px; }
+    .juego-ia-niveles { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* ============================================================
+   ⭐ v12: SALA LIBRE — RELOJES Y PANEL SIMPLIFICADO
+   ============================================================ */
+.cm-sala-libre {
+    padding: 12px;
+    background: white;
+}
+
+.cm-sala-libre-header {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+}
+
+.cm-reloj {
+    flex: 1;
+    min-width: 130px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    background: var(--cm-surface, #f1f5f9);
+    border: 2px solid var(--cm-borde, #cbd5e1);
+    border-radius: 10px;
+    font-family: 'Lato', sans-serif;
+    transition: all 0.25s;
+    position: relative;
+}
+
+.cm-reloj.activo {
+    border-color: var(--cm-acento, #0ea5e9);
+    background: linear-gradient(135deg, #e0f2fe, #bae6fd);
+    box-shadow: 0 0 16px rgba(14, 165, 233, 0.35);
+}
+
+.cm-reloj.activo .cm-reloj-tiempo {
+    color: var(--cm-acento-oscuro, #0284c7);
+}
+
+.cm-reloj.alerta {
+    border-color: #dc2626;
+    background: #fee2e2;
+    animation: cm-reloj-pulso 1s infinite;
+}
+
+.cm-reloj.alerta .cm-reloj-tiempo {
+    color: #dc2626;
+}
+
+@keyframes cm-reloj-pulso {
+    0%, 100% { box-shadow: 0 0 12px rgba(220, 38, 38, 0.4); }
+    50% { box-shadow: 0 0 24px rgba(220, 38, 38, 0.8); }
+}
+
+.cm-reloj-icono {
+    font-size: 1.3rem;
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+.cm-reloj-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--cm-texto-suave, #64748b);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.cm-reloj-tiempo {
+    font-family: 'Courier New', monospace;
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--cm-texto, #1e293b);
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+.cm-sala-libre-indicator {
+    background: linear-gradient(135deg, #ede9fe, #ddd6fe) !important;
+    border-color: #8b5cf6 !important;
+    color: #5b21b6 !important;
+    font-size: 0.85rem;
+}
+
+.cm-sala-libre-movs-wrap {
+    max-height: 180px;
+    overflow-y: auto;
+    border-radius: 8px;
+    border: 1px solid var(--cm-borde, #cbd5e1);
+    padding: 8px;
+    background: white;
+    margin-bottom: 8px;
+}
+
+.cm-sala-libre-movs {
+    min-height: 40px !important;
+    background: transparent !important;
+    padding: 4px 6px !important;
+    word-break: normal !important;
+    line-height: 1.9 !important;
+}
+
+.cm-sala-libre-botones {
+    gap: 6px !important;
+}
+
+.cm-sala-libre-botones .cm-tablero-btn {
+    flex: 1;
+    min-width: 100px;
+    font-size: 0.82rem;
+    padding: 9px 12px;
+}
+
+/* ============================================================
+   ⭐ v12: ANÁLISIS POST-PARTIDA
+   ============================================================ */
+.cm-sala-libre-analisis {
+    margin-top: 12px;
+    background: linear-gradient(160deg, #f0f9ff 0%, #e0f2fe 100%);
+    border: 2px solid #0ea5e9;
+    border-radius: 12px;
+    padding: 14px;
+    animation: cm-analisis-fade-in 0.4s ease;
+}
+
+@keyframes cm-analisis-fade-in {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.cm-analisis-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+    padding-bottom: 10px;
+    border-bottom: 1px dashed #0ea5e9;
+    color: #075985;
+    font-size: 1rem;
+}
+
+.cm-analisis-stats {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    margin-bottom: 14px;
+}
+
+.cm-analisis-stat-card {
+    background: white;
+    border-radius: 10px;
+    padding: 12px;
+    text-align: center;
+    border: 1px solid #bae6fd;
+    box-shadow: 0 2px 8px rgba(14, 165, 233, 0.08);
+}
+
+.cm-analisis-stat-label {
+    display: block;
+    font-size: 0.72rem;
+    color: #0284c7;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+}
+
+.cm-analisis-stat-valor {
+    display: block;
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #075985;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.1;
+}
+
+.cm-analisis-conteo {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 12px;
+}
+
+.cm-analisis-chip {
+    background: white;
+    padding: 4px 10px;
+    border-radius: 20px;
+    border: 1.5px solid;
+    font-size: 0.78rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+.cm-analisis-lista-wrap {
+    margin-top: 8px;
+}
+
+.cm-analisis-details {
+    background: white;
+    border-radius: 10px;
+    border: 1px solid #bae6fd;
+    overflow: hidden;
+}
+
+.cm-analisis-details summary {
+    padding: 10px 14px;
+    cursor: pointer;
+    font-weight: 700;
+    font-size: 0.85rem;
+    color: #0284c7;
+    user-select: none;
+    transition: background 0.15s;
+    list-style: none;
+}
+
+.cm-analisis-details summary::-webkit-details-marker { display: none; }
+.cm-analisis-details summary::before {
+    content: '▶ ';
+    display: inline-block;
+    margin-right: 4px;
+    transition: transform 0.2s;
+    font-size: 0.7rem;
+}
+
+.cm-analisis-details[open] summary::before {
+    transform: rotate(90deg);
+}
+
+.cm-analisis-details summary:hover {
+    background: #f0f9ff;
+}
+
+.cm-analisis-lista {
+    max-height: 380px;
+    overflow-y: auto;
+    padding: 6px;
+    border-top: 1px solid #e0f2fe;
+    scrollbar-width: thin;
+    scrollbar-color: #0ea5e9 #e0f2fe;
+}
+
+.cm-analisis-jugada {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    border-left: 4px solid #cbd5e1;
+    background: white;
+    border-radius: 6px;
+    margin-bottom: 4px;
+    font-size: 0.85rem;
+    transition: background 0.15s;
+}
+
+.cm-analisis-jugada:hover {
+    background: #f8fafc;
+}
+
+.cm-analisis-num {
+    font-weight: 700;
+    color: #64748b;
+    font-variant-numeric: tabular-nums;
+    min-width: 32px;
+    flex-shrink: 0;
+}
+
+.cm-analisis-san {
+    font-family: 'Courier New', monospace;
+    font-weight: 700;
+    color: #1e293b;
+    flex: 1;
+    min-width: 0;
+}
+
+.cm-analisis-icono {
+    font-family: 'Courier New', monospace;
+    font-weight: 900;
+    font-size: 0.95rem;
+    min-width: 22px;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.cm-analisis-eval {
+    font-family: 'Courier New', monospace;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #475569;
+    font-variant-numeric: tabular-nums;
+    min-width: 50px;
+    text-align: right;
+    flex-shrink: 0;
+}
+
+/* Estado del análisis en progreso */
+.cm-sala-libre-analisis.cm-analizando {
+    text-align: center;
+    padding: 24px;
+}
+
+.cm-analisis-loader {
+    display: inline-block;
+    width: 32px;
+    height: 32px;
+    border: 3px solid #bae6fd;
+    border-top-color: #0ea5e9;
+    border-radius: 50%;
+    animation: cm-analisis-spin 0.8s linear infinite;
+    margin-bottom: 12px;
+}
+
+@keyframes cm-analisis-spin {
+    to { transform: rotate(360deg); }
+}
+
+@media (max-width: 600px) {
+    .cm-reloj-tiempo { font-size: 1.25rem; }
+    .cm-reloj { padding: 8px 10px; min-width: 110px; }
+    .cm-reloj-icono { font-size: 1.1rem; }
+    .cm-reloj-label { font-size: 0.68rem; }
+
+    .cm-analisis-stats { grid-template-columns: 1fr; }
+    .cm-analisis-stat-valor { font-size: 1.3rem; }
+
+    .cm-analisis-jugada {
+        font-size: 0.78rem;
+        padding: 5px 8px;
+        gap: 6px;
     }
-    #btn-zen .btn-label {
-        display: none;
-    }
+    .cm-analisis-num { min-width: 28px; }
+    .cm-analisis-eval { min-width: 42px; font-size: 0.72rem; }
+
+    .juego-ia-niveles { grid-template-columns: repeat(2, 1fr); gap: 6px; }
+    .juego-ia-nivel-btn { padding: 8px 10px; font-size: 0.78rem; }
+    .juego-ia-nivel-btn .nivel-num { font-size: 0.9rem; }
+    .juego-ia-nivel-btn .nivel-elo { font-size: 0.66rem; }
+    .juego-ia-nivel-btn .nivel-nombre { font-size: 0.62rem; }
+}
+
+/* ============================================================
+   ⭐ v12: MODAL DE CONFIRMACIÓN DE SALIDA
+   ============================================================ */
+.cm-tablero-modal-overlay {
+    /* Estilos ya definidos en entrenador.css */
 }
