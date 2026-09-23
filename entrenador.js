@@ -2955,76 +2955,82 @@ if (this.chess.turn() !== colorHumano) {
             this.analizando = true;
             this.setStatus('ordenador', '🔍 Analizando la partida…');
 
-            const jugadasAnalizadas = [];
+const jugadasAnalizadas = [];
+const total = this.historialCompletoPartida.length;
 
-            try {
-                for (let i = 0; i < this.historialCompletoPartida.length; i++) {
-                    const j = this.historialCompletoPartida[i];
+try {
+    this.setStatus('ordenador', `🔍 Analizando 0/${total}…`);
 
-                    // Evaluar posición ANTES de la jugada (mejor movimiento)
-                    const evalAntes = await SF.evaluarPosicion(j.fenAntes, 10);
+    const evals = [];
+    evals.push(await SF.evaluarPosicion(this.historialCompletoPartida[0].fenAntes, 8));
 
-                    // Evaluar posición DESPUÉS
-                    const evalDespues = await SF.evaluarPosicion(j.fenDespues, 10);
+    for (let i = 0; i < total; i++) {
+        const j = this.historialCompletoPartida[i];
+        const ev = await SF.evaluarPosicion(j.fenDespues, 8);
+        evals.push(ev);
 
-                    // Calcular CPL (centipawn loss) desde la perspectiva del jugador que movió
-                    let cpl;
-                    if (j.color === 'w') {
-                        cpl = evalAntes.cp - evalDespues.cp;
-                    } else {
-                        cpl = evalDespues.cp - evalAntes.cp;
-                    }
-                    // CPL siempre positivo (pérdida)
-                    cpl = Math.max(0, cpl);
+        if (i % 3 === 0 || i === total - 1) {
+            this.setStatus('ordenador', `🔍 Analizando ${i + 1}/${total}…`);
+        }
+    }
 
-                    // Detectar si ya estaba ganando/perdiendo por mucho
-                    const cpAntesDesdeHumano = j.color === 'w' ? evalAntes.cp : -evalAntes.cp;
-                    const yaEstabaGanando = cpAntesDesdeHumano > 500;
-                    const yaEstabaPerdiendo = cpAntesDesdeHumano < -500;
+    for (let i = 0; i < total; i++) {
+        const j = this.historialCompletoPartida[i];
+        const evalAntes = evals[i];
+        const evalDespues = evals[i + 1];
 
-                    // Clasificar
-                    let clasificacion;
-                    // Si el movimiento fue el mejor (según Stockfish), es excelente automáticamente
-                    if (evalAntes.mejor && evalAntes.mejor === j.from + j.to + (j.promotion || '')) {
-                        clasificacion = 'excelente';
-                    } else {
-                        clasificacion = clasificarPorCPL(cpl, yaEstabaGanando, yaEstabaPerdiendo);
-                    }
+        let cpl;
+        if (j.color === 'w') {
+            cpl = evalAntes.cp - evalDespues.cp;
+        } else {
+            cpl = evalDespues.cp - evalAntes.cp;
+        }
+        cpl = Math.max(0, cpl);
 
-                    jugadasAnalizadas.push({
-                        ...j,
-                        evalAntes,
-                        evalDespues,
-                        cpl,
-                        clasificacion
-                    });
+        const cpAntesDesdeHumano = j.color === 'w' ? evalAntes.cp : -evalAntes.cp;
+        const yaEstabaGanando = cpAntesDesdeHumano > 500;
+        const yaEstabaPerdiendo = cpAntesDesdeHumano < -500;
 
-                    // Actualizar progreso
-                    if (i % 5 === 0) {
-                        this.setStatus('ordenador', `🔍 Analizando… ${i + 1}/${this.historialCompletoPartida.length}`);
-                    }
-                }
+        let clasificacion;
+        if (evalAntes.mejor && evalAntes.mejor === j.from + j.to + (j.promotion || '')) {
+            clasificacion = 'excelente';
+        } else {
+            clasificacion = clasificarPorCPL(cpl, yaEstabaGanando, yaEstabaPerdiendo);
+        }
 
-                // Calcular estadísticas
-                const acplHumano = calcularACPL(jugadasAnalizadas.filter(j => j.esHumano), this.colorHumano);
-                const acplPC = calcularACPL(jugadasAnalizadas.filter(j => !j.esHumano), this.colorHumano === 'w' ? 'b' : 'w');
-                const conteoHumano = contarClasificaciones(jugadasAnalizadas.filter(j => j.esHumano));
-                const conteoPC = contarClasificaciones(jugadasAnalizadas.filter(j => !j.esHumano));
+        jugadasAnalizadas.push({
+            ...j,
+            evalAntes,
+            evalDespues,
+            cpl,
+            clasificacion
+        });
+    }
 
-                // Precisión estimada (fórmula simple basada en ACPL)
-                const precisionHumano = Math.max(0, Math.min(100, Math.round(100 - acplHumano / 3)));
+    this.analisis = {
+        jugadas: jugadasAnalizadas,
+        acplHumano: 0,
+        acplPC: 0,
+        conteoHumano: { brillante: 0, excelente: 0, buena: 0, imprecision: 0, error: 0, blunder: 0, libro: 0, forzada: 0 },
+        conteoPC: { brillante: 0, excelente: 0, buena: 0, imprecision: 0, error: 0, blunder: 0, libro: 0, forzada: 0 },
+        precisionHumano: 0
+    };
+    this.renderizarAnalisis();
 
-                this.analisis = {
-                    jugadas: jugadasAnalizadas,
-                    acplHumano,
-                    acplPC,
-                    conteoHumano,
-                    conteoPC,
-                    precisionHumano
-                };
+    const acplHumano = calcularACPL(jugadasAnalizadas.filter(j => j.esHumano), this.colorHumano);
+    const acplPC = calcularACPL(jugadasAnalizadas.filter(j => !j.esHumano), this.colorHumano === 'w' ? 'b' : 'w');
+    const conteoHumano = contarClasificaciones(jugadasAnalizadas.filter(j => j.esHumano));
+    const conteoPC = contarClasificaciones(jugadasAnalizadas.filter(j => !j.esHumano));
+    const precisionHumano = Math.max(0, Math.min(100, Math.round(100 - acplHumano / 3)));
 
-                this.setStatus('ordenador', '✅ Análisis completado.');
-                this.renderizarAnalisis();
+    this.analisis.acplHumano = acplHumano;
+    this.analisis.acplPC = acplPC;
+    this.analisis.conteoHumano = conteoHumano;
+    this.analisis.conteoPC = conteoPC;
+    this.analisis.precisionHumano = precisionHumano;
+
+    this.setStatus('ordenador', '✅ Análisis completado.');
+    this.renderizarAnalisis();
 
             } catch (err) {
                 console.error('[v12] Error al analizar:', err);
