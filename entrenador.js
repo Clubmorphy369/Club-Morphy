@@ -737,24 +737,31 @@
         }
 
         cambiarTurno(colorQueAcabaDeMover) {
-            if (this.sinLimite || !this.activo) {
-                this.turno = colorQueAcabaDeMover === 'w' ? 'b' : 'w';
-                return;
-            }
+    if (this.sinLimite) {
+        this.turno = colorQueAcabaDeMover === 'w' ? 'b' : 'w';
+        return;
+    }
 
-            // Aplicar incremento al jugador que acaba de mover
-            if (this.incremento > 0) {
-                if (colorQueAcabaDeMover === 'w') {
-                    this.tiempoBlancas += this.incremento;
-                } else {
-                    this.tiempoNegras += this.incremento;
-                }
-            }
-
-            this.turno = colorQueAcabaDeMover === 'w' ? 'b' : 'w';
-            this._ultimoTick = performance.now();
+    // Aplicar incremento al jugador que acaba de mover
+    if (this.incremento > 0) {
+        if (colorQueAcabaDeMover === 'w') {
+            this.tiempoBlancas += this.incremento;
+        } else {
+            this.tiempoNegras += this.incremento;
         }
+    }
 
+    this.turno = colorQueAcabaDeMover === 'w' ? 'b' : 'w';
+    this._ultimoTick = performance.now();
+
+    // ⭐ v13: Si el reloj no está activo, activarlo ahora
+    // (para que el nuevo turno empiece a contar)
+    if (!this.activo) {
+        this.activo = true;
+        if (this._intervalId) clearInterval(this._intervalId);
+        this._intervalId = setInterval(() => this._tick(), 250);
+    }
+}
         _tick() {
             if (!this.activo || this.sinLimite) return;
             const ahora = performance.now();
