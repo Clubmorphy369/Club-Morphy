@@ -3036,21 +3036,41 @@ try {
     };
     this.renderizarAnalisis();
 
-    const acplHumano = calcularACPL(jugadasAnalizadas.filter(j => j.esHumano), this.colorHumano);
-    const acplPC = calcularACPL(jugadasAnalizadas.filter(j => !j.esHumano), this.colorHumano === 'w' ? 'b' : 'w');
-    const conteoHumano = contarClasificaciones(jugadasAnalizadas.filter(j => j.esHumano));
-    const conteoPC = contarClasificaciones(jugadasAnalizadas.filter(j => !j.esHumano));
-    const precisionHumano = Math.max(0, Math.min(100, Math.round(100 - acplHumano / 3)));
+        // ⭐ v17: Verificar que el análisis tiene datos válidos
+        const evalsValidas = jugadasAnalizadas.filter(j =>
+            j.evalAntes && j.evalDespues &&
+            (j.evalAntes.cp !== 0 || j.evalAntes.mate !== null) &&
+            (j.evalDespues.cp !== 0 || j.evalDespues.mate !== null)
+        );
 
-    this.analisis.acplHumano = acplHumano;
-    this.analisis.acplPC = acplPC;
-    this.analisis.conteoHumano = conteoHumano;
-    this.analisis.conteoPC = conteoPC;
-    this.analisis.precisionHumano = precisionHumano;
+        if (evalsValidas.length === 0) {
+            this.setStatus('ordenador', '⚠️ Análisis no disponible');
+            this.mostrarToast('⚠️ El motor no dio evaluaciones válidas', '');
+            if (this.$panelAnalisis) {
+                this.$panelAnalisis.classList.add('cm-tablero-hidden');
+            }
+            return;
+        }
 
-    this.setStatus('ordenador', '✅ Análisis completado.');
-    this.renderizarAnalisis();
+        // Calcular estadísticas finales
+        const acplHumano = calcularACPL(jugadasAnalizadas.filter(j => j.esHumano), this.colorHumano);
+        const acplPC = calcularACPL(jugadasAnalizadas.filter(j => !j.esHumano), this.colorHumano === 'w' ? 'b' : 'w');
+        const conteoHumano = contarClasificaciones(jugadasAnalizadas.filter(j => j.esHumano));
+        const conteoPC = contarClasificaciones(jugadasAnalizadas.filter(j => !j.esHumano));
 
+        // ⭐ v17: Fórmula de precisión más realista
+        const precisionHumano = acplHumano <= 0
+            ? 100
+            : Math.max(0, Math.min(100, Math.round(100 - Math.sqrt(acplHumano) * 3.5)));
+
+        this.analisis.acplHumano = acplHumano;
+        this.analisis.acplPC = acplPC;
+        this.analisis.conteoHumano = conteoHumano;
+        this.analisis.conteoPC = conteoPC;
+        this.analisis.precisionHumano = precisionHumano;
+
+        this.setStatus('ordenador', '✅ Análisis completado.');
+        this.renderizarAnalisis();
             } catch (err) {
                 console.error('[v12] Error al analizar:', err);
                 this.setStatus('ordenador', '⚠️ No se pudo completar el análisis.');
