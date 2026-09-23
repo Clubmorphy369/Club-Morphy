@@ -963,21 +963,24 @@
             this.colorHumano = colorHumano;
             this.orientacion = colorHumano === 'w' ? 'white' : 'black';
 
-            if (this.chess.turn() !== colorHumano) {
-                // Empieza la PC
-                this.setStatus('ordenador', '🤖 Stockfish piensa…');
-                this.esperandoRespuesta = true;
-                setTimeout(() => this.jugarOrdenador(), 600);
-            } else {
-                const nivel = this.config.nivelSF || 5;
-                const eloHumano = ELO.data ? ELO.data.total : ELO_INICIAL;
-                this.setStatus('ordenador',
-                    `🤖 Nv${nivel} (~${ELO_BOT[nivel]} ELO) vs tú (${eloHumano} ELO). Tu turno.`);
-                // Iniciar reloj cuando le toque mover al humano
-                setTimeout(() => {
-                    if (!this.destroyed && this.reloj) this.reloj.iniciar();
-                }, 100);
-            }
+           // ⭐ v13: Iniciar el reloj SIEMPRE (independientemente de quién empiece)
+if (this.reloj && !this.reloj.sinLimite) {
+    setTimeout(() => {
+        if (!this.destroyed && this.reloj) this.reloj.iniciar();
+    }, 100);
+}
+
+if (this.chess.turn() !== colorHumano) {
+    // Empieza la PC
+    this.setStatus('ordenador', '🤖 Stockfish piensa…');
+    this.esperandoRespuesta = true;
+    setTimeout(() => this.jugarOrdenador(), 600);
+} else {
+    const nivel = this.config.nivelSF || 5;
+    const eloHumano = ELO.data ? ELO.data.total : ELO_INICIAL;
+    this.setStatus('ordenador',
+        `🤖 Nv${nivel} (~${ELO_BOT[nivel]} ELO) vs tú (${eloHumano} ELO). Tu turno.`);
+}
         }
 
         // --------------------------------------------------------
