@@ -3,8 +3,8 @@
 // =============================================================
 
 // ⚠️ Sube la versión cuando hagas cambios importantes
-// ⭐ v14: fix multi-dispositivo + juego vs IA + reloj + análisis
-const CACHE_NAME = 'club-morphy-v14';
+// ⭐ v15: fix multi-dispositivo + juego vs IA + reloj + análisis
+const CACHE_NAME = 'club-morphy-v15';
 const OFFLINE_URL = '/Club-Morphy/offline.html';
 
 const STATIC_ASSETS = [
