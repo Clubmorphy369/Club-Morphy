@@ -2943,14 +2943,33 @@ if (this.chess.turn() !== colorHumano) {
         // --------------------------------------------------------
         // ⭐ v12: ANÁLISIS POST-PARTIDA (tipo Lichess)
         // --------------------------------------------------------
+		        // ⭐ v15: Espera a que Stockfish esté listo (con timeout)
+        _esperarStockfishListo(timeoutMs) {
+            return new Promise((resolve) => {
+                if (SF.ready) { resolve(true); return; }
+                const handler = () => {
+                    document.removeEventListener('cm-tablero-sf-ready', handler);
+                    resolve(true);
+                };
+                document.addEventListener('cm-tablero-sf-ready', handler);
+                setTimeout(() => {
+                    document.removeEventListener('cm-tablero-sf-ready', handler);
+                    resolve(SF.ready);
+                }, timeoutMs);
+            });
+        }
+
         async analizarPartida() {
             if (this.analizando) return;
-            if (!SF.ready) {
-                this.analizando = false;
-                this.mostrarToast('⚠️ Stockfish no está listo para analizar', '');
-                return;
-            }
-            if (this.historialCompletoPartida.length === 0) return;
+           if (!SF.ready) {
+    this.setStatus('ordenador', '⏳ Esperando al motor…');
+    const listo = await this._esperarStockfishListo(15000);
+    if (!listo) {
+        this.mostrarToast('⚠️ Stockfish tardó demasiado. Análisis no disponible.', '');
+        this.setStatus('ordenador', '⚠️ Stockfish no disponible');
+        return;
+    }
+}            if (this.historialCompletoPartida.length === 0) return;
 
             this.analizando = true;
             this.setStatus('ordenador', '🔍 Analizando la partida…');
