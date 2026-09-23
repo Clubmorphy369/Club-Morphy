@@ -3163,13 +3163,24 @@ try {
 
         _onTimeoutReloj(color) {
             if (this.destroyed) return;
+
+            // ⭐ v17: Detener el reloj COMPLETO (ambos jugadores)
+            if (this.reloj) {
+                this.reloj.detener();
+            }
+
             const esHumano = color === this.colorHumano;
             const texto = esHumano ? '⏱️ ¡Se te acabó el tiempo!' : '🎉 ¡La IA se quedó sin tiempo!';
             this.setStatus('ordenador', texto);
             this.mostrarToast(texto, esHumano ? 'elo-down' : 'elo-up');
 
-            // Aplicar ELO
-            if (!this.esModoAdmin && this.esSalaLibre) {
+            // ⭐ v17: Bloquear al usuario para que no siga moviendo
+            this.bloqueado = true;
+            this.esperandoRespuesta = false;
+
+            // ⭐ v17: Aplicar ELO solo si no se aplicó antes
+            if (!this.eloAplicado && !this.esModoAdmin && this.esSalaLibre) {
+                this.eloAplicado = true;
                 const nivel = this.config.nivelSF || 5;
                 const eloBot = ELO_BOT[nivel] || 1600;
                 const eloActual = ELO.data ? ELO.data.total : ELO_INICIAL;
@@ -3185,10 +3196,11 @@ try {
                 }
             }
 
-            this.bloqueado = true;
-            setTimeout(() => this.analizarPartida(), 800);
+            // ⭐ v17: Ejecutar análisis post-partida
+            setTimeout(() => {
+                if (!this.destroyed) this.analizarPartida();
+            }, 800);
         }
-
         // --------------------------------------------------------
         // ⭐ v12: DESHACER PARTIDA (en sala libre)
         // --------------------------------------------------------
