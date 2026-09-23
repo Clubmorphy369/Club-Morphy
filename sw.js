@@ -3,8 +3,8 @@
 // =============================================================
 
 // ⚠️ Sube la versión cuando hagas cambios importantes
-// ⭐ v10: progreso por variante + comentarios + modo zen + Drive + renombrar capítulos
-const CACHE_NAME = 'club-morphy-v10';
+// ⭐ v12: fix multi-dispositivo + juego vs IA + reloj + análisis
+const CACHE_NAME = 'club-morphy-v12';
 const OFFLINE_URL = '/Club-Morphy/offline.html';
 
 const STATIC_ASSETS = [
@@ -96,6 +96,9 @@ self.addEventListener('fetch', event => {
         'cdnjs.cloudflare.com',
         'wikimedia.org',
         'wikipedia.org',
+        'lichess.org',
+        'stockfish',
+        'jsdelivr.net',
     ];
 
     if (ignoredHosts.some(host => url.hostname.includes(host))) {
