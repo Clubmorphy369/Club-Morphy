@@ -32,7 +32,6 @@
         </div>
         <div class="header-right">
             <span id="user-info" style="font-size:0.9rem;"></span>
-            <!-- ⭐ NUEVO: Badge del ELO en el header -->
             <span id="header-elo-badge" title="Tu ELO actual" style="display:none; background:linear-gradient(135deg,#fef3c7,#fde68a); border:2px solid #d97706; color:#92400e; font-weight:800; padding:4px 10px; border-radius:20px; font-size:0.82rem; transition: transform 0.2s;">🏆 <span id="header-elo-value">1200</span></span>
             <button class="btn" id="btn-datos-club" type="button" style="display:none;" onclick="mostrarDatosClub()">📋 <span class="btn-label">Contacto</span></button>
             <button class="btn" id="btn-donar" type="button" style="display:none;" onclick="mostrarDonacion()">❤️ <span class="btn-label">Donar</span></button>
@@ -40,7 +39,8 @@
                 🔔 <span class="btn-label">Notif.</span> <span id="notif-badge" class="notification-badge" style="display:none;">0</span>
             </button>
             <button class="btn" id="btn-progreso" type="button" style="display:none;" onclick="abrirPanelProgreso()">📊 <span class="btn-label">Progreso</span></button>
-            <!-- ⭐ v9: Botón de modo zen -->
+            <!-- ⭐ v12: Nuevo botón Jugar vs IA -->
+            <button class="btn btn-jugar-ia" id="btn-jugar-ia" type="button" onclick="abrirModalJuegoIA()" title="Jugar una partida contra Stockfish">♟️ <span class="btn-label">Jugar vs IA</span></button>
             <button class="btn" id="btn-zen" type="button" onclick="toggleModoZen()" title="Modo zen (sin distracciones)">🎯 <span class="btn-label">Zen</span></button>
             <button class="btn" id="btn-solicitudes-admin" type="button" style="display:none; position:relative;" onclick="abrirSolicitudesAdmin()">
                 📩 <span class="btn-label">Solicitudes</span> <span id="solicitudes-badge" class="notification-badge" style="display:none;">0</span>
@@ -74,6 +74,13 @@
     <!-- Toast -->
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
+    <!-- ⭐ v12: Modal de configuración del juego vs IA -->
+    <div class="modal-overlay modal-juego-ia" id="modal-juego-ia" role="dialog" aria-modal="true" aria-labelledby="juego-ia-title">
+        <div class="modal-content modal-juego-ia-content">
+            <!-- El contenido se renderiza desde script.js -->
+        </div>
+    </div>
+
     <!-- Modal de Login -->
     <div class="modal-overlay" id="modal-login" role="dialog" aria-modal="true" aria-labelledby="modal-title">
         <div class="modal-content">
@@ -84,7 +91,6 @@
                 <button class="btn" type="button" onclick="cambiarCuenta()">Cambiar cuenta</button>
             </div>
             <form id="auth-form">
-                <!-- Campos de registro -->
                 <div id="register-fields" style="display: none;">
                     <label for="nombre">Nombre(s)</label>
                     <input id="nombre" name="nombre" type="text"
@@ -240,7 +246,6 @@
             <label for="config-web">Web</label>
             <input id="config-web" name="config-web" type="url" autocomplete="url">
 
-            <!-- Sección de donación -->
             <hr style="margin: 20px 0; border: none; border-top: 1px dashed var(--borde);">
             <p style="color:var(--acento); font-weight:bold; margin-bottom:12px; font-family:'Playfair Display',serif; font-size:1.1rem;">
                 ❤️ Datos para donaciones
