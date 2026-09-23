@@ -2981,11 +2981,11 @@ try {
     this.setStatus('ordenador', `🔍 Analizando 0/${total}…`);
 
     const evals = [];
-    evals.push(await SF.evaluarPosicion(this.historialCompletoPartida[0].fenAntes, 8));
+    evals.push(await SF.evaluarPosicion(this.historialCompletoPartida[0].fenAntes, 6));
 
     for (let i = 0; i < total; i++) {
         const j = this.historialCompletoPartida[i];
-        const ev = await SF.evaluarPosicion(j.fenDespues, 8);
+        const ev = await SF.evaluarPosicion(j.fenDespues, 6);
         evals.push(ev);
 
         if (i % 3 === 0 || i === total - 1) {
