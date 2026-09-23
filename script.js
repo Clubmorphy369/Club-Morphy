@@ -47,11 +47,20 @@ let modalCompletarPerfilYaMostrado = false;
 // ⭐ v10: Contador de escrituras activas del curso (evita race condition con onSnapshot)
 let _guardandoCursoContador = 0;
 
-// ⭐ v9: Modo zen (ocultar sidebar)
+// ⭐ v9: Modo zen
 let modoZen = false;
 
-// ⭐ v9: Progreso de tableros (variantes resueltas por el alumno)
+// ⭐ v9: Progreso de tableros
 let progresoTableros = {};
+
+// ⭐ v12: Estado del juego vs IA
+let juegoIAConfig = {
+    nivelSF: 5,
+    colorHumano: 'w',
+    tiempo: 'libre'
+};
+let juegoIAInstancia = null;
+let juegoIAEsperandoStockfish = false;
 
 // ------------------------------------------------
 // VARIABLES GLOBALES Y REFERENCIAS A DOM
@@ -67,6 +76,7 @@ const modalNotificaciones = document.getElementById('modal-notificaciones');
 const modalDatosClub = document.getElementById('modal-datos-club');
 const modalConfigClub = document.getElementById('modal-config-club');
 const modalDonacion = document.getElementById('modal-donacion');
+const modalJuegoIA = document.getElementById('modal-juego-ia');
 const btnLogin = document.getElementById('btn-login');
 const btnLogout = document.getElementById('btn-logout');
 const btnAdmin = document.getElementById('btn-admin');
@@ -150,7 +160,7 @@ function _exponerFuncionesGlobales() {
 }
 
 // ------------------------------------------------
-// PERSISTENCIA DE NAVEGACIÓN (sessionStorage)
+// PERSISTENCIA DE NAVEGACIÓN
 // ------------------------------------------------
 function guardarEstadoNavegacion() {
     try {
@@ -180,7 +190,7 @@ function onContentScroll() {
 }
 
 // ------------------------------------------------
-// ⭐ v9: MODO ZEN (ocultar sidebar)
+// MODO ZEN
 // ------------------------------------------------
 function cargarModoZen() {
     try {
@@ -320,9 +330,7 @@ async function registrarUsuarioEnColeccion(user, nombre = null, apellidos = null
 async function cargarPerfilUsuario(uid) {
     try {
         const doc = await db.collection('usuarios').doc(uid).get();
-        if (doc.exists) {
-            return doc.data();
-        }
+        if (doc.exists) return doc.data();
         return null;
     } catch (error) {
         console.error('Error al cargar perfil:', error);
@@ -339,7 +347,6 @@ function actualizarHeaderUsuario() {
 function mostrarCompletarPerfil() {
     if (modalCompletarPerfilYaMostrado) return;
     modalCompletarPerfilYaMostrado = true;
-
     document.getElementById('modal-completar-perfil')?.remove();
 
     const modal = document.createElement('div');
@@ -356,19 +363,16 @@ function mostrarCompletarPerfil() {
                     Antes de continuar, cuéntanos cómo te llamas.
                 </p>
             </div>
-
             <label for="perfil-nombre">Nombre(s)</label>
             <input id="perfil-nombre" type="text"
                    placeholder="Ej: Juan Carlos"
                    autocomplete="given-name"
                    value="${escapeAttr(userProfile?.nombre || '')}">
-
             <label for="perfil-apellidos">Apellidos</label>
             <input id="perfil-apellidos" type="text"
                    placeholder="Ej: Pérez García"
                    autocomplete="family-name"
                    value="${escapeAttr(userProfile?.apellidos || '')}">
-
             <div class="modal-buttons" style="margin-top:20px;">
                 <button class="btn" type="button" onclick="cerrarCompletarPerfil()">Más tarde</button>
                 <button class="btn btn-azul" type="button" onclick="guardarPerfilUsuario()">Guardar y continuar</button>
@@ -376,10 +380,7 @@ function mostrarCompletarPerfil() {
         </div>
     `;
     document.body.appendChild(modal);
-
-    setTimeout(() => {
-        document.getElementById('perfil-nombre')?.focus();
-    }, 100);
+    setTimeout(() => { document.getElementById('perfil-nombre')?.focus(); }, 100);
 }
 
 function cerrarCompletarPerfil() {
@@ -389,7 +390,6 @@ function cerrarCompletarPerfil() {
 
 async function guardarPerfilUsuario() {
     if (!currentUser) return;
-
     const nombre = document.getElementById('perfil-nombre').value.trim();
     const apellidos = document.getElementById('perfil-apellidos').value.trim();
 
@@ -406,11 +406,8 @@ async function guardarPerfilUsuario() {
 
     try {
         await db.collection('usuarios').doc(currentUser.uid).update({
-            nombre: nombre,
-            apellidos: apellidos,
-            perfilCompletado: true
+            nombre: nombre, apellidos: apellidos, perfilCompletado: true
         });
-
         userProfile = { ...userProfile, nombre, apellidos, perfilCompletado: true };
         actualizarHeaderUsuario();
         cerrarCompletarPerfil();
@@ -466,12 +463,8 @@ function mostrarLogin() {
         document.getElementById('extra-controls').style.display = 'block';
         document.getElementById('btn-auth').textContent = 'Ingresar';
         modoRegistro = false;
-
         const registerFields = document.getElementById('register-fields');
-        if (registerFields) {
-            registerFields.style.display = 'none';
-        }
-
+        if (registerFields) registerFields.style.display = 'none';
         limpiarCampos();
     }
     modalLogin.classList.add('active');
@@ -480,12 +473,10 @@ function mostrarLogin() {
 function limpiarCampos() {
     document.getElementById('email').value = '';
     document.getElementById('password').value = '';
-
     const nombreInput = document.getElementById('nombre');
     const apellidosInput = document.getElementById('apellidos');
     if (nombreInput) nombreInput.value = '';
     if (apellidosInput) apellidosInput.value = '';
-
     document.getElementById('autofill-warning').style.display = 'none';
     document.getElementById('email').focus();
 }
@@ -497,7 +488,6 @@ function cambiarCuenta() {
 }
 
 function confirmarCerrarSesion() { modalConfirmLogout.classList.add('active'); }
-
 function cerrarSesionConfirmada() { modalConfirmLogout.classList.remove('active'); auth.signOut(); }
 
 function toggleAdmin() {
@@ -523,7 +513,8 @@ function traducirErrorFirebase(codigo) {
     return mensajes[codigo] || 'Ocurrió un problema. Inténtalo de nuevo en unos segundos.';
 }
 
-// ------------------------------------------------
+// === FIN DE LA PARTE 1/4 DE script.js ===
+       // ------------------------------------------------
 // SUSCRIPCIONES EN TIEMPO REAL (Firestore)
 // ------------------------------------------------
 function suscribirAccesosEspeciales() {
@@ -691,14 +682,12 @@ function actualizarLogoClub() {
 function actualizarBotonDatosClub() {
     const btn = document.getElementById('btn-datos-club');
     const btnDonar = document.getElementById('btn-donar');
-
     if (!currentUser) {
         btn.style.display = 'none';
     } else {
         const tieneDatos = datosClub.telefono || datosClub.direccion || datosClub.emailContacto || datosClub.horarios || datosClub.web;
         btn.style.display = tieneDatos ? 'inline-flex' : 'none';
     }
-
     if (btnDonar) {
         const tieneDonacion = datosClub.donacionTitular || datosClub.donacionBanco ||
                               datosClub.donacionTarjeta || datosClub.donacionCuenta ||
@@ -743,7 +732,6 @@ async function copiarAlPortapapeles(texto, btn) {
 function mostrarDonacion() {
     const contenedor = document.getElementById('donacion-contenido');
     const d = datosClub;
-
     const tieneAlgo = d.donacionTitular || d.donacionBanco ||
                       d.donacionTarjeta || d.donacionCuenta ||
                       d.donacionClabe || d.donacionNota;
@@ -756,7 +744,6 @@ function mostrarDonacion() {
 
     let html = '';
     let contador = 0;
-
     const makeCard = (icon, label, value) => {
         if (!value || !value.trim()) return '';
         contador++;
@@ -783,7 +770,6 @@ function mostrarDonacion() {
     }
 
     contenedor.innerHTML = html;
-
     contenedor.querySelectorAll('.btn-copy').forEach(btn => {
         btn.addEventListener('click', () => {
             const target = document.getElementById(btn.dataset.target);
@@ -933,9 +919,7 @@ function iniciarEscuchaCurso() {
     migracionRealizada = false;
 
     unsubscribeCurso = db.collection('config').doc('curso').onSnapshot(async (doc) => {
-        // ⭐ v10: Ignorar ecos de nuestras propias escrituras pendientes.
-        // Sin esta guarda, un snapshot viejo puede sobrescribir cambios recientes,
-        // especialmente si tienes la app abierta en celular + PC al mismo tiempo.
+        // ⭐ v10: Ignorar ecos de nuestras propias escrituras pendientes
         if (doc.metadata.hasPendingWrites || _guardandoCursoContador > 0) {
             console.log('[Curso] Snapshot ignorado (escritura pendiente)');
             return;
@@ -973,35 +957,90 @@ function iniciarEscuchaCurso() {
                     }
                 });
             });
-            if (migrado) {
-                await guardarCurso();
-            }
+            if (migrado) await guardarCurso();
         }
 
         curso.clases.sort((a, b) => a.numero - b.numero);
 
-        if (currentUser) {
-            actualizarUI();
-        }
+        if (currentUser) actualizarUI();
     }, error => {
         console.warn('Error en snapshot del curso:', error);
         mostrarToast('Error al sincronizar el curso. Revisa tu conexión.', 'error');
     });
 }
 
+// ⭐ v11: Guardar curso con transacción y fusión
 async function guardarCurso() {
-    // ⭐ v10: Marcamos que hay una escritura en vuelo.
-    // Mientras el contador sea > 0, el onSnapshot ignora los snapshots
-    // para no sobrescribir el estado local con datos viejos.
     _guardandoCursoContador++;
+
+    const cursoLocalSnapshot = JSON.parse(JSON.stringify(curso));
+
     try {
-        await db.collection('config').doc('curso').set(curso, { merge: true });
-        localStorage.setItem('cursoBackup', JSON.stringify(curso));
+        const cursoFinal = await db.runTransaction(async (transaction) => {
+            const ref = db.collection('config').doc('curso');
+            const doc = await transaction.get(ref);
+
+            const cursoRemoto = doc.exists ? doc.data() : { clases: [] };
+            const cursoFusionado = fusionarCursos(cursoRemoto, cursoLocalSnapshot);
+
+            transaction.set(ref, cursoFusionado);
+            return cursoFusionado;
+        });
+
+        curso = cursoFinal;
+        localStorage.setItem('cursoBackup', JSON.stringify(cursoFinal));
     } catch (err) {
+        console.error('[Curso] Error en transacción:', err);
         mostrarToast('Error al guardar. Verifica tu conexión.', 'error');
     } finally {
         _guardandoCursoContador--;
     }
+}
+
+// ⭐ v11: Fusiona dos versiones del curso sin perder datos
+function fusionarCursos(cursoRemoto, cursoLocal) {
+    const remotas = (cursoRemoto && cursoRemoto.clases) || [];
+    const locales = (cursoLocal && cursoLocal.clases) || [];
+
+    const clasesPorId = {};
+    remotas.forEach(c => { clasesPorId[c.id] = c; });
+    locales.forEach(c => { clasesPorId[c.id] = c; });
+
+    const clasesFusionadas = Object.values(clasesPorId).map(claseLocal => {
+        const claseRemota = remotas.find(c => c.id === claseLocal.id);
+        if (!claseRemota) return claseLocal;
+
+        const temasPorId = {};
+        (claseRemota.temas || []).forEach(t => { temasPorId[t.id] = t; });
+        (claseLocal.temas || []).forEach(t => {
+            const temaRemoto = temasPorId[t.id];
+            if (!temaRemoto) {
+                temasPorId[t.id] = t;
+                return;
+            }
+            const bloquesPorId = {};
+            (temaRemoto.bloques || []).forEach(b => { bloquesPorId[b.id] = b; });
+            (t.bloques || []).forEach(b => { bloquesPorId[b.id] = b; });
+
+            temasPorId[t.id] = {
+                ...temaRemoto,
+                ...t,
+                bloques: Object.values(bloquesPorId)
+            };
+        });
+
+        return {
+            ...claseRemota,
+            ...claseLocal,
+            temas: Object.values(temasPorId)
+        };
+    });
+
+    return {
+        ...cursoRemoto,
+        ...cursoLocal,
+        clases: clasesFusionadas
+    };
 }
 
 function migrarTemaABloques(tema) {
@@ -1074,7 +1113,6 @@ function temaAccesible(tema, usuario) {
     if (!usuario) return false;
     if (usuario.esAdmin) return true;
     if (!tema.bloqueado) return true;
-
     if (tema.accesosTemaId) {
         const uids = accesosTema[tema.accesosTemaId] || [];
         if (uids.includes(usuario.uid)) return true;
@@ -1145,7 +1183,6 @@ async function toggleBloqueoTema(claseId, temaId) {
     if (!tema) return;
 
     const seVaABloquear = !tema.bloqueado;
-
     if (seVaABloquear) {
         mostrarConfirmacion(
             'Bloquear tema',
@@ -1253,7 +1290,6 @@ async function moverTemaArriba(claseId, temaId) {
     if (!clase) return;
     const info = encontrarTemaYPadre(clase.temas, temaId);
     if (!info || info.index === 0) return;
-
     const { lista, index } = info;
     [lista[index - 1], lista[index]] = [lista[index], lista[index - 1]];
     reordenarTemasRecursivo(clase.temas);
@@ -1268,7 +1304,6 @@ async function moverTemaAbajo(claseId, temaId) {
     if (!clase) return;
     const info = encontrarTemaYPadre(clase.temas, temaId);
     if (!info || info.index >= info.lista.length - 1) return;
-
     const { lista, index } = info;
     [lista[index], lista[index + 1]] = [lista[index + 1], lista[index]];
     reordenarTemasRecursivo(clase.temas);
@@ -1452,9 +1487,7 @@ async function guardarProgresoCapCompletoEnFirestore({ claseId, temaId, bloqueId
     const key = `tablero_cap_${claseId}_${temaId}_${bloqueId}_${capituloIdx}`;
     progresoTableros[key] = true;
     try {
-        await db.collection('progreso').doc(currentUser.uid).set({
-            [key]: true
-        }, { merge: true });
+        await db.collection('progreso').doc(currentUser.uid).set({ [key]: true }, { merge: true });
     } catch (e) {
         console.warn('Error al guardar capítulo completo:', e);
     }
@@ -1574,15 +1607,10 @@ async function solicitarAccesoTema(claseId, temaId) {
         mostrarToast("Debes iniciar sesión para solicitar acceso.", "error");
         return;
     }
-
     const clase = curso.clases.find(c => c.id === claseId);
     if (!clase) return;
-
     const tema = buscarTemaRecursivo(clase.temas, temaId);
-    if (!tema) {
-        mostrarToast("El tema no existe.", "error");
-        return;
-    }
+    if (!tema) { mostrarToast("El tema no existe.", "error"); return; }
 
     const yaSolicitada = misSolicitudes.some(s => s.temaId === temaId && s.estado === 'pendiente');
     if (yaSolicitada) {
@@ -1721,29 +1749,22 @@ async function ejecutarEnLotes(operaciones) {
 
 async function aprobarTodoElCurso(uid, email) {
     if (!currentUser?.esAdmin) return;
-
     mostrarConfirmacion(
         '🎓 Aprobar TODO el curso',
         `¿Dar acceso completo a "${email}"? Se liberarán TODAS las clases publicadas y TODOS los temas bloqueados.`,
         async () => {
             try {
                 const operaciones = [];
-
                 for (const clase of curso.clases) {
                     if (!clase.publicada) continue;
                     const uidsActual = accesosEspeciales[clase.id] || [];
                     if (!uidsActual.includes(uid)) {
                         const nuevos = [...uidsActual, uid];
                         operaciones.push(batch =>
-                            batch.set(
-                                db.collection('accesosEspeciales').doc(clase.id),
-                                { uids: nuevos },
-                                { merge: true }
-                            )
+                            batch.set(db.collection('accesosEspeciales').doc(clase.id), { uids: nuevos }, { merge: true })
                         );
                     }
                 }
-
                 function recorrerTemas(temas) {
                     temas.forEach(t => {
                         if (t.bloqueado && t.accesosTemaId) {
@@ -1751,29 +1772,21 @@ async function aprobarTodoElCurso(uid, email) {
                             if (!uidsTema.includes(uid)) {
                                 const nuevos = [...uidsTema, uid];
                                 operaciones.push(batch =>
-                                    batch.set(
-                                        db.collection('accesosTema').doc(t.accesosTemaId),
-                                        { uids: nuevos },
-                                        { merge: true }
-                                    )
+                                    batch.set(db.collection('accesosTema').doc(t.accesosTemaId), { uids: nuevos }, { merge: true })
                                 );
                             }
                         }
                         if (t.subtemas && t.subtemas.length) recorrerTemas(t.subtemas);
                     });
                 }
-                curso.clases.forEach(c => {
-                    if (c.publicada) recorrerTemas(c.temas || []);
-                });
+                curso.clases.forEach(c => { if (c.publicada) recorrerTemas(c.temas || []); });
 
                 const solicitudesDelAlumno = await db.collection('solicitudesAcceso')
                     .where('uid', '==', uid)
                     .where('estado', '==', 'pendiente')
                     .get();
                 solicitudesDelAlumno.forEach(doc => {
-                    operaciones.push(batch =>
-                        batch.update(doc.ref, { estado: 'aprobada' })
-                    );
+                    operaciones.push(batch => batch.update(doc.ref, { estado: 'aprobada' }));
                 });
 
                 const notifRef = db.collection('notificaciones').doc();
@@ -1806,28 +1819,21 @@ window.aprobarTodoElCurso = aprobarTodoElCurso;
 
 async function revocarTodoElCurso(uid, email) {
     if (!currentUser?.esAdmin) return;
-
     mostrarConfirmacion(
         '🚫 Revocar TODO el curso',
-        `¿Quitar TODOS los accesos a "${email}"? Seguirá viendo la Clase 1 (pública), pero perderá el resto. Esta acción se puede revertir aprobando de nuevo.`,
+        `¿Quitar TODOS los accesos a "${email}"? Seguirá viendo la Clase 1 (pública), pero perderá el resto.`,
         async () => {
             try {
                 const operaciones = [];
-
                 for (const clase of curso.clases) {
                     const uidsActual = accesosEspeciales[clase.id] || [];
                     if (uidsActual.includes(uid)) {
                         const nuevos = uidsActual.filter(id => id !== uid);
                         operaciones.push(batch =>
-                            batch.set(
-                                db.collection('accesosEspeciales').doc(clase.id),
-                                { uids: nuevos },
-                                { merge: true }
-                            )
+                            batch.set(db.collection('accesosEspeciales').doc(clase.id), { uids: nuevos }, { merge: true })
                         );
                     }
                 }
-
                 function recorrerTemas(temas) {
                     temas.forEach(t => {
                         if (t.accesosTemaId) {
@@ -1835,11 +1841,7 @@ async function revocarTodoElCurso(uid, email) {
                             if (uidsTema.includes(uid)) {
                                 const nuevos = uidsTema.filter(id => id !== uid);
                                 operaciones.push(batch =>
-                                    batch.set(
-                                        db.collection('accesosTema').doc(t.accesosTemaId),
-                                        { uids: nuevos },
-                                        { merge: true }
-                                    )
+                                    batch.set(db.collection('accesosTema').doc(t.accesosTemaId), { uids: nuevos }, { merge: true })
                                 );
                             }
                         }
@@ -1878,7 +1880,6 @@ window.revocarTodoElCurso = revocarTodoElCurso;
 
 async function abrirGestionAlumnos() {
     if (!currentUser?.esAdmin) return;
-
     let modal = document.getElementById('modal-gestion-alumnos');
     if (!modal) {
         modal = document.createElement('div');
@@ -1961,8 +1962,7 @@ function abrirSolicitudesAdmin() {
                         ✅ Aprobar esta
                     </button>
                     <button class="btn btn-azul btn-small"
-                            onclick="aprobarTodoElCurso('${s.uid}','${escapeOnclick(s.email)}')"
-                            title="Libera TODAS las clases publicadas y temas bloqueados para este alumno">
+                            onclick="aprobarTodoElCurso('${s.uid}','${escapeOnclick(s.email)}')">
                         🎓 Aprobar TODO el curso
                     </button>
                     <button class="btn btn-peligro btn-small"
@@ -2072,14 +2072,12 @@ function abrirConfigClub() {
     document.getElementById('config-email-contacto').value = datosClub.emailContacto || '';
     document.getElementById('config-horarios').value = datosClub.horarios || '';
     document.getElementById('config-web').value = datosClub.web || '';
-
     document.getElementById('config-donacion-titular').value = datosClub.donacionTitular || '';
     document.getElementById('config-donacion-banco').value = datosClub.donacionBanco || '';
     document.getElementById('config-donacion-tarjeta').value = datosClub.donacionTarjeta || '';
     document.getElementById('config-donacion-cuenta').value = datosClub.donacionCuenta || '';
     document.getElementById('config-donacion-clabe').value = datosClub.donacionClabe || '';
     document.getElementById('config-donacion-nota').value = datosClub.donacionNota || '';
-
     modalConfigClub.classList.add('active');
 }
 
@@ -2092,7 +2090,6 @@ async function guardarConfigClub() {
         emailContacto: document.getElementById('config-email-contacto').value.trim(),
         horarios: document.getElementById('config-horarios').value.trim(),
         web: document.getElementById('config-web').value.trim(),
-
         donacionTitular: document.getElementById('config-donacion-titular').value.trim(),
         donacionBanco: document.getElementById('config-donacion-banco').value.trim(),
         donacionTarjeta: document.getElementById('config-donacion-tarjeta').value.trim(),
@@ -2126,22 +2123,13 @@ function agregarBloque(claseId, temaId, tipo) {
         nota: ''
     };
     if (tipo === 'enlace') { nuevo.label = ''; nuevo.url = ''; }
-
     if (tipo === 'tablero') {
-        nuevo.config = {
-            pgn: '',
-            modo: 'ejercicio',
-            colorHumano: 'w',
-            nivelSF: 5,
-            orientacion: 'auto'
-        };
+        nuevo.config = { pgn: '', modo: 'ejercicio', colorHumano: 'w', nivelSF: 5, orientacion: 'auto' };
     }
-
     if (tipo === 'consejo') {
         nuevo.imagenURL = '';
         nuevo.texto = '';
     }
-
     tema.bloques.push(nuevo);
     guardarCurso().then(() => actualizarUI());
 }
@@ -2154,15 +2142,10 @@ function eliminarBloque(claseId, temaId, bloqueId) {
     if (!bloque) return;
 
     let preview = '';
-    if (bloque.tipo === 'enlace') {
-        preview = bloque.label || 'sin etiqueta';
-    } else if (bloque.tipo === 'tablero') {
-        preview = 'Ejercicio de tablero';
-    } else if (bloque.tipo === 'consejo') {
-        preview = bloque.texto ? bloque.texto.substring(0, 40) : 'Consejo';
-    } else {
-        preview = bloque.contenido || 'vacío';
-    }
+    if (bloque.tipo === 'enlace') preview = bloque.label || 'sin etiqueta';
+    else if (bloque.tipo === 'tablero') preview = 'Ejercicio de tablero';
+    else if (bloque.tipo === 'consejo') preview = bloque.texto ? bloque.texto.substring(0, 40) : 'Consejo';
+    else preview = bloque.contenido || 'vacío';
     const previewCorto = String(preview).length > 40 ? String(preview).substring(0, 40) + '...' : String(preview);
 
     mostrarConfirmacion(
@@ -2244,9 +2227,7 @@ function cambiarTipoBloque(claseId, temaId, bloqueId, nuevoTipo) {
         bloque.url = bloque.url || '';
         delete bloque.contenido;
     } else if (nuevoTipo === 'tablero') {
-        bloque.config = bloque.config || {
-            pgn: '', modo: 'ejercicio', colorHumano: 'w', nivelSF: 5, orientacion: 'auto'
-        };
+        bloque.config = bloque.config || { pgn: '', modo: 'ejercicio', colorHumano: 'w', nivelSF: 5, orientacion: 'auto' };
         delete bloque.contenido;
         delete bloque.label;
         delete bloque.url;
@@ -2264,7 +2245,7 @@ function cambiarTipoBloque(claseId, temaId, bloqueId, nuevoTipo) {
     guardarCurso().then(() => actualizarUI());
 }
 
-// === FIN DE LA PARTE 1/3 ===
+// === FIN DE LA PARTE 2/4 DE script.js ===
 // ------------------------------------------------
 // RENDERIZADO PRINCIPAL
 // ------------------------------------------------
@@ -2314,17 +2295,11 @@ function renderizarSidebar() {
             if (e.target.closest('button')) return;
             const id = item.dataset.id;
             const clase = curso.clases.find(c => c.id === id);
-            if (clase && esClaseDesbloqueada(clase)) {
-                seleccionarClase(id);
-            } else if (clase && !esClaseDesbloqueada(clase)) {
-                seleccionarClase(id);
-            }
+            if (clase) seleccionarClase(id);
         });
     });
 
-    if (terminoBusqueda) {
-        setTimeout(() => filtrarClases(), 0);
-    }
+    if (terminoBusqueda) setTimeout(() => filtrarClases(), 0);
 }
 
 function filtrarClases() {
@@ -2389,7 +2364,8 @@ async function gestionarAccesosClase(claseId) {
             cb.addEventListener('change', async (e) => {
                 const uid = cb.dataset.uid;
                 let uidsActual = [...(accesosEspeciales[claseId] || [])];
-                if (cb.checked) { if (!uidsActual.includes(uid)) uidsActual.push(uid); } else { uidsActual = uidsActual.filter(id => id !== uid); }
+                if (cb.checked) { if (!uidsActual.includes(uid)) uidsActual.push(uid); }
+                else { uidsActual = uidsActual.filter(id => id !== uid); }
                 await db.collection('accesosEspeciales').doc(claseId).set({ uids: uidsActual }, { merge: true });
                 accesosEspeciales[claseId] = uidsActual;
                 actualizarUI();
@@ -2436,13 +2412,11 @@ function renderizarTemaRecursivo(tema, claseId, nivel = 0) {
                         if (!bloque.contenido) return '';
                         const esHtml = /<[a-z][\s\S]*>/i.test(bloque.contenido);
                         if (esHtml) {
-                            const contenidoSanitizado = sanitizeHtml(bloque.contenido);
-                            html = `<div class="bloque-texto">${contenidoSanitizado}</div>`;
+                            html = `<div class="bloque-texto">${sanitizeHtml(bloque.contenido)}</div>`;
                         } else {
-                            const textoSanitizado = escapeHtml(bloque.contenido);
-                            const textoConSaltos = textoSanitizado.replace(/\n/g, '<br>');
+                            const textoSanitizado = escapeHtml(bloque.contenido).replace(/\n/g, '<br>');
                             const est = bloque.estilo || {};
-                            html = `<div class="bloque-texto" style="font-size:${escapeHtml(est.fontSize)||'inherit'}; color:${escapeHtml(est.color)||'inherit'}; text-align:${escapeHtml(est.textAlign)||'left'};">${textoConSaltos}</div>`;
+                            html = `<div class="bloque-texto" style="font-size:${escapeHtml(est.fontSize)||'inherit'}; color:${escapeHtml(est.color)||'inherit'}; text-align:${escapeHtml(est.textAlign)||'left'};">${textoSanitizado}</div>`;
                         }
                         break;
                     }
@@ -2535,11 +2509,9 @@ function renderizarTemaRecursivo(tema, claseId, nivel = 0) {
             ${(tema.bloques || []).map((bloque, idx) => {
                 const esc = escapeHtml;
                 const info = TIPOS_BLOQUE[bloque.tipo] || TIPOS_BLOQUE.texto;
-
                 let previewRaw = '';
-                if (bloque.tipo === 'enlace') {
-                    previewRaw = bloque.label || '(sin etiqueta)';
-                } else if (bloque.tipo === 'tablero') {
+                if (bloque.tipo === 'enlace') previewRaw = bloque.label || '(sin etiqueta)';
+                else if (bloque.tipo === 'tablero') {
                     const cfg = bloque.config || {};
                     const caps = cfg.pgn ? (cfg.pgn.match(/\[Event\s/g) || []).length : 0;
                     previewRaw = caps > 0 ? `${caps} capítulo${caps === 1 ? '' : 's'} PGN` : '(sin PGN)';
@@ -2573,16 +2545,12 @@ function renderizarTemaRecursivo(tema, claseId, nivel = 0) {
                             <button class="btn-reorder" onclick="moverBloqueAbajo('${claseId}','${tema.id}','${bloque.id}')" title="Bajar bloque">↓</button>
                             <button class="btn btn-peligro btn-small" onclick="eliminarBloque('${claseId}','${tema.id}','${bloque.id}')" title="Eliminar bloque">🗑️</button>
                         </div>
-
                         ${bloque.tipo === 'texto' ? `
                             ${buildTextEditorToolbar(bloque.id)}
                             <div class="bloque-texto-editor"
-                                 contenteditable="true"
-                                 spellcheck="true"
+                                 contenteditable="true" spellcheck="true"
                                  data-placeholder="Escribe el texto aquí…"
-                                 data-clase="${claseId}"
-                                 data-tema="${tema.id}"
-                                 data-bloque="${bloque.id}"
+                                 data-clase="${claseId}" data-tema="${tema.id}" data-bloque="${bloque.id}"
                                  oninput="textEditorSave()">${bloque.contenido || ''}</div>
                         ` : bloque.tipo === 'enlace' ? `
                             <input placeholder="Etiqueta" value="${esc(bloque.label||'')}" onchange="actualizarBloqueEnlace('${claseId}','${tema.id}','${bloque.id}', this.value, this.nextElementSibling.value)">
@@ -2664,9 +2632,7 @@ function renderizarTemaRecursivo(tema, claseId, nivel = 0) {
         </div>
     </div>` : '';
 
-    const nivelBadgeHTML = nivel > 0
-        ? `<span class="nivel-badge">Nivel ${nivel}</span>`
-        : '';
+    const nivelBadgeHTML = nivel > 0 ? `<span class="nivel-badge">Nivel ${nivel}</span>` : '';
 
     const html = `
     <div class="tema ${completado ? 'abierto' : ''} ${!accesible ? 'bloqueado' : ''}"
@@ -2701,6 +2667,12 @@ function renderizarTemaRecursivo(tema, claseId, nivel = 0) {
 // ------------------------------------------------
 function actualizarUI() {
     const contentDiv = document.getElementById('main-content');
+
+    // ⭐ v12: Ocultar/mostrar botón Jugar vs IA según sesión
+    const btnJugarIA = document.getElementById('btn-jugar-ia');
+    if (btnJugarIA) {
+        btnJugarIA.style.display = currentUser ? 'inline-flex' : 'none';
+    }
 
     if (!currentUser) {
         contentDiv.innerHTML = `
@@ -2737,10 +2709,7 @@ function actualizarUI() {
                     </button>
                 </div>`;
         } else {
-            contentDiv.innerHTML = `
-                <div style="text-align:center; margin-top:40px; color:var(--texto-suave);">
-                    <p>Selecciona una clase del menú lateral.</p>
-                </div>`;
+            contentDiv.innerHTML = `<div style="text-align:center; margin-top:40px; color:var(--texto-suave);"><p>Selecciona una clase del menú lateral.</p></div>`;
         }
     } else if (curso.clases.length > 0) {
         const primeraDesbloqueada = curso.clases.find(c => esClaseDesbloqueada(c));
@@ -2748,39 +2717,28 @@ function actualizarUI() {
             claseActivaId = primeraDesbloqueada.id;
             renderizarContenido(primeraDesbloqueada);
         } else {
-            contentDiv.innerHTML = `
-                <div style="text-align:center; margin-top:40px; color:var(--texto-suave);">
-                    <p>No hay clases disponibles o todas están bloqueadas.</p>
-                </div>`;
+            contentDiv.innerHTML = `<div style="text-align:center; margin-top:40px; color:var(--texto-suave);"><p>No hay clases disponibles o todas están bloqueadas.</p></div>`;
         }
     } else {
-        contentDiv.innerHTML = `
-            <div style="text-align:center; margin-top:40px; color:var(--texto-suave);">
-                <p>📚 El curso aún no tiene contenido. Si eres administrador, agrega clases desde el menú.</p>
-            </div>`;
+        contentDiv.innerHTML = `<div style="text-align:center; margin-top:40px; color:var(--texto-suave);"><p>📚 El curso aún no tiene contenido. Si eres administrador, agrega clases desde el menú.</p></div>`;
     }
     habilitarEdicionPorLongPress();
 
     const idNuevoTema = window.__nuevoTemaId;
-    if (idNuevoTema) {
-        window.__nuevoTemaId = null;
-    }
+    if (idNuevoTema) window.__nuevoTemaId = null;
     const idParaAbrir = idNuevoTema || temaAbiertoGlobal;
 
     if (idParaAbrir) {
         setTimeout(() => {
             const tema = contentDiv.querySelector(`.tema[data-tema-id="${idParaAbrir}"]`);
             if (tema) {
-                if (!tema.classList.contains('abierto')) {
-                    tema.classList.add('abierto');
-                }
+                if (!tema.classList.contains('abierto')) tema.classList.add('abierto');
                 tema.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }
         }, 50);
     }
 
     setTimeout(() => inicializarTablerosEntrenador(), 100);
-
     guardarEstadoNavegacion();
 }
 
@@ -2859,7 +2817,7 @@ function habilitarEdicionPorLongPress() {
         let longPressed = false;
         const start = (e) => { longPressed = false; timer = setTimeout(() => { longPressed = true; activarEdicion(span); }, 600); };
         const cancel = () => { clearTimeout(timer); };
-        const cancelOnMove = (e) => { if (e.cancelable) { clearTimeout(timer); } };
+        const cancelOnMove = (e) => { if (e.cancelable) clearTimeout(timer); };
         const clickHandler = (e) => { if (longPressed) { e.stopPropagation(); e.preventDefault(); longPressed = false; } };
         span.addEventListener('mousedown', start);
         span.addEventListener('touchstart', start, { passive: true });
@@ -2888,7 +2846,8 @@ function activarEdicion(span) {
         const nuevo = input.value.trim();
         if (nuevo && nuevo !== textoActual) {
             const tipo = input.dataset.accion;
-            if (tipo === 'renombrarClase') { await renombrarClase(input.dataset.id, nuevo); } else if (tipo === 'renombrarTema') { await renombrarTema(input.dataset.clase, input.dataset.tema, nuevo); }
+            if (tipo === 'renombrarClase') { await renombrarClase(input.dataset.id, nuevo); }
+            else if (tipo === 'renombrarTema') { await renombrarTema(input.dataset.clase, input.dataset.tema, nuevo); }
         }
         const nuevoSpan = document.createElement('span');
         nuevoSpan.className = span.className;
@@ -2933,39 +2892,13 @@ function inicializarTablerosEntrenador() {
                 claseId: claseId,
                 temaId: temaId,
                 bloqueId: bloqueId,
-
-                onCompletado: () => {
-                    console.log('[v9] Tablero completado');
-                },
-                onGuardarVariante: (data) => {
-                    guardarVarianteEnFirestore(claseId, temaId, bloqueId, data);
-                },
-                onGuardarPGN: (data) => {
-                    guardarPGNEnFirestore(claseId, temaId, bloqueId, data.pgn);
-                },
-                onEliminarCapitulo: (data) => {
-                    eliminarCapituloDeFirestore(claseId, temaId, bloqueId, data.pgnNuevo);
-                },
-                onGuardarProgresoVariante: (data) => {
-                    guardarProgresoVarianteEnFirestore({
-                        claseId: data.claseId,
-                        temaId: data.temaId,
-                        bloqueId: data.bloqueId,
-                        capituloIdx: data.capituloIdx,
-                        clave: data.clave
-                    });
-                },
-                onGuardarProgresoCapCompleto: (data) => {
-                    guardarProgresoCapCompletoEnFirestore({
-                        claseId: data.claseId,
-                        temaId: data.temaId,
-                        bloqueId: data.bloqueId,
-                        capituloIdx: data.capituloIdx
-                    });
-                },
-                onRenombrarCapitulo: (data) => {
-                    guardarPGNEnFirestore(claseId, temaId, bloqueId, data.pgnNuevo);
-                }
+                onCompletado: () => { console.log('[v12] Tablero completado'); },
+                onGuardarVariante: (data) => guardarVarianteEnFirestore(claseId, temaId, bloqueId, data),
+                onGuardarPGN: (data) => guardarPGNEnFirestore(claseId, temaId, bloqueId, data.pgn),
+                onEliminarCapitulo: (data) => eliminarCapituloDeFirestore(claseId, temaId, bloqueId, data.pgnNuevo),
+                onGuardarProgresoVariante: (data) => guardarProgresoVarianteEnFirestore(data),
+                onGuardarProgresoCapCompleto: (data) => guardarProgresoCapCompletoEnFirestore(data),
+                onRenombrarCapitulo: (data) => guardarPGNEnFirestore(claseId, temaId, bloqueId, data.pgnNuevo)
             };
             window.Entrenador.render(bloqueEl, config, contexto);
             bloqueEl.dataset.inicializado = 'true';
@@ -3002,8 +2935,7 @@ function cargarPGNArchivoEnBloque(claseId, temaId, bloqueId, event) {
     if (!file) return;
     const reader = new FileReader();
     reader.onload = (ev) => {
-        const pgn = ev.target.result;
-        actualizarBloqueTablero(claseId, temaId, bloqueId, 'pgn', pgn);
+        actualizarBloqueTablero(claseId, temaId, bloqueId, 'pgn', ev.target.result);
         mostrarToast('📂 PGN cargado desde archivo', 'success');
     };
     reader.readAsText(file);
@@ -3017,28 +2949,21 @@ function guardarVarianteEnFirestore(claseId, temaId, bloqueId, data) {
     const bloque = tema?.bloques?.find(b => b.id === bloqueId);
     if (!bloque || bloque.tipo !== 'tablero') return;
 
-    const { capituloIdx, pgnCapitulo, nuevoNumLineas } = data;
+    const { capituloIdx, pgnCapitulo } = data;
     if (!pgnCapitulo) return;
 
     const pgnOriginal = (bloque.config || {}).pgn || '';
     const bloques = pgnOriginal.split(/(?=\[Event\s)/i).filter(b => b.trim());
-
-    if (capituloIdx < 0 || capituloIdx >= bloques.length) {
-        console.warn('[v9] Índice de capítulo fuera de rango');
-        return;
-    }
+    if (capituloIdx < 0 || capituloIdx >= bloques.length) return;
 
     bloques[capituloIdx] = pgnCapitulo.trim();
-    const pgnActualizado = bloques.join('\n\n');
-
     if (!bloque.config) bloque.config = {};
-    bloque.config.pgn = pgnActualizado;
+    bloque.config.pgn = bloques.join('\n\n');
 
     guardarCurso().then(() => {
-        console.log(`[v9] Variante guardada. Capítulo ${capituloIdx + 1} ahora tiene ${nuevoNumLineas} solución(es).`);
+        console.log(`[v12] Variante guardada en cap ${capituloIdx + 1}`);
     }).catch(err => {
-        console.error('[v9] Error al guardar variante:', err);
-        mostrarToast('Error al guardar la variante', 'error');
+        console.error('[v12] Error al guardar variante:', err);
     });
 }
 
@@ -3049,16 +2974,9 @@ function guardarPGNEnFirestore(claseId, temaId, bloqueId, pgn) {
     const tema = buscarTemaRecursivo(clase.temas, temaId);
     const bloque = tema?.bloques?.find(b => b.id === bloqueId);
     if (!bloque || bloque.tipo !== 'tablero') return;
-
     if (!bloque.config) bloque.config = {};
     bloque.config.pgn = pgn;
-
-    guardarCurso().then(() => {
-        console.log(`[v9] PGN guardado en Firestore (${claseId}/${temaId}/${bloqueId})`);
-    }).catch(err => {
-        console.error('[v9] Error al guardar PGN:', err);
-        mostrarToast('Error al guardar el PGN', 'error');
-    });
+    guardarCurso().then(() => console.log(`[v12] PGN guardado`)).catch(err => console.error('[v12]', err));
 }
 
 function eliminarCapituloDeFirestore(claseId, temaId, bloqueId, pgnNuevo) {
@@ -3068,16 +2986,9 @@ function eliminarCapituloDeFirestore(claseId, temaId, bloqueId, pgnNuevo) {
     const tema = buscarTemaRecursivo(clase.temas, temaId);
     const bloque = tema?.bloques?.find(b => b.id === bloqueId);
     if (!bloque || bloque.tipo !== 'tablero') return;
-
     if (!bloque.config) bloque.config = {};
     bloque.config.pgn = pgnNuevo;
-
-    guardarCurso().then(() => {
-        console.log(`[v9] Capítulo eliminado y PGN actualizado en Firestore`);
-    }).catch(err => {
-        console.error('[v9] Error al eliminar capítulo:', err);
-        mostrarToast('Error al eliminar el capítulo', 'error');
-    });
+    guardarCurso().then(() => console.log(`[v12] Capítulo eliminado`)).catch(err => console.error('[v12]', err));
 }
 
 // ------------------------------------------------
@@ -3110,7 +3021,281 @@ function inicializarBadgeELO() {
 }
 window.inicializarBadgeELO = inicializarBadgeELO;
 
-// === FIN DE LA PARTE 2/3 ===
+// ================================================================
+// ⭐ v12: JUEGO VS IA — MODAL DE CONFIGURACIÓN Y SALA LIBRE
+// ================================================================
+
+// Abre el modal de configuración del juego
+function abrirModalJuegoIA() {
+    if (!currentUser) {
+        mostrarToast('Debes iniciar sesión para jugar', 'error');
+        return;
+    }
+
+    if (!modalJuegoIA) {
+        console.warn('[v12] Modal de juego IA no encontrado en el DOM');
+        return;
+    }
+
+    // Reset de la config a valores por defecto (o mantener la última)
+    const niveles = [
+        { nivel: 1, nombre: 'Principiante', elo: 800 },
+        { nivel: 2, nombre: 'Muy fácil', elo: 1000 },
+        { nivel: 3, nombre: 'Fácil', elo: 1200 },
+        { nivel: 4, nombre: 'Normal', elo: 1400 },
+        { nivel: 5, nombre: 'Intermedio', elo: 1600 },
+        { nivel: 6, nombre: 'Difícil', elo: 1800 },
+        { nivel: 7, nombre: 'Muy difícil', elo: 2100 },
+        { nivel: 8, nombre: 'Maestro', elo: 2400 }
+    ];
+
+    const tiempos = [
+        { id: 'libre', nombre: 'Sin límite' },
+        { id: '3+0', nombre: '3 min' },
+        { id: '5+0', nombre: '5 min' },
+        { id: '10+0', nombre: '10 min' },
+        { id: '15+10', nombre: '15 min + 10s' }
+    ];
+
+    const htmlNiveles = niveles.map(n => `
+        <button class="juego-ia-nivel-btn ${juegoIAConfig.nivelSF === n.nivel ? 'activo' : ''}" data-nivel="${n.nivel}">
+            <span class="nivel-num">Nv${n.nivel}</span>
+            <span class="nivel-elo">~${n.elo} ELO</span>
+            <span class="nivel-nombre">${n.nombre}</span>
+        </button>
+    `).join('');
+
+    const htmlColores = `
+        <button class="juego-ia-color-btn ${juegoIAConfig.colorHumano === 'w' ? 'activo' : ''}" data-color="w">
+            <span class="pieza">♔</span> Blancas
+        </button>
+        <button class="juego-ia-color-btn ${juegoIAConfig.colorHumano === 'b' ? 'activo' : ''}" data-color="b">
+            <span class="pieza">♚</span> Negras
+        </button>
+        <button class="juego-ia-color-btn ${juegoIAConfig.colorHumano === 'random' ? 'activo' : ''}" data-color="random">
+            🎲 Aleatorio
+        </button>
+    `;
+
+    const htmlTiempos = tiempos.map(t => `
+        <button class="juego-ia-tiempo-btn ${juegoIAConfig.tiempo === t.id ? 'activo' : ''}" data-tiempo="${t.id}">
+            ${t.nombre}
+        </button>
+    `).join('');
+
+    const eloHumano = window.Entrenador && window.Entrenador.obtenerELO
+        ? window.Entrenador.obtenerELO()
+        : 1200;
+
+    modalJuegoIA.querySelector('.modal-juego-ia-content').innerHTML = `
+        <div class="juego-ia-setup">
+            <div class="juego-ia-header">
+                <span class="juego-ia-header-icon">♟️</span>
+                <div class="juego-ia-header-text">
+                    <h3>Jugar vs Inteligencia Artificial</h3>
+                    <p>Elige el nivel, tu color y el tiempo. Tu ELO actual: <strong>${eloHumano}</strong></p>
+                </div>
+            </div>
+
+            <div class="juego-ia-seccion">
+                <label class="juego-ia-seccion-label">🎯 Nivel de dificultad</label>
+                <div class="juego-ia-niveles">${htmlNiveles}</div>
+            </div>
+
+            <div class="juego-ia-seccion">
+                <label class="juego-ia-seccion-label">♟️ Tu color</label>
+                <div class="juego-ia-colores">${htmlColores}</div>
+            </div>
+
+            <div class="juego-ia-seccion">
+                <label class="juego-ia-seccion-label">⏱️ Tiempo de partida</label>
+                <div class="juego-ia-tiempos">${htmlTiempos}</div>
+            </div>
+        </div>
+
+        <div class="juego-ia-preview">
+            <span class="preview-item">🤖 <strong>IA Nv${juegoIAConfig.nivelSF}</strong></span>
+            <span class="preview-item">🎨 <strong>${juegoIAConfig.colorHumano === 'w' ? 'Blancas' : juegoIAConfig.colorHumano === 'b' ? 'Negras' : 'Aleatorio'}</strong></span>
+            <span class="preview-item">⏱️ <strong>${(TIEMPOS_PARTIDA_MAP[juegoIAConfig.tiempo] || 'Sin límite')}</strong></span>
+        </div>
+
+        <div class="juego-ia-acciones">
+            <button class="juego-ia-btn-cancelar" data-accion="cancelar">Cancelar</button>
+            <button class="juego-ia-btn-empezar" data-accion="empezar" ${juegoIAEsperandoStockfish ? 'disabled' : ''}>
+                ${juegoIAEsperandoStockfish ? '⏳ Cargando motor…' : '▶ Empezar partida'}
+            </button>
+        </div>
+    `;
+
+    // Listeners de los botones
+    modalJuegoIA.querySelectorAll('.juego-ia-nivel-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            modalJuegoIA.querySelectorAll('.juego-ia-nivel-btn').forEach(b => b.classList.remove('activo'));
+            btn.classList.add('activo');
+            juegoIAConfig.nivelSF = parseInt(btn.dataset.nivel, 10);
+            actualizarPreviewJuegoIA();
+        });
+    });
+
+    modalJuegoIA.querySelectorAll('.juego-ia-color-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            modalJuegoIA.querySelectorAll('.juego-ia-color-btn').forEach(b => b.classList.remove('activo'));
+            btn.classList.add('activo');
+            juegoIAConfig.colorHumano = btn.dataset.color;
+            actualizarPreviewJuegoIA();
+        });
+    });
+
+    modalJuegoIA.querySelectorAll('.juego-ia-tiempo-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            modalJuegoIA.querySelectorAll('.juego-ia-tiempo-btn').forEach(b => b.classList.remove('activo'));
+            btn.classList.add('activo');
+            juegoIAConfig.tiempo = btn.dataset.tiempo;
+            actualizarPreviewJuegoIA();
+        });
+    });
+
+    const btnCancelar = modalJuegoIA.querySelector('[data-accion="cancelar"]');
+    if (btnCancelar) btnCancelar.addEventListener('click', () => cerrarModalJuegoIA());
+
+    const btnEmpezar = modalJuegoIA.querySelector('[data-accion="empezar"]');
+    if (btnEmpezar) btnEmpezar.addEventListener('click', () => iniciarJuegoIA());
+
+    // Abrir el modal
+    modalJuegoIA.classList.add('active');
+
+    // Precargar Stockfish en background
+    precargarStockfishParaJuego();
+}
+
+// Mapa auxiliar para el preview
+const TIEMPOS_PARTIDA_MAP = {
+    'libre': 'Sin límite',
+    '3+0': '3 min',
+    '5+0': '5 min',
+    '10+0': '10 min',
+    '15+10': '15 min + 10s'
+};
+
+// Actualiza el preview del modal
+function actualizarPreviewJuegoIA() {
+    if (!modalJuegoIA) return;
+    const preview = modalJuegoIA.querySelector('.juego-ia-preview');
+    if (!preview) return;
+    preview.innerHTML = `
+        <span class="preview-item">🤖 <strong>IA Nv${juegoIAConfig.nivelSF}</strong></span>
+        <span class="preview-item">🎨 <strong>${juegoIAConfig.colorHumano === 'w' ? 'Blancas' : juegoIAConfig.colorHumano === 'b' ? 'Negras' : 'Aleatorio'}</strong></span>
+        <span class="preview-item">⏱️ <strong>${TIEMPOS_PARTIDA_MAP[juegoIAConfig.tiempo] || 'Sin límite'}</strong></span>
+    `;
+}
+
+// Precarga Stockfish en background (no bloquea)
+function precargarStockfishParaJuego() {
+    if (!window.Entrenador || typeof window.Entrenador.precargarStockfish !== 'function') return;
+    if (juegoIAEsperandoStockfish) return;
+
+    const estado = window.Entrenador.estadoStockfish();
+    if (estado === 'listo') return;
+
+    juegoIAEsperandoStockfish = true;
+    const btnEmpezar = modalJuegoIA?.querySelector('[data-accion="empezar"]');
+    if (btnEmpezar) {
+        btnEmpezar.disabled = true;
+        btnEmpezar.textContent = '⏳ Cargando motor…';
+    }
+
+    window.Entrenador.precargarStockfish().then(() => {
+        juegoIAEsperandoStockfish = false;
+        const btnEmpezar2 = modalJuegoIA?.querySelector('[data-accion="empezar"]');
+        if (btnEmpezar2) {
+            btnEmpezar2.disabled = false;
+            btnEmpezar2.innerHTML = '▶ Empezar partida';
+        }
+    });
+}
+
+// Cierra el modal de configuración
+function cerrarModalJuegoIA() {
+    if (!modalJuegoIA) return;
+    modalJuegoIA.classList.remove('active');
+}
+window.cerrarModalJuegoIA = cerrarModalJuegoIA;
+
+// Inicia la partida vs IA
+function iniciarJuegoIA() {
+    if (!currentUser) return;
+
+    // Resolver color aleatorio
+    let colorHumano = juegoIAConfig.colorHumano;
+    if (colorHumano === 'random') {
+        colorHumano = Math.random() < 0.5 ? 'w' : 'b';
+    }
+
+    // Cambiar el contenido del modal a la sala de juego
+    const contentEl = modalJuegoIA.querySelector('.modal-juego-ia-content');
+    if (!contentEl) return;
+
+    contentEl.innerHTML = `
+        <div class="juego-ia-sala" id="contenedor-juego-ia">
+            <div style="padding:40px; text-align:center; color:var(--texto-suave);">
+                <div class="loader" style="width:32px; height:32px; border-width:3px; margin-bottom:12px;"></div>
+                <p>Preparando tablero…</p>
+            </div>
+        </div>
+    `;
+
+    const contenedor = document.getElementById('contenedor-juego-ia');
+    if (!contenedor) return;
+
+    // Verificar que el entrenador esté disponible
+    if (!window.Entrenador || typeof window.Entrenador.abrirSalaLibre !== 'function') {
+        contenedor.innerHTML = '<div style="padding:40px; text-align:center; color:var(--peligro);">⚠️ El entrenador no está disponible. Recarga la página.</div>';
+        return;
+    }
+
+    // Config y contexto para la sala libre
+    const config = {
+        nivelSF: juegoIAConfig.nivelSF,
+        colorHumano: colorHumano,
+        tiempo: juegoIAConfig.tiempo
+    };
+
+    const contexto = {
+        esAdmin: !!(currentUser && currentUser.esAdmin),
+        uid: currentUser.uid,
+        onSalirSalaLibre: () => {
+            cerrarModalJuegoIA();
+            juegoIAInstancia = null;
+        },
+        onFinPartida: (data) => {
+            console.log('[v12] Partida terminada:', data.resultado);
+            // Actualizar el badge ELO del header
+            inicializarBadgeELO();
+        }
+    };
+
+    try {
+        // Limpiar instancia previa si existía
+        if (juegoIAInstancia) {
+            try { window.Entrenador.destroy(contenedor); } catch (e) {}
+            juegoIAInstancia = null;
+        }
+
+        juegoIAInstancia = window.Entrenador.abrirSalaLibre(contenedor, config, contexto);
+    } catch (err) {
+        console.error('[v12] Error al iniciar sala libre:', err);
+        contenedor.innerHTML = '<div style="padding:40px; text-align:center; color:var(--peligro);">⚠️ No se pudo iniciar la partida. Intenta de nuevo.</div>';
+    }
+}
+
+// Cierra la sala libre y vuelve al modal de configuración
+function cerrarSalaLibre() {
+    cerrarModalJuegoIA();
+    juegoIAInstancia = null;
+}
+window.cerrarSalaLibre = cerrarSalaLibre;
+
+// === FIN DE LA PARTE 3/4 DE script.js ===
 // ------------------------------------------------
 // EVENTOS DE AUTENTICACIÓN Y CARGA INICIAL
 // ------------------------------------------------
@@ -3159,13 +3344,10 @@ auth.onAuthStateChanged(async (user) => {
             if (estadoPrevio && estadoPrevio.scrollTop) {
                 setTimeout(() => {
                     const content = document.getElementById('main-content');
-                    if (content) {
-                        content.scrollTop = estadoPrevio.scrollTop;
-                    }
+                    if (content) content.scrollTop = estadoPrevio.scrollTop;
                 }, 100);
             }
             actualizarBotonDatosClub();
-
             inicializarBadgeELO();
 
             if (!currentUser.esAdmin && (!userProfile || !userProfile.nombre || !userProfile.apellidos)) {
@@ -3272,7 +3454,6 @@ if (elAuthForm) {
         if (modoRegistro) {
             nombre = document.getElementById('nombre').value.trim();
             apellidos = document.getElementById('apellidos').value.trim();
-
             if (!nombre || !apellidos) {
                 return mostrarToast('Por favor escribe tu nombre y apellidos', 'error');
             }
@@ -3329,7 +3510,6 @@ if (elSwitchAuth) {
         if (registerFields) {
             registerFields.style.display = modoRegistro ? 'block' : 'none';
         }
-
         limpiarCampos();
     });
 }
@@ -3443,10 +3623,17 @@ if (elSearchInput) {
 
 document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
+        // Cerrar el modal de juego IA si está abierto y no hay partida activa
+        if (modalJuegoIA && modalJuegoIA.classList.contains('active') && !juegoIAInstancia) {
+            cerrarModalJuegoIA();
+            return;
+        }
         const modalesAbiertos = document.querySelectorAll('.modal-overlay.active');
         if (modalesAbiertos.length === 0) return;
         const ultimoModal = modalesAbiertos[modalesAbiertos.length - 1];
         if (ultimoModal.id === 'modal-confirm' && confirmCallback) return;
+        // No cerrar el modal de juego si hay partida en curso
+        if (ultimoModal.id === 'modal-juego-ia' && juegoIAInstancia) return;
         ultimoModal.classList.remove('active');
     }
 
@@ -3461,6 +3648,7 @@ document.addEventListener('keydown', (e) => {
 // ------------------------------------------------
 // INICIALIZACIÓN
 // ------------------------------------------------
+// ⭐ v9: Exponer TODAS las funciones ANTES de cualquier inicialización
 window.mostrarLogin = mostrarLogin;
 window.cambiarCuenta = cambiarCuenta;
 window.confirmarCerrarSesion = confirmarCerrarSesion;
@@ -3543,7 +3731,13 @@ window.guardarProgresoVarianteEnFirestore = guardarProgresoVarianteEnFirestore;
 window.guardarProgresoCapCompletoEnFirestore = guardarProgresoCapCompletoEnFirestore;
 window.suscribirProgresoTableros = suscribirProgresoTableros;
 
-// v9: helper de utilidad para exponer y usar en HTML
+// ⭐ v12: Juego vs IA
+window.abrirModalJuegoIA = abrirModalJuegoIA;
+window.cerrarModalJuegoIA = cerrarModalJuegoIA;
+window.iniciarJuegoIA = iniciarJuegoIA;
+window.cerrarSalaLibre = cerrarSalaLibre;
+
+// Helper de utilidad
 window._exponerFuncionesGlobales = _exponerFuncionesGlobales;
 window._exponerFuncionesGlobales();
 
@@ -3563,8 +3757,8 @@ try {
     console.error('[Init] Error en suscribirDatosClub:', err);
 }
 
-// ⭐ v10: Log final actualizado
-console.log('✅ Club Morphy v10 – fix race condition en guardado del curso');
+// ⭐ v12: Log final
+console.log('✅ Club Morphy v12 – fix multi-dispositivo + juego vs IA + reloj + análisis');
 
 // ================================================================
 // REGISTRO DEL SERVICE WORKER
@@ -3589,4 +3783,4 @@ if ('serviceWorker' in navigator) {
     });
 }
 
-// === FIN DEL ARCHIVO script.js v10 ===
+// === FIN DEL ARCHIVO script.js v12 ===
