@@ -272,7 +272,7 @@ function mostrarToast(mensaje, tipo = 'success') {
     toast.textContent = mensaje;
     toast.className = `toast ${tipo} show`;
     clearTimeout(toast._timeout);
-    toast._timeout = setTimeout(() => toast.classList.remove('show'), 3000);
+    toast._timeout = setTimeout(() => toast.classList.remove('show'), 8000);
 }
 
 function mostrarConfirmacion(titulo, mensaje, callback) {
