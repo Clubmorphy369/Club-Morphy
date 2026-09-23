@@ -3757,8 +3757,8 @@ try {
     console.error('[Init] Error en suscribirDatosClub:', err);
 }
 
-// ⭐ v12: Log final
-console.log('✅ Club Morphy v12 – fix multi-dispositivo + juego vs IA + reloj + análisis');
+// ⭐ v18: Log final
+console.log('✅ Club Morphy v18 – fix multi-dispositivo + juego vs IA + reloj + análisis');
 
 // ================================================================
 // REGISTRO DEL SERVICE WORKER
