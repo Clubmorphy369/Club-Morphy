@@ -2808,7 +2808,7 @@ if (this.chess.turn() !== colorHumano) {
             let mejorVal = max ? -Infinity : Infinity;
             for (const m of moves) {
                 c.move({ from: m.from, to: m.to, promotion: m.promotion || 'q' });
-                const val = this.minimax(c, 2, -Infinity, Infinity, !max);
+                const val = this.minimax(c, 1, -Infinity, Infinity, !max);
                 c.undo();
                 if ((max && val > mejorVal) || (!max && val < mejorVal)) { mejorVal = val; mejor = m; }
             }
