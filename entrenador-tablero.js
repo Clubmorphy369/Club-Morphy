@@ -84,19 +84,25 @@
                     localStorage.getItem(MODO_EDICION_KEY) === 'true';
             } catch (e) { /* ignorar */ }
 
-            // ⭐ v20 Fix E: Progreso por variante CARGA desde el contexto
-            this.progresoVariantes = new Set();
-            if (this.contexto.progresoTableros && typeof this.contexto.progresoTableros === 'object') {
-                Object.keys(this.contexto.progresoTableros).forEach(key => {
-                    if (this.contexto.progresoTableros[key] === true) {
-                        this.progresoVariantes.add(key);
-                    }
-                });
-                console.log(`[Entrenador v20] Progreso cargado: ${this.progresoVariantes.size} entradas`);
-            }
+                       // ⭐ v21 Fix E: Progreso por variante — cargar filtrando por este bloque
             this.claseIdContexto = this.contexto.claseId || null;
             this.temaIdContexto = this.contexto.temaId || null;
             this.bloqueIdContexto = this.contexto.bloqueId || null;
+
+            this.progresoVariantes = new Set();
+            if (this.contexto.progresoTableros && typeof this.contexto.progresoTableros === 'object') {
+                const prefijoPropio = (this.claseIdContexto && this.temaIdContexto && this.bloqueIdContexto)
+                    ? `tablero_${this.claseIdContexto}_${this.temaIdContexto}_${this.bloqueIdContexto}_`
+                    : null;
+                Object.keys(this.contexto.progresoTableros).forEach(key => {
+                    if (this.contexto.progresoTableros[key] === true) {
+                        if (prefijoPropio && key.startsWith(prefijoPropio)) {
+                            this.progresoVariantes.add(key.substring(prefijoPropio.length));
+                        }
+                    }
+                });
+                console.log(`[Entrenador v21] Progreso cargado: ${this.progresoVariantes.size} entradas`);
+            }
 
             // Sala libre
             this.esSalaLibre = !!this.config.esSalaLibre;
