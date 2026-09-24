@@ -2145,3 +2145,46 @@ button, .btn, .btn-small, .btn-reorder, .btn-icon, .btn-copy,
 .cm-tablero-modal-overlay {
     /* Estilos ya definidos en entrenador.css */
 }
+
+/* ============================================================
+   ⭐ v21: MODO ZEN — Ocultar elementos no esenciales del tablero
+   ============================================================ */
+body.modo-zen .cm-tablero-capitulos-bar,
+body.modo-zen .cm-tablero-progress-info,
+body.modo-zen .cm-tablero-meta,
+body.modo-zen .cm-tablero-modo-indicator,
+body.modo-zen .cm-tablero-persist-check,
+body.modo-zen .cm-tablero-edit-toolbar,
+body.modo-zen .cm-tablero-admin-block-panel,
+body.modo-zen .cm-tablero-btn-admin,
+body.modo-zen .solo-admin,
+body.modo-zen .tema-header .btn-reorder,
+body.modo-zen .tema-header button[onclick*="toggleBloqueoTema"],
+body.modo-zen .tema-header button[onclick*="gestionarAccesosTema"],
+body.modo-zen .tema-header button[onclick*="agregarSubtema"],
+body.modo-zen .tema-header button[onclick*="eliminarTema"],
+body.modo-zen .tema-header button[onclick*="moverTema"] {
+    display: none !important;
+}
+
+/* En modo zen, el panel del tablero se centra mejor */
+body.modo-zen .cm-tablero-game {
+    grid-template-columns: 1fr;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+body.modo-zen .cm-tablero-panel {
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+/* Reducir espacio perdido */
+body.modo-zen .content {
+    padding: 20px;
+}
+
+body.modo-zen .tema-body {
+    padding: 16px;
+    gap: 12px;
+}
