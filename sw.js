@@ -3,8 +3,8 @@
 // =============================================================
 
 // ⚠️ Sube la versión cuando hagas cambios importantes
-// ⭐ v20: fix multi-dispositivo + juego vs IA + reloj + análisis
-const CACHE_NAME = 'club-morphy-v20';
+// ⭐ v21: fix multi-dispositivo + juego vs IA + reloj + análisis
+const CACHE_NAME = 'club-morphy-v21';
 const OFFLINE_URL = '/Club-Morphy/offline.html';
 
 const STATIC_ASSETS = [
@@ -13,7 +13,10 @@ const STATIC_ASSETS = [
     '/Club-Morphy/offline.html',
     '/Club-Morphy/styles.css',
     '/Club-Morphy/entrenador.css',
-    '/Club-Morphy/script.js',
+    '/Club-Morphy/script-core.js',
+    '/Club-Morphy/script-curso.js',
+    '/Club-Morphy/script-render.js',
+    '/Club-Morphy/script-main.js',
     '/Club-Morphy/entrenador-core.js',
     '/Club-Morphy/entrenador-tablero.js',
     '/Club-Morphy/entrenador-api.js',
