@@ -563,12 +563,22 @@
             this._on('[data-rol="btnNext"]', 'click', () => this.capituloSiguiente());
 
             if (!esAdmin) {
+                // ⭐ v21: Cargar valor persistido del auto-avance
+                try {
+                    const autoAvanceGuardado = localStorage.getItem('cm-tablero-auto-avance') === 'true';
+                    this.autoAvance = autoAvanceGuardado;
+                    const checkbox = this.contenedor.querySelector('[data-rol="autoAvanceCheck"]');
+                    if (checkbox) checkbox.checked = autoAvanceGuardado;
+                } catch (e) { /* ignorar */ }
+
                 this._on('[data-rol="autoAvanceCheck"]', 'change', (e) => {
                     this.autoAvance = e.target.checked;
+                    try {
+                        localStorage.setItem('cm-tablero-auto-avance', e.target.checked ? 'true' : 'false');
+                    } catch (err) { /* ignorar */ }
                     this.mostrarToast(e.target.checked ? '✅ Auto-avance activado' : '⏸️ Auto-avance desactivado', '');
                 });
             }
-
             if (esAdmin) {
                 if (this.$persistCheck) {
                     this.$persistCheck.checked = this.modoEdicionPersistente;
