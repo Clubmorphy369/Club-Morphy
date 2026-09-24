@@ -1976,7 +1976,7 @@ if (this.chess.turn() !== colorHumano) {
                     const sq = f + r;
                     const fileIdx = files.indexOf(f);
                     const rankNum = parseInt(r, 10);
-                    const isLight = (fileIdx + rankNum) % 2 === 1;
+                    const isLight = (fileIdx + rankNum) % 2 === 0;
                     const div = document.createElement('div');
                     div.className = 'cm-tablero-square ' + (isLight ? 'light' : 'dark');
                     div.dataset.square = sq;
