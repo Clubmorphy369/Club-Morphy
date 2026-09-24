@@ -309,9 +309,11 @@
                 Curso.suscribirNotificaciones();
                 Curso.suscribirSolicitudesAdmin();
                 Curso.suscribirMisSolicitudes();
+                // ⭐ v21: Cargar progreso ANTES de iniciar la escucha del curso
+                // para que los tableros se inicialicen con el progreso ya cargado
+                await Curso.sincronizarProgresoDesdeFirestore();
                 Curso.suscribirProgresoTableros();
                 Curso.iniciarEscuchaCurso();
-                await Curso.sincronizarProgresoDesdeFirestore();
 
                 const estadoPrevio = cargarEstadoNavegacion();
                 if (estadoPrevio && estadoPrevio.claseActivaId && Core.state.curso.clases.some(c => c.id === estadoPrevio.claseActivaId)) {
