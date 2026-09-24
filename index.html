@@ -291,12 +291,13 @@
 
     <!-- ========================================================
          SCRIPTS
-         El orden es CRÍTICO y no debe cambiarse:
-         1. Firebase + Chess.js (dependencias externas)
-         2. entrenador-core.js   (define utilidades, SF, ELO)
-         3. entrenador-tablero.js (define la clase InstanciaTablero)
-         4. entrenador-api.js    (define window.Entrenador)
-         5. script.js            (usa window.Entrenador)
+         1. entrenador-core.js    (define utilidades, SF, ELO)
+         2. entrenador-tablero.js (define la clase InstanciaTablero)
+         3. entrenador-api.js     (define window.Entrenador)
+         4. script-core.js        (Firebase + utilidades)
+         5. script-curso.js       (CRUD curso)
+         6. script-render.js      (UI + juego IA)
+         7. script-main.js        (auth + inicialización)
          ======================================================== -->
 
     <!-- Firebase -->
@@ -312,7 +313,10 @@
     <script src="entrenador-tablero.js"></script>
     <script src="entrenador-api.js"></script>
 
-    <!-- Script principal de la academia -->
-    <script src="script.js"></script>
+    <!-- Script principal de la academia — Refactor v20 en 4 archivos modulares -->
+    <script src="script-core.js"></script>
+    <script src="script-curso.js"></script>
+    <script src="script-render.js"></script>
+    <script src="script-main.js"></script>
 </body>
 </html>
