@@ -3,28 +3,31 @@
 // =============================================================
 
 // ⚠️ Sube la versión cuando hagas cambios importantes
-// ⭐ v22: fix multi-dispositivo + juego vs IA + reloj + análisis
-const CACHE_NAME = 'club-morphy-v22';
-const OFFLINE_URL = '/Club-Morphy/offline.html';
+// ⭐ v23: rutas relativas (compatibilidad Firebase + GitHub Pages)
+const CACHE_NAME = 'club-morphy-v23';
+
+// Scope dinámico: funciona tanto en "/" (Firebase) como en "/Club-Morphy/" (GitHub Pages)
+const ROOT = self.registration.scope;
+const OFFLINE_URL = ROOT + 'offline.html';
 
 const STATIC_ASSETS = [
-    '/Club-Morphy/',
-    '/Club-Morphy/index.html',
-    '/Club-Morphy/offline.html',
-    '/Club-Morphy/styles.css',
-    '/Club-Morphy/entrenador.css',
-    '/Club-Morphy/script-core.js',
-    '/Club-Morphy/script-curso.js',
-    '/Club-Morphy/script-render.js',
-    '/Club-Morphy/script-main.js',
-    '/Club-Morphy/entrenador-core.js',
-    '/Club-Morphy/entrenador-tablero.js',
-    '/Club-Morphy/entrenador-api.js',
-    '/Club-Morphy/manifest.json',
-    '/Club-Morphy/assets/android-chrome-192x192.png',
-    '/Club-Morphy/assets/android-chrome-512x512.png',
-    '/Club-Morphy/assets/apple-touch-icon.png',
-    '/Club-Morphy/assets/favicon.ico',
+    ROOT,
+    ROOT + 'index.html',
+    ROOT + 'offline.html',
+    ROOT + 'styles.css',
+    ROOT + 'entrenador.css',
+    ROOT + 'script-core.js',
+    ROOT + 'script-curso.js',
+    ROOT + 'script-render.js',
+    ROOT + 'script-main.js',
+    ROOT + 'entrenador-core.js',
+    ROOT + 'entrenador-tablero.js',
+    ROOT + 'entrenador-api.js',
+    ROOT + 'manifest.json',
+    ROOT + 'assets/android-chrome-192x192.png',
+    ROOT + 'assets/android-chrome-512x512.png',
+    ROOT + 'assets/apple-touch-icon.png',
+    ROOT + 'assets/favicon.ico',
 ];
 
 // ⭐ Flag para saber si había una versión previa instalada
@@ -34,10 +37,9 @@ let habiaCachePrevia = false;
 // INSTALL
 // ============================
 self.addEventListener('install', event => {
-    console.log('[SW] Instalando versión:', CACHE_NAME);
+    console.log('[SW] Instalando versión:', CACHE_NAME, 'scope:', ROOT);
     event.waitUntil(
         caches.keys().then(keys => {
-            // ⭐ ¿Ya existía alguna caché de club-morphy antes?
             habiaCachePrevia = keys.some(key => key.startsWith('club-morphy-'));
             return caches.open(CACHE_NAME).then(cache => {
                 console.log('[SW] Precaching assets');
@@ -67,8 +69,6 @@ self.addEventListener('activate', event => {
     );
     self.clients.claim();
 
-    // ⭐ Solo avisar a las pestañas si ESTA instalación es una actualización real
-    // (no la primera vez que el usuario abre la página)
     if (habiaCachePrevia) {
         self.clients.matchAll().then(clients => {
             clients.forEach(client => {
@@ -85,10 +85,8 @@ self.addEventListener('fetch', event => {
     const request = event.request;
     const url = new URL(request.url);
 
-    // 1️⃣ Ignorar métodos que no sean GET
     if (request.method !== 'GET') return;
 
-    // 2️⃣ Ignorar solicitudes a Firebase / Google / APIs externas
     const ignoredHosts = [
         'firebase',
         'firebaseio.com',
@@ -110,19 +108,14 @@ self.addEventListener('fetch', event => {
         return;
     }
 
-    // 3️⃣ Ignorar solicitudes que no sean del mismo origen
     if (url.origin !== self.location.origin) return;
 
-    // ⭐ 4️⃣ Decidir estrategia según tipo de recurso
-    //    - HTML / JS / CSS  → NETWORK FIRST (siempre la última versión)
-    //    - resto (iconos)   → CACHE FIRST    (rápido, cambian poco)
     const esHtml = /\.html?$/i.test(url.pathname);
     const esJs = /\.js$/i.test(url.pathname);
     const esCss = /\.css$/i.test(url.pathname);
-    const esRaiz = url.pathname === '/Club-Morphy/' || url.pathname === '/Club-Morphy';
+    const esRaiz = url.pathname === '/' || url.pathname === '/Club-Morphy/' || url.pathname.endsWith('/');
 
     if (esHtml || esJs || esCss || esRaiz) {
-        // 🚀 NETWORK FIRST: intenta red; si falla, usa cache; si no hay cache, offline.html
         event.respondWith(
             fetch(request)
                 .then(response => {
@@ -137,19 +130,15 @@ self.addEventListener('fetch', event => {
                         if (cached) return cached;
                         if (request.mode === 'navigate') {
                             return caches.match(OFFLINE_URL)
-                                .then(offlinePage => offlinePage || caches.match('/Club-Morphy/index.html'));
+                                .then(offlinePage => offlinePage || caches.match(ROOT + 'index.html'));
                         }
-                        return new Response('', {
-                            status: 408,
-                            statusText: 'Sin conexión'
-                        });
+                        return new Response('', { status: 408, statusText: 'Sin conexión' });
                     });
                 })
         );
         return;
     }
 
-    // 📦 CACHE FIRST: para iconos, manifest, offline.html (cambian poco)
     event.respondWith(
         caches.match(request).then(cached => {
             if (cached) return cached;
@@ -165,12 +154,9 @@ self.addEventListener('fetch', event => {
                 .catch(() => {
                     if (request.mode === 'navigate') {
                         return caches.match(OFFLINE_URL)
-                            .then(offlinePage => offlinePage || caches.match('/Club-Morphy/index.html'));
+                            .then(offlinePage => offlinePage || caches.match(ROOT + 'index.html'));
                     }
-                    return new Response('', {
-                        status: 408,
-                        statusText: 'Sin conexión'
-                    });
+                    return new Response('', { status: 408, statusText: 'Sin conexión' });
                 });
         })
     );
