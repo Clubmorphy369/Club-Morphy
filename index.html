@@ -32,6 +32,7 @@
         </div>
         <div class="header-right">
             <span id="user-info" style="font-size:0.9rem;"></span>
+            <!-- Badge del ELO en el header -->
             <span id="header-elo-badge" title="Tu ELO actual" style="display:none; background:linear-gradient(135deg,#fef3c7,#fde68a); border:2px solid #d97706; color:#92400e; font-weight:800; padding:4px 10px; border-radius:20px; font-size:0.82rem; transition: transform 0.2s;">🏆 <span id="header-elo-value">1200</span></span>
             <button class="btn" id="btn-datos-club" type="button" style="display:none;" onclick="mostrarDatosClub()">📋 <span class="btn-label">Contacto</span></button>
             <button class="btn" id="btn-donar" type="button" style="display:none;" onclick="mostrarDonacion()">❤️ <span class="btn-label">Donar</span></button>
@@ -39,7 +40,7 @@
                 🔔 <span class="btn-label">Notif.</span> <span id="notif-badge" class="notification-badge" style="display:none;">0</span>
             </button>
             <button class="btn" id="btn-progreso" type="button" style="display:none;" onclick="abrirPanelProgreso()">📊 <span class="btn-label">Progreso</span></button>
-            <!-- ⭐ v12: Nuevo botón Jugar vs IA -->
+            <!-- Botón Jugar vs IA -->
             <button class="btn btn-jugar-ia" id="btn-jugar-ia" type="button" onclick="abrirModalJuegoIA()" title="Jugar una partida contra Stockfish">♟️ <span class="btn-label">Jugar vs IA</span></button>
             <button class="btn" id="btn-zen" type="button" onclick="toggleModoZen()" title="Modo zen (sin distracciones)">🎯 <span class="btn-label">Zen</span></button>
             <button class="btn" id="btn-solicitudes-admin" type="button" style="display:none; position:relative;" onclick="abrirSolicitudesAdmin()">
@@ -74,7 +75,7 @@
     <!-- Toast -->
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-    <!-- ⭐ v12: Modal de configuración del juego vs IA -->
+    <!-- Modal de configuración del juego vs IA -->
     <div class="modal-overlay modal-juego-ia" id="modal-juego-ia" role="dialog" aria-modal="true" aria-labelledby="juego-ia-title">
         <div class="modal-content modal-juego-ia-content">
             <!-- El contenido se renderiza desde script.js -->
@@ -288,7 +289,17 @@
         </div>
     </div>
 
-    <!-- Firebase y script principal -->
+    <!-- ========================================================
+         SCRIPTS
+         El orden es CRÍTICO y no debe cambiarse:
+         1. Firebase + Chess.js (dependencias externas)
+         2. entrenador-core.js   (define utilidades, SF, ELO)
+         3. entrenador-tablero.js (define la clase InstanciaTablero)
+         4. entrenador-api.js    (define window.Entrenador)
+         5. script.js            (usa window.Entrenador)
+         ======================================================== -->
+
+    <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
@@ -296,8 +307,10 @@
     <!-- Chess.js (necesario para el entrenador) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
 
-    <!-- Entrenador de ajedrez (módulo aislado) -->
-    <script src="entrenador.js"></script>
+    <!-- Entrenador de ajedrez — Refactor v20 en 3 archivos modulares -->
+    <script src="entrenador-core.js"></script>
+    <script src="entrenador-tablero.js"></script>
+    <script src="entrenador-api.js"></script>
 
     <!-- Script principal de la academia -->
     <script src="script.js"></script>
