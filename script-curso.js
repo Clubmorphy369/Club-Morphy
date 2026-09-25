@@ -134,7 +134,7 @@
         }, error => console.warn('Error snapshot club:', error));
     };
 
-    Curso.suscribirProgresoTableros = function () {
+       Curso.suscribirProgresoTableros = function () {
         if (!Core.state.currentUser) {
             Core.state.progresoTableros = {};
             return;
@@ -145,7 +145,10 @@
             } else {
                 Core.state.progresoTableros = {};
             }
-            if (typeof window.inicializarTablerosEntrenador === 'function') {
+            // ⭐ v22: Actualizar progreso en tableros ya inicializados
+            if (typeof window.actualizarProgresoTableros === 'function') {
+                setTimeout(() => window.actualizarProgresoTableros(), 100);
+            } else if (typeof window.inicializarTablerosEntrenador === 'function') {
                 setTimeout(() => window.inicializarTablerosEntrenador(), 100);
             }
         }, error => console.warn('Error snapshot progreso tableros:', error));
