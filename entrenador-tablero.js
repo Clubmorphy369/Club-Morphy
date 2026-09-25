@@ -2263,21 +2263,19 @@
             });
         }
 
-                async analizarPartida() {
+                    async analizarPartida() {
             if (this.analizando) return;
             if (this.historialCompletoPartida.length === 0) return;
 
             // ⭐ v30: Marcar como analizando ANTES del await
-            // (evita que otro evento dispare análisis concurrentes)
             this.analizando = true;
 
             // ⭐ v30: Snapshot inmutable del historial
-            // (protege contra "Nueva partida" durante el análisis)
             const historialSnapshot = [...this.historialCompletoPartida];
             const total = historialSnapshot.length;
 
             try {
-                // ⭐ v20 Fix D: Esperar a Stockfish hasta 30 segundos
+                // Esperar a Stockfish hasta 30 segundos
                 if (!SF.ready) {
                     this.setStatus('ordenador', '⏳ Esperando al motor…');
                     const listo = await this._esperarStockfishListo(30000);
@@ -2288,16 +2286,16 @@
                     }
                 }
 
-                this.setStatus('ordenador', '🔍 Analizando la partida…');
                 this.setStatus('ordenador', `🔍 Analizando 0/${total}…`);
 
                 const jugadasAnalizadas = [];
                 const evals = [];
                 evals.push(await SF.evaluarPosicion(historialSnapshot[0].fenAntes, 6));
 
+                // Bucle 1: evaluar todas las posiciones
                 for (let i = 0; i < total; i++) {
                     const j = historialSnapshot[i];
-                    if (!j) break; // ⭐ v30: guard adicional
+                    if (!j) break;
                     const ev = await SF.evaluarPosicion(j.fenDespues, 6);
                     evals.push(ev);
 
@@ -2306,33 +2304,13 @@
                     }
                 }
 
+                // Bucle 2: calcular CPL y clasificar cada jugada
                 for (let i = 0; i < total; i++) {
                     const j = historialSnapshot[i];
-                    if (!j) break; // ⭐ v30: guard adicional
+                    if (!j) break;
                     const evalAntes = evals[i];
                     const evalDespues = evals[i + 1];
                     if (!evalAntes || !evalDespues) continue;
-
-                    // ⭐ v30: Si el historial cambió durante el análisis, abortar
-                    if (this.destroyed) return;                this.setStatus('ordenador', `🔍 Analizando 0/${total}…`);
-
-                const evals = [];
-                evals.push(await SF.evaluarPosicion(this.historialCompletoPartida[0].fenAntes, 6));
-
-                for (let i = 0; i < total; i++) {
-                    const j = this.historialCompletoPartida[i];
-                    const ev = await SF.evaluarPosicion(j.fenDespues, 6);
-                    evals.push(ev);
-
-                    if (i % 3 === 0 || i === total - 1) {
-                        this.setStatus('ordenador', `🔍 Analizando ${i + 1}/${total}…`);
-                    }
-                }
-
-                for (let i = 0; i < total; i++) {
-                    const j = this.historialCompletoPartida[i];
-                    const evalAntes = evals[i];
-                    const evalDespues = evals[i + 1];
 
                     let cpl;
                     if (j.color === 'w') {
@@ -2362,6 +2340,7 @@
                     });
                 }
 
+                // Análisis temporal (para feedback inmediato)
                 this.analisis = {
                     jugadas: jugadasAnalizadas,
                     acplHumano: 0,
@@ -2388,6 +2367,7 @@
                     return;
                 }
 
+                // Estadísticas finales
                 const acplHumano = Core.calcularACPL(jugadasAnalizadas.filter(j => j.esHumano), this.colorHumano);
                 const acplPC = Core.calcularACPL(jugadasAnalizadas.filter(j => !j.esHumano), this.colorHumano === 'w' ? 'b' : 'w');
                 const conteoHumano = Core.contarClasificaciones(jugadasAnalizadas.filter(j => j.esHumano));
@@ -2413,7 +2393,6 @@
                 this.analizando = false;
             }
         }
-
         renderizarAnalisis() {
             if (!this.$panelAnalisis || !this.analisis) return;
 
