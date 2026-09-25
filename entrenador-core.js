@@ -202,7 +202,8 @@
             if (this.worker || this.inicializado) return;
             this.inicializado = true;
             const url = window.stockfishWorkerUrl ||
-            '/assets/stockfish/stockfish.wasm.js';
+           const url = window.stockfishWorkerUrl ||
+           '/assets/stockfish/stockfish.js';
             try {
                 this.worker = new Worker(url);
                 this.worker.addEventListener('message', (e) => {
