@@ -608,12 +608,19 @@
                     }
                     return false;
                 }
-                eliminarDeLista(clase.temas);
+                       eliminarDeLista(clase.temas);
                 Curso.reordenarTemasRecursivo(clase.temas);
-                await Curso.guardarCurso();
+
+                // ⭐ v28: Marcar operación de eliminación
+                Core.state._operacionEliminar = true;
+                try {
+                    await Curso.guardarCurso();
+                } finally {
+                    Core.state._operacionEliminar = false;
+                }
+
                 window.actualizarUI();
-                mostrarToast('🗑️ Tema eliminado', 'success');
-            }
+                mostrarToast('🗑️ Tema eliminado', 'success');            }
         );
     };
 
