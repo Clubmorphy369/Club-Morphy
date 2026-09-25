@@ -2263,29 +2263,58 @@
             });
         }
 
-        async analizarPartida() {
+                async analizarPartida() {
             if (this.analizando) return;
             if (this.historialCompletoPartida.length === 0) return;
 
-            // ⭐ v20 Fix D: Esperar a Stockfish hasta 30 segundos
-            if (!SF.ready) {
-                this.setStatus('ordenador', '⏳ Esperando al motor…');
-                const listo = await this._esperarStockfishListo(30000);
-                if (!listo) {
-                    this.mostrarToast('⚠️ Stockfish tardó demasiado. Análisis no disponible.', '');
-                    this.setStatus('ordenador', '⚠️ Stockfish no disponible');
-                    return;
-                }
-            }
-
+            // ⭐ v30: Marcar como analizando ANTES del await
+            // (evita que otro evento dispare análisis concurrentes)
             this.analizando = true;
-            this.setStatus('ordenador', '🔍 Analizando la partida…');
 
-            const jugadasAnalizadas = [];
-            const total = this.historialCompletoPartida.length;
+            // ⭐ v30: Snapshot inmutable del historial
+            // (protege contra "Nueva partida" durante el análisis)
+            const historialSnapshot = [...this.historialCompletoPartida];
+            const total = historialSnapshot.length;
 
             try {
+                // ⭐ v20 Fix D: Esperar a Stockfish hasta 30 segundos
+                if (!SF.ready) {
+                    this.setStatus('ordenador', '⏳ Esperando al motor…');
+                    const listo = await this._esperarStockfishListo(30000);
+                    if (!listo) {
+                        this.mostrarToast('⚠️ Stockfish tardó demasiado. Análisis no disponible.', '');
+                        this.setStatus('ordenador', '⚠️ Stockfish no disponible');
+                        return;
+                    }
+                }
+
+                this.setStatus('ordenador', '🔍 Analizando la partida…');
                 this.setStatus('ordenador', `🔍 Analizando 0/${total}…`);
+
+                const jugadasAnalizadas = [];
+                const evals = [];
+                evals.push(await SF.evaluarPosicion(historialSnapshot[0].fenAntes, 6));
+
+                for (let i = 0; i < total; i++) {
+                    const j = historialSnapshot[i];
+                    if (!j) break; // ⭐ v30: guard adicional
+                    const ev = await SF.evaluarPosicion(j.fenDespues, 6);
+                    evals.push(ev);
+
+                    if (i % 3 === 0 || i === total - 1) {
+                        this.setStatus('ordenador', `🔍 Analizando ${i + 1}/${total}…`);
+                    }
+                }
+
+                for (let i = 0; i < total; i++) {
+                    const j = historialSnapshot[i];
+                    if (!j) break; // ⭐ v30: guard adicional
+                    const evalAntes = evals[i];
+                    const evalDespues = evals[i + 1];
+                    if (!evalAntes || !evalDespues) continue;
+
+                    // ⭐ v30: Si el historial cambió durante el análisis, abortar
+                    if (this.destroyed) return;                this.setStatus('ordenador', `🔍 Analizando 0/${total}…`);
 
                 const evals = [];
                 evals.push(await SF.evaluarPosicion(this.historialCompletoPartida[0].fenAntes, 6));
