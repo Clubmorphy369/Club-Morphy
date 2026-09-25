@@ -752,7 +752,50 @@
             }
         });
     };
+   
+    // ⭐ v27: Verificar si TODOS los tableros del tema están completos.
+    // Solo entonces marca el tema como completado.
+    Render.verificarTemaCompleto = function (claseId, temaId) {
+        // Los admins no marcan temas automáticamente
+        if (Core.state.currentUser?.esAdmin) return;
 
+        const clase = Core.state.curso.clases.find(c => c.id === claseId);
+        if (!clase) return;
+        const tema = Curso.buscarTemaRecursivo(clase.temas, temaId);
+        if (!tema || !tema.bloques) return;
+
+        // Obtener solo bloques de tablero CON PGN
+        const bloquesTablero = tema.bloques.filter(b =>
+            b.tipo === 'tablero' && b.config && b.config.pgn && b.config.pgn.trim()
+        );
+        if (bloquesTablero.length === 0) return;
+
+        // Buscar instancias activas por bloque
+        const instanciasPorBloque = {};
+        Render.instanciasTablero.forEach(inst => {
+            if (inst.destroyed) return;
+            if (inst.claseIdContexto === claseId &&
+                inst.temaIdContexto === temaId &&
+                inst.bloqueIdContexto) {
+                instanciasPorBloque[inst.bloqueIdContexto] = inst;
+            }
+        });
+
+        // Si algún bloque de tablero no tiene instancia o no está completo → no marcar
+        for (const bloque of bloquesTablero) {
+            const inst = instanciasPorBloque[bloque.id];
+            if (!inst) return; // Bloque aún no cargado
+            const todosCaps = inst.capitulos.every(c => c.completado);
+            if (!todosCaps) return; // Aún no terminó
+        }
+
+        // Si llegamos aquí, TODOS los tableros del tema están completos
+        if (!Curso.estaCompletado(claseId, temaId)) {
+            console.log('[v27] Tema completo, marcando como visto:', tema.titulo);
+            Curso.marcarVisto(claseId, temaId);
+        }
+    };
+   
     // ⭐ v22 Fix A: actualizar progreso de los tableros ya inicializados
     // (se llama cuando llega el snapshot de Firestore con el progreso)
     Render.actualizarProgresoTableros = function () {
