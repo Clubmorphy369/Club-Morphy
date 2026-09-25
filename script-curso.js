@@ -296,11 +296,20 @@
     };
 
     // ⭐ v20: Guardar curso con transacción + fusión (fix multi-dispositivo)
-    Curso.guardarCurso = async function () {
+        Curso.guardarCurso = async function () {
         Core.state._guardandoCursoContador++;
         const cursoLocalSnapshot = JSON.parse(JSON.stringify(Core.state.curso));
 
         try {
+           
+            // ⭐ v28: Si hay una eliminación en curso, hacer set directo (sin fusión)
+            // Esto evita que fusionarCursos reinserten las clases/temas eliminados
+            if (Core.state._operacionEliminar) {
+                await db.collection('config').doc('curso').set(cursoLocalSnapshot);
+                localStorage.setItem('cursoBackup', JSON.stringify(cursoLocalSnapshot));
+                return;
+            }
+
             const cursoFinal = await db.runTransaction(async (transaction) => {
                 const ref = db.collection('config').doc('curso');
                 const doc = await transaction.get(ref);
@@ -321,7 +330,7 @@
             Core.state._guardandoCursoContador--;
         }
     };
-
+   
     // ⭐ v20: Fusiona dos versiones del curso sin perder datos
     Curso.fusionarCursos = function (cursoRemoto, cursoLocal) {
         const remotas = (cursoRemoto && cursoRemoto.clases) || [];
