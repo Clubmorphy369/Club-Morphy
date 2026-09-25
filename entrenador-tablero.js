@@ -812,6 +812,35 @@
             this.renderizarBarraCapitulos();
         }
 
+               // ⭐ v26: Marca TODOS los capítulos completados (no solo el actual)
+        _marcarCapitulosCompletados() {
+            const Core = window.CMScriptCore;
+            const progresoGlobal = (Core && Core.state && Core.state.progresoTableros) || {};
+
+            if (!this.claseIdContexto || !this.temaIdContexto || !this.bloqueIdContexto) return;
+            if (!this.capitulos || this.capitulos.length === 0) return;
+
+            this.capitulos.forEach((cap, idx) => {
+                if (!cap.arbol) return;
+
+                const prefijo = `tablero_${this.claseIdContexto}_${this.temaIdContexto}_${this.bloqueIdContexto}_cap${idx}_`;
+                const lineas = obtenerLineasCompletas(cap.arbol);
+
+                let completadas = 0;
+                lineas.forEach(linea => {
+                    const hash = hashVariante(linea);
+                    if (!hash) return;
+                    if (progresoGlobal[prefijo + hash] === true) completadas++;
+                });
+
+                if (lineas.length > 0 && completadas >= lineas.length) {
+                    cap.completado = true;
+                } else {
+                    cap.completado = false;
+                }
+            });
+        }
+
                 _restaurarProgresoDeCapitulo() {
             this.hojasCompletadas = new Set();
 
@@ -865,10 +894,13 @@
         // --------------------------------------------------------
         // BARRA DE CAPÍTULOS
         // --------------------------------------------------------
-        renderizarBarraCapitulos() {
+                renderizarBarraCapitulos() {
             if (!this.$capsLista) return;
-            const esAdmin = this.esModoAdmin;
 
+            // ⭐ v26: Refrescar el estado de completado de TODOS los capítulos
+            this._marcarCapitulosCompletados();
+
+            const esAdmin = this.esModoAdmin;
             this.$capsLista.innerHTML = this.capitulos.map((cap, idx) => {
                 const activo = idx === this.capituloActual;
                 const completado = cap.completado;
