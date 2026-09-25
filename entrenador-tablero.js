@@ -789,6 +789,29 @@
             }
         }
 
+               // ⭐ v22: Actualizar progreso de un tablero ya inicializado
+        // (cuando llega el snapshot de Firestore)
+        actualizarProgresoVariantes(progresoTableros) {
+            if (this.destroyed) return;
+            if (!progresoTableros || typeof progresoTableros !== 'object') return;
+
+            const prefijoPropio = (this.claseIdContexto && this.temaIdContexto && this.bloqueIdContexto)
+                ? `tablero_${this.claseIdContexto}_${this.temaIdContexto}_${this.bloqueIdContexto}_`
+                : null;
+            if (!prefijoPropio) return;
+
+            this.progresoVariantes = new Set();
+            Object.keys(progresoTableros).forEach(key => {
+                if (progresoTableros[key] === true && key.startsWith(prefijoPropio)) {
+                    this.progresoVariantes.add(key.substring(prefijoPropio.length));
+                }
+            });
+
+            this._restaurarProgresoDeCapitulo();
+            this.actualizarVariantesProgreso();
+            this.renderizarBarraCapitulos();
+        }
+
         _restaurarProgresoDeCapitulo() {
             this.hojasCompletadas = new Set();
             if (!this.progresoVariantes || this.progresoVariantes.size === 0) return;
