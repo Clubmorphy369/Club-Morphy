@@ -812,30 +812,39 @@
             this.renderizarBarraCapitulos();
         }
 
-        _restaurarProgresoDeCapitulo() {
+                _restaurarProgresoDeCapitulo() {
             this.hojasCompletadas = new Set();
-            if (!this.progresoVariantes || this.progresoVariantes.size === 0) return;
 
             const cap = this.capitulos[this.capituloActual];
             if (!cap) return;
 
-            const lineas = obtenerLineasCompletas(this.arbol);
-            const prefijo = `cap${this.capituloActual}_`;
+            // ⭐ v23: Leer SIEMPRE desde Core.state.progresoTableros para asegurar
+            // que tenemos los datos más recientes, sin importar el timing
+            // (el snapshot de Firestore puede llegar después del constructor)
+            const Core = window.CMScriptCore;
+            const progresoGlobal = (Core && Core.state && Core.state.progresoTableros) || {};
 
+            // Si no tenemos IDs de contexto, no podemos buscar
+            if (!this.claseIdContexto || !this.temaIdContexto || !this.bloqueIdContexto) return;
+
+            const prefijo = `tablero_${this.claseIdContexto}_${this.temaIdContexto}_${this.bloqueIdContexto}_cap${this.capituloActual}_`;
+
+            const lineas = obtenerLineasCompletas(this.arbol);
             lineas.forEach(linea => {
                 const hash = hashVariante(linea);
-                const clave = prefijo + hash;
-                if (this.progresoVariantes.has(clave)) {
+                if (!hash) return;
+                const claveCompleta = prefijo + hash;
+                if (progresoGlobal[claveCompleta] === true) {
                     const hoja = linea[linea.length - 1];
                     if (hoja) this.hojasCompletadas.add(hoja.id);
                 }
             });
 
+            // Actualizar el campo `completado` del capítulo
             if (this.hojasTotales.length > 0 && this.hojasCompletadas.size >= this.hojasTotales.length) {
                 cap.completado = true;
             }
         }
-
         actualizarMeta() {
             if (!this.$meta) return;
             if (this.esSalaLibre) {
