@@ -336,6 +336,17 @@
                 // Activar badge ELO en header
                 Render.inicializarBadgeELO();
 
+                // ⭐ v29: Precargar Stockfish al login (para que esté listo cuando
+                // el usuario entre al juego vs IA o termine una partida)
+                if (window.Entrenador && typeof window.Entrenador.initStockfish === 'function') {
+                    try {
+                        window.Entrenador.initStockfish();
+                        console.log('[v29] Stockfish precargando en background...');
+                    } catch (e) {
+                        console.warn('[v29] Error al precargar Stockfish:', e);
+                    }
+                }
+
                 if (!Core.state.currentUser.esAdmin && (!Core.state.userProfile || !Core.state.userProfile.nombre || !Core.state.userProfile.apellidos)) {
                     setTimeout(() => Main.mostrarCompletarPerfil(), 1500);
                 }
