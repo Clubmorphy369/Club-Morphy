@@ -705,7 +705,7 @@
         }
     };
 
-    Curso.eliminarClase = async function (id) {
+      Curso.eliminarClase = async function (id) {
         if (!Core.state.currentUser?.esAdmin) return;
         const index = Core.state.curso.clases.findIndex(c => c.id === id);
         if (index === -1) return;
@@ -714,7 +714,15 @@
             Core.state.claseActivaId = Core.state.curso.clases.length > 0 ? Core.state.curso.clases[0].id : null;
         }
         Core.state.temaAbiertoGlobal = null;
-        await Curso.guardarCurso();
+
+        // ⭐ v28: Marcar operación de eliminación
+        Core.state._operacionEliminar = true;
+        try {
+            await Curso.guardarCurso();
+        } finally {
+            Core.state._operacionEliminar = false;
+        }
+
         window.actualizarUI();
         guardarEstadoNavegacion();
         mostrarToast('Clase eliminada', 'success');
@@ -722,7 +730,6 @@
             await db.collection('accesosEspeciales').doc(id).delete();
         } catch (e) { console.warn('No se pudo eliminar accesos', e); }
     };
-
     Curso.togglePublicarClase = async function (claseId) {
         if (!Core.state.currentUser?.esAdmin) return;
         const clase = Core.state.curso.clases.find(c => c.id === claseId);
