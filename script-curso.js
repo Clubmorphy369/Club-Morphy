@@ -1716,16 +1716,24 @@
         else preview = bloque.contenido || 'vacío';
         const previewCorto = String(preview).length > 40 ? String(preview).substring(0, 40) + '...' : String(preview);
 
-        mostrarConfirmacion(
+                mostrarConfirmacion(
             '🗑️ Eliminar bloque',
             `¿Seguro que quieres eliminar este bloque de tipo "${bloque.tipo}"? Contenido: "${previewCorto}". Esta acción no se puede deshacer.`,
-            () => {
+            async () => {
                 tema.bloques = tema.bloques.filter(b => b.id !== bloqueId);
-                Curso.guardarCurso().then(() => window.actualizarUI());
+
+                // ⭐ v28: Marcar operación de eliminación para guardado directo
+                Core.state._operacionEliminar = true;
+                try {
+                    await Curso.guardarCurso();
+                } finally {
+                    Core.state._operacionEliminar = false;
+                }
+
+                window.actualizarUI();
                 mostrarToast('🗑️ Bloque eliminado', 'success');
             }
-        );
-    };
+        );    };
 
     Curso.moverBloqueArriba = function (claseId, temaId, bloqueId) {
         const clase = Core.state.curso.clases.find(c => c.id === claseId);
