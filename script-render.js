@@ -194,6 +194,10 @@
         const accesible = Curso.temaAccesible(tema, Core.state.currentUser);
         const completado = Curso.estaCompletado(claseId, tema.id);
         const esAdmin = Core.state.currentUser?.esAdmin;
+       
+        // ⭐ v27: Detectar si el tema tiene bloques de tablero con PGN
+        const tieneTableros = Array.isArray(tema.bloques) &&
+                              tema.bloques.some(b => b.tipo === 'tablero' && (b.config || {}).pgn && b.config.pgn.trim());
 
         let contenidoHTML = '';
         if (accesible) {
