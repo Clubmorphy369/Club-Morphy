@@ -456,8 +456,8 @@
                 ${!accesible ? '<span>🔒</span>' : ''}
                 ${completado ? '<span class="badge">✓</span>' : ''}
                 <span style="flex:1;"></span>
-                ${accesible ? `<button class="btn btn-exito btn-small" onclick="event.stopPropagation(); marcarVisto('${claseId}','${tema.id}')">${completado ? '✓ Completado' : '👁️ Visto'}</button>` : ''}
-                ${esAdmin ? `
+                ${accesible && !tieneTableros ? `<button class="btn btn-exito btn-small" onclick="event.stopPropagation(); marcarVisto('${claseId}','${tema.id}')">${completado ? '✓ Completado' : '👁️ Visto'}</button>` : ''}
+                ${accesible && tieneTableros && completado ? '<span class="badge">✓ Completado</span>' : ''}                ${esAdmin ? `
                     <button class="btn-reorder" onclick="event.stopPropagation(); moverTemaArriba('${claseId}','${tema.id}')" title="Subir tema">↑</button>
                     <button class="btn-reorder" onclick="event.stopPropagation(); moverTemaAbajo('${claseId}','${tema.id}')" title="Bajar tema">↓</button>
                     <button class="btn btn-small ${tema.bloqueado ? 'btn-warning' : 'btn-exito'}" onclick="event.stopPropagation(); toggleBloqueoTema('${claseId}','${tema.id}')">${tema.bloqueado ? '🔒' : '🔓'}</button>
