@@ -675,12 +675,19 @@
         input.addEventListener('keypress', (e) => { if (e.key === 'Enter') { e.preventDefault(); input.blur(); } });
     };
 
-    // ============================================================
+        // ============================================================
     // INICIALIZAR TABLEROS DEL ENTRENADOR
     // ============================================================
     // ⭐ FIX F: se pasa `progresoTableros` al contexto para que el
     // entrenador restaure el progreso previo del alumno.
+    //
+    // ⭐ v22 Fix A: se registran las instancias activas para poder
+    // actualizar su progreso cuando llegue el snapshot de Firestore.
     // ============================================================
+
+    // ⭐ v22: Registro de instancias activas de tablero
+    Render.instanciasTablero = [];
+
     Render.inicializarTablerosEntrenador = function () {
         if (!window.Entrenador) {
             console.warn('[Fase 5] Entrenador no está cargado');
@@ -715,7 +722,7 @@
                     progresoTableros: Core.state.progresoTableros,
 
                     onCompletado: () => {
-                        console.log('[v20] Tablero completado');
+                        console.log('[v22] Tablero completado');
                     },
                     onGuardarVariante: (data) => Render.guardarVarianteEnFirestore(claseId, temaId, bloqueId, data),
                     onGuardarPGN: (data) => Render.guardarPGNEnFirestore(claseId, temaId, bloqueId, data.pgn),
@@ -724,7 +731,11 @@
                     onGuardarProgresoCapCompleto: (data) => Curso.guardarProgresoCapCompletoEnFirestore(data),
                     onRenombrarCapitulo: (data) => Render.guardarPGNEnFirestore(claseId, temaId, bloqueId, data.pgnNuevo)
                 };
-                window.Entrenador.render(bloqueEl, config, contexto);
+
+                // ⭐ v22 Fix A: registrar la instancia para poder actualizarla después
+                const instancia = window.Entrenador.render(bloqueEl, config, contexto);
+                if (instancia) Render.instanciasTablero.push(instancia);
+
                 bloqueEl.dataset.inicializado = 'true';
             } catch (err) {
                 console.error('[Fase 5] Error al inicializar tablero:', err);
@@ -732,6 +743,23 @@
         });
     };
 
+    // ⭐ v22 Fix A: actualizar progreso de los tableros ya inicializados
+    // (se llama cuando llega el snapshot de Firestore con el progreso)
+    Render.actualizarProgresoTableros = function () {
+        if (!Core.state.progresoTableros) return;
+        // Limpiar instancias destruidas
+        Render.instanciasTablero = Render.instanciasTablero.filter(inst => inst && !inst.destroyed);
+        // Actualizar el progreso de cada instancia activa
+        Render.instanciasTablero.forEach(inst => {
+            if (typeof inst.actualizarProgresoVariantes === 'function') {
+                try {
+                    inst.actualizarProgresoVariantes(Core.state.progresoTableros);
+                } catch (e) {
+                    console.warn('[v22] Error al actualizar progreso de instancia:', e);
+                }
+            }
+        });
+    };
     // ============================================================
     // BLOQUES DEL TABLERO (admin)
     // ============================================================
