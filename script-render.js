@@ -725,6 +725,12 @@
                     // ⭐ FIX F: pasar el progreso global al entrenador
                     progresoTableros: Core.state.progresoTableros,
 
+                    // ⭐ v27: callback cuando TODOS los capítulos de este tablero estén resueltos
+                    onTableroCompletado: (data) => {
+                        setTimeout(() => {
+                            Render.verificarTemaCompleto(data.claseId, data.temaId);
+                        }, 200);
+                    },
                     onCompletado: () => {
                         console.log('[v22] Tablero completado');
                     },
