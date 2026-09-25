@@ -1814,6 +1814,19 @@
                 this._guardarProgresoCapCompleto();
                 this.renderizarBarraCapitulos();
 
+                               // ⭐ v27: Avisar al exterior para que verifique TODOS los tableros
+                if (!this.esModoAdmin && this.contexto.onTableroCompletado) {
+                    try {
+                        this.contexto.onTableroCompletado({
+                            claseId: this.claseIdContexto,
+                            temaId: this.temaIdContexto,
+                            bloqueId: this.bloqueIdContexto
+                        });
+                    } catch (e) {
+                        console.warn('[v27] Error en onTableroCompletado:', e);
+                    }
+                }
+               
                 if (!this.eloAplicado && !this.esModoAdmin) {
                     this.eloAplicado = true;
                     const cap = this.capitulos[this.capituloActual];
