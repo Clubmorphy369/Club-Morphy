@@ -3,8 +3,8 @@
 // =============================================================
 
 // ⚠️ Sube la versión cuando hagas cambios importantes
-// ⭐ v23: rutas relativas (compatibilidad Firebase + GitHub Pages)
-const CACHE_NAME = 'club-morphy-v23';
+// ⭐ v24: rutas relativas (compatibilidad Firebase + GitHub Pages)
+const CACHE_NAME = 'club-morphy-v24';
 
 // Scope dinámico: funciona tanto en "/" (Firebase) como en "/Club-Morphy/" (GitHub Pages)
 const ROOT = self.registration.scope;
