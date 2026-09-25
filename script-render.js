@@ -1219,6 +1219,7 @@
 
     window.inicializarTablerosEntrenador = Render.inicializarTablerosEntrenador;
     window.actualizarProgresoTableros = Render.actualizarProgresoTableros;
+    window.verificarTemaCompleto = Render.verificarTemaCompleto;
     window.actualizarBloqueTablero = Render.actualizarBloqueTablero;
     window.actualizarBloqueConsejo = Render.actualizarBloqueConsejo;
     window.cargarPGNArchivoEnBloque = Render.cargarPGNArchivoEnBloque;
