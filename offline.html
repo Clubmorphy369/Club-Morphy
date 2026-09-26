@@ -6,8 +6,9 @@
   <meta name="theme-color" content="#0ea5e9">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="robots" content="noindex">
   <title>Sin conexión — Club Morphy</title>
-  <link rel="icon" type="image/png" href="./assets/logo-club.png">
+  <link rel="icon" href="./assets/favicon.ico">
   <style>
     :root {
       --acento: #0ea5e9;
@@ -49,7 +50,20 @@
       background: var(--bg);
       display: block;
     }
-    .icon { font-size: 4rem; line-height: 1; margin: 8px 0; }
+    .icon {
+      font-size: 4rem;
+      line-height: 1;
+      margin: 8px 0;
+      display: inline-block;
+      animation: pulso 2s ease-in-out infinite;
+    }
+    @keyframes pulso {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.08); opacity: 0.75; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .icon { animation: none; }
+    }
     h1 {
       color: var(--acento);
       margin: 12px 0;
@@ -100,23 +114,33 @@
       Revisa tu conexión y vuelve a intentarlo.
     </p>
     <button id="retry-btn" onclick="reintentar()">Reintentar</button>
-    <p id="estado">Comprobando conexión...</p>
+    <p id="estado" role="status" aria-live="polite">Comprobando conexión...</p>
   </div>
 
   <script>
+    const btn = document.getElementById('retry-btn');
+    const estado = document.getElementById('estado');
+    let timeoutRehabilitar = null;
+
     function reintentar() {
-      const btn = document.getElementById('retry-btn');
       btn.disabled = true;
       btn.textContent = 'Reintentando...';
+
+      // Rehabilita el botón a los 3s por si sigue offline
+      clearTimeout(timeoutRehabilitar);
+      timeoutRehabilitar = setTimeout(() => {
+        btn.disabled = false;
+        btn.textContent = 'Reintentar';
+      }, 3000);
+
       location.reload();
     }
-
-    const estado = document.getElementById('estado');
 
     function actualizarEstado() {
       if (navigator.onLine) {
         estado.textContent = '✅ Conexión restaurada. Recargando...';
         estado.classList.add('online');
+        clearTimeout(timeoutRehabilitar);
         setTimeout(() => location.reload(), 1200);
       } else {
         estado.textContent = 'Sin conexión. Esperando red...';
