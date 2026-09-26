@@ -2658,6 +2658,15 @@
                 });
             });
 
+            // ⭐ v44: Navegación ◀ ▶
+            this.$panelAnalisis.querySelector('[data-rol="btnNavInicio"]')?.addEventListener('click', () => this._navegarAnalisis('inicio'));
+            this.$panelAnalisis.querySelector('[data-rol="btnNavAnterior"]')?.addEventListener('click', () => this._navegarAnalisis(-1));
+            this.$panelAnalisis.querySelector('[data-rol="btnNavSiguiente"]')?.addEventListener('click', () => this._navegarAnalisis(1));
+            this.$panelAnalisis.querySelector('[data-rol="btnNavFinal"]')?.addEventListener('click', () => this._navegarAnalisis('final'));
+
+            // ⭐ v44: Registrar atajos de teclado
+            this._registrarAtajosAnalisis();
+           
             // Botón "Practicar mis errores"
             const btnPracticar = this.$panelAnalisis.querySelector('[data-rol="btnPracticarErrores"]');
             if (btnPracticar) {
