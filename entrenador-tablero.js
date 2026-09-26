@@ -2656,11 +2656,22 @@
                 });
             }
 
-            // Clic en jugada → cargar posición
+                       // Clic en jugada → cargar posición
             this.$panelAnalisis.querySelectorAll('[data-jugada-idx]').forEach(el => {
-                el.addEventListener('click', () => {
+                el.addEventListener('click', (e) => {
+                    // ⭐ v46: Si el clic fue en el botón "Practicar", no cargar la posición normal
+                    if (e.target.closest('[data-practicar-idx]')) return;
                     const idx = parseInt(el.dataset.jugadaIdx, 10);
                     this._cargarPosicionDesdeAnalisis(idx);
+                });
+            });
+
+            // ⭐ v46: Listeners del botón "Practicar" por fila
+            this.$panelAnalisis.querySelectorAll('[data-practicar-idx]').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const idx = parseInt(btn.dataset.practicarIdx, 10);
+                    this._practicarJugadaEspecifica(idx);
                 });
             });
 
