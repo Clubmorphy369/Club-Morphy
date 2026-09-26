@@ -3724,10 +3724,87 @@
             setTimeout(() => { t.remove(); }, 3000);
         }
 
+               // ⭐ v44: Actualizar el texto de navegación
+        _actualizarInfoNavegacion() {
+            if (!this.$panelAnalisis) return;
+            const infoEl = this.$panelAnalisis.querySelector('[data-rol="navInfo"]');
+            if (!infoEl) return;
+
+            const idx = this.practicandoDesdeIdx;
+            if (idx === null || idx === undefined) {
+                infoEl.textContent = 'Posición final';
+            } else {
+                const numJugada = Math.floor(idx / 2) + 1;
+                const jugada = this.analisis && this.analisis.jugadas[idx];
+                const pre = jugada && jugada.color === 'w' ? `${numJugada}.` : `${numJugada}…`;
+                infoEl.textContent = `${pre} ${jugada ? jugada.san : ''}`;
+            }
+        }
+
+        // ⭐ v44: Navegar por el análisis
+        _navegarAnalisis(delta) {
+            if (!this.analisis || !this.analisis.jugadas.length) return;
+            const total = this.analisis.jugadas.length;
+
+            let nuevoIdx;
+            if (delta === 'inicio') {
+                nuevoIdx = 0;
+            } else if (delta === 'final') {
+                nuevoIdx = total - 1;
+            } else {
+                const actual = this.practicandoDesdeIdx === null ? total - 1 : this.practicandoDesdeIdx;
+                nuevoIdx = actual + delta;
+            }
+
+            if (nuevoIdx < 0) nuevoIdx = 0;
+            if (nuevoIdx >= total) {
+                this._volverAlPresente();
+                return;
+            }
+
+            this._cargarPosicionDesdeAnalisis(nuevoIdx);
+            this._actualizarInfoNavegacion();
+        }
+
+        // ⭐ v44: Registrar atajos de teclado
+        _registrarAtajosAnalisis() {
+            if (this._atajosAnalisisActivos) return;
+            this._atajosAnalisisActivos = true;
+
+            this._atajosHandler = (e) => {
+                if (!this.analisis || !this.$panelAnalisis || this.$panelAnalisis.classList.contains('cm-tablero-hidden')) return;
+
+                const tag = document.activeElement?.tagName?.toLowerCase();
+                if (tag === 'input' || tag === 'textarea' || document.activeElement?.isContentEditable) return;
+
+                if (e.key === 'ArrowLeft') {
+                    e.preventDefault();
+                    this._navegarAnalisis(-1);
+                } else if (e.key === 'ArrowRight') {
+                    e.preventDefault();
+                    this._navegarAnalisis(1);
+                } else if (e.key === 'Escape' && this.practicandoDesdeIdx !== null) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    this._volverAlPresente();
+                }
+            };
+            document.addEventListener('keydown', this._atajosHandler);
+        }
+
+        // ⭐ v44: Desregistrar atajos
+        _desregistrarAtajosAnalisis() {
+            if (this._atajosHandler) {
+                document.removeEventListener('keydown', this._atajosHandler);
+                this._atajosHandler = null;
+            }
+            this._atajosAnalisisActivos = false;
+        }
         // --------------------------------------------------------
         // DESTROY
         // --------------------------------------------------------
-        destroy() {
+       
+       destroy() {
             this.destroyed = true;
             if (this.respuestaAutoTimeout) { clearTimeout(this.respuestaAutoTimeout); this.respuestaAutoTimeout = null; }
             if (this.reloj) this.reloj.detener();
