@@ -1,0 +1,201 @@
+/* ============================================================
+   STYLES-BASE.CSS — Club Morphy
+   Variables, reset, tipografía, inputs, toast, utilidades base
+   ============================================================ */
+
+:root {
+    --bg: #ffffff;
+    --surface: #f1f5f9;
+    --surface2: #e2e8f0;
+    --acento: #0ea5e9;
+    --acento-oscuro: #0284c7;
+    --acento-claro: #38bdf8;
+    --blanco: #ffffff;
+    --texto: #1e293b;
+    --texto-suave: #64748b;
+    --borde: #cbd5e1;
+    --exito: #16a34a;
+    --peligro: #dc2626;
+    --warning: #f59e0b;
+    --sombra: 0 4px 20px rgba(0, 0, 0, 0.06);
+    --sombra-acento: 0 0 15px rgba(14, 165, 233, 0.15);
+    --radio: 12px;
+    --transicion: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    --header-bg: linear-gradient(135deg, var(--bg) 0%, var(--surface) 50%, var(--bg) 100%);
+    --sidebar-bg: linear-gradient(180deg, var(--surface) 0%, var(--bg) 100%);
+    --btn-bg: linear-gradient(135deg, var(--surface2), var(--surface));
+    --btn-hover-bg: linear-gradient(135deg, #cbd5e1, #e2e8f0);
+    --btn-acento-bg: linear-gradient(135deg, var(--acento-oscuro), var(--acento), var(--acento-oscuro));
+    --btn-acento-hover-bg: linear-gradient(135deg, var(--acento), var(--acento-claro), var(--acento));
+    --btn-peligro-bg: linear-gradient(135deg, #fee2e2, #fecaca);
+    --btn-peligro-hover-bg: linear-gradient(135deg, #fecaca, #fca5a5);
+    --btn-exito-bg: linear-gradient(135deg, #dcfce7, #bbf7d0);
+    --btn-exito-hover-bg: linear-gradient(135deg, #bbf7d0, #86efac);
+    --modal-bg: linear-gradient(160deg, var(--bg) 0%, var(--surface) 100%);
+    --toast-bg: linear-gradient(135deg, var(--surface), var(--surface2));
+    --input-bg: var(--bg);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    font-family: 'Lato', 'Segoe UI', system-ui, sans-serif;
+    background-color: var(--bg);
+    color: var(--texto);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    line-height: 1.6;
+    -webkit-tap-highlight-color: transparent;
+    transition: background-color var(--transicion), color var(--transicion);
+    overflow-x: hidden;
+    width: 100%;
+}
+
+.content, .sidebar, .modal-content, .tema-body, .nota-debajo {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+/* ============================================================
+   INPUTS
+   ============================================================ */
+input, textarea, select {
+    padding: 12px 16px;
+    border-radius: 8px;
+    border: 1px solid var(--borde);
+    background: var(--input-bg);
+    color: var(--texto);
+    font-family: 'Lato', sans-serif;
+    font-size: 0.95rem;
+    width: 100%;
+    transition: border var(--transicion), box-shadow var(--transicion);
+}
+
+input::placeholder, textarea::placeholder { color: var(--texto-suave); opacity: 0.7; }
+
+input:focus, textarea:focus, select:focus {
+    outline: none;
+    border-color: var(--acento);
+    box-shadow: 0 0 0 3px rgba(14,165,233,0.15), 0 0 12px rgba(14,165,233,0.1);
+}
+
+.input-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.input-row input { flex: 1; min-width: 140px; }
+
+label {
+    font-family: 'Lato', sans-serif;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--acento-oscuro);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    display: block;
+    margin-bottom: 4px;
+}
+
+a { color: var(--acento); text-decoration: none; font-weight: 600; transition: color var(--transicion); }
+a:hover { color: var(--acento-oscuro); text-decoration: underline; }
+
+.badge {
+    background: var(--exito);
+    color: white;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    border: 1px solid rgba(22,163,74,0.4);
+    box-shadow: 0 0 8px rgba(22,163,74,0.2);
+}
+
+/* ============================================================
+   TOAST
+   ============================================================ */
+.toast {
+    position: fixed;
+    bottom: 30px; right: 30px;
+    background: var(--toast-bg);
+    color: var(--texto);
+    padding: 14px 26px;
+    border-radius: 8px;
+    font-family: 'Lato', sans-serif;
+    font-weight: 600;
+    font-size: 0.9rem;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.1), 0 0 20px rgba(14,165,233,0.15);
+    border: 1px solid var(--borde);
+    z-index: 999;
+    transform: translateY(120px);
+    opacity: 0;
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.toast.show { transform: translateY(0); opacity: 1; }
+.toast.error {
+    background: #fee2e2;
+    border-color: var(--peligro);
+    color: var(--peligro);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.1), 0 0 15px rgba(220,38,38,0.25);
+}
+.toast.success {
+    background: #dcfce7;
+    border-color: var(--exito);
+    color: var(--exito);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.1), 0 0 15px rgba(22,163,74,0.25);
+}
+
+/* ============================================================
+   UTILIDADES
+   ============================================================ */
+.loader {
+    display: inline-block;
+    width: 18px; height: 18px;
+    border: 2px solid rgba(14,165,233,0.2);
+    border-top-color: var(--acento);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.flex-between { display: flex; justify-content: space-between; align-items: center; }
+.flex-between h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.5rem;
+    color: var(--acento);
+    text-shadow: 0 2px 10px rgba(14,165,233,0.15);
+}
+
+pre {
+    background: var(--surface);
+    border: 1px solid var(--borde);
+    border-radius: 6px;
+    padding: 10px 14px;
+    font-size: 0.8rem;
+    color: var(--texto);
+    overflow-x: auto;
+}
+
+code {
+    font-family: 'Courier New', monospace;
+    background: var(--surface);
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: var(--acento-oscuro);
+    font-size: 0.85em;
+}
+
+#user-info {
+    font-size: 0.85rem;
+    color: var(--texto-suave);
+    font-family: 'Lato', sans-serif;
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    display: inline-block;
+    vertical-align: middle;
+}
