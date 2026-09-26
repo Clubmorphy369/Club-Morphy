@@ -3,8 +3,8 @@
 // =============================================================
 
 // ⚠️ Sube la versión cuando hagas cambios importantes
-// ⭐ v43: fix ignoredHosts + unificar STATIC_ASSETS + añadir Lozza
-const CACHE_NAME = 'club-morphy-v43';
+// ⭐ v44: fix ignoredHosts + unificar STATIC_ASSETS + añadir Lozza
+const CACHE_NAME = 'club-morphy-v44';
 
 // Scope dinámico: funciona tanto en "/" (Firebase) como en "/Club-Morphy/" (GitHub Pages)
 const ROOT = self.registration.scope;
