@@ -1851,3 +1851,346 @@
     margin-bottom: 12px;
 }
 @keyframes cm-analisis-spin { to { transform: rotate(360deg); } }
+
+/* ============================================================
+   ⭐ v43: BARRA DE MATERIAL CAPTURADO
+   ============================================================ */
+.cm-material-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: var(--cm-surface);
+    border: 1px solid var(--cm-borde);
+    border-radius: 8px;
+    margin-top: 8px;
+    font-size: 0.85rem;
+    font-family: 'Lato', sans-serif;
+    min-height: 40px;
+    flex-wrap: wrap;
+}
+
+.cm-material-lado {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-wrap: wrap;
+    min-width: 0;
+    flex: 1;
+}
+
+.cm-material-lado.cm-material-negras { justify-content: flex-end; }
+
+.cm-material-pieza {
+    width: 22px;
+    height: 22px;
+    object-fit: contain;
+    opacity: 0.9;
+    flex-shrink: 0;
+}
+
+.cm-material-ventaja {
+    font-weight: 800;
+    font-size: 0.9rem;
+    color: var(--cm-exito);
+    padding: 2px 10px;
+    background: #dcfce7;
+    border-radius: 12px;
+    flex-shrink: 0;
+    font-variant-numeric: tabular-nums;
+}
+
+.cm-material-ventaja.cm-material-ventaja-negras {
+    color: var(--cm-peligro);
+    background: #fee2e2;
+}
+
+.cm-material-ventaja.cm-material-ventaja-igual {
+    color: var(--cm-texto-suave);
+    background: var(--cm-surface2);
+}
+
+/* ============================================================
+   ⭐ v43: TERMÓMETRO DE EVALUACIÓN (gráfico tipo Lichess)
+   ============================================================ */
+.cm-termometro {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 10px;
+    padding: 8px;
+    background: var(--cm-surface);
+    border: 1px solid var(--cm-borde);
+    border-radius: 8px;
+    font-size: 0.78rem;
+    font-family: 'Lato', sans-serif;
+}
+
+.cm-termometro-label {
+    font-weight: 700;
+    color: var(--cm-texto-suave);
+    text-transform: uppercase;
+    font-size: 0.68rem;
+    letter-spacing: 0.5px;
+    flex-shrink: 0;
+}
+
+.cm-termometro-grafico {
+    flex: 1;
+    height: 24px;
+    background: #1e293b;
+    border-radius: 4px;
+    position: relative;
+    overflow: hidden;
+    min-width: 100px;
+}
+
+.cm-termometro-blanco {
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    background: #f8fafc;
+    transition: width 0.4s ease;
+}
+
+.cm-termometro-linea {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    width: 2px;
+    background: #f59e0b;
+    opacity: 0.5;
+    z-index: 2;
+}
+
+.cm-termometro-eval {
+    font-family: 'Courier New', monospace;
+    font-weight: 800;
+    color: var(--cm-texto);
+    font-variant-numeric: tabular-nums;
+    min-width: 48px;
+    text-align: right;
+    flex-shrink: 0;
+}
+
+/* ============================================================
+   ⭐ v43: INDICADOR DE PRECISIÓN (círculo grande)
+   ============================================================ */
+.cm-analisis-precision-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    background: white;
+    border-radius: 12px;
+    border: 2px solid #bae6fd;
+    box-shadow: 0 2px 12px rgba(14, 165, 233, 0.1);
+}
+
+.cm-analisis-precision-circle {
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Lato', sans-serif;
+    font-weight: 800;
+    color: white;
+    margin-bottom: 8px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+    position: relative;
+    background: conic-gradient(
+        var(--cm-acento) 0%,
+        var(--cm-acento) var(--precision-pct, 50%),
+        #e2e8f0 var(--precision-pct, 50%),
+        #e2e8f0 100%
+    );
+}
+
+.cm-analisis-precision-circle::before {
+    content: '';
+    position: absolute;
+    inset: 6px;
+    background: white;
+    border-radius: 50%;
+}
+
+.cm-analisis-precision-circle .cm-precision-valor {
+    font-size: 1.6rem;
+    font-weight: 900;
+    color: var(--cm-acento-oscuro);
+    z-index: 1;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+}
+
+.cm-analisis-precision-circle .cm-precision-pct {
+    font-size: 0.72rem;
+    color: var(--cm-texto-suave);
+    z-index: 1;
+    margin-top: 2px;
+}
+
+.cm-analisis-precision-label {
+    font-size: 0.7rem;
+    color: var(--cm-texto-suave);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 700;
+}
+
+/* ============================================================
+   ⭐ v43: CONFIGURACIÓN "MEJOR ERA"
+   ============================================================ */
+.cm-analisis-config {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    background: #fef3c7;
+    border: 1px solid #fcd34d;
+    border-radius: 8px;
+    margin-bottom: 12px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #78350f;
+    flex-wrap: wrap;
+}
+
+.cm-analisis-config input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    accent-color: var(--cm-warning);
+    flex-shrink: 0;
+}
+
+.cm-analisis-config label {
+    cursor: pointer;
+    user-select: none;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex: 1;
+    min-width: 0;
+}
+
+/* ============================================================
+   ⭐ v43: JUGADA CLICABLE + MEJOR ERA
+   ============================================================ */
+.cm-analisis-jugada.cm-jugada-clickable {
+    cursor: pointer;
+}
+
+.cm-analisis-jugada.cm-jugada-clickable:hover {
+    background: #e0f2fe;
+    transform: translateX(2px);
+    box-shadow: 0 2px 6px rgba(14, 165, 233, 0.15);
+}
+
+.cm-analisis-jugada.cm-jugada-actual {
+    background: #dbeafe !important;
+    border-left-width: 6px;
+}
+
+.cm-analisis-mejor-era {
+    font-family: 'Courier New', monospace;
+    font-size: 0.75rem;
+    color: var(--cm-exito);
+    background: #dcfce7;
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-weight: 700;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.cm-analisis-mejor-era.cm-mejor-era-error {
+    color: var(--cm-peligro);
+    background: #fee2e2;
+}
+
+/* ============================================================
+   ⭐ v43: ACCIONES DEL ANÁLISIS (retry, exportar)
+   ============================================================ */
+.cm-analisis-acciones {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px dashed #0ea5e9;
+}
+
+.cm-analisis-acciones .cm-tablero-btn {
+    flex: 1;
+    min-width: 130px;
+    font-size: 0.82rem;
+    padding: 9px 12px;
+}
+
+.cm-analisis-btn-practicar {
+    background: linear-gradient(135deg, #7c3aed, #a855f7) !important;
+    border: none;
+    color: white !important;
+    font-weight: 700;
+    box-shadow: 0 3px 10px rgba(124, 58, 237, 0.35);
+}
+
+.cm-analisis-btn-practicar:hover {
+    box-shadow: 0 5px 18px rgba(124, 58, 237, 0.55) !important;
+    transform: translateY(-1px);
+}
+
+.cm-analisis-btn-exportar {
+    background: white !important;
+    border: 1px solid #0284c7 !important;
+    color: #0284c7 !important;
+    font-weight: 700;
+}
+
+.cm-analisis-btn-exportar:hover {
+    background: #f0f9ff !important;
+    border-color: #0ea5e9 !important;
+}
+
+/* Aviso "practicando desde aquí" */
+.cm-practicando-aviso {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    background: linear-gradient(135deg, #ede9fe, #ddd6fe);
+    border: 2px solid #8b5cf6;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #5b21b6;
+    animation: cm-practicando-pulse 2s infinite;
+}
+
+@keyframes cm-practicando-pulse {
+    0%, 100% { box-shadow: 0 0 12px rgba(139, 92, 246, 0.3); }
+    50% { box-shadow: 0 0 20px rgba(139, 92, 246, 0.6); }
+}
+
+/* Responsive del termómetro y material */
+@media (max-width: 600px) {
+    .cm-material-pieza { width: 18px; height: 18px; }
+    .cm-material-bar { font-size: 0.78rem; padding: 6px 10px; min-height: 36px; }
+    .cm-material-ventaja { font-size: 0.82rem; padding: 2px 8px; }
+    .cm-termometro { font-size: 0.72rem; padding: 6px; }
+    .cm-termometro-grafico { height: 20px; }
+    .cm-termometro-eval { font-size: 0.82rem; min-width: 42px; }
+    .cm-analisis-precision-circle { width: 76px; height: 76px; }
+    .cm-analisis-precision-circle .cm-precision-valor { font-size: 1.35rem; }
+    .cm-analisis-acciones .cm-tablero-btn { min-width: 110px; font-size: 0.78rem; }
+    .cm-analisis-mejor-era { font-size: 0.7rem; padding: 1px 4px; }
+}
