@@ -2565,8 +2565,8 @@
             else if (precision >= 60) colorPrecision = '#65a30d';
             else if (precision >= 40) colorPrecision = '#f59e0b';
 
-            const termometroHTML = this._renderizarTermometro(a.evalFinal);
-
+            const termometroHTML = this._renderizarTermometro(this._obtenerEvalActiva());
+            
             this.$panelAnalisis.innerHTML = `
                 <div class="cm-analisis-header">
                     <span style="font-size:1.1rem;">📊</span>
