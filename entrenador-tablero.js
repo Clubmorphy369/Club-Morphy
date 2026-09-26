@@ -2543,7 +2543,12 @@
                     mejorEraHTML = `<span class="cm-analisis-mejor-era${claseExtra}" title="El motor sugería: ${escapeHtml(j.mejorEra)}">💡 ${escapeHtml(j.mejorEra)}</span>`;
                 }
 
-                const esJugadaActual = this.practicandoDesdeIdx === i;
+                    const esJugadaActual = this.practicandoDesdeIdx === i;
+
+                // ⭐ v46: Botón "Practicar" solo para jugadas humanas y que no sean la primera
+                const btnPracticarFila = (j.esHumano && i > 0)
+                    ? `<button class="cm-analisis-btn-practicar-fila" data-practicar-idx="${i}" title="Practicar esta jugada">🎯</button>`
+                    : '';
 
                 return `
                     <div class="cm-analisis-jugada cm-jugada-clickable ${esJugadaActual ? 'cm-jugada-actual' : ''}"
@@ -2555,6 +2560,7 @@
                         <span class="cm-analisis-icono" style="color:${c.color};">${c.icono}</span>
                         ${mejorEraHTML}
                         <span class="cm-analisis-eval">${formatearEvaluacion(j.evalDespues.cp)}</span>
+                        ${btnPracticarFila}
                     </div>`;
             }).join('');
 
