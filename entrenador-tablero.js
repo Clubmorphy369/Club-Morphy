@@ -134,7 +134,17 @@
             // ⭐ v43: Estado del retry desde análisis
             this.practicandoDesdeIdx = null;  // índice de jugada del historial que estamos practicando
             this.practicandoNodo = null;      // nodo del árbol alternativo (solo sala libre: no aplica)
-
+           
+            // ⭐ v47: Estado del MODO QUIZ (estilo Lichess)
+            this.quizActivo = false;
+            this.quizEjercicios = [];              // Array de { idx, fen, mejorUCI, mejorSAN, sanUsuario, clasificacion, colorHumano }
+            this.quizEjercicioActual = 0;
+            this.quizAciertos = 0;
+            this.quizIntentosActuales = 0;
+            this.quizMaxIntentos = 2;
+            this.quizEsperandoAuto = false;
+            this.quizFlechaSVG = null;             // Referencia al overlay SVG
+           
             // Callbacks externos
             this.onGuardarPGN = this.contexto.onGuardarPGN || null;
             this.onEliminarCapitulo = this.contexto.onEliminarCapitulo || null;
