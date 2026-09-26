@@ -2696,7 +2696,13 @@
 
             // ⭐ v44: Registrar atajos de teclado
             this._registrarAtajosAnalisis();
-           
+
+            // ⭐ v47: Botón "Hacer quiz de errores"
+            const btnIniciarQuiz = this.$panelAnalisis.querySelector('[data-rol="btnIniciarQuiz"]');
+            if (btnIniciarQuiz) {
+                btnIniciarQuiz.addEventListener('click', () => this._iniciarQuizErrores());
+            }
+
             // Botón "Practicar mis errores"
             const btnPracticar = this.$panelAnalisis.querySelector('[data-rol="btnPracticarErrores"]');
             if (btnPracticar) {
