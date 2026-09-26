@@ -3,8 +3,8 @@
 // =============================================================
 
 // ⚠️ Sube la versión cuando hagas cambios importantes
-// ⭐ v39: rutas relativas (compatibilidad Firebase + GitHub Pages)
-const CACHE_NAME = 'club-morphy-v39';
+// ⭐ v40: rutas relativas (compatibilidad Firebase + GitHub Pages)
+const CACHE_NAME = 'club-morphy-v40';
 
 // Scope dinámico: funciona tanto en "/" (Firebase) como en "/Club-Morphy/" (GitHub Pages)
 const ROOT = self.registration.scope;
@@ -91,22 +91,32 @@ self.addEventListener('fetch', event => {
 
     if (request.method !== 'GET') return;
 
-    const ignoredHosts = [
-        'firebase',
-        'firebaseio.com',
-        'googleapis.com',
-        'gstatic.com',
-        'cloudfunctions.net',
-        'identitytoolkit.googleapis.com',
-        'firestore.googleapis.com',
-        'firebasestorage.googleapis.com',
-        'cdnjs.cloudflare.com',
-        'wikimedia.org',
-        'wikipedia.org',
-        'lichess.org',
-        'stockfish',
-        'jsdelivr.net',
-    ];
+   const STATIC_ASSETS = [
+    ROOT,
+    ROOT + 'index.html',
+    ROOT + 'offline.html',
+    ROOT + 'styles-base.css',
+    ROOT + 'styles-layout.css',
+    ROOT + 'styles-componentes.css',
+    ROOT + 'styles-curso.css',
+    ROOT + 'styles-extras.css',
+    ROOT + 'styles-responsive.css',
+    ROOT + 'entrenador.css',
+    ROOT + 'entrenador-responsive.css',
+    ROOT + 'script-core.js',
+    ROOT + 'script-curso.js',
+    ROOT + 'script-render.js',
+    ROOT + 'script-main.js',
+    ROOT + 'entrenador-core.js',
+    ROOT + 'entrenador-tablero.js',
+    ROOT + 'entrenador-api.js',
+    ROOT + 'manifest.json',
+    ROOT + 'assets/lozza/lozza.js',          // ← NUEVO
+    ROOT + 'assets/android-chrome-192x192.png',
+    ROOT + 'assets/android-chrome-512x512.png',
+    ROOT + 'assets/apple-touch-icon.png',
+    ROOT + 'assets/favicon.ico',
+];
 
     if (ignoredHosts.some(host => url.hostname.includes(host))) {
         return;
