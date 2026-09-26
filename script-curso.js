@@ -134,7 +134,7 @@
         }, error => console.warn('Error snapshot club:', error));
     };
 
-       Curso.suscribirProgresoTableros = function () {
+    Curso.suscribirProgresoTableros = function () {
         if (!Core.state.currentUser) {
             Core.state.progresoTableros = {};
             return;
@@ -145,7 +145,7 @@
             } else {
                 Core.state.progresoTableros = {};
             }
-            // ⭐ v22: Actualizar progreso en tableros ya inicializados
+            // Actualizar progreso en tableros ya inicializados
             if (typeof window.actualizarProgresoTableros === 'function') {
                 setTimeout(() => window.actualizarProgresoTableros(), 100);
             } else if (typeof window.inicializarTablerosEntrenador === 'function') {
@@ -234,8 +234,7 @@
         }
     };
 
-// === FIN DE LA PARTE 1/4 ===
-     // ============================================================
+    // ============================================================
     // GESTIÓN DEL CURSO (CRUD)
     // ============================================================
     Curso.iniciarEscuchaCurso = function () {
@@ -243,7 +242,7 @@
         Core.state.migracionRealizada = false;
 
         Core.state.unsubscribeCurso = db.collection('config').doc('curso').onSnapshot(async (doc) => {
-            // ⭐ Ignorar ecos de nuestras propias escrituras pendientes
+            // Ignorar ecos de nuestras propias escrituras pendientes
             if (doc.metadata.hasPendingWrites || Core.state._guardandoCursoContador > 0) {
                 console.log('[Curso] Snapshot ignorado (escritura pendiente)');
                 return;
@@ -295,14 +294,13 @@
         });
     };
 
-    // ⭐ v20: Guardar curso con transacción + fusión (fix multi-dispositivo)
-        Curso.guardarCurso = async function () {
+    // Guardar curso con transacción + fusión (fix multi-dispositivo)
+    Curso.guardarCurso = async function () {
         Core.state._guardandoCursoContador++;
         const cursoLocalSnapshot = JSON.parse(JSON.stringify(Core.state.curso));
 
         try {
-           
-            // ⭐ v28: Si hay una eliminación en curso, hacer set directo (sin fusión)
+            // Si hay una eliminación en curso, hacer set directo (sin fusión)
             // Esto evita que fusionarCursos reinserten las clases/temas eliminados
             if (Core.state._operacionEliminar) {
                 await db.collection('config').doc('curso').set(cursoLocalSnapshot);
@@ -330,8 +328,8 @@
             Core.state._guardandoCursoContador--;
         }
     };
-   
-    // ⭐ v20: Fusiona dos versiones del curso sin perder datos
+
+    // Fusiona dos versiones del curso sin perder datos
     Curso.fusionarCursos = function (cursoRemoto, cursoLocal) {
         const remotas = (cursoRemoto && cursoRemoto.clases) || [];
         const locales = (cursoLocal && cursoLocal.clases) || [];
@@ -608,10 +606,10 @@
                     }
                     return false;
                 }
-                       eliminarDeLista(clase.temas);
+                eliminarDeLista(clase.temas);
                 Curso.reordenarTemasRecursivo(clase.temas);
 
-                // ⭐ v28: Marcar operación de eliminación
+                // Marcar operación de eliminación
                 Core.state._operacionEliminar = true;
                 try {
                     await Curso.guardarCurso();
@@ -620,7 +618,8 @@
                 }
 
                 window.actualizarUI();
-                mostrarToast('🗑️ Tema eliminado', 'success');            }
+                mostrarToast('🗑️ Tema eliminado', 'success');
+            }
         );
     };
 
@@ -712,7 +711,7 @@
         }
     };
 
-      Curso.eliminarClase = async function (id) {
+    Curso.eliminarClase = async function (id) {
         if (!Core.state.currentUser?.esAdmin) return;
         const index = Core.state.curso.clases.findIndex(c => c.id === id);
         if (index === -1) return;
@@ -722,7 +721,7 @@
         }
         Core.state.temaAbiertoGlobal = null;
 
-        // ⭐ v28: Marcar operación de eliminación
+        // Marcar operación de eliminación
         Core.state._operacionEliminar = true;
         try {
             await Curso.guardarCurso();
@@ -737,6 +736,7 @@
             await db.collection('accesosEspeciales').doc(id).delete();
         } catch (e) { console.warn('No se pudo eliminar accesos', e); }
     };
+
     Curso.togglePublicarClase = async function (claseId) {
         if (!Core.state.currentUser?.esAdmin) return;
         const clase = Core.state.curso.clases.find(c => c.id === claseId);
@@ -747,8 +747,7 @@
         mostrarToast(clase.publicada ? 'Clase visible para alumnos' : 'Clase oculta para alumnos', 'success');
     };
 
-// === FIN DE LA PARTE 2/4 ===
-     // ============================================================
+    // ============================================================
     // MOVER CLASE ARRIBA/ABAJO
     // ============================================================
     Curso.moverClaseArriba = async function (claseId) {
@@ -782,7 +781,7 @@
         window.actualizarUI();
         mostrarToast('Orden de clases actualizado', 'success');
     };
-
+   
     // ============================================================
     // PROGRESO DEL USUARIO
     // ============================================================
@@ -847,8 +846,10 @@
         }
     };
 
-    Curso.renombrarCapituloEnFirestore = async function ({ capituloIdx, nuevoNombre, pgnNuevo }) {
-        console.log('[Curso] Capítulo renombrado a:', nuevoNombre);
+    // Stub: el renombrado real del capítulo se persiste vía
+    // Render.onRenombrarCapitulo → guardarPGNEnFirestore.
+    Curso.renombrarCapituloEnFirestore = async function () {
+        // No-op intencional
     };
 
     // ============================================================
@@ -1332,8 +1333,7 @@
         Core.dom.modalSolicitudesAdmin.classList.add('active');
     };
 
-// === FIN DE LA PARTE 3/4 ===
-     // ============================================================
+    // ============================================================
     // NOTIFICACIONES
     // ============================================================
     Curso.abrirNotificaciones = function () {
@@ -1716,13 +1716,13 @@
         else preview = bloque.contenido || 'vacío';
         const previewCorto = String(preview).length > 40 ? String(preview).substring(0, 40) + '...' : String(preview);
 
-                mostrarConfirmacion(
+        mostrarConfirmacion(
             '🗑️ Eliminar bloque',
             `¿Seguro que quieres eliminar este bloque de tipo "${bloque.tipo}"? Contenido: "${previewCorto}". Esta acción no se puede deshacer.`,
             async () => {
                 tema.bloques = tema.bloques.filter(b => b.id !== bloqueId);
 
-                // ⭐ v28: Marcar operación de eliminación para guardado directo
+                // Marcar operación de eliminación para guardado directo
                 Core.state._operacionEliminar = true;
                 try {
                     await Curso.guardarCurso();
@@ -1733,7 +1733,8 @@
                 window.actualizarUI();
                 mostrarToast('🗑️ Bloque eliminado', 'success');
             }
-        );    };
+        );
+    };
 
     Curso.moverBloqueArriba = function (claseId, temaId, bloqueId) {
         const clase = Core.state.curso.clases.find(c => c.id === claseId);
@@ -1822,7 +1823,7 @@
     };
 
     // ============================================================
-    // EXPOSICIÓN GLOBAL (compatibilidad con HTML onclick y código existente)
+    // EXPOSICIÓN GLOBAL (compatibilidad con HTML onclick)
     // ============================================================
     window.suscribirAccesosEspeciales = Curso.suscribirAccesosEspeciales;
     window.suscribirAccesosTema = Curso.suscribirAccesosTema;
