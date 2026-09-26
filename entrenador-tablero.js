@@ -5,11 +5,15 @@
    Depende de: entrenador-core.js (window.CMEntrenadorCore)
    Expone: window.CMEntrenador.InstanciaTablero
    
-   ⭐ v20 — Cambios respecto a v19:
-     - Fix A: reset bloqueo al reiniciar partida
-     - Fix B: detener reloj en manejarFinPartida
-     - Fix D: timeout Stockfish 15s → 30s
-     - Fix E: cargar progresoVariantes desde contexto
+   ⭐ v43 — Bloque 1 (análisis post-partida):
+     - Cosmético: textos "Stockfish" → "IA"
+     - Barra de material capturado
+     - Termómetro de evaluación tipo Lichess
+     - Retry desde análisis (practicar desde una jugada)
+     - Clic en jugada del análisis → carga posición
+     - Exportar análisis a PGN con clasificaciones
+     - "Mejor era: X" configurable con persistencia
+     - Indicador visual de precisión (círculo)
    ============================================================ */
 
 (function () {
@@ -30,6 +34,9 @@
         contarLineas, obtenerLineasCompletas, contarComentarios,
         arbolAPGN, siguienteInstanciaId
     } = Core;
+
+    // Clave de persistencia para la config del análisis
+    const ANALISIS_MEJOR_ERA_KEY = 'cm-analisis-mostrar-mejor-era';
 
     class InstanciaTablero {
         constructor(contenedor, config, contexto) {
@@ -84,7 +91,7 @@
                     localStorage.getItem(MODO_EDICION_KEY) === 'true';
             } catch (e) { /* ignorar */ }
 
-                       // ⭐ v21 Fix E: Progreso por variante — cargar filtrando por este bloque
+            // Progreso por variante — cargar filtrando por este bloque
             this.claseIdContexto = this.contexto.claseId || null;
             this.temaIdContexto = this.contexto.temaId || null;
             this.bloqueIdContexto = this.contexto.bloqueId || null;
@@ -101,7 +108,6 @@
                         }
                     }
                 });
-                console.log(`[Entrenador v21] Progreso cargado: ${this.progresoVariantes.size} entradas`);
             }
 
             // Sala libre
@@ -117,6 +123,17 @@
             // Estado del análisis post-partida
             this.analisis = null;
             this.analizando = false;
+
+            // ⭐ v43: Configuración persistente del análisis
+            this.mostrarMejorEraEnTodas = false;
+            try {
+                this.mostrarMejorEraEnTodas =
+                    localStorage.getItem(ANALISIS_MEJOR_ERA_KEY) === 'true';
+            } catch (e) { /* ignorar */ }
+
+            // ⭐ v43: Estado del retry desde análisis
+            this.practicandoDesdeIdx = null;  // índice de jugada del historial que estamos practicando
+            this.practicandoNodo = null;      // nodo del árbol alternativo (solo sala libre: no aplica)
 
             // Callbacks externos
             this.onGuardarPGN = this.contexto.onGuardarPGN || null;
@@ -208,7 +225,7 @@
             this.colorHumano = colorHumano;
             this.orientacion = colorHumano === 'w' ? 'white' : 'black';
 
-            // ⭐ v13: Iniciar el reloj SIEMPRE (independientemente de quién empiece)
+            // Iniciar el reloj SIEMPRE (independientemente de quién empiece)
             if (this.reloj && !this.reloj.sinLimite) {
                 setTimeout(() => {
                     if (!this.destroyed && this.reloj) this.reloj.iniciar();
@@ -216,7 +233,7 @@
             }
 
             if (this.chess.turn() !== colorHumano) {
-                this.setStatus('ordenador', '🤖 Stockfish piensa…');
+                this.setStatus('ordenador', '🤖 IA piensa…');
                 this.esperandoRespuesta = true;
                 setTimeout(() => this.jugarOrdenador(), 600);
             } else {
@@ -382,7 +399,7 @@
                                             </select>
                                         </div>
                                         <div>
-                                            <label class="cm-tablero-admin-field-label">Nivel Stockfish</label>
+                                            <label class="cm-tablero-admin-field-label">Nivel del motor</label>
                                             <select class="cm-tablero-admin-select" data-rol="configNivel">
                                                 <option value="1">1 — Principiante (800)</option>
                                                 <option value="2">2 — Muy fácil (1000)</option>
@@ -563,7 +580,7 @@
             this._on('[data-rol="btnNext"]', 'click', () => this.capituloSiguiente());
 
             if (!esAdmin) {
-                // ⭐ v21: Cargar valor persistido del auto-avance
+                // Cargar valor persistido del auto-avance
                 try {
                     const autoAvanceGuardado = localStorage.getItem('cm-tablero-auto-avance') === 'true';
                     this.autoAvance = autoAvanceGuardado;
@@ -667,10 +684,10 @@
         actualizarEstadoMotor() {
             if (!this.$engineStatus) return;
             if (SF.ready) {
-                this.$engineStatus.textContent = '✅ Stockfish listo';
+                this.$engineStatus.textContent = '✅ Motor listo';
                 this.$engineStatus.className = 'cm-tablero-engine-status ready';
             } else if (SF.worker) {
-                this.$engineStatus.textContent = '⏳ Cargando Stockfish…';
+                this.$engineStatus.textContent = '⏳ Cargando motor…';
                 this.$engineStatus.className = 'cm-tablero-engine-status loading';
             } else {
                 this.$engineStatus.textContent = '⏸️ Motor no inicializado';
@@ -684,8 +701,8 @@
             if (filaColor) filaColor.style.display = modo === 'ordenador' ? 'grid' : 'none';
         }
 
-// === FIN DE LA PARTE 1/4 ===
-          // --------------------------------------------------------
+
+        // --------------------------------------------------------
         // CARGAR PGN Y CAPÍTULOS
         // --------------------------------------------------------
         cargarCapitulosDesdePGN(pgn) {
@@ -763,6 +780,7 @@
             this.solucionVista = false;
             this.eloAplicado = false;
             this.historialPartida = [];
+            this.practicandoDesdeIdx = null;
 
             if (this.respuestaAutoTimeout) { clearTimeout(this.respuestaAutoTimeout); this.respuestaAutoTimeout = null; }
 
@@ -789,8 +807,7 @@
             }
         }
 
-               // ⭐ v22: Actualizar progreso de un tablero ya inicializado
-        // (cuando llega el snapshot de Firestore)
+        // Actualizar progreso de un tablero ya inicializado
         actualizarProgresoVariantes(progresoTableros) {
             if (this.destroyed) return;
             if (!progresoTableros || typeof progresoTableros !== 'object') return;
@@ -812,10 +829,10 @@
             this.renderizarBarraCapitulos();
         }
 
-               // ⭐ v26: Marca TODOS los capítulos completados (no solo el actual)
+        // Marca TODOS los capítulos completados (no solo el actual)
         _marcarCapitulosCompletados() {
-            const Core = window.CMScriptCore;
-            const progresoGlobal = (Core && Core.state && Core.state.progresoTableros) || {};
+            const CoreGlobal = window.CMScriptCore;
+            const progresoGlobal = (CoreGlobal && CoreGlobal.state && CoreGlobal.state.progresoTableros) || {};
 
             if (!this.claseIdContexto || !this.temaIdContexto || !this.bloqueIdContexto) return;
             if (!this.capitulos || this.capitulos.length === 0) return;
@@ -841,19 +858,15 @@
             });
         }
 
-                _restaurarProgresoDeCapitulo() {
+        _restaurarProgresoDeCapitulo() {
             this.hojasCompletadas = new Set();
 
             const cap = this.capitulos[this.capituloActual];
             if (!cap) return;
 
-            // ⭐ v23: Leer SIEMPRE desde Core.state.progresoTableros para asegurar
-            // que tenemos los datos más recientes, sin importar el timing
-            // (el snapshot de Firestore puede llegar después del constructor)
-            const Core = window.CMScriptCore;
-            const progresoGlobal = (Core && Core.state && Core.state.progresoTableros) || {};
+            const CoreGlobal = window.CMScriptCore;
+            const progresoGlobal = (CoreGlobal && CoreGlobal.state && CoreGlobal.state.progresoTableros) || {};
 
-            // Si no tenemos IDs de contexto, no podemos buscar
             if (!this.claseIdContexto || !this.temaIdContexto || !this.bloqueIdContexto) return;
 
             const prefijo = `tablero_${this.claseIdContexto}_${this.temaIdContexto}_${this.bloqueIdContexto}_cap${this.capituloActual}_`;
@@ -869,11 +882,11 @@
                 }
             });
 
-            // Actualizar el campo `completado` del capítulo
             if (this.hojasTotales.length > 0 && this.hojasCompletadas.size >= this.hojasTotales.length) {
                 cap.completado = true;
             }
         }
+
         actualizarMeta() {
             if (!this.$meta) return;
             if (this.esSalaLibre) {
@@ -894,10 +907,9 @@
         // --------------------------------------------------------
         // BARRA DE CAPÍTULOS
         // --------------------------------------------------------
-                renderizarBarraCapitulos() {
+        renderizarBarraCapitulos() {
             if (!this.$capsLista) return;
 
-            // ⭐ v26: Refrescar el estado de completado de TODOS los capítulos
             this._marcarCapitulosCompletados();
 
             const esAdmin = this.esModoAdmin;
@@ -1543,7 +1555,7 @@
             }
 
             this.esperandoRespuesta = true;
-            this.setStatus('ordenador', '🤖 Stockfish piensa…');
+            this.setStatus('ordenador', '🤖 IA piensa…');
             setTimeout(() => this.jugarOrdenador(), 200);
         }
 
@@ -1552,8 +1564,7 @@
             return ELO.aplicar(estudio, capIdx, cambio, razon);
         }
 
-// === FIN DE LA PARTE 2/4 ===
-          // --------------------------------------------------------
+        // --------------------------------------------------------
         // MODO EDICIÓN
         // --------------------------------------------------------
         clickCasillaEdicion(sq) {
@@ -1814,7 +1825,6 @@
                 this._guardarProgresoCapCompleto();
                 this.renderizarBarraCapitulos();
 
-                               // ⭐ v27: Avisar al exterior para que verifique TODOS los tableros
                 if (!this.esModoAdmin && this.contexto.onTableroCompletado) {
                     try {
                         this.contexto.onTableroCompletado({
@@ -1826,7 +1836,7 @@
                         console.warn('[v27] Error en onTableroCompletado:', e);
                     }
                 }
-               
+
                 if (!this.eloAplicado && !this.esModoAdmin) {
                     this.eloAplicado = true;
                     const cap = this.capitulos[this.capituloActual];
@@ -1966,7 +1976,7 @@
             const turno = this.chess.turn();
             const colorHumano = this.config.colorHumano || 'w';
             if (turno !== colorHumano) {
-                this.setStatus('ordenador', '🤖 Stockfish piensa…');
+                this.setStatus('ordenador', '🤖 IA piensa…');
                 this.esperandoRespuesta = true;
                 setTimeout(() => this.jugarOrdenador(), 400);
             } else {
@@ -2001,7 +2011,7 @@
 
             if (this.chess.game_over()) { this.manejarFinPartida(); return; }
             this.esperandoRespuesta = true;
-            this.setStatus('ordenador', '🤖 Stockfish piensa…');
+            this.setStatus('ordenador', '🤖 IA piensa…');
             setTimeout(() => this.jugarOrdenador(), 100);
         }
 
@@ -2050,10 +2060,10 @@
             if (this.chess.game_over()) { this.manejarFinPartida(); return; }
 
             if (this.esSalaLibre) {
-                this.setStatus('ordenador', `🤖 Stockfish jugó ${mv.san}. Tu turno.`);
+                this.setStatus('ordenador', `🤖 IA jugó ${mv.san}. Tu turno.`);
                 this.actualizarMovimientosSalaLibre();
             } else {
-                this.setStatus('ordenador', `🤖 Stockfish: ${mv.san}. Tu turno.`);
+                this.setStatus('ordenador', `🤖 IA: ${mv.san}. Tu turno.`);
             }
         }
 
@@ -2125,11 +2135,9 @@
         // FIN DE PARTIDA
         // --------------------------------------------------------
         async manejarFinPartida() {
-            // ⭐ v20 Fix B: Detener el reloj COMPLETO al terminar
             if (this.reloj) {
                 this.reloj.detener();
             }
-            // ⭐ v20 Fix B: Bloquear movimientos tras fin de partida
             this.bloqueado = true;
             this.esperandoRespuesta = false;
 
@@ -2216,11 +2224,13 @@
             const fecha = new Date();
             const fechaStr = fecha.toISOString().split('T')[0].replace(/-/g, '.');
 
+            const nombreRival = 'IA Nv' + (this.config.nivelSF || 5);
+
             let headers = `[Event "Partida libre vs IA"]\n`;
             headers += `[Site "Club Morphy"]\n`;
             headers += `[Date "${fechaStr}"]\n`;
-            headers += `[White "${this.colorHumano === 'w' ? 'Alumno' : 'Stockfish Nv' + (this.config.nivelSF || 5)}"]\n`;
-            headers += `[Black "${this.colorHumano === 'b' ? 'Alumno' : 'Stockfish Nv' + (this.config.nivelSF || 5)}"]\n`;
+            headers += `[White "${this.colorHumano === 'w' ? 'Alumno' : nombreRival}"]\n`;
+            headers += `[Black "${this.colorHumano === 'b' ? 'Alumno' : nombreRival}"]\n`;
 
             let resultadoPGN = '*';
             if (this.chess.in_checkmate()) {
@@ -2245,6 +2255,7 @@
             return headers + textoMovs;
         }
 
+   
         // --------------------------------------------------------
         // ANÁLISIS POST-PARTIDA
         // --------------------------------------------------------
@@ -2263,25 +2274,21 @@
             });
         }
 
-                    async analizarPartida() {
+        async analizarPartida() {
             if (this.analizando) return;
             if (this.historialCompletoPartida.length === 0) return;
 
-            // ⭐ v30: Marcar como analizando ANTES del await
             this.analizando = true;
-
-            // ⭐ v30: Snapshot inmutable del historial
             const historialSnapshot = [...this.historialCompletoPartida];
             const total = historialSnapshot.length;
 
             try {
-                // Esperar a Stockfish hasta 30 segundos
                 if (!SF.ready) {
                     this.setStatus('ordenador', '⏳ Esperando al motor…');
                     const listo = await this._esperarStockfishListo(30000);
                     if (!listo) {
-                        this.mostrarToast('⚠️ Stockfish tardó demasiado. Análisis no disponible.', '');
-                        this.setStatus('ordenador', '⚠️ Stockfish no disponible');
+                        this.mostrarToast('⚠️ El motor tardó demasiado. Análisis no disponible.', '');
+                        this.setStatus('ordenador', '⚠️ Motor no disponible');
                         return;
                     }
                 }
@@ -2292,7 +2299,6 @@
                 const evals = [];
                 evals.push(await SF.evaluarPosicion(historialSnapshot[0].fenAntes, 6));
 
-                // Bucle 1: evaluar todas las posiciones
                 for (let i = 0; i < total; i++) {
                     const j = historialSnapshot[i];
                     if (!j) break;
@@ -2304,7 +2310,6 @@
                     }
                 }
 
-                // Bucle 2: calcular CPL y clasificar cada jugada
                 for (let i = 0; i < total; i++) {
                     const j = historialSnapshot[i];
                     if (!j) break;
@@ -2333,25 +2338,26 @@
 
                     jugadasAnalizadas.push({
                         ...j,
+                        idx: i,
                         evalAntes,
                         evalDespues,
                         cpl,
-                        clasificacion
+                        clasificacion,
+                        mejorEra: evalAntes.mejor || null
                     });
                 }
 
-                // Análisis temporal (para feedback inmediato)
                 this.analisis = {
                     jugadas: jugadasAnalizadas,
                     acplHumano: 0,
                     acplPC: 0,
                     conteoHumano: { brillante: 0, excelente: 0, buena: 0, imprecision: 0, error: 0, blunder: 0, libro: 0, forzada: 0 },
                     conteoPC: { brillante: 0, excelente: 0, buena: 0, imprecision: 0, error: 0, blunder: 0, libro: 0, forzada: 0 },
-                    precisionHumano: 0
+                    precisionHumano: 0,
+                    evalFinal: evals[evals.length - 1] || { cp: 0, mate: null }
                 };
                 this.renderizarAnalisis();
 
-                // Verificar evals válidas
                 const evalsValidas = jugadasAnalizadas.filter(j =>
                     j.evalAntes && j.evalDespues &&
                     (j.evalAntes.cp !== 0 || j.evalAntes.mate !== null) &&
@@ -2367,7 +2373,6 @@
                     return;
                 }
 
-                // Estadísticas finales
                 const acplHumano = Core.calcularACPL(jugadasAnalizadas.filter(j => j.esHumano), this.colorHumano);
                 const acplPC = Core.calcularACPL(jugadasAnalizadas.filter(j => !j.esHumano), this.colorHumano === 'w' ? 'b' : 'w');
                 const conteoHumano = Core.contarClasificaciones(jugadasAnalizadas.filter(j => j.esHumano));
@@ -2393,6 +2398,125 @@
                 this.analizando = false;
             }
         }
+
+        // --------------------------------------------------------
+        // BARRA DE MATERIAL CAPTURADO
+        // --------------------------------------------------------
+        _calcularMaterialCapturado() {
+            const inicial = { p: 8, n: 2, b: 2, r: 2, q: 1 };
+            const conteo = {
+                w: { p: 8, n: 2, b: 2, r: 2, q: 1 },
+                b: { p: 8, n: 2, b: 2, r: 2, q: 1 }
+            };
+
+            const board = this.chess.board();
+            for (let r = 0; r < 8; r++) {
+                for (let c = 0; c < 8; c++) {
+                    const cell = board[r][c];
+                    if (cell && cell.type !== 'k') {
+                        conteo[cell.color][cell.type] = Math.max(0, conteo[cell.color][cell.type] - 1);
+                    }
+                }
+            }
+
+            const capturadasPorBlancas = [];
+            const capturadasPorNegras = [];
+            const valores = { p: 1, n: 3, b: 3, r: 5, q: 9 };
+
+            ['q', 'r', 'b', 'n', 'p'].forEach(tipo => {
+                for (let i = 0; i < conteo.b[tipo]; i++) capturadasPorBlancas.push('b' + tipo);
+                for (let i = 0; i < conteo.w[tipo]; i++) capturadasPorNegras.push('w' + tipo);
+            });
+
+            let materialBlancas = 0;
+            let materialNegras = 0;
+            ['q', 'r', 'b', 'n', 'p'].forEach(tipo => {
+                materialBlancas += conteo.w[tipo] * valores[tipo];
+                materialNegras += conteo.b[tipo] * valores[tipo];
+            });
+
+            const ventaja = materialBlancas - materialNegras;
+
+            return { capturadasPorBlancas, capturadasPorNegras, ventaja };
+        }
+
+        _renderizarBarraMaterial() {
+            if (!this.esSalaLibre) return '';
+            const { capturadasPorBlancas, capturadasPorNegras, ventaja } = this._calcularMaterialCapturado();
+
+            const piezasBlancas = capturadasPorBlancas.map(k =>
+                `<img class="cm-material-pieza" src="${PIEZAS[k]}" alt="${SIMBOLOS[k]}" title="${SIMBOLOS[k]}" onerror="this.style.display='none'">`
+            ).join('');
+
+            const piezasNegras = capturadasPorNegras.map(k =>
+                `<img class="cm-material-pieza" src="${PIEZAS[k]}" alt="${SIMBOLOS[k]}" title="${SIMBOLOS[k]}" onerror="this.style.display='none'">`
+            ).join('');
+
+            let ventajaHTML = '';
+            if (ventaja > 0) {
+                ventajaHTML = `<span class="cm-material-ventaja">+${ventaja}</span>`;
+            } else if (ventaja < 0) {
+                ventajaHTML = `<span class="cm-material-ventaja cm-material-ventaja-negras">${ventaja}</span>`;
+            } else {
+                ventajaHTML = `<span class="cm-material-ventaja cm-material-ventaja-igual">=</span>`;
+            }
+
+            return `
+                <div class="cm-material-bar" data-rol="materialBar">
+                    <div class="cm-material-lado">${piezasBlancas}</div>
+                    ${ventajaHTML}
+                    <div class="cm-material-lado cm-material-negras">${piezasNegras}</div>
+                </div>
+            `;
+        }
+
+        _actualizarBarraMaterial() {
+            if (!this.esSalaLibre) return;
+            const barraExistente = this.contenedor.querySelector('[data-rol="materialBar"]');
+            const nuevoHTML = this._renderizarBarraMaterial();
+            if (barraExistente) {
+                barraExistente.outerHTML = nuevoHTML;
+            } else {
+                const boardWrap = this.contenedor.querySelector('.cm-tablero-board-wrap');
+                if (boardWrap) boardWrap.insertAdjacentHTML('afterend', nuevoHTML);
+            }
+        }
+
+        // --------------------------------------------------------
+        // TERMÓMETRO DE EVALUACIÓN
+        // --------------------------------------------------------
+        _renderizarTermometro(evalActual) {
+            const cp = evalActual && evalActual.cp !== undefined ? evalActual.cp : 0;
+            // Mapear cp a porcentaje blanco: -1000 a +1000
+            let pctBlanco = 50 + (cp / 1000) * 50;
+            pctBlanco = Math.max(2, Math.min(98, pctBlanco));
+
+            const textoEval = formatearEvaluacion(cp);
+
+            return `
+                <div class="cm-termometro" data-rol="termometro">
+                    <span class="cm-termometro-label">Eval</span>
+                    <div class="cm-termometro-grafico">
+                        <div class="cm-termometro-blanco" style="width:${pctBlanco}%;"></div>
+                        <div class="cm-termometro-linea"></div>
+                    </div>
+                    <span class="cm-termometro-eval">${textoEval}</span>
+                </div>
+            `;
+        }
+
+        _actualizarTermometro() {
+            if (!this.$panelAnalisis || !this.analisis) return;
+            const termoExistente = this.$panelAnalisis.querySelector('[data-rol="termometro"]');
+            const nuevoHTML = this._renderizarTermometro(this.analisis.evalFinal);
+            if (termoExistente) {
+                termoExistente.outerHTML = nuevoHTML;
+            }
+        }
+
+        // --------------------------------------------------------
+        // RENDERIZAR ANÁLISIS (con termómetro, material, retry, export, mejor era, precisión)
+        // --------------------------------------------------------
         renderizarAnalisis() {
             if (!this.$panelAnalisis || !this.analisis) return;
 
@@ -2403,19 +2527,45 @@
                 return `<span class="cm-analisis-chip" style="border-color:${color}; color:${color};">${icono} ${cant}</span>`;
             };
 
+            // Jugadas con "Mejor era" condicional
             const filaJugadas = a.jugadas.map((j, i) => {
                 const c = CLASIFICACION_JUGADAS[j.clasificacion] || CLASIFICACION_JUGADAS.buena;
                 const numJugada = Math.floor(i / 2) + 1;
                 const pre = j.color === 'w' ? `${numJugada}.` : `${numJugada}…`;
                 const icono = j.esHumano ? '' : '🤖 ';
+
+                // ⭐ Decidir si mostrar "Mejor era"
+                const esErrorOImprecision = j.clasificacion === 'error' || j.clasificacion === 'blunder' || j.clasificacion === 'imprecision';
+                const mostrarMejorEra = this.mostrarMejorEraEnTodas || esErrorOImprecision;
+                let mejorEraHTML = '';
+                if (mostrarMejorEra && j.mejorEra && j.clasificacion !== 'excelente' && j.clasificacion !== 'brillante') {
+                    const claseExtra = esErrorOImprecision ? ' cm-mejor-era-error' : '';
+                    mejorEraHTML = `<span class="cm-analisis-mejor-era${claseExtra}" title="El motor sugería: ${escapeHtml(j.mejorEra)}">💡 ${escapeHtml(j.mejorEra)}</span>`;
+                }
+
+                const esJugadaActual = this.practicandoDesdeIdx === i;
+
                 return `
-                    <div class="cm-analisis-jugada" style="border-left-color:${c.color};" title="${escapeHtml(c.nombre)}">
+                    <div class="cm-analisis-jugada cm-jugada-clickable ${esJugadaActual ? 'cm-jugada-actual' : ''}"
+                         data-jugada-idx="${i}"
+                         style="border-left-color:${c.color};"
+                         title="Clic para cargar esta posición en el tablero">
                         <span class="cm-analisis-num">${pre}</span>
                         <span class="cm-analisis-san">${icono}${escapeHtml(j.san)}</span>
                         <span class="cm-analisis-icono" style="color:${c.color};">${c.icono}</span>
+                        ${mejorEraHTML}
                         <span class="cm-analisis-eval">${formatearEvaluacion(j.evalDespues.cp)}</span>
                     </div>`;
             }).join('');
+
+            // Círculo de precisión
+            const precision = a.precisionHumano;
+            let colorPrecision = '#dc2626';
+            if (precision >= 80) colorPrecision = '#16a34a';
+            else if (precision >= 60) colorPrecision = '#65a30d';
+            else if (precision >= 40) colorPrecision = '#f59e0b';
+
+            const termometroHTML = this._renderizarTermometro(a.evalFinal);
 
             this.$panelAnalisis.innerHTML = `
                 <div class="cm-analisis-header">
@@ -2423,18 +2573,24 @@
                     <strong>Análisis de la partida</strong>
                 </div>
 
-                <div class="cm-analisis-stats">
-                    <div class="cm-analisis-stat-card">
-                        <span class="cm-analisis-stat-label">Tu precisión</span>
-                        <span class="cm-analisis-stat-valor">${a.precisionHumano}%</span>
+                <div class="cm-analisis-stats" style="grid-template-columns: 1fr 1fr;">
+                    <div class="cm-analisis-precision-card">
+                        <div class="cm-analisis-precision-circle" style="background: conic-gradient(${colorPrecision} 0%, ${colorPrecision} ${precision}%, #e2e8f0 ${precision}%, #e2e8f0 100%);">
+                            <span class="cm-precision-valor">${precision}</span>
+                            <span class="cm-precision-pct">%</span>
+                        </div>
+                        <span class="cm-analisis-precision-label">Tu precisión</span>
                     </div>
                     <div class="cm-analisis-stat-card">
                         <span class="cm-analisis-stat-label">ACPL</span>
                         <span class="cm-analisis-stat-valor">${a.acplHumano}</span>
+                        <span style="font-size:0.7rem; color:var(--cm-texto-suave); margin-top:4px; display:block;">Centipeones por jugada</span>
                     </div>
                 </div>
 
-                <div class="cm-analisis-conteo">
+                ${termometroHTML}
+
+                <div class="cm-analisis-conteo" style="margin-top:12px;">
                     ${filaConteo('!!', 'Brillante', a.conteoHumano.brillante, CLASIFICACION_JUGADAS.brillante.color)}
                     ${filaConteo('!', 'Excelente', a.conteoHumano.excelente, CLASIFICACION_JUGADAS.excelente.color)}
                     ${filaConteo('✓', 'Buena', a.conteoHumano.buena, CLASIFICACION_JUGADAS.buena.color)}
@@ -2443,17 +2599,290 @@
                     ${filaConteo('??', 'Error grave', a.conteoHumano.blunder, CLASIFICACION_JUGADAS.blunder.color)}
                 </div>
 
+                <div class="cm-analisis-config">
+                    <input type="checkbox" id="${this.idInstancia}-mejor-era" data-rol="mejorEraCheck" ${this.mostrarMejorEraEnTodas ? 'checked' : ''}>
+                    <label for="${this.idInstancia}-mejor-era">
+                        💡 Mostrar "Mejor era" en <strong>todas las jugadas</strong> (si desmarcas, solo en errores e imprecisiones)
+                    </label>
+                </div>
+
                 <div class="cm-analisis-lista-wrap">
-                    <details class="cm-analisis-details">
+                    <details class="cm-analisis-details" open>
                         <summary>Ver jugada por jugada</summary>
                         <div class="cm-analisis-lista">
                             ${filaJugadas}
                         </div>
                     </details>
                 </div>
+
+                <div class="cm-analisis-acciones">
+                    <button class="cm-tablero-btn cm-analisis-btn-practicar" data-rol="btnPracticarErrores">
+                        🎯 Practicar mis errores
+                    </button>
+                    <button class="cm-tablero-btn cm-analisis-btn-exportar" data-rol="btnExportarPGN">
+                        📥 Exportar PGN
+                    </button>
+                </div>
             `;
 
             this.$panelAnalisis.classList.remove('cm-tablero-hidden');
+
+            // === Listeners de la nueva UI ===
+
+            // Checkbox "Mejor era"
+            const checkMejorEra = this.$panelAnalisis.querySelector('[data-rol="mejorEraCheck"]');
+            if (checkMejorEra) {
+                checkMejorEra.addEventListener('change', (e) => {
+                    this.mostrarMejorEraEnTodas = e.target.checked;
+                    try {
+                        localStorage.setItem(ANALISIS_MEJOR_ERA_KEY, e.target.checked ? 'true' : 'false');
+                    } catch (err) { /* ignorar */ }
+                    this.renderizarAnalisis();
+                });
+            }
+
+            // Clic en jugada → cargar posición
+            this.$panelAnalisis.querySelectorAll('[data-jugada-idx]').forEach(el => {
+                el.addEventListener('click', () => {
+                    const idx = parseInt(el.dataset.jugadaIdx, 10);
+                    this._cargarPosicionDesdeAnalisis(idx);
+                });
+            });
+
+            // Botón "Practicar mis errores"
+            const btnPracticar = this.$panelAnalisis.querySelector('[data-rol="btnPracticarErrores"]');
+            if (btnPracticar) {
+                btnPracticar.addEventListener('click', () => this._practicarErrores());
+            }
+
+            // Botón "Exportar PGN"
+            const btnExportar = this.$panelAnalisis.querySelector('[data-rol="btnExportarPGN"]');
+            if (btnExportar) {
+                btnExportar.addEventListener('click', () => this._exportarAnalisisPGN());
+            }
+        }
+
+        // --------------------------------------------------------
+        // CLIC EN JUGADA DEL ANÁLISIS → CARGA POSICIÓN
+        // --------------------------------------------------------
+        _cargarPosicionDesdeAnalisis(idx) {
+            if (!this.analisis || !this.analisis.jugadas[idx]) return;
+
+            const jugada = this.analisis.jugadas[idx];
+
+            // Reconstruir la posición aplicando las jugadas hasta el FEN
+            const chess = new Chess();
+            for (let i = 0; i <= idx; i++) {
+                const j = this.analisis.jugadas[i];
+                if (!j) break;
+                try {
+                    chess.move({ from: j.from, to: j.to, promotion: j.promotion || 'q' });
+                } catch (e) {
+                    break;
+                }
+            }
+
+            if (chess.fen() === this.chess.fen()) {
+                this.mostrarToast(`Ya estás en la posición de la jugada ${Math.floor(idx / 2) + 1}`, '');
+                return;
+            }
+
+            this.chess = chess;
+            this.casillaSeleccionada = null;
+            this.bloqueado = true;
+            this.practicandoDesdeIdx = idx;
+            this.dibujarPiezas();
+            this._actualizarBarraMaterial();
+
+            this.setStatus('ordenador',
+                `📍 Posición después de la jugada ${Math.floor(idx / 2) + 1} (${jugada.san}). Clic en "🔄 Volver al presente" para regresar.`);
+
+            // Añadir botón "volver al presente" si no existe
+            this._mostrarBotonVolverAlPresente();
+        }
+
+        _mostrarBotonVolverAlPresente() {
+            if (!this.$panelAnalisis) return;
+            let btnVolver = this.$panelAnalisis.querySelector('[data-rol="btnVolverPresente"]');
+            if (btnVolver) return; // ya existe
+
+            const aviso = document.createElement('div');
+            aviso.className = 'cm-practicando-aviso';
+            aviso.setAttribute('data-rol', 'avisoPracticando');
+            aviso.innerHTML = `
+                <span>🔍 Estás explorando una posición del pasado.</span>
+                <button class="cm-tablero-btn cm-tablero-btn-sec" data-rol="btnVolverPresente" style="padding:6px 12px; font-size:0.82rem; min-height:auto;">
+                    🔄 Volver al presente
+                </button>
+            `;
+
+            // Insertar al principio del panel
+            this.$panelAnalisis.insertBefore(aviso, this.$panelAnalisis.firstChild);
+
+            const btn = aviso.querySelector('[data-rol="btnVolverPresente"]');
+            if (btn) {
+                btn.addEventListener('click', () => this._volverAlPresente());
+            }
+        }
+
+        _volverAlPresente() {
+            // Restaurar la posición final de la partida
+            const chessFinal = new Chess();
+            this.historialCompletoPartida.forEach(j => {
+                try {
+                    chessFinal.move({ from: j.from, to: j.to, promotion: j.promotion || 'q' });
+                } catch (e) {}
+            });
+
+            this.chess = chessFinal;
+            this.casillaSeleccionada = null;
+            this.bloqueado = true;
+            this.practicandoDesdeIdx = null;
+            this.dibujarPiezas();
+            this._actualizarBarraMaterial();
+
+            const aviso = this.$panelAnalisis?.querySelector('[data-rol="avisoPracticando"]');
+            if (aviso) aviso.remove();
+
+            this.setStatus('ordenador', '✅ De vuelta en la posición final.');
+        }
+
+        // --------------------------------------------------------
+        // PRACTICAR ERRORES — Retry
+        // --------------------------------------------------------
+        _practicarErrores() {
+            if (!this.analisis) return;
+
+            // Buscar la primera jugada humana con error/imprecision/blunder
+            const jugadasHumanasConError = this.analisis.jugadas
+                .map((j, i) => ({ ...j, idx: i }))
+                .filter(j => j.esHumano && ['error', 'blunder', 'imprecision'].includes(j.clasificacion));
+
+            if (jugadasHumanasConError.length === 0) {
+                this.mostrarToast('🎉 ¡No tuviste errores ni imprecisiones! Excelente partida.', 'elo-up');
+                return;
+            }
+
+            this._iniciarPracticaEnJugada(jugadasHumanasConError[0]);
+        }
+
+        _iniciarPracticaEnJugada(jugada) {
+            if (!jugada) return;
+
+            this.abrirModalConfirmacion(
+                '🎯 Practicar este momento',
+                `Vas a volver a la posición antes de la jugada ${Math.floor(jugada.idx / 2) + 1} (${jugada.san}). El motor te dirá si encuentras la mejor jugada. ¿Continuar?`,
+                () => {
+                    // Reconstruir posición ANTES de la jugada
+                    const chess = new Chess();
+                    for (let i = 0; i < jugada.idx; i++) {
+                        const j = this.analisis.jugadas[i];
+                        if (!j) break;
+                        try {
+                            chess.move({ from: j.from, to: j.to, promotion: j.promotion || 'q' });
+                        } catch (e) { break; }
+                    }
+
+                    this.chess = chess;
+                    this.casillaSeleccionada = null;
+                    this.bloqueado = false;
+                    this.practicandoDesdeIdx = jugada.idx;
+                    this.dibujarPiezas();
+                    this._actualizarBarraMaterial();
+
+                    this._mostrarBotonVolverAlPresente();
+
+                    this.setStatus('alt',
+                        `🎯 Tu turno. Encuentra la mejor jugada (la que jugaste fue ${jugada.san}).`);
+                    this.mostrarToast('🎯 Practicando: encuentra la mejor jugada', '');
+                }
+            );
+        }
+
+        // --------------------------------------------------------
+        // EXPORTAR ANÁLISIS A PGN
+        // --------------------------------------------------------
+        _exportarAnalisisPGN() {
+            if (!this.analisis || !this.historialCompletoPartida.length) return;
+
+            const fecha = new Date();
+            const fechaStr = fecha.toISOString().split('T')[0].replace(/-/g, '.');
+            const nivel = this.config.nivelSF || 5;
+            const nombreRival = 'IA Nv' + nivel;
+
+            let headers = `[Event "Partida libre vs IA (analizada)"]\n`;
+            headers += `[Site "Club Morphy"]\n`;
+            headers += `[Date "${fechaStr}"]\n`;
+            headers += `[White "${this.colorHumano === 'w' ? 'Alumno' : nombreRival}"]\n`;
+            headers += `[Black "${this.colorHumano === 'b' ? 'Alumno' : nombreRival}"]\n`;
+
+            let resultadoPGN = '*';
+            if (this.chess.in_checkmate()) {
+                resultadoPGN = this.chess.turn() === 'w' ? '0-1' : '1-0';
+            } else if (this.chess.in_draw() || this.chess.in_stalemate()) {
+                resultadoPGN = '1/2-1/2';
+            }
+            headers += `[Result "${resultadoPGN}"]\n`;
+            headers += `[Annotator "Club Morphy"]\n`;
+            headers += `[Precision "${this.analisis.precisionHumano}%"]\n`;
+            headers += `[ACPL "${this.analisis.acplHumano}"]\n\n`;
+
+            let textoMovs = '';
+            let numeroJugada = 1;
+            this.historialCompletoPartida.forEach((j, i) => {
+                const analisisJ = this.analisis.jugadas[i];
+                if (j.color === 'w') {
+                    textoMovs += `${numeroJugada}. `;
+                }
+                textoMovs += j.san;
+
+                // Añadir eval y clasificación como comentario
+                if (analisisJ) {
+                    const info = CLASIFICACION_JUGADAS[analisisJ.clasificacion];
+                    const evalFormateada = formatearEvaluacion(analisisJ.evalDespues.cp);
+                    let comentario = ` { [%eval ${evalFormateada}] ${info ? info.nombre : ''}`;
+                    if (analisisJ.mejorEra && analisisJ.clasificacion !== 'excelente') {
+                        comentario += ` · Mejor era: ${analisisJ.mejorEra}`;
+                    }
+                    comentario += ` }`;
+                    textoMovs += comentario;
+                }
+
+                if (j.color === 'b') numeroJugada++;
+                textoMovs += ' ';
+            });
+            textoMovs += resultadoPGN;
+
+            const pgnCompleto = headers + textoMovs;
+
+            // Copiar al portapapeles
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(pgnCompleto).then(() => {
+                    this.mostrarToast('📥 PGN analizado copiado al portapapeles', 'elo-up');
+                }).catch(() => {
+                    this._descargarPGN(pgnCompleto);
+                });
+            } else {
+                this._descargarPGN(pgnCompleto);
+            }
+        }
+
+        _descargarPGN(pgn) {
+            try {
+                const blob = new Blob([pgn], { type: 'application/x-chess-pgn' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                const fecha = new Date().toISOString().split('T')[0];
+                a.href = url;
+                a.download = `club-morphy-partida-${fecha}.pgn`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                this.mostrarToast('📥 PGN descargado', 'elo-up');
+            } catch (e) {
+                this.mostrarToast('No se pudo exportar el PGN. Cópialo manualmente.', 'error');
+            }
         }
 
         // --------------------------------------------------------
@@ -2487,10 +2916,7 @@
         _onTimeoutReloj(color) {
             if (this.destroyed) return;
 
-            // ⭐ v20 Fix B: Detener el reloj COMPLETO
-            if (this.reloj) {
-                this.reloj.detener();
-            }
+            if (this.reloj) this.reloj.detener();
 
             const esHumano = color === this.colorHumano;
             const texto = esHumano ? '⏱️ ¡Se te acabó el tiempo!' : '🎉 ¡La IA se quedó sin tiempo!';
@@ -2543,13 +2969,13 @@
 
             this.dibujarPiezas();
             this.actualizarMovimientosSalaLibre();
+            this._actualizarBarraMaterial();
             this.casillaSeleccionada = null;
             this.setStatus('ordenador', '↩️ Jugada deshecha. Tu turno.');
             this.mostrarToast('↩️ Jugada deshecha', '');
         }
 
         reiniciarPartidaLibre() {
-            // ⭐ v20 Fix A: resetear bloqueo al reiniciar
             this.abrirModalConfirmacion(
                 '⟲ Nueva partida',
                 'Se reiniciará la partida actual con la misma configuración. ¿Continuar?',
@@ -2559,9 +2985,10 @@
                     this.historialCompletoPartida = [];
                     this.casillaSeleccionada = null;
                     this.esperandoRespuesta = false;
-                    this.bloqueado = false;              // ⭐ v20 Fix A
+                    this.bloqueado = false;
                     this.analisis = null;
                     this.analizando = false;
+                    this.practicandoDesdeIdx = null;
 
                     if (this.$panelAnalisis) {
                         this.$panelAnalisis.classList.add('cm-tablero-hidden');
@@ -2578,9 +3005,10 @@
                     this.dibujarPiezas();
                     this.actualizarMovimientosSalaLibre();
                     this.actualizarRelojUI();
+                    this._actualizarBarraMaterial();
 
                     if (this.chess.turn() !== this.colorHumano) {
-                        this.setStatus('ordenador', '🤖 Stockfish piensa…');
+                        this.setStatus('ordenador', '🤖 IA piensa…');
                         this.esperandoRespuesta = true;
                         setTimeout(() => this.jugarOrdenador(), 600);
                     } else {
@@ -2635,8 +3063,7 @@
             );
         }
 
-        // === FIN DE LA PARTE 3/4 ===
-          // --------------------------------------------------------
+        // --------------------------------------------------------
         // ACTUALIZAR MOVIMIENTOS (estudio)
         // --------------------------------------------------------
         actualizarMovimientos() {
@@ -2943,7 +3370,7 @@
 
         cambiarNivel(nivel) {
             this.config.nivelSF = parseInt(nivel, 10);
-            this.mostrarToast(`Stockfish: Nv${nivel} (~${ELO_BOT[nivel]} ELO)`, '');
+            this.mostrarToast(`Motor: Nv${nivel} (~${ELO_BOT[nivel]} ELO)`, '');
         }
 
         cambiarOrientacion(valor) {
@@ -3291,5 +3718,5 @@
     window.CMEntrenador = window.CMEntrenador || {};
     window.CMEntrenador.InstanciaTablero = InstanciaTablero;
 
-    console.log('✅ CMEntrenadorTablero cargado (InstanciaTablero con fixes v20)');
+    console.log('✅ CMEntrenadorTablero cargado (InstanciaTablero v43 — análisis mejorado)');
 })();
