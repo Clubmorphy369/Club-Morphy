@@ -202,7 +202,6 @@
             if (this.worker || this.inicializado) return;
             this.inicializado = true;
             const url = window.stockfishWorkerUrl ||
-           const url = window.stockfishWorkerUrl ||
            '/assets/stockfish/stockfish.js';
             try {
                 this.worker = new Worker(url);
