@@ -787,5 +787,5 @@
         }
     };
 
-    console.log('✅ CMEntrenadorCore cargado (constantes + utilidades + SF + ELO + PGN + RelojPartida)');
+     console.log('✅ CMEntrenadorCore cargado (constantes + utilidades + Lozza + ELO + PGN + RelojPartida)');
 })();
