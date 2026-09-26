@@ -56,7 +56,7 @@ jobs:
           credentials_json: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_CLUB_MORPHY }}'
           project_id: club-morphy-6aa5c
 
-      - name: Verify critical files
+            - name: Verify critical files
         run: |
           test -f index.html || (echo "Falta index.html" && exit 1)
           test -f offline.html || (echo "Falta offline.html" && exit 1)
@@ -80,8 +80,9 @@ jobs:
           test -f script-curso.js || (echo "Falta script-curso.js" && exit 1)
           test -f script-render.js || (echo "Falta script-render.js" && exit 1)
           test -f script-main.js || (echo "Falta script-main.js" && exit 1)
+          test -f assets/lozza/lozza.js || (echo "Falta assets/lozza/lozza.js" && exit 1)
           echo "OK: Todos los archivos criticos presentes"
-
+          
       - name: Deploy to Firebase
         run: |
           npx firebase-tools@13 deploy \
