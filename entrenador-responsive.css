@@ -1,0 +1,45 @@
+/* ============================================================
+   ENTRENADOR-RESPONSIVE.CSS — Club Morphy
+   Media queries específicas del entrenador (juego IA, sala libre)
+   ⚠️ Se carga DESPUÉS de styles-responsive.css para ganar prioridad.
+   ============================================================ */
+
+/* ============================================================
+   MÓVIL (≤ 768px) — Juego IA
+   ============================================================ */
+@media (max-width: 768px) {
+    .juego-ia-setup { padding: 20px 18px 16px; }
+    .juego-ia-header-icon { font-size: 2rem; }
+    .juego-ia-header-text h3 { font-size: 1.15rem; }
+    .juego-ia-acciones { padding: 14px 18px; }
+    .juego-ia-btn-empezar { flex: 1; }
+    .juego-ia-preview { padding: 14px 18px; }
+    .juego-ia-niveles { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* ============================================================
+   MÓVIL PEQUEÑO (≤ 600px) — Relojes, análisis y juego IA
+   ============================================================ */
+@media (max-width: 600px) {
+    .cm-reloj-tiempo { font-size: 1.25rem; }
+    .cm-reloj { padding: 8px 10px; min-width: 110px; }
+    .cm-reloj-icono { font-size: 1.1rem; }
+    .cm-reloj-label { font-size: 0.68rem; }
+
+    .cm-analisis-stats { grid-template-columns: 1fr; }
+    .cm-analisis-stat-valor { font-size: 1.3rem; }
+
+    .cm-analisis-jugada {
+        font-size: 0.78rem;
+        padding: 5px 8px;
+        gap: 6px;
+    }
+    .cm-analisis-num { min-width: 28px; }
+    .cm-analisis-eval { min-width: 42px; font-size: 0.72rem; }
+
+    .juego-ia-niveles { grid-template-columns: repeat(2, 1fr); gap: 6px; }
+    .juego-ia-nivel-btn { padding: 8px 10px; font-size: 0.78rem; }
+    .juego-ia-nivel-btn .nivel-num { font-size: 0.9rem; }
+    .juego-ia-nivel-btn .nivel-elo { font-size: 0.66rem; }
+    .juego-ia-nivel-btn .nivel-nombre { font-size: 0.62rem; }
+}
