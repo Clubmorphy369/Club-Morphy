@@ -2720,7 +2720,7 @@
             }
         }
 
-        _volverAlPresente() {
+                _volverAlPresente() {
             // Restaurar la posición final de la partida
             const chessFinal = new Chess();
             this.historialCompletoPartida.forEach(j => {
@@ -2736,12 +2736,14 @@
             this.dibujarPiezas();
             this._actualizarBarraMaterial();
 
+            // ⭐ v44: Restaurar termómetro a la eval final
+            this._actualizarTermometroDesdeIdx(null);
+
             const aviso = this.$panelAnalisis?.querySelector('[data-rol="avisoPracticando"]');
             if (aviso) aviso.remove();
 
             this.setStatus('ordenador', '✅ De vuelta en la posición final.');
         }
-
         // --------------------------------------------------------
         // PRACTICAR ERRORES — Retry
         // --------------------------------------------------------
