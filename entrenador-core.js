@@ -201,8 +201,8 @@
         init() {
             if (this.worker || this.inicializado) return;
             this.inicializado = true;
-            const url = window.stockfishWorkerUrl ||
-    'https://cdn.jsdelivr.net/npm/stockfish.js@10.0.2/src/stockfish.wasm.js';
+const url = window.stockfishWorkerUrl ||
+    'https://cdn.jsdelivr.net/npm/stockfish.wasm@0.10.0/stockfish.js';
             try {
                 this.worker = new Worker(url);
                 this.worker.addEventListener('message', (e) => {
