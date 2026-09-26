@@ -2194,3 +2194,103 @@
     .cm-analisis-acciones .cm-tablero-btn { min-width: 110px; font-size: 0.78rem; }
     .cm-analisis-mejor-era { font-size: 0.7rem; padding: 1px 4px; }
 }
+
+/* ============================================================
+   ⭐ v44: NAVEGACIÓN DEL ANÁLISIS (◀ ▶)
+   ============================================================ */
+.cm-analisis-navegacion {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 10px;
+    padding: 8px;
+    background: white;
+    border: 1px solid #bae6fd;
+    border-radius: 8px;
+}
+
+.cm-nav-btn {
+    background: #f0f9ff;
+    border: 1px solid #bae6fd;
+    color: #0284c7;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: inherit;
+    min-width: 40px;
+    min-height: 36px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.cm-nav-btn:hover {
+    background: #0ea5e9;
+    color: white;
+    border-color: #0ea5e9;
+    transform: translateY(-1px);
+}
+
+.cm-nav-btn:active {
+    transform: scale(0.96);
+}
+
+.cm-nav-info {
+    flex: 1;
+    text-align: center;
+    font-family: 'Courier New', monospace;
+    font-weight: 700;
+    font-size: 0.85rem;
+    color: #075985;
+    padding: 0 8px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+@media (max-width: 600px) {
+    .cm-nav-btn { padding: 6px 8px; min-width: 34px; min-height: 34px; font-size: 0.9rem; }
+    .cm-nav-info { font-size: 0.75rem; }
+}
+
+/* ⭐ v44: Botón "Practicar esta jugada" en cada fila */
+.cm-analisis-btn-practicar-fila {
+    background: linear-gradient(135deg, #7c3aed, #a855f7);
+    border: none;
+    color: white;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    font-size: 0.85rem;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.15s;
+    box-shadow: 0 2px 6px rgba(124, 58, 237, 0.3);
+    padding: 0;
+    font-family: inherit;
+    margin-left: 4px;
+}
+
+.cm-analisis-btn-practicar-fila:hover {
+    transform: scale(1.15);
+    box-shadow: 0 3px 10px rgba(124, 58, 237, 0.55);
+}
+
+.cm-analisis-btn-practicar-fila:active {
+    transform: scale(0.95);
+}
+
+@media (max-width: 600px) {
+    .cm-analisis-btn-practicar-fila {
+        width: 24px;
+        height: 24px;
+        font-size: 0.75rem;
+    }
+}
