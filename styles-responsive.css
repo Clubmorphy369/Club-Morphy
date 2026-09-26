@@ -1,7 +1,9 @@
 /* ============================================================
    STYLES-RESPONSIVE.CSS — Club Morphy
-   TODAS las media queries + Modo Zen + botón Zen
-   ⚠️ Este archivo se carga AL FINAL para que sus reglas ganen.
+   TODAS las media queries generales + Modo Zen + botón Zen
+   ⚠️ Este archivo se carga después de entrenador.css pero antes
+   de entrenador-responsive.css. Las media queries específicas
+   del entrenador viven en entrenador-responsive.css.
    ============================================================ */
 
 /* ============================================================
@@ -17,7 +19,7 @@
 }
 
 /* ============================================================
-   MEDIA QUERIES — MÓVIL (≤ 768px) — Bloque 1
+   MEDIA QUERIES — MÓVIL (≤ 768px)
    ============================================================ */
 @media (max-width: 768px) {
     .sidebar {
@@ -89,19 +91,10 @@
     /* Imágenes adaptables */
     .imagen-bloque { max-height: 350px; margin: 10px auto; }
     .consejo-imagen { max-height: 280px; }
-
-    /* Juego IA */
-    .juego-ia-setup { padding: 20px 18px 16px; }
-    .juego-ia-header-icon { font-size: 2rem; }
-    .juego-ia-header-text h3 { font-size: 1.15rem; }
-    .juego-ia-acciones { padding: 14px 18px; }
-    .juego-ia-btn-empezar { flex: 1; }
-    .juego-ia-preview { padding: 14px 18px; }
-    .juego-ia-niveles { grid-template-columns: repeat(2, 1fr); }
 }
 
 /* ============================================================
-   MEDIA QUERIES — MÓVIL PEQUEÑO (≤ 480px) — Bloque 1
+   MEDIA QUERIES — MÓVIL PEQUEÑO (≤ 480px)
    ============================================================ */
 @media (max-width: 480px) {
     .header { padding: 10px 14px; }
@@ -117,35 +110,8 @@
 }
 
 /* ============================================================
-   MEDIA QUERIES — MÓVIL PEQUEÑO (≤ 600px) — Análisis
-   ============================================================ */
-@media (max-width: 600px) {
-    .cm-reloj-tiempo { font-size: 1.25rem; }
-    .cm-reloj { padding: 8px 10px; min-width: 110px; }
-    .cm-reloj-icono { font-size: 1.1rem; }
-    .cm-reloj-label { font-size: 0.68rem; }
-
-    .cm-analisis-stats { grid-template-columns: 1fr; }
-    .cm-analisis-stat-valor { font-size: 1.3rem; }
-
-    .cm-analisis-jugada {
-        font-size: 0.78rem;
-        padding: 5px 8px;
-        gap: 6px;
-    }
-    .cm-analisis-num { min-width: 28px; }
-    .cm-analisis-eval { min-width: 42px; font-size: 0.72rem; }
-
-    .juego-ia-niveles { grid-template-columns: repeat(2, 1fr); gap: 6px; }
-    .juego-ia-nivel-btn { padding: 8px 10px; font-size: 0.78rem; }
-    .juego-ia-nivel-btn .nivel-num { font-size: 0.9rem; }
-    .juego-ia-nivel-btn .nivel-elo { font-size: 0.66rem; }
-    .juego-ia-nivel-btn .nivel-nombre { font-size: 0.62rem; }
-}
-
-/* ============================================================
    ⭐ v9 + v21: MODO ZEN
-   ⚠️ Corregido: padding unificado a 20px (antes había conflicto)
+   ⚠️ v37: padding unificado a 20px (antes había conflicto)
    ============================================================ */
 
 /* Desktop: ocultar sidebar */
@@ -190,7 +156,7 @@ body.modo-zen .cm-tablero-panel {
     margin: 0 auto;
 }
 
-/* ✅ FIX v36: padding unificado (antes era 32px 40px en desktop, 20px en móvil) */
+/* ✅ FIX v37: padding unificado (antes era 32px 40px en desktop, 20px en móvil) */
 body.modo-zen .content {
     padding: 20px;
 }
