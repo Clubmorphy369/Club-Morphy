@@ -1,0 +1,165 @@
+/* ============================================================
+   STYLES-LAYOUT.CSS — Club Morphy
+   Header, sidebar, layout principal, clases, hamburguesa
+   ============================================================ */
+
+/* ============================================================
+   HEADER
+   ============================================================ */
+.header {
+    padding: 14px 28px;
+    background: var(--header-bg);
+    border-bottom: 2px solid var(--acento);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.1), 0 1px 0 rgba(14,165,233,0.3);
+    z-index: 10;
+    position: relative;
+}
+
+.header::after {
+    content: '';
+    position: absolute;
+    bottom: -4px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, rgba(14,165,233,0.4), transparent);
+    pointer-events: none;
+}
+
+.header h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--acento);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-shadow: 0 2px 8px rgba(14,165,233,0.15);
+    letter-spacing: 0.5px;
+}
+
+.header-left { display: flex; align-items: center; gap: 10px; }
+.header-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+.logo-club {
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--acento);
+    background: var(--surface2);
+    display: none;
+    box-shadow: 0 0 10px rgba(14,165,233,0.3);
+}
+
+.logo-club.visible { display: block; }
+.btn-label { display: inline; }
+
+/* ============================================================
+   SIDEBAR
+   ============================================================ */
+.sidebar {
+    width: 285px;
+    background: var(--sidebar-bg);
+    border-right: 1px solid var(--borde);
+    padding: 20px 14px;
+    overflow-y: auto;
+    transition: transform var(--transicion), width var(--transicion), opacity var(--transicion);
+    box-shadow: 3px 0 20px rgba(0,0,0,0.05);
+    z-index: 5;
+    scrollbar-width: thin;
+    scrollbar-color: var(--acento-oscuro) var(--surface);
+}
+
+.sidebar::-webkit-scrollbar { width: 5px; }
+.sidebar::-webkit-scrollbar-track { background: var(--surface); }
+.sidebar::-webkit-scrollbar-thumb { background: var(--acento-oscuro); border-radius: 3px; }
+.sidebar.collapsed { transform: translateX(-100%); }
+
+.sidebar-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh;
+    background: rgba(0,0,0,0.3);
+    z-index: 4;
+    backdrop-filter: blur(2px);
+}
+
+.sidebar-separator {
+    border: none;
+    border-top: 1px solid var(--borde);
+    margin: 15px 0 12px;
+    opacity: 0.8;
+}
+
+/* ============================================================
+   CLASES (sidebar)
+   ============================================================ */
+.clase-item {
+    padding: 13px 15px;
+    background: var(--surface);
+    border-radius: 8px;
+    margin-bottom: 7px;
+    cursor: pointer;
+    font-family: 'Lato', sans-serif;
+    font-weight: 600;
+    font-size: 0.9rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: var(--texto);
+    transition: var(--transicion);
+    border: 1px solid var(--borde);
+    flex-wrap: wrap;
+    gap: 6px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+}
+
+.clase-item:hover { background: var(--surface2); border-color: var(--acento); transform: translateX(4px); box-shadow: 0 3px 12px rgba(0,0,0,0.05), 0 0 8px rgba(14,165,233,0.15); }
+.clase-item.active { border-left: 4px solid var(--acento); background: var(--surface2); box-shadow: 0 4px 16px rgba(0,0,0,0.08), 0 0 12px rgba(14,165,233,0.2); color: var(--acento-oscuro); }
+.clase-item.bloqueada { opacity: 0.55; filter: grayscale(0.4); }
+.clase-num { font-weight: 700; color: var(--acento); margin-right: 6px; }
+
+/* ============================================================
+   LAYOUT PRINCIPAL
+   ============================================================ */
+.main-layout { display: flex; flex: 1; overflow: hidden; position: relative; }
+
+.content {
+    flex: 1;
+    padding: 28px;
+    overflow-y: auto;
+    background: transparent;
+    scrollbar-width: thin;
+    scrollbar-color: var(--acento-oscuro) var(--surface);
+}
+
+.content::-webkit-scrollbar { width: 6px; }
+.content::-webkit-scrollbar-track { background: var(--bg); }
+.content::-webkit-scrollbar-thumb { background: var(--acento-oscuro); border-radius: 3px; }
+
+/* ============================================================
+   HAMBURGUESA (móvil)
+   ============================================================ */
+.hamburger {
+    display: none;
+    background: var(--surface);
+    border: 1px solid var(--borde);
+    border-radius: 6px;
+    color: var(--acento);
+    font-size: 1.4rem;
+    cursor: pointer;
+    padding: 8px 12px;
+    transition: var(--transicion);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+}
+
+.hamburger:hover { background: var(--surface2); border-color: var(--acento); }
