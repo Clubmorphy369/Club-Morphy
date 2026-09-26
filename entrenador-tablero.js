@@ -2326,6 +2326,10 @@
                     }
                 }
 
+                                // ⭐ v48: Constantes para clasificación más precisa
+                const JUGADAS_APERTURA = 6;          // primeros 3 movimientos completos
+                const CPL_APERTURA_MAX = 150;         // en apertura, solo "libro" si CPL < 150
+
                 for (let i = 0; i < total; i++) {
                     const j = historialSnapshot[i];
                     if (!j) break;
@@ -2333,21 +2337,27 @@
                     const evalDespues = evals[i + 1];
                     if (!evalAntes || !evalDespues) continue;
 
-                    let cpl;
-                    if (j.color === 'w') {
-                        cpl = evalAntes.cp - evalDespues.cp;
-                    } else {
-                        cpl = evalDespues.cp - evalAntes.cp;
-                    }
-                    cpl = Math.max(0, cpl);
+                    // ⭐ v48 FIX: Ambos evals están desde la perspectiva del lado que mueve.
+                    // evalAntes → perspectiva de quien hizo la jugada.
+                    // evalDespues → perspectiva del rival (que ahora mueve).
+                    // Por eso SE SUMAN (los signos se compensan al normalizar).
+                    let cpl = evalAntes.cp + evalDespues.cp;
+                    if (cpl < 0) cpl = 0;
 
+                    // Detectar si ya estaba ganando/perdiendo (perspectiva del humano)
                     const cpAntesDesdeHumano = j.color === 'w' ? evalAntes.cp : -evalAntes.cp;
                     const yaEstabaGanando = cpAntesDesdeHumano > 500;
                     const yaEstabaPerdiendo = cpAntesDesdeHumano < -500;
 
                     let clasificacion;
+                    const esApertura = i < JUGADAS_APERTURA;
+
                     if (evalAntes.mejor && evalAntes.mejor === j.from + j.to + (j.promotion || '')) {
+                        // Coincide con la mejor del motor → siempre excelente
                         clasificacion = 'excelente';
+                    } else if (esApertura && cpl < CPL_APERTURA_MAX) {
+                        // ⭐ v48: Apertura con CPL bajo → marcar como "libro"
+                        clasificacion = 'libro';
                     } else {
                         clasificacion = clasificarPorCPL(cpl, yaEstabaGanando, yaEstabaPerdiendo);
                     }
