@@ -3852,6 +3852,608 @@
             }
             this._atajosAnalisisActivos = false;
         }
+               // ============================================================
+        // ⭐ v47: MODO QUIZ DE ERRORES (estilo Lichess)
+        // ============================================================
+
+        // Iniciar el quiz: detectar errores y arrancar
+        _iniciarQuizErrores() {
+            if (!this.analisis || !this.analisis.jugadas.length) {
+                this.mostrarToast('Primero debe completarse el análisis', 'error');
+                return;
+            }
+
+            // Filtrar solo las jugadas humanas que fueron error/blunder/imprecisión
+            const errores = this.analisis.jugadas
+                .map((j, i) => ({ ...j, idx: i }))
+                .filter(j =>
+                    j.esHumano &&
+                    ['error', 'blunder', 'imprecision'].includes(j.clasificacion) &&
+                    j.mejorEra  // debe tener una mejor jugada registrada
+                );
+
+            if (errores.length === 0) {
+                this.mostrarToast('🎉 ¡No tuviste errores para practicar! Excelente partida.', 'elo-up');
+                return;
+            }
+
+            // Construir lista de ejercicios del quiz
+            this.quizEjercicios = errores.map(err => {
+                // Reconstruir FEN antes de la jugada
+                const chessAntes = new Chess();
+                for (let i = 0; i < err.idx; i++) {
+                    const j = this.analisis.jugadas[i];
+                    if (!j) break;
+                    try {
+                        chessAntes.move({ from: j.from, to: j.to, promotion: j.promotion || 'q' });
+                    } catch (e) { break; }
+                }
+                const fenAntes = chessAntes.fen();
+
+                // Convertir mejorUCI → mejorSAN usando la posición antes
+                let mejorSAN = err.mejorEra;
+                try {
+                    const chessTemp = new Chess(fenAntes);
+                    const uci = err.mejorEra;
+                    if (uci && uci.length >= 4) {
+                        const from = uci.slice(0, 2);
+                        const to = uci.slice(2, 4);
+                        const promo = uci.length > 4 ? uci[4] : 'q';
+                        const mv = chessTemp.move({ from, to, promotion: promo });
+                        if (mv) mejorSAN = mv.san;
+                    }
+                } catch (e) { /* ignorar, dejamos el UCI */ }
+
+                return {
+                    idx: err.idx,
+                    fen: fenAntes,
+                    mejorUCI: err.mejorEra,
+                    mejorSAN,
+                    sanUsuario: err.san,
+                    clasificacion: err.clasificacion,
+                    colorHumano: err.color,
+                    numeroJugada: Math.floor(err.idx / 2) + 1
+                };
+            });
+
+            // Resetear estado
+            this.quizActivo = true;
+            this.quizEjercicioActual = 0;
+            this.quizAciertos = 0;
+
+            this.mostrarToast(`🎓 Quiz iniciado: ${this.quizEjercicios.length} ejercicio${this.quizEjercicios.length === 1 ? '' : 's'}`, 'elo-up');
+
+            // Ocultar panel de análisis normal y cargar primer ejercicio
+            this._renderizarPanelQuiz();
+            this._cargarEjercicioQuiz();
+        }
+
+        // Cargar el ejercicio actual
+        _cargarEjercicioQuiz() {
+            if (!this.quizActivo) return;
+            const ej = this.quizEjercicios[this.quizEjercicioActual];
+            if (!ej) return;
+
+            // Cargar posición
+            this.chess = new Chess(ej.fen);
+            this.casillaSeleccionada = null;
+            this.bloqueado = false;
+            this.quizIntentosActuales = 0;
+            this.quizEsperandoAuto = false;
+
+            // Orientar el tablero según el color del humano
+            this.orientacion = ej.colorHumano === 'w' ? 'white' : 'black';
+
+            this.construirTablero();
+            this.dibujarPiezas();
+            this._actualizarBarraMaterial();
+            this._limpiarFlechaQuiz();
+
+            // Actualizar panel
+            this._actualizarPanelQuiz();
+
+            // Status
+            const colorTxt = ej.colorHumano === 'w' ? 'blancas' : 'negras';
+            this.setStatus('alt',
+                `🎓 Ejercicio ${this.quizEjercicioActual + 1}/${this.quizEjercicios.length} · Juegas con ${colorTxt}. Encuentra la mejor.`);
+        }
+
+        // Manejar click en casilla durante el quiz
+        _clickCasillaQuiz(sq) {
+            if (!this.quizActivo) return;
+            if (this.quizEsperandoAuto) return;  // bloqueado mientras muestra la solución
+            if (this.bloqueado) return;
+
+            const ej = this.quizEjercicios[this.quizEjercicioActual];
+            if (!ej) return;
+
+            // Si el turno no es del humano, no permitir
+            if (this.chess.turn() !== ej.colorHumano) return;
+
+            // Selección
+            if (!this.casillaSeleccionada) {
+                const pieza = this.chess.get(sq);
+                if (!pieza) return;
+                if (pieza.color !== ej.colorHumano) return;
+                this.casillaSeleccionada = sq;
+                this.dibujarPiezas();
+                return;
+            }
+
+            if (this.casillaSeleccionada === sq) {
+                this.casillaSeleccionada = null;
+                this.dibujarPiezas();
+                return;
+            }
+
+            // Cambiar selección a otra pieza propia
+            const piezaDestino = this.chess.get(sq);
+            if (piezaDestino && piezaDestino.color === ej.colorHumano) {
+                this.casillaSeleccionada = sq;
+                this.dibujarPiezas();
+                return;
+            }
+
+            // Verificar si es legal
+            const movsLegales = this.chess.moves({ square: this.casillaSeleccionada, verbose: true });
+            const esLegal = movsLegales.some(m => m.to === sq);
+            if (!esLegal) {
+                const sqEl = this.$board.querySelector(`[data-square="${sq}"]`);
+                if (sqEl) {
+                    sqEl.classList.add('error-shake');
+                    setTimeout(() => sqEl.classList.remove('error-shake'), 300);
+                }
+                this.casillaSeleccionada = null;
+                this.dibujarPiezas();
+                return;
+            }
+
+            // Evaluar la jugada
+            this._evaluarJugadaQuiz(this.casillaSeleccionada, sq);
+        }
+
+        // Evaluar la jugada del usuario contra la mejor
+        _evaluarJugadaQuiz(from, to) {
+            const ej = this.quizEjercicios[this.quizEjercicioActual];
+            if (!ej) return;
+
+            const mejorUCI = ej.mejorUCI || '';
+            const mejorFrom = mejorUCI.slice(0, 2);
+            const mejorTo = mejorUCI.slice(2, 4);
+            const mejorPromo = mejorUCI.length > 4 ? mejorUCI[4] : 'q';
+
+            // Verificar si la jugada del usuario coincide con la mejor
+            const esCorrecta = (from === mejorFrom && to === mejorTo);
+
+            // Ejecutar la jugada del usuario en el tablero
+            const mv = this.chess.move({ from, to, promotion: 'q' });
+            if (!mv) return;
+            this.casillaSeleccionada = null;
+            this.dibujarPiezas();
+
+            if (esCorrecta) {
+                // ✅ ACIERTO
+                this.quizAciertos++;
+                this._mostrarFeedbackQuiz('ok', '🎉', `¡Correcto! ${mv.san} era la mejor jugada.`);
+                this._marcarCasillaVerde(from);
+                this._marcarCasillaVerde(to);
+
+                // Bloquear y auto-avanzar
+                this.quizEsperandoAuto = true;
+                setTimeout(() => {
+                    this._siguienteEjercicioQuiz();
+                }, 2000);
+            } else {
+                // ❌ FALLO o ⚠️ intento
+                this.quizIntentosActuales++;
+
+                if (this.quizIntentosActuales < this.quizMaxIntentos) {
+                    // Aún tiene intentos
+                    this._mostrarFeedbackQuiz('warn', '⚠️', `No es la mejor. Te quedan ${this.quizMaxIntentos - this.quizIntentosActuales} intento(s).`);
+                    // Deshacer la jugada para que pueda reintentar
+                    setTimeout(() => {
+                        this.chess.undo();
+                        this.dibujarPiezas();
+                        this.casillaSeleccionada = null;
+                    }, 800);
+                } else {
+                    // Se quedó sin intentos: mostrar la mejor
+                    this._mostrarFeedbackQuiz('bad', '❌', `La mejor era: ${ej.mejorSAN}`);
+                    this._mostrarFlechaMejorJugada(mejorFrom, mejorTo);
+
+                    // Auto-jugar la mejor después de 2s
+                    this.quizEsperandoAuto = true;
+                    setTimeout(() => {
+                        this._autoJugarMejorJugada();
+                    }, 2000);
+                }
+            }
+
+            this._actualizarPanelQuiz();
+        }
+
+        // Auto-jugar la mejor jugada en el tablero
+        _autoJugarMejorJugada() {
+            if (!this.quizActivo) return;
+            const ej = this.quizEjercicios[this.quizEjercicioActual];
+            if (!ej) return;
+
+            // Deshacer el intento fallido si aún está
+            const hist = this.chess.history({ verbose: true });
+            if (hist.length > 0) {
+                const lastMove = hist[hist.length - 1];
+                // Si la última jugada no es la del FEN inicial, deshacer hasta volver al FEN
+                try {
+                    const chessTest = new Chess();
+                    chessTest.load(ej.fen);
+                    if (this.chess.fen() !== chessTest.fen()) {
+                        // Deshacer todas las jugadas
+                        while (this.chess.history().length > 0) {
+                            this.chess.undo();
+                        }
+                    }
+                } catch (e) { /* ignorar */ }
+            }
+
+            // Aplicar la mejor jugada
+            const mejorUCI = ej.mejorUCI || '';
+            const from = mejorUCI.slice(0, 2);
+            const to = mejorUCI.slice(2, 4);
+            const promo = mejorUCI.length > 4 ? mejorUCI[4] : 'q';
+
+            try {
+                const mv = this.chess.move({ from, to, promotion: promo });
+                if (mv) {
+                    this.dibujarPiezas();
+                    this._marcarCasillaVerde(from);
+                    this._marcarCasillaVerde(to);
+                    this._mostrarFlechaMejorJugada(from, to);
+                }
+            } catch (e) {
+                console.warn('[Quiz] No se pudo auto-jugar:', e);
+            }
+
+            // Avanzar tras 1.5s más
+            setTimeout(() => {
+                if (this.quizActivo) this._siguienteEjercicioQuiz();
+            }, 1500);
+        }
+
+        // Avanzar al siguiente ejercicio o terminar
+        _siguienteEjercicioQuiz() {
+            if (!this.quizActivo) return;
+
+            this.quizEjercicioActual++;
+
+            if (this.quizEjercicioActual >= this.quizEjercicios.length) {
+                this._terminarQuiz();
+                return;
+            }
+
+            // Limpiar feedback y cargar siguiente
+            this._limpiarFlechaQuiz();
+            this._limpiarFeedbackQuiz();
+            this._cargarEjercicioQuiz();
+        }
+
+        // Mostrar resumen final del quiz
+        _terminarQuiz() {
+            if (!this.quizActivo) return;
+
+            const total = this.quizEjercicios.length;
+            const aciertos = this.quizAciertos;
+            const precision = total > 0 ? Math.round((aciertos / total) * 100) : 0;
+
+            let mensaje = '';
+            if (precision === 100) mensaje = '🏆 ¡Perfecto! Dominas estos errores.';
+            else if (precision >= 80) mensaje = '🌟 ¡Excelente trabajo!';
+            else if (precision >= 60) mensaje = '👍 Buen trabajo. Sigue practicando.';
+            else if (precision >= 40) mensaje = '💪 Vas por buen camino. Repite el quiz.';
+            else mensaje = '📚 Practica más. Estos errores son clave.';
+
+            // Renderizar resumen
+            const panel = this.$panelAnalisis?.querySelector('[data-rol="panelQuiz"]');
+            if (!panel) return;
+
+            panel.innerHTML = `
+                <div class="cm-quiz-resumen">
+                    <h4>🎓 Quiz completado</h4>
+                    <div class="cm-quiz-resumen-precision">
+                        <span class="valor">${precision}%</span>
+                        <span class="etiqueta">Precisión</span>
+                    </div>
+                    <p class="cm-quiz-resumen-mensaje">${mensaje}</p>
+                    <p style="font-size: 0.9rem; color: #6b21a8; margin-bottom: 16px;">
+                        Resolviste <strong>${aciertos}</strong> de <strong>${total}</strong> correctamente.
+                    </p>
+                    <div class="cm-quiz-acciones">
+                        <button class="cm-tablero-btn cm-quiz-btn-primario" data-quiz-accion="repetir">
+                            🔄 Repetir quiz
+                        </button>
+                        <button class="cm-tablero-btn cm-quiz-btn-cancelar" data-quiz-accion="cerrar">
+                            ✕ Cerrar
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            panel.querySelector('[data-quiz-accion="repetir"]')?.addEventListener('click', () => {
+                this._cancelarQuiz();
+                setTimeout(() => this._iniciarQuizErrores(), 300);
+            });
+            panel.querySelector('[data-quiz-accion="cerrar"]')?.addEventListener('click', () => this._cancelarQuiz());
+
+            this.setStatus('ok', `🎓 Quiz terminado. Precisión: ${precision}%`);
+        }
+
+        // Cancelar el quiz y volver al análisis
+        _cancelarQuiz() {
+            this.quizActivo = false;
+            this.quizEjercicios = [];
+            this.quizEjercicioActual = 0;
+            this.quizAciertos = 0;
+            this.quizIntentosActuales = 0;
+            this.quizEsperandoAuto = false;
+            this._limpiarFlechaQuiz();
+
+            // Ocultar panel del quiz
+            const panel = this.$panelAnalisis?.querySelector('[data-rol="panelQuiz"]');
+            if (panel) panel.remove();
+
+            // Mostrar de nuevo el análisis
+            if (this.$panelAnalisis && this.analisis) {
+                this.renderizarAnalisis();
+            }
+        }
+
+        // Renderizar el panel del quiz
+        _renderizarPanelQuiz() {
+            if (!this.$panelAnalisis) return;
+
+            // Ocultar el HTML del análisis y añadir panel del quiz
+            let panel = this.$panelAnalisis.querySelector('[data-rol="panelQuiz"]');
+            if (!panel) {
+                panel = document.createElement('div');
+                panel.className = 'cm-quiz-panel';
+                panel.setAttribute('data-rol', 'panelQuiz');
+                this.$panelAnalisis.insertBefore(panel, this.$panelAnalisis.firstChild);
+            }
+
+            panel.innerHTML = `
+                <div class="cm-quiz-header">
+                    <div class="cm-quiz-titulo">
+                        <span>🎓</span>
+                        <span>Quiz de errores</span>
+                    </div>
+                    <span class="cm-quiz-progreso" data-rol="quizProgreso">0/0</span>
+                </div>
+
+                <div class="cm-quiz-info" data-rol="quizInfo">
+                    Cargando…
+                </div>
+
+                <div class="cm-quiz-stats">
+                    <div class="cm-quiz-stat">
+                        <span class="cm-quiz-stat-valor" data-rol="quizAciertos">0</span>
+                        <span class="cm-quiz-stat-label">Aciertos</span>
+                    </div>
+                    <div class="cm-quiz-stat">
+                        <span class="cm-quiz-stat-valor" data-rol="quizIntentos">0/2</span>
+                        <span class="cm-quiz-stat-label">Intentos</span>
+                    </div>
+                </div>
+
+                <div data-rol="quizFeedbackWrap"></div>
+
+                <div class="cm-quiz-acciones">
+                    <button class="cm-tablero-btn cm-quiz-btn-primario" data-quiz-accion="pista">
+                        💡 Pista
+                    </button>
+                    <button class="cm-tablero-btn cm-quiz-btn-cancelar" data-quiz-accion="salir">
+                        ✕ Salir del quiz
+                    </button>
+                </div>
+            `;
+
+            panel.querySelector('[data-quiz-accion="pista"]')?.addEventListener('click', () => {
+                const ej = this.quizEjercicios[this.quizEjercicioActual];
+                if (!ej) return;
+                const from = ej.mejorUCI.slice(0, 2);
+                this.mostrarToast(`💡 Pista: mueve la pieza de ${from}`, '');
+                const fromEl = this.$board.querySelector(`[data-square="${from}"]`);
+                if (fromEl) fromEl.classList.add('selected');
+            });
+
+            panel.querySelector('[data-quiz-accion="salir"]')?.addEventListener('click', () => {
+                this._cancelarQuiz();
+            });
+        }
+
+        // Actualizar el panel del quiz
+        _actualizarPanelQuiz() {
+            if (!this.$panelAnalisis || !this.quizActivo) return;
+            const panel = this.$panelAnalisis.querySelector('[data-rol="panelQuiz"]');
+            if (!panel) return;
+
+            const ej = this.quizEjercicios[this.quizEjercicioActual];
+            if (!ej) return;
+
+            const progresoEl = panel.querySelector('[data-rol="quizProgreso"]');
+            if (progresoEl) {
+                progresoEl.textContent = `${this.quizEjercicioActual + 1}/${this.quizEjercicios.length}`;
+            }
+
+            const infoEl = panel.querySelector('[data-rol="quizInfo"]');
+            if (infoEl) {
+                const colorTxt = ej.colorHumano === 'w' ? '♔ Blancas' : '♚ Negras';
+                const clasif = CLASIFICACION_JUGADAS[ej.clasificacion];
+                const clasifNombre = clasif ? clasif.nombre : '';
+                const clasifIcono = clasif ? clasif.icono : '';
+
+                let intentosHTML = '';
+                for (let i = 0; i < this.quizMaxIntentos; i++) {
+                    intentosHTML += `<span class="cm-quiz-attempt-dot ${i < this.quizIntentosActuales ? 'usado' : ''}"></span>`;
+                }
+
+                infoEl.innerHTML = `
+                    Juegas con <strong>${colorTxt}</strong> · 
+                    En la jugada <strong>${ej.numeroJugada}</strong> jugaste 
+                    <strong style="color:#dc2626;">${escapeHtml(ej.sanUsuario)}</strong> 
+                    <span style="color:#64748b;">(${clasifIcono} ${clasifNombre})</span>
+                    <br>
+                    <span style="font-size:0.82rem; color:#5b21b6;">
+                        🎯 Encuentra la mejor jugada.
+                    </span>
+                    <span class="cm-quiz-attempts">${intentosHTML}</span>
+                `;
+            }
+
+            const aciertosEl = panel.querySelector('[data-rol="quizAciertos"]');
+            if (aciertosEl) aciertosEl.textContent = this.quizAciertos;
+
+            const intentosEl = panel.querySelector('[data-rol="quizIntentos"]');
+            if (intentosEl) intentosEl.textContent = `${this.quizIntentosActuales}/${this.quizMaxIntentos}`;
+        }
+
+        // Mostrar feedback visual en el panel del quiz
+        _mostrarFeedbackQuiz(tipo, icono, texto) {
+            if (!this.$panelAnalisis) return;
+            const panel = this.$panelAnalisis.querySelector('[data-rol="panelQuiz"]');
+            if (!panel) return;
+            const wrap = panel.querySelector('[data-rol="quizFeedbackWrap"]');
+            if (!wrap) return;
+
+            const clase = tipo === 'ok' ? 'cm-quiz-ok'
+                       : tipo === 'bad' ? 'cm-quiz-bad'
+                       : tipo === 'warn' ? 'cm-quiz-warn'
+                       : 'cm-quiz-info';
+
+            wrap.innerHTML = `
+                <div class="cm-quiz-feedback ${clase}">
+                    <span class="cm-quiz-icono">${icono}</span>
+                    <span>${escapeHtml(texto)}</span>
+                </div>
+            `;
+        }
+
+        // Limpiar feedback
+        _limpiarFeedbackQuiz() {
+            if (!this.$panelAnalisis) return;
+            const panel = this.$panelAnalisis.querySelector('[data-rol="panelQuiz"]');
+            if (!panel) return;
+            const wrap = panel.querySelector('[data-rol="quizFeedbackWrap"]');
+            if (wrap) wrap.innerHTML = '';
+        }
+
+        // Marcar casilla con color verde
+        _marcarCasillaVerde(sq) {
+            if (!this.$board) return;
+            const el = this.$board.querySelector(`[data-square="${sq}"]`);
+            if (el) {
+                el.style.boxShadow = 'inset 0 0 0 4px #16a34a';
+                setTimeout(() => {
+                    if (el) el.style.boxShadow = '';
+                }, 2500);
+            }
+        }
+
+        // Dibujar flecha SVG de la mejor jugada
+        _mostrarFlechaMejorJugada(from, to) {
+            if (!this.$board) return;
+            this._limpiarFlechaQuiz();
+
+            const boardWrap = this.contenedor.querySelector('.cm-tablero-board-wrap');
+            if (!boardWrap) return;
+
+            const files = 'abcdefgh';
+            const ranks = '87654321';
+
+            const posToXY = (sq) => {
+                const file = sq[0];
+                const rank = sq[1];
+                let col = files.indexOf(file);
+                let row = ranks.indexOf(rank);
+                if (this.orientacion === 'black') {
+                    col = 7 - col;
+                    row = 7 - row;
+                }
+                // Centro de la casilla en porcentaje (0-100)
+                return {
+                    x: (col + 0.5) * 12.5,
+                    y: (row + 0.5) * 12.5
+                };
+            };
+
+            const p1 = posToXY(from);
+            const p2 = posToXY(to);
+
+            const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            svg.setAttribute('viewBox', '0 0 100 100');
+            svg.setAttribute('preserveAspectRatio', 'none');
+            svg.classList.add('cm-quiz-arrow-overlay');
+            svg.style.position = 'absolute';
+            svg.style.top = '0';
+            svg.style.left = '0';
+            svg.style.width = '100%';
+            svg.style.height = '100%';
+
+            // Calcular ángulo y acortar el final para no tapar la pieza
+            const dx = p2.x - p1.x;
+            const dy = p2.y - p1.y;
+            const len = Math.sqrt(dx * dx + dy * dy);
+            const ux = dx / len;
+            const uy = dy / len;
+            const shrink = 3.5; // para no invadir la pieza destino
+            const x2 = p2.x - ux * shrink;
+            const y2 = p2.y - uy * shrink;
+
+            const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+            const marker = document.createElementNS('http://www.w3.org/2000/svg', 'marker');
+            marker.setAttribute('id', 'cm-arrow-head');
+            marker.setAttribute('markerWidth', '4');
+            marker.setAttribute('markerHeight', '4');
+            marker.setAttribute('refX', '2');
+            marker.setAttribute('refY', '2');
+            marker.setAttribute('orient', 'auto');
+            const polygon = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+            polygon.setAttribute('points', '0,0 4,2 0,4');
+            polygon.setAttribute('fill', '#16a34a');
+            marker.appendChild(polygon);
+            defs.appendChild(marker);
+            svg.appendChild(defs);
+
+            const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            line.setAttribute('x1', p1.x);
+            line.setAttribute('y1', p1.y);
+            line.setAttribute('x2', x2);
+            line.setAttribute('y2', y2);
+            line.setAttribute('stroke', '#16a34a');
+            line.setAttribute('stroke-width', '2.5');
+            line.setAttribute('stroke-linecap', 'round');
+            line.setAttribute('opacity', '0.85');
+            line.setAttribute('marker-end', 'url(#cm-arrow-head)');
+            svg.appendChild(line);
+
+            boardWrap.style.position = 'relative';
+            boardWrap.appendChild(svg);
+            this.quizFlechaSVG = svg;
+        }
+
+        // Limpiar la flecha SVG
+        _limpiarFlechaQuiz() {
+            if (this.quizFlechaSVG && this.quizFlechaSVG.parentNode) {
+                this.quizFlechaSVG.parentNode.removeChild(this.quizFlechaSVG);
+            }
+            this.quizFlechaSVG = null;
+            // También limpiar cualquier flecha residual
+            if (this.$board) {
+                const boardWrap = this.contenedor.querySelector('.cm-tablero-board-wrap');
+                if (boardWrap) {
+                    boardWrap.querySelectorAll('.cm-quiz-arrow-overlay').forEach(el => el.remove());
+                }
+            }
+        }
+
         // --------------------------------------------------------
         // DESTROY
         // --------------------------------------------------------
