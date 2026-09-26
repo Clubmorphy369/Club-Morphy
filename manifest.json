@@ -1,4 +1,5 @@
 {
+  "id": "./",
   "name": "♟️ Club Morphy - Curso de Ajedrez",
   "short_name": "Club Morphy",
   "description": "Curso de ajedrez interactivo para el Club Morphy con lecciones, videos y ejercicios.",
@@ -6,7 +7,7 @@
   "dir": "ltr",
   "start_url": "./",
   "display": "standalone",
-  "orientation": "portrait",
+  "orientation": "any",
   "theme_color": "#0ea5e9",
   "background_color": "#ffffff",
   "categories": ["education", "games", "sports"],
