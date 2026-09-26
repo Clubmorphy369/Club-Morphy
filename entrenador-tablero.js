@@ -2313,12 +2313,12 @@
 
                 const jugadasAnalizadas = [];
                 const evals = [];
-                evals.push(await SF.evaluarPosicion(historialSnapshot[0].fenAntes, 6));
+                evals.push(await SF.evaluarPosicion(historialSnapshot[0].fenAntes, 8));
 
                 for (let i = 0; i < total; i++) {
                     const j = historialSnapshot[i];
                     if (!j) break;
-                    const ev = await SF.evaluarPosicion(j.fenDespues, 6);
+                    const ev = await SF.evaluarPosicion(j.fenDespues, 8);
                     evals.push(ev);
 
                     if (i % 3 === 0 || i === total - 1) {
