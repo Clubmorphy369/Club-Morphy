@@ -2750,6 +2750,40 @@
         // --------------------------------------------------------
         // PRACTICAR ERRORES — Retry
         // --------------------------------------------------------
+               // ⭐ v44: Obtener la evaluación de la posición activa
+        _obtenerEvalActiva() {
+            if (!this.analisis) return { cp: 0, mate: null };
+            const idx = this.practicandoDesdeIdx;
+
+            if (idx === null || idx === undefined) {
+                // Posición final
+                return this.analisis.evalFinal || { cp: 0, mate: null };
+            }
+
+            const j = this.analisis.jugadas[idx];
+            if (!j || !j.evalDespues) {
+                return this.analisis.evalFinal || { cp: 0, mate: null };
+            }
+            return j.evalDespues;
+        }
+
+        // ⭐ v44: Actualizar termómetro con la eval de un índice concreto
+        _actualizarTermometroDesdeIdx(idx) {
+            if (!this.$panelAnalisis) return;
+            const termoExistente = this.$panelAnalisis.querySelector('[data-rol="termometro"]');
+            if (!termoExistente) return;
+
+            let evalUsar;
+            if (idx === null || idx === undefined) {
+                evalUsar = this.analisis.evalFinal || { cp: 0, mate: null };
+            } else {
+                const j = this.analisis.jugadas[idx];
+                evalUsar = (j && j.evalDespues) ? j.evalDespues : (this.analisis.evalFinal || { cp: 0, mate: null });
+            }
+
+            const nuevoHTML = this._renderizarTermometro(evalUsar);
+            termoExistente.outerHTML = nuevoHTML;
+        }
         _practicarErrores() {
             if (!this.analisis) return;
 
