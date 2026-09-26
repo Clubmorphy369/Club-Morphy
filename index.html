@@ -8,12 +8,14 @@
     <meta name="theme-color" content="#0ea5e9">
     <meta name="apple-mobile-web-app-title" content="Club Morphy">
     <meta name="description" content="Curso de ajedrez interactivo del Club Morphy con lecciones, videos y ejercicios.">
-    <link rel="manifest" href="/Club-Morphy/manifest.json">
+    
+    <!-- ✅ CAMBIO 1: Un solo manifest, ruta relativa (compatible con Firebase y GitHub Pages) -->
     <link rel="manifest" href="manifest.json">
-<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
-<link rel="icon" href="assets/favicon.ico">
-<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32x32.png">
-<link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16x16.png">
+    
+    <!-- ✅ CAMBIO 2: Iconos. Se eliminaron los que no existen en el repo para evitar errores 404 -->
+    <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+    <link rel="icon" href="assets/favicon.ico">
+    
     <title>♟️ Club Morphy - Curso de Ajedrez</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -41,8 +43,10 @@
                 🔔 <span class="btn-label">Notif.</span> <span id="notif-badge" class="notification-badge" style="display:none;">0</span>
             </button>
             <button class="btn" id="btn-progreso" type="button" style="display:none;" onclick="abrirPanelProgreso()">📊 <span class="btn-label">Progreso</span></button>
-            <!-- Botón Jugar vs IA -->
-            <button class="btn btn-jugar-ia" id="btn-jugar-ia" type="button" onclick="abrirModalJuegoIA()" title="Jugar una partida contra Stockfish">♟️ <span class="btn-label">Jugar vs IA</span></button>
+            
+            <!-- ✅ CAMBIO 3: Título actualizado (ya no dice Stockfish) -->
+            <button class="btn btn-jugar-ia" id="btn-jugar-ia" type="button" onclick="abrirModalJuegoIA()" title="Jugar una partida contra la IA">♟️ <span class="btn-label">Jugar vs IA</span></button>
+            
             <button class="btn" id="btn-zen" type="button" onclick="toggleModoZen()" title="Modo zen (sin distracciones)">🎯 <span class="btn-label">Zen</span></button>
             <button class="btn" id="btn-solicitudes-admin" type="button" style="display:none; position:relative;" onclick="abrirSolicitudesAdmin()">
                 📩 <span class="btn-label">Solicitudes</span> <span id="solicitudes-badge" class="notification-badge" style="display:none;">0</span>
@@ -308,6 +312,10 @@
 
     <!-- Chess.js (necesario para el entrenador) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+
+    <!-- ✅ CAMBIO 4: Comentario para el motor de ajedrez (Lozza) -->
+    <!-- El motor de ajedrez (Lozza) se cargará dinámicamente desde entrenador-core.js -->
+    <!-- Si en el futuro decides cargarlo aquí, sería: <script src="assets/lozza/lozza.js"></script> -->
 
     <!-- Entrenador de ajedrez — Refactor v20 en 3 archivos modulares -->
     <script src="entrenador-core.js"></script>
