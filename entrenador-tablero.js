@@ -2665,7 +2665,7 @@
         // --------------------------------------------------------
         // CLIC EN JUGADA DEL ANÁLISIS → CARGA POSICIÓN
         // --------------------------------------------------------
-        _cargarPosicionDesdeAnalisis(idx) {
+                _cargarPosicionDesdeAnalisis(idx) {
             if (!this.analisis || !this.analisis.jugadas[idx]) return;
 
             const jugada = this.analisis.jugadas[idx];
@@ -2682,11 +2682,6 @@
                 }
             }
 
-            if (chess.fen() === this.chess.fen()) {
-                this.mostrarToast(`Ya estás en la posición de la jugada ${Math.floor(idx / 2) + 1}`, '');
-                return;
-            }
-
             this.chess = chess;
             this.casillaSeleccionada = null;
             this.bloqueado = true;
@@ -2694,14 +2689,14 @@
             this.dibujarPiezas();
             this._actualizarBarraMaterial();
 
+            // ⭐ v44: Actualizar termómetro con la eval de esta posición
+            this._actualizarTermometroDesdeIdx(idx);
+
             this.setStatus('ordenador',
                 `📍 Posición después de la jugada ${Math.floor(idx / 2) + 1} (${jugada.san}). Clic en "🔄 Volver al presente" para regresar.`);
 
-            // Añadir botón "volver al presente" si no existe
             this._mostrarBotonVolverAlPresente();
-        }
-
-        _mostrarBotonVolverAlPresente() {
+        }        _mostrarBotonVolverAlPresente() {
             if (!this.$panelAnalisis) return;
             let btnVolver = this.$panelAnalisis.querySelector('[data-rol="btnVolverPresente"]');
             if (btnVolver) return; // ya existe
