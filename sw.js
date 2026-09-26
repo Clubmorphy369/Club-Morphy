@@ -21,6 +21,7 @@ const STATIC_ASSETS = [
     ROOT + 'styles-extras.css',
     ROOT + 'styles-responsive.css',
     ROOT + 'entrenador.css',
+    ROOT + 'entrenador-responsive.css',   // ← NUEVO
     ROOT + 'script-core.js',
     ROOT + 'script-curso.js',
     ROOT + 'script-render.js',
@@ -33,9 +34,7 @@ const STATIC_ASSETS = [
     ROOT + 'assets/android-chrome-512x512.png',
     ROOT + 'assets/apple-touch-icon.png',
     ROOT + 'assets/favicon.ico',
-];
-
-// ⭐ Flag para saber si había una versión previa instalada
+];// ⭐ Flag para saber si había una versión previa instalada
 let habiaCachePrevia = false;
 
 // ============================
