@@ -2588,7 +2588,21 @@
                     </div>
                 </div>
 
-                ${termometroHTML}
+                               ${termometroHTML}
+
+                <!-- ⭐ v44: Navegación ◀ ▶ -->
+                <div class="cm-analisis-navegacion" data-rol="navegacionAnalisis">
+                    <button class="cm-nav-btn" data-rol="btnNavInicio" title="Ir al inicio">⏮</button>
+                    <button class="cm-nav-btn" data-rol="btnNavAnterior" title="Jugada anterior">◀</button>
+                    <span class="cm-nav-info" data-rol="navInfo">Posición final</span>
+                    <button class="cm-nav-btn" data-rol="btnNavSiguiente" title="Jugada siguiente">▶</button>
+                    <button class="cm-nav-btn" data-rol="btnNavFinal" title="Ir al final">⏭</button>
+                </div>
+
+                <div class="cm-analisis-conteo" style="margin-top:12px;">
+                    ${filaConteo('!!', 'Brillante', a.conteoHumano.brillante, CLASIFICACION_JUGADAS.brillante.color)}
+                    ...
+                </div>
 
                 <div class="cm-analisis-conteo" style="margin-top:12px;">
                     ${filaConteo('!!', 'Brillante', a.conteoHumano.brillante, CLASIFICACION_JUGADAS.brillante.color)}
