@@ -12,6 +12,9 @@
    Depende de: script-core.js + script-curso.js + script-render.js + entrenador-*.js
    Expone: window.CMMain
    Cargado AL FINAL (después de script-render.js)
+   
+   ⚠️ Fase 3 (migración a Lozza): buscar comentarios "⚠️ Fase 3"
+      para saber qué renombrar cuando se reemplace Stockfish.
    ============================================================ */
 
 (function () {
@@ -276,9 +279,8 @@
         mostrarToast(Core.state.modoAdmin ? 'Modo administrador activado' : 'Modo usuario', 'success');
         Render.actualizarUI();
     };
-
-// === FIN DE LA PARTE 1/2 ===
-      // ============================================================
+   
+    // ============================================================
     // ON AUTH STATE CHANGED (orquestador principal)
     // ============================================================
     auth.onAuthStateChanged(async (user) => {
@@ -309,7 +311,7 @@
                 Curso.suscribirNotificaciones();
                 Curso.suscribirSolicitudesAdmin();
                 Curso.suscribirMisSolicitudes();
-                // ⭐ v21: Cargar progreso ANTES de iniciar la escucha del curso
+                // Cargar progreso ANTES de iniciar la escucha del curso
                 // para que los tableros se inicialicen con el progreso ya cargado
                 await Curso.sincronizarProgresoDesdeFirestore();
                 Curso.suscribirProgresoTableros();
@@ -336,8 +338,8 @@
                 // Activar badge ELO en header
                 Render.inicializarBadgeELO();
 
-                // ⭐ v29: Precargar Stockfish al login (para que esté listo cuando
-                // el usuario entre al juego vs IA o termine una partida)
+                // ⚠️ Fase 3 (Lozza): cuando migremos, esta llamada se renombrará
+                //    a window.Entrenador.initMotor() y el log dirá "motor".
                 if (window.Entrenador && typeof window.Entrenador.initStockfish === 'function') {
                     try {
                         window.Entrenador.initStockfish();
@@ -678,15 +680,6 @@
     window.cerrarSesionConfirmada = Main.cerrarSesionConfirmada;
     window.toggleAdmin = Main.toggleAdmin;
 
-    // Exponer helpers de utilidad
-    window._exponerFuncionesGlobales = function () {
-        window.escapeHtml = escapeHtml;
-        window.escapeAttr = escapeAttr;
-        window.convertirUrlImagen = Core.convertirUrlImagen;
-        window.escapeOnclick = Core.escapeOnclick;
-    };
-    window._exponerFuncionesGlobales();
-
     // ============================================================
     // INICIALIZACIÓN GLOBAL
     // ============================================================
@@ -705,15 +698,17 @@
         console.error('[Init] Error en suscribirDatosClub:', err);
     }
 
-    // ⭐ Log final del refactor v20
-    console.log('✅ Club Morphy v20 — refactor modular completo (4 archivos script + 3 archivos entrenador)');
+    console.log('✅ Club Morphy — refactor modular completo (4 scripts + 3 entrenador)');
 
     // ============================================================
     // REGISTRO DEL SERVICE WORKER
+    // ✅ FIX: ruta RELATIVA ('sw.js') en vez de absoluta ('/sw.js')
+    //    Esto funciona tanto en Firebase (raíz) como en GitHub Pages
+    //    (subcarpeta /Club-Morphy/).
     // ============================================================
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-            navigator.serviceWorker.register('/sw.js')
+            navigator.serviceWorker.register('sw.js')
                 .then(registration => {
                     console.log('✅ Service Worker registrado en:', registration.scope);
 
@@ -737,4 +732,3 @@
     console.log('✅ CMMain cargado (auth + eventos + Service Worker + inicialización)');
 
 })();
- 
