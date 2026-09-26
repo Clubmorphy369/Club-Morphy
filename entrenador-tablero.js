@@ -1399,6 +1399,12 @@
                 return;
             }
 
+            // ⭐ v47: Si el quiz está activo, redirigir los clics al quiz
+            if (this.quizActivo) {
+                this._clickCasillaQuiz(sq);
+                return;
+            }
+           
             if (this.esperandoRespuesta) return;
 
             if (this.esSalaLibre) {
