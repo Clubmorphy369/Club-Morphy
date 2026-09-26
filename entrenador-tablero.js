@@ -2799,10 +2799,10 @@
             const nuevoHTML = this._renderizarTermometro(evalUsar);
             termoExistente.outerHTML = nuevoHTML;
         }
+      
         _practicarErrores() {
             if (!this.analisis) return;
 
-            // Buscar la primera jugada humana con error/imprecision/blunder
             const jugadasHumanasConError = this.analisis.jugadas
                 .map((j, i) => ({ ...j, idx: i }))
                 .filter(j => j.esHumano && ['error', 'blunder', 'imprecision'].includes(j.clasificacion));
@@ -2812,42 +2812,49 @@
                 return;
             }
 
-            this._iniciarPracticaEnJugada(jugadasHumanasConError[0]);
+            const primerError = jugadasHumanasConError[0];
+            const idxError = primerError.idx;
+
+            if (idxError === 0) {
+                this.mostrarToast('El error fue en la primera jugada. Practica desde el inicio.', '');
+                return;
+            }
+
+            // ⭐ v46: Cargar posición ANTERIOR al error (sin regresar a jugada 1)
+            this._cargarPosicionDesdeAnalisis(idxError - 1);
+
+            const numJugada = Math.floor(idxError / 2) + 1;
+            const color = primerError.color === 'w' ? 'blancas' : 'negras';
+            this.setStatus('alt',
+                `🎯 Tu turno (${color}). Jugaste ${primerError.san} (${CLASIFICACION_JUGADAS[primerError.clasificacion].nombre}). ¡Encuentra la mejor!`);
+
+            this.mostrarToast(`🎯 Practicando: encuentra la mejor en la jugada ${numJugada}`, '');
         }
 
-        _iniciarPracticaEnJugada(jugada) {
-            if (!jugada) return;
+        // ⭐ v46: Practicar una jugada específica (por índice del análisis)
+        _practicarJugadaEspecifica(idx) {
+            if (!this.analisis || !this.analisis.jugadas[idx]) return;
 
-            this.abrirModalConfirmacion(
-                '🎯 Practicar este momento',
-                `Vas a volver a la posición antes de la jugada ${Math.floor(jugada.idx / 2) + 1} (${jugada.san}). El motor te dirá si encuentras la mejor jugada. ¿Continuar?`,
-                () => {
-                    // Reconstruir posición ANTES de la jugada
-                    const chess = new Chess();
-                    for (let i = 0; i < jugada.idx; i++) {
-                        const j = this.analisis.jugadas[i];
-                        if (!j) break;
-                        try {
-                            chess.move({ from: j.from, to: j.to, promotion: j.promotion || 'q' });
-                        } catch (e) { break; }
-                    }
+            const jugada = this.analisis.jugadas[idx];
+            if (!jugada.esHumano) {
+                this.mostrarToast('Solo puedes practicar tus propias jugadas', '');
+                return;
+            }
 
-                    this.chess = chess;
-                    this.casillaSeleccionada = null;
-                    this.bloqueado = false;
-                    this.practicandoDesdeIdx = jugada.idx;
-                    this.dibujarPiezas();
-                    this._actualizarBarraMaterial();
+            if (idx === 0) {
+                this.mostrarToast('No hay posición anterior. Practica desde el inicio.', '');
+                return;
+            }
 
-                    this._mostrarBotonVolverAlPresente();
+            this._cargarPosicionDesdeAnalisis(idx - 1);
 
-                    this.setStatus('alt',
-                        `🎯 Tu turno. Encuentra la mejor jugada (la que jugaste fue ${jugada.san}).`);
-                    this.mostrarToast('🎯 Practicando: encuentra la mejor jugada', '');
-                }
-            );
+            const numJugada = Math.floor(idx / 2) + 1;
+            const color = jugada.color === 'w' ? 'blancas' : 'negras';
+            this.setStatus('alt',
+                `🎯 Tu turno (${color}). Jugaste ${jugada.san} (${CLASIFICACION_JUGADAS[jugada.clasificacion].nombre}). ¡Encuentra la mejor!`);
+
+            this.mostrarToast(`🎯 Practicando jugada ${numJugada}`, '');
         }
-
         // --------------------------------------------------------
         // EXPORTAR ANÁLISIS A PGN
         // --------------------------------------------------------
