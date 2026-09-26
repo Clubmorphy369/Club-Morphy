@@ -2601,11 +2601,6 @@
 
                 <div class="cm-analisis-conteo" style="margin-top:12px;">
                     ${filaConteo('!!', 'Brillante', a.conteoHumano.brillante, CLASIFICACION_JUGADAS.brillante.color)}
-                    ...
-                </div>
-
-                <div class="cm-analisis-conteo" style="margin-top:12px;">
-                    ${filaConteo('!!', 'Brillante', a.conteoHumano.brillante, CLASIFICACION_JUGADAS.brillante.color)}
                     ${filaConteo('!', 'Excelente', a.conteoHumano.excelente, CLASIFICACION_JUGADAS.excelente.color)}
                     ${filaConteo('✓', 'Buena', a.conteoHumano.buena, CLASIFICACION_JUGADAS.buena.color)}
                     ${filaConteo('?!', 'Imprecisión', a.conteoHumano.imprecision, CLASIFICACION_JUGADAS.imprecision.color)}
