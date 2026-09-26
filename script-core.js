@@ -14,7 +14,7 @@
    - Estado del juego vs IA
    
    Depende de: firebase (compat), chess.js
-   Expone: window.CMScriptCore
+   Expone: window.CMScriptCore + getters/setters en window.*
    Cargado ANTES de script-curso.js
    ============================================================ */
 
@@ -25,6 +25,9 @@
 
     // ============================================================
     // CONFIGURACIÓN DE FIREBASE
+    // ⚠️ La apiKey es PÚBLICA por diseño en Firebase Web.
+    //    La seguridad real está en las Firestore Rules y en los
+    //    dominios autorizados en Firebase Console.
     // ============================================================
     const firebaseConfig = {
         apiKey: "AIzaSyBEd81JSPeJLyEiTwoafyMqVHmFGPtNC2w",
@@ -91,6 +94,8 @@
         progresoTableros: {},
         modoRegistro: false,
         claseActualGestion: null,
+        // ⭐ FASE 3: cuando migremos a Lozza, `nivelSF` se renombrará a `nivelMotor`.
+        //    De momento se deja `nivelSF` para no romper el código actual.
         juegoIAConfig: {
             nivelSF: 5,
             colorHumano: 'w',
@@ -196,7 +201,7 @@
     // UTILIDADES GENERALES
     // ============================================================
     Core.generarId = function () {
-        return Date.now().toString(36) + Math.random().toString(36).substr(2);
+        return Date.now().toString(36) + Math.random().toString(36).slice(2);
     };
 
     Core.extraerYouTubeID = function (url) {
@@ -319,8 +324,13 @@
     Core.mostrarToast = function (mensaje, tipo = 'success') {
         const toast = document.getElementById('toast');
         if (!toast) return;
+        // Mantenemos la clase base "toast" siempre y añadimos tipo + show
+        toast.classList.remove('success', 'error');
+        if (tipo === 'success' || tipo === 'error') {
+            toast.classList.add(tipo);
+        }
         toast.textContent = mensaje;
-        toast.className = `toast ${tipo} show`;
+        toast.classList.add('show');
         clearTimeout(toast._timeout);
         toast._timeout = setTimeout(() => toast.classList.remove('show'), 3000);
     };
@@ -345,8 +355,7 @@
         Core.state.confirmCallback = null;
     };
 
-// === FIN DE LA PARTE 1/2 de script-core.js ===
-     // ============================================================
+    // ============================================================
     // EXPOSICIÓN DE VARIABLES DEL STATE COMO GLOBALES
     // ============================================================
     // Usamos getters/setters para que `window.currentUser` refleje
@@ -354,7 +363,6 @@
     // Así el resto de archivos (script-curso, script-render, script-main)
     // puede seguir usando las variables como antes.
     // ============================================================
-
     const _stateGettersSetters = [
         'currentUser', 'userProfile', 'curso', 'temaAbiertoGlobal',
         'claseActivaId', 'modoAdmin', 'confirmCallback', 'accesosEspeciales',
