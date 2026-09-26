@@ -2640,7 +2640,10 @@
                     </details>
                 </div>
 
-                <div class="cm-analisis-acciones">
+                               <div class="cm-analisis-acciones">
+                    <button class="cm-tablero-btn cm-quiz-btn-primario" data-rol="btnIniciarQuiz">
+                        🎓 Hacer quiz de errores
+                    </button>
                     <button class="cm-tablero-btn cm-analisis-btn-practicar" data-rol="btnPracticarErrores">
                         🎯 Practicar mis errores
                     </button>
@@ -2648,7 +2651,7 @@
                         📥 Exportar PGN
                     </button>
                 </div>
-            `;
+                `;
 
             this.$panelAnalisis.classList.remove('cm-tablero-hidden');
 
