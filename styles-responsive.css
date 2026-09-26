@@ -1,0 +1,222 @@
+/* ============================================================
+   STYLES-RESPONSIVE.CSS — Club Morphy
+   TODAS las media queries + Modo Zen + botón Zen
+   ⚠️ Este archivo se carga AL FINAL para que sus reglas ganen.
+   ============================================================ */
+
+/* ============================================================
+   MEDIA QUERIES — TABLET (769px a 1024px)
+   ============================================================ */
+@media (min-width: 769px) and (max-width: 1024px) {
+    .sidebar { width: 240px; font-size: 0.9rem; }
+    .content { padding: 22px; }
+    .header h1 { font-size: 1.4rem; }
+    .tema-header { padding: 12px 16px; }
+    .clase-item { padding: 12px; font-size: 0.88rem; }
+    .btn, .btn-small { min-height: 44px; min-width: 44px; padding: 8px 14px; }
+}
+
+/* ============================================================
+   MEDIA QUERIES — MÓVIL (≤ 768px) — Bloque 1
+   ============================================================ */
+@media (max-width: 768px) {
+    .sidebar {
+        position: fixed;
+        top: 0; left: 0;
+        height: 100%;
+        z-index: 20;
+        transform: translateX(-100%);
+        width: 85%;
+        max-width: 320px;
+    }
+    .sidebar.open { transform: translateX(0); }
+    .sidebar-overlay.active { display: block; }
+    .hamburger { display: block; }
+    .main-layout { flex-direction: column; }
+    .content { padding: 16px; }
+
+    .header { padding: 10px 14px; }
+    .header h1 { font-size: 1.25rem; }
+    .header-right { gap: 6px; }
+    .header-right .btn { padding: 8px 12px; font-size: 0.8rem; }
+
+    .btn, .btn-small, .clase-item, .tema-header button { min-height: 44px; min-width: 44px; }
+    .btn-small { padding: 8px 14px; font-size: 0.82rem; }
+    .btn-reorder { padding: 8px 12px; font-size: 1rem; min-width: 44px; text-align: center; }
+
+    .clase-item { padding: 15px; margin-bottom: 10px; font-size: 0.95rem; }
+
+    .tema-header { gap: 12px; padding: 8px 10px; flex-wrap: wrap; }
+    .tema-header .titulo-editable { word-break: break-word; flex: 1 1 auto; min-width: 0; }
+    .tema-header .btn { margin-left: auto; }
+    .tema.abierto .tema-body { padding: 16px; gap: 20px; max-height: none; }
+
+    .tema[data-nivel="1"] { margin-left: 8px; }
+    .tema[data-nivel="2"] { margin-left: 16px; }
+    .tema[data-nivel="3"] { margin-left: 24px; }
+    .tema[data-nivel="4"] { margin-left: 32px; }
+
+    .bloque-header { gap: 6px; padding: 8px 10px; }
+    .bloque-preview { font-size: 0.72rem; flex-basis: 100%; order: 10; padding-top: 4px; white-space: normal; word-break: break-all; }
+    .bloque-tipo { font-size: 0.68rem; }
+
+    .text-editor-toolbar { padding: 6px; gap: 3px; }
+    .toolbar-btn { min-width: 38px; height: 38px; font-size: 1rem; }
+    .toolbar-select { height: 38px; font-size: 0.9rem; min-width: 100px; }
+    .toolbar-select-sm { min-width: 80px; }
+    .toolbar-color { width: 38px; height: 38px; }
+
+    input, textarea { font-size: 16px; padding: 14px 16px; }
+    .input-row { flex-direction: column; align-items: stretch; gap: 12px; }
+    .input-row input { min-width: auto; }
+
+    .modal-content { width: 92%; padding: 22px; max-width: 480px; }
+    .modal-content .btn { min-height: 48px; justify-content: center; }
+
+    .toast { bottom: 20px; left: 20px; right: 20px; width: auto; border-radius: 10px; text-align: center; justify-content: center; }
+
+    .video-wrapper, .iframe-wrapper { margin: 12px 0; }
+    .nota-debajo { font-size: 0.88rem; }
+
+    .bloque-campos { flex-direction: column; align-items: stretch; }
+    .bloque-campos > * { min-width: auto; }
+
+    .modal-alumno { max-width: 95% !important; padding: 18px; }
+    .alumno-header-modal { flex-direction: column; text-align: center; gap: 10px; }
+    .elo-badge-modal { align-self: center; }
+    .stats-grid { grid-template-columns: repeat(2, 1fr); }
+
+    /* Imágenes adaptables */
+    .imagen-bloque { max-height: 350px; margin: 10px auto; }
+    .consejo-imagen { max-height: 280px; }
+
+    /* Juego IA */
+    .juego-ia-setup { padding: 20px 18px 16px; }
+    .juego-ia-header-icon { font-size: 2rem; }
+    .juego-ia-header-text h3 { font-size: 1.15rem; }
+    .juego-ia-acciones { padding: 14px 18px; }
+    .juego-ia-btn-empezar { flex: 1; }
+    .juego-ia-preview { padding: 14px 18px; }
+    .juego-ia-niveles { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* ============================================================
+   MEDIA QUERIES — MÓVIL PEQUEÑO (≤ 480px) — Bloque 1
+   ============================================================ */
+@media (max-width: 480px) {
+    .header { padding: 10px 14px; }
+    .tema-header { flex-direction: column; align-items: flex-start; }
+    .tema-header .btn { align-self: flex-end; }
+    .header-right .btn .btn-label { display: none; }
+    .header-right .btn { padding: 10px 12px; font-size: 1.2rem; gap: 2px; }
+    #user-info { max-width: 100px; }
+    .donacion-texto { font-size: 0.9rem; }
+    .donacion-intro { font-size: 0.85rem; }
+    .donacion-lista li { font-size: 0.8rem; }
+    .toolbar-select { min-width: 80px; font-size: 0.82rem; }
+}
+
+/* ============================================================
+   MEDIA QUERIES — MÓVIL PEQUEÑO (≤ 600px) — Análisis
+   ============================================================ */
+@media (max-width: 600px) {
+    .cm-reloj-tiempo { font-size: 1.25rem; }
+    .cm-reloj { padding: 8px 10px; min-width: 110px; }
+    .cm-reloj-icono { font-size: 1.1rem; }
+    .cm-reloj-label { font-size: 0.68rem; }
+
+    .cm-analisis-stats { grid-template-columns: 1fr; }
+    .cm-analisis-stat-valor { font-size: 1.3rem; }
+
+    .cm-analisis-jugada {
+        font-size: 0.78rem;
+        padding: 5px 8px;
+        gap: 6px;
+    }
+    .cm-analisis-num { min-width: 28px; }
+    .cm-analisis-eval { min-width: 42px; font-size: 0.72rem; }
+
+    .juego-ia-niveles { grid-template-columns: repeat(2, 1fr); gap: 6px; }
+    .juego-ia-nivel-btn { padding: 8px 10px; font-size: 0.78rem; }
+    .juego-ia-nivel-btn .nivel-num { font-size: 0.9rem; }
+    .juego-ia-nivel-btn .nivel-elo { font-size: 0.66rem; }
+    .juego-ia-nivel-btn .nivel-nombre { font-size: 0.62rem; }
+}
+
+/* ============================================================
+   ⭐ v9 + v21: MODO ZEN
+   ⚠️ Corregido: padding unificado a 20px (antes había conflicto)
+   ============================================================ */
+
+/* Desktop: ocultar sidebar */
+@media (min-width: 769px) {
+    body.modo-zen .sidebar { display: none; }
+}
+
+/* Móvil: sidebar fuera de pantalla */
+@media (max-width: 768px) {
+    body.modo-zen .sidebar { transform: translateX(-100%); }
+    body.modo-zen .sidebar.open { transform: translateX(0); }
+}
+
+/* Ocultar elementos no esenciales del tablero */
+body.modo-zen .cm-tablero-capitulos-bar,
+body.modo-zen .cm-tablero-progress-info,
+body.modo-zen .cm-tablero-meta,
+body.modo-zen .cm-tablero-modo-indicator,
+body.modo-zen .cm-tablero-persist-check,
+body.modo-zen .cm-tablero-edit-toolbar,
+body.modo-zen .cm-tablero-admin-block-panel,
+body.modo-zen .cm-tablero-btn-admin,
+body.modo-zen .solo-admin,
+body.modo-zen .tema-header .btn-reorder,
+body.modo-zen .tema-header button[onclick*="toggleBloqueoTema"],
+body.modo-zen .tema-header button[onclick*="gestionarAccesosTema"],
+body.modo-zen .tema-header button[onclick*="agregarSubtema"],
+body.modo-zen .tema-header button[onclick*="eliminarTema"],
+body.modo-zen .tema-header button[onclick*="moverTema"] {
+    display: none !important;
+}
+
+/* Panel del tablero centrado */
+body.modo-zen .cm-tablero-game {
+    grid-template-columns: 1fr;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+body.modo-zen .cm-tablero-panel {
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+/* ✅ FIX v36: padding unificado (antes era 32px 40px en desktop, 20px en móvil) */
+body.modo-zen .content {
+    padding: 20px;
+}
+
+body.modo-zen .tema-body {
+    padding: 16px;
+    gap: 12px;
+}
+
+/* ============================================================
+   ⭐ v9: BOTÓN ZEN ACTIVO
+   ============================================================ */
+#btn-zen.activo {
+    background: linear-gradient(135deg, #0284c7, #0ea5e9, #38bdf8);
+    color: white;
+    border-color: var(--acento-claro);
+    box-shadow: 0 3px 12px rgba(14, 165, 233, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+#btn-zen.activo:hover {
+    background: linear-gradient(135deg, #0ea5e9, #38bdf8, #0ea5e9);
+    box-shadow: 0 5px 20px rgba(14, 165, 233, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+@media (max-width: 480px) {
+    #btn-zen { padding: 10px 12px; font-size: 1.1rem; }
+    #btn-zen .btn-label { display: none; }
+}
