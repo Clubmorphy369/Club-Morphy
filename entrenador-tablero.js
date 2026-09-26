@@ -3831,6 +3831,7 @@
                 document.removeEventListener('cm-tablero-sf-ready', this._sfReadyHandler);
                 this._sfReadyHandler = null;
             }
+                this._desregistrarAtajosAnalisis();
             if (this.esModoAdmin) {
                 ELO.bloquearCambios = false;
             }
