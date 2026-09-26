@@ -95,3 +95,55 @@
         padding: 0 !important;
     }
 }
+/* ============================================================
+   ⭐ v42: MODO ZEN MÓVIL — Tablero a pantalla completa (estilo Lichess)
+   ============================================================ */
+@media (max-width: 800px) {
+    /* Sin padding en el content: el tablero toca los bordes */
+    body.modo-zen .content {
+        padding: 0 !important;
+    }
+
+    /* El contenedor del juego ocupa todo el ancho */
+    body.modo-zen .cm-tablero-game {
+        max-width: 100% !important;
+        margin: 0 !important;
+        gap: 0 !important;
+    }
+
+    /* El tablero: sin bordes redondeados, sin sombra, sin max-width */
+    body.modo-zen .cm-tablero-board-wrap {
+        max-width: 100% !important;
+        margin: 0 !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+    }
+
+    /* El panel lateral: padding mínimo pero visible */
+    body.modo-zen .cm-tablero-panel {
+        max-width: 100% !important;
+        margin: 0 !important;
+        padding: 10px 8px !important;
+        gap: 8px !important;
+    }
+
+    /* El primer hijo (donde vive el tablero) sin padding */
+    body.modo-zen .cm-tablero-game > div:first-child {
+        padding: 0 !important;
+    }
+
+    /* Ocultar el botón "Ver solución" en modo zen */
+    body.modo-zen [data-rol="btnVerSol"] {
+        display: none !important;
+    }
+
+    /* Ocultar también el wrapper del botón si tiene uno */
+    body.modo-zen .cm-tablero-row:has([data-rol="btnVerSol"]) {
+        display: none !important;
+    }
+
+    /* El wrapper general sin padding */
+    body.modo-zen .cm-tablero-wrap {
+        padding: 0 !important;
+    }
+}
