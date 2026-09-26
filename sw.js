@@ -3,13 +3,16 @@
 // =============================================================
 
 // ⚠️ Sube la versión cuando hagas cambios importantes
-// ⭐ v41: rutas relativas (compatibilidad Firebase + GitHub Pages)
-const CACHE_NAME = 'club-morphy-v41';
+// ⭐ v42: fix ignoredHosts + unificar STATIC_ASSETS + añadir Lozza
+const CACHE_NAME = 'club-morphy-v42';
 
 // Scope dinámico: funciona tanto en "/" (Firebase) como en "/Club-Morphy/" (GitHub Pages)
 const ROOT = self.registration.scope;
 const OFFLINE_URL = ROOT + 'offline.html';
 
+// ============================
+// ASSETS ESTÁTICOS A PRECACHEAR
+// ============================
 const STATIC_ASSETS = [
     ROOT,
     ROOT + 'index.html',
@@ -21,7 +24,7 @@ const STATIC_ASSETS = [
     ROOT + 'styles-extras.css',
     ROOT + 'styles-responsive.css',
     ROOT + 'entrenador.css',
-    ROOT + 'entrenador-responsive.css',   // ← NUEVO
+    ROOT + 'entrenador-responsive.css',
     ROOT + 'script-core.js',
     ROOT + 'script-curso.js',
     ROOT + 'script-render.js',
@@ -30,11 +33,34 @@ const STATIC_ASSETS = [
     ROOT + 'entrenador-tablero.js',
     ROOT + 'entrenador-api.js',
     ROOT + 'manifest.json',
+    ROOT + 'assets/lozza/lozza.js',
     ROOT + 'assets/android-chrome-192x192.png',
     ROOT + 'assets/android-chrome-512x512.png',
     ROOT + 'assets/apple-touch-icon.png',
     ROOT + 'assets/favicon.ico',
-];// ⭐ Flag para saber si había una versión previa instalada
+];
+
+// ============================
+// HOSTS A IGNORAR (no interceptar)
+// Firebase, CDNs y APIs externas que NO se cachean en el SW
+// ============================
+const ignoredHosts = [
+    'firebase',
+    'firebaseio.com',
+    'googleapis.com',
+    'gstatic.com',
+    'cloudfunctions.net',
+    'identitytoolkit.googleapis.com',
+    'firestore.googleapis.com',
+    'firebasestorage.googleapis.com',
+    'cdnjs.cloudflare.com',
+    'wikimedia.org',
+    'wikipedia.org',
+    'lichess.org',
+    'jsdelivr.net',
+];
+
+// ⭐ Flag para saber si había una versión previa instalada
 let habiaCachePrevia = false;
 
 // ============================
@@ -91,37 +117,12 @@ self.addEventListener('fetch', event => {
 
     if (request.method !== 'GET') return;
 
-   const STATIC_ASSETS = [
-    ROOT,
-    ROOT + 'index.html',
-    ROOT + 'offline.html',
-    ROOT + 'styles-base.css',
-    ROOT + 'styles-layout.css',
-    ROOT + 'styles-componentes.css',
-    ROOT + 'styles-curso.css',
-    ROOT + 'styles-extras.css',
-    ROOT + 'styles-responsive.css',
-    ROOT + 'entrenador.css',
-    ROOT + 'entrenador-responsive.css',
-    ROOT + 'script-core.js',
-    ROOT + 'script-curso.js',
-    ROOT + 'script-render.js',
-    ROOT + 'script-main.js',
-    ROOT + 'entrenador-core.js',
-    ROOT + 'entrenador-tablero.js',
-    ROOT + 'entrenador-api.js',
-    ROOT + 'manifest.json',
-    ROOT + 'assets/lozza/lozza.js',          // ← NUEVO
-    ROOT + 'assets/android-chrome-192x192.png',
-    ROOT + 'assets/android-chrome-512x512.png',
-    ROOT + 'assets/apple-touch-icon.png',
-    ROOT + 'assets/favicon.ico',
-];
-
+    // Ignorar hosts externos (Firebase, CDNs, etc.)
     if (ignoredHosts.some(host => url.hostname.includes(host))) {
         return;
     }
 
+    // Ignorar peticiones fuera de nuestro origen
     if (url.origin !== self.location.origin) return;
 
     const esHtml = /\.html?$/i.test(url.pathname);
@@ -129,6 +130,7 @@ self.addEventListener('fetch', event => {
     const esCss = /\.css$/i.test(url.pathname);
     const esRaiz = url.pathname === '/' || url.pathname === '/Club-Morphy/' || url.pathname.endsWith('/');
 
+    // HTML/JS/CSS/raíz: NETWORK-FIRST (para tener siempre lo último, con fallback a caché)
     if (esHtml || esJs || esCss || esRaiz) {
         event.respondWith(
             fetch(request)
@@ -153,6 +155,7 @@ self.addEventListener('fetch', event => {
         return;
     }
 
+    // Todo lo demás: CACHE-FIRST con relleno progresivo
     event.respondWith(
         caches.match(request).then(cached => {
             if (cached) return cached;
