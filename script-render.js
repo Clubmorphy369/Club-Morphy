@@ -9,13 +9,16 @@
    - actualizarUI, renderizarContenido
    - agregarTema
    - Edición inline (long press)
-   - Inicializar tableros del entrenador (⭐ Fix F integrado)
+   - Inicializar tableros del entrenador
    - Guardar variante/PGN/capítulos
    - Badge ELO
    - Modal de juego vs IA
    
    Depende de: script-core.js + script-curso.js + entrenador-*.js
    Expone: window.CMRender
+   
+   ⚠️ Fase 3 (migración a Lozza): buscar comentarios "⚠️ Fase 3"
+      para saber qué renombrar cuando se reemplace Stockfish.
    ============================================================ */
 
 (function () {
@@ -67,15 +70,16 @@
                 ${!desbloqueada ? '<span>🔒</span>' : ''}
                 ${esAdmin ? `
                     <div style="display:flex; align-items:center; gap:4px; flex-wrap:wrap;">
-                        <button class="btn-reorder" onclick="event.stopPropagation(); moverClaseArriba('${c.id}')" title="Subir clase">↑</button>
-                        <button class="btn-reorder" onclick="event.stopPropagation(); moverClaseAbajo('${c.id}')" title="Bajar clase">↓</button>
+                        <button class="btn-reorder" aria-label="Subir clase" onclick="event.stopPropagation(); moverClaseArriba('${c.id}')" title="Subir clase">↑</button>
+                        <button class="btn-reorder" aria-label="Bajar clase" onclick="event.stopPropagation(); moverClaseAbajo('${c.id}')" title="Bajar clase">↓</button>
                         <button class="btn btn-small ${c.publicada ? 'btn-exito' : 'btn-warning'}"
+                                aria-label="${c.publicada ? 'Ocultar clase' : 'Publicar clase'}"
                                 onclick="event.stopPropagation(); togglePublicarClase('${c.id}')"
                                 title="${c.publicada ? 'Visible para alumnos' : 'Oculta para alumnos'}">
                             ${c.publicada ? '👁️' : '🙈'}
                         </button>
-                        <button class="btn btn-peligro btn-small btn-eliminar-clase" data-id="${c.id}">🗑️</button>
-                        <button class="btn btn-azul btn-small" onclick="event.stopPropagation(); gestionarAccesosClase('${c.id}')" title="Gestionar accesos especiales">👥</button>
+                        <button class="btn btn-peligro btn-small btn-eliminar-clase" data-id="${c.id}" aria-label="Eliminar clase" title="Eliminar clase">🗑️</button>
+                        <button class="btn btn-azul btn-small" aria-label="Gestionar accesos" onclick="event.stopPropagation(); gestionarAccesosClase('${c.id}')" title="Gestionar accesos especiales">👥</button>
                     </div>` : ''}
             </div>`;
         }).join('');
@@ -194,8 +198,7 @@
         const accesible = Curso.temaAccesible(tema, Core.state.currentUser);
         const completado = Curso.estaCompletado(claseId, tema.id);
         const esAdmin = Core.state.currentUser?.esAdmin;
-       
-        // ⭐ v27: Detectar si el tema tiene bloques de tablero con PGN
+
         const tieneTableros = Array.isArray(tema.bloques) &&
                               tema.bloques.some(b => b.tipo === 'tablero' && (b.config || {}).pgn && b.config.pgn.trim());
 
@@ -254,6 +257,8 @@
                         case 'tablero': {
                             if (!bloque.config || !bloque.config.pgn || !bloque.config.pgn.trim()) return '';
                             const cfg = bloque.config || {};
+                            // ⚠️ Fase 3 (Lozza): data-nivel se seguirá usando igual,
+                            //    el cambio es interno en entrenador-core.js.
                             html = `<div class="cm-tablero-bloque-alumno" data-bloque-id="${bloque.id}" data-clase="${claseId}" data-tema="${tema.id}" data-pgn="${encodeURIComponent(cfg.pgn || '')}" data-modo="${escapeAttr(cfg.modo || 'ejercicio')}" data-color="${escapeAttr(cfg.colorHumano || 'w')}" data-nivel="${cfg.nivelSF || 5}" data-orientacion="${escapeAttr(cfg.orientacion || 'auto')}"></div>`;
                             break;
                         }
@@ -394,7 +399,8 @@
                                             </select>
                                         </div>
                                         <div>
-                                            <label style="display:block; font-size:0.72rem; color:#92400e; font-weight:700; text-transform:uppercase; margin-bottom:3px;">Nivel Stockfish</label>
+                                            <!-- ⚠️ Fase 3 (Lozza): este label cambiará a "Nivel del motor" pero los valores 1-8 se mantienen -->
+                                            <label style="display:block; font-size:0.72rem; color:#92400e; font-weight:700; text-transform:uppercase; margin-bottom:3px;">Nivel del motor</label>
                                             <select onchange="actualizarBloqueTablero('${claseId}','${tema.id}','${bloque.id}', 'nivelSF', parseInt(this.value,10))" style="width:100%; padding:6px; border:1px solid #fdba74; border-radius:6px; font-size:0.82rem; background:white;">
                                                 <option value="1" ${((bloque.config||{}).nivelSF)==1?'selected':''}>1 — Principiante</option>
                                                 <option value="2" ${((bloque.config||{}).nivelSF)==2?'selected':''}>2 — Muy fácil</option>
@@ -457,13 +463,14 @@
                 ${completado ? '<span class="badge">✓</span>' : ''}
                 <span style="flex:1;"></span>
                 ${accesible && !tieneTableros ? `<button class="btn btn-exito btn-small" onclick="event.stopPropagation(); marcarVisto('${claseId}','${tema.id}')">${completado ? '✓ Completado' : '👁️ Visto'}</button>` : ''}
-                ${accesible && tieneTableros && completado ? '<span class="badge">✓ Completado</span>' : ''}                ${esAdmin ? `
-                    <button class="btn-reorder" onclick="event.stopPropagation(); moverTemaArriba('${claseId}','${tema.id}')" title="Subir tema">↑</button>
-                    <button class="btn-reorder" onclick="event.stopPropagation(); moverTemaAbajo('${claseId}','${tema.id}')" title="Bajar tema">↓</button>
-                    <button class="btn btn-small ${tema.bloqueado ? 'btn-warning' : 'btn-exito'}" onclick="event.stopPropagation(); toggleBloqueoTema('${claseId}','${tema.id}')">${tema.bloqueado ? '🔒' : '🔓'}</button>
-                    <button class="btn btn-azul btn-small" onclick="event.stopPropagation(); gestionarAccesosTema('${claseId}','${tema.id}')">👥</button>
-                    <button class="btn btn-azul btn-small" onclick="event.stopPropagation(); agregarSubtema('${claseId}','${tema.id}')">➕</button>
-                    <button class="btn btn-peligro btn-small" onclick="event.stopPropagation(); eliminarTema('${claseId}','${tema.id}')">🗑️</button>
+                ${accesible && tieneTableros && completado ? '<span class="badge">✓ Completado</span>' : ''}
+                ${esAdmin ? `
+                    <button class="btn-reorder" aria-label="Subir tema" onclick="event.stopPropagation(); moverTemaArriba('${claseId}','${tema.id}')" title="Subir tema">↑</button>
+                    <button class="btn-reorder" aria-label="Bajar tema" onclick="event.stopPropagation(); moverTemaAbajo('${claseId}','${tema.id}')" title="Bajar tema">↓</button>
+                    <button class="btn btn-small ${tema.bloqueado ? 'btn-warning' : 'btn-exito'}" aria-label="${tema.bloqueado ? 'Desbloquear tema' : 'Bloquear tema'}" onclick="event.stopPropagation(); toggleBloqueoTema('${claseId}','${tema.id}')">${tema.bloqueado ? '🔒' : '🔓'}</button>
+                    <button class="btn btn-azul btn-small" aria-label="Gestionar accesos del tema" onclick="event.stopPropagation(); gestionarAccesosTema('${claseId}','${tema.id}')">👥</button>
+                    <button class="btn btn-azul btn-small" aria-label="Agregar subtema" onclick="event.stopPropagation(); agregarSubtema('${claseId}','${tema.id}')">➕</button>
+                    <button class="btn btn-peligro btn-small" aria-label="Eliminar tema" onclick="event.stopPropagation(); eliminarTema('${claseId}','${tema.id}')">🗑️</button>
                 ` : ''}
             </div>
             <div class="tema-body">
@@ -474,15 +481,13 @@
         return html;
     };
 
-// === FIN DE LA PARTE 1/4 ===
-     // ============================================================
+    // ============================================================
     // ACTUALIZAR UI COMPLETA
     // ============================================================
     Render.actualizarUI = function () {
         const contentDiv = document.getElementById('main-content');
         if (!contentDiv) return;
 
-        // Mostrar/ocultar botón Jugar vs IA según sesión
         const btnJugarIA = document.getElementById('btn-jugar-ia');
         if (btnJugarIA) {
             btnJugarIA.style.display = Core.state.currentUser ? 'inline-flex' : 'none';
@@ -679,17 +684,14 @@
         input.addEventListener('keypress', (e) => { if (e.key === 'Enter') { e.preventDefault(); input.blur(); } });
     };
 
-        // ============================================================
+    // ============================================================
     // INICIALIZAR TABLEROS DEL ENTRENADOR
     // ============================================================
-    // ⭐ FIX F: se pasa `progresoTableros` al contexto para que el
+    // Se pasa `progresoTableros` al contexto para que el
     // entrenador restaure el progreso previo del alumno.
-    //
-    // ⭐ v22 Fix A: se registran las instancias activas para poder
-    // actualizar su progreso cuando llegue el snapshot de Firestore.
+    // Se registran las instancias activas para poder actualizar
+    // su progreso cuando llegue el snapshot de Firestore.
     // ============================================================
-
-    // ⭐ v22: Registro de instancias activas de tablero
     Render.instanciasTablero = [];
 
     Render.inicializarTablerosEntrenador = function () {
@@ -697,6 +699,10 @@
             console.warn('[Fase 5] Entrenador no está cargado');
             return;
         }
+
+        // ⭐ Limpiar instancias destruidas antes de añadir nuevas
+        Render.instanciasTablero = Render.instanciasTablero.filter(inst => inst && !inst.destroyed);
+
         const bloques = document.querySelectorAll('.cm-tablero-bloque-alumno');
         bloques.forEach(bloqueEl => {
             if (bloqueEl.dataset.inicializado === 'true') return;
@@ -722,10 +728,8 @@
                     temaId: temaId,
                     bloqueId: bloqueId,
 
-                    // ⭐ FIX F: pasar el progreso global al entrenador
                     progresoTableros: Core.state.progresoTableros,
 
-                    // ⭐ v27: callback cuando TODOS los capítulos de este tablero estén resueltos
                     onTableroCompletado: (data) => {
                         setTimeout(() => {
                             Render.verificarTemaCompleto(data.claseId, data.temaId);
@@ -742,7 +746,6 @@
                     onRenombrarCapitulo: (data) => Render.guardarPGNEnFirestore(claseId, temaId, bloqueId, data.pgnNuevo)
                 };
 
-                // ⭐ v22 Fix A: registrar la instancia para poder actualizarla después
                 const instancia = window.Entrenador.render(bloqueEl, config, contexto);
                 if (instancia) Render.instanciasTablero.push(instancia);
 
@@ -752,11 +755,10 @@
             }
         });
     };
-   
-    // ⭐ v27: Verificar si TODOS los tableros del tema están completos.
+
+    // Verificar si TODOS los tableros del tema están completos.
     // Solo entonces marca el tema como completado.
     Render.verificarTemaCompleto = function (claseId, temaId) {
-        // Los admins no marcan temas automáticamente
         if (Core.state.currentUser?.esAdmin) return;
 
         const clase = Core.state.curso.clases.find(c => c.id === claseId);
@@ -764,13 +766,11 @@
         const tema = Curso.buscarTemaRecursivo(clase.temas, temaId);
         if (!tema || !tema.bloques) return;
 
-        // Obtener solo bloques de tablero CON PGN
         const bloquesTablero = tema.bloques.filter(b =>
             b.tipo === 'tablero' && b.config && b.config.pgn && b.config.pgn.trim()
         );
         if (bloquesTablero.length === 0) return;
 
-        // Buscar instancias activas por bloque
         const instanciasPorBloque = {};
         Render.instanciasTablero.forEach(inst => {
             if (inst.destroyed) return;
@@ -781,28 +781,24 @@
             }
         });
 
-        // Si algún bloque de tablero no tiene instancia o no está completo → no marcar
         for (const bloque of bloquesTablero) {
             const inst = instanciasPorBloque[bloque.id];
-            if (!inst) return; // Bloque aún no cargado
+            if (!inst) return;
             const todosCaps = inst.capitulos.every(c => c.completado);
-            if (!todosCaps) return; // Aún no terminó
+            if (!todosCaps) return;
         }
 
-        // Si llegamos aquí, TODOS los tableros del tema están completos
         if (!Curso.estaCompletado(claseId, temaId)) {
             console.log('[v27] Tema completo, marcando como visto:', tema.titulo);
             Curso.marcarVisto(claseId, temaId);
         }
     };
-   
-    // ⭐ v22 Fix A: actualizar progreso de los tableros ya inicializados
+
+    // Actualizar progreso de los tableros ya inicializados
     // (se llama cuando llega el snapshot de Firestore con el progreso)
     Render.actualizarProgresoTableros = function () {
         if (!Core.state.progresoTableros) return;
-        // Limpiar instancias destruidas
         Render.instanciasTablero = Render.instanciasTablero.filter(inst => inst && !inst.destroyed);
-        // Actualizar el progreso de cada instancia activa
         Render.instanciasTablero.forEach(inst => {
             if (typeof inst.actualizarProgresoVariantes === 'function') {
                 try {
@@ -813,6 +809,7 @@
             }
         });
     };
+
     // ============================================================
     // BLOQUES DEL TABLERO (admin)
     // ============================================================
@@ -930,11 +927,32 @@
             });
         }
     };
-
-// === FIN DE LA PARTE 2/4 ===
-     // ============================================================
+   
+    // ============================================================
     // JUEGO VS IA — MODAL DE CONFIGURACIÓN
     // ============================================================
+    const JUEGO_IA_CONFIG_KEY = 'clubMorphy_juegoIA_config';
+
+    function cargarUltimaConfigJuegoIA() {
+        try {
+            const raw = localStorage.getItem(JUEGO_IA_CONFIG_KEY);
+            if (!raw) return null;
+            const cfg = JSON.parse(raw);
+            if (cfg && typeof cfg === 'object') return cfg;
+        } catch (e) { /* ignorar */ }
+        return null;
+    }
+
+    function guardarUltimaConfigJuegoIA(cfg) {
+        try {
+            localStorage.setItem(JUEGO_IA_CONFIG_KEY, JSON.stringify({
+                nivelSF: cfg.nivelSF,
+                colorHumano: cfg.colorHumano,
+                tiempo: cfg.tiempo
+            }));
+        } catch (e) { /* ignorar */ }
+    }
+
     Render.abrirModalJuegoIA = function () {
         if (!Core.state.currentUser) {
             mostrarToast('Debes iniciar sesión para jugar', 'error');
@@ -946,12 +964,21 @@
             return;
         }
 
-        // ⭐ Resetear config a valores por defecto cada vez que se abre
-        Core.state.juegoIAConfig = {
-            nivelSF: 5,
-            colorHumano: 'w',
-            tiempo: 'libre'
-        };
+        // ⭐ v38: Recuperar la última configuración guardada (o usar defaults)
+        const ultimaConfig = cargarUltimaConfigJuegoIA();
+        if (ultimaConfig) {
+            Core.state.juegoIAConfig = {
+                nivelSF: ultimaConfig.nivelSF || 5,
+                colorHumano: ultimaConfig.colorHumano || 'w',
+                tiempo: ultimaConfig.tiempo || 'libre'
+            };
+        } else {
+            Core.state.juegoIAConfig = {
+                nivelSF: 5,
+                colorHumano: 'w',
+                tiempo: 'libre'
+            };
+        }
 
         const niveles = [
             { nivel: 1, nombre: 'Principiante', elo: 800 },
@@ -973,7 +1000,7 @@
         ];
 
         const htmlNiveles = niveles.map(n => `
-            <button class="juego-ia-nivel-btn ${Core.state.juegoIAConfig.nivelSF === n.nivel ? 'activo' : ''}" data-nivel="${n.nivel}">
+            <button class="juego-ia-nivel-btn ${Core.state.juegoIAConfig.nivelSF === n.nivel ? 'activo' : ''}" data-nivel="${n.nivel}" aria-label="Nivel ${n.nivel}: ${n.nombre}">
                 <span class="nivel-num">Nv${n.nivel}</span>
                 <span class="nivel-elo">~${n.elo} ELO</span>
                 <span class="nivel-nombre">${n.nombre}</span>
@@ -981,19 +1008,19 @@
         `).join('');
 
         const htmlColores = `
-            <button class="juego-ia-color-btn ${Core.state.juegoIAConfig.colorHumano === 'w' ? 'activo' : ''}" data-color="w">
+            <button class="juego-ia-color-btn ${Core.state.juegoIAConfig.colorHumano === 'w' ? 'activo' : ''}" data-color="w" aria-label="Jugar con blancas">
                 <span class="pieza">♔</span> Blancas
             </button>
-            <button class="juego-ia-color-btn ${Core.state.juegoIAConfig.colorHumano === 'b' ? 'activo' : ''}" data-color="b">
+            <button class="juego-ia-color-btn ${Core.state.juegoIAConfig.colorHumano === 'b' ? 'activo' : ''}" data-color="b" aria-label="Jugar con negras">
                 <span class="pieza">♚</span> Negras
             </button>
-            <button class="juego-ia-color-btn ${Core.state.juegoIAConfig.colorHumano === 'random' ? 'activo' : ''}" data-color="random">
+            <button class="juego-ia-color-btn ${Core.state.juegoIAConfig.colorHumano === 'random' ? 'activo' : ''}" data-color="random" aria-label="Color aleatorio">
                 🎲 Aleatorio
             </button>
         `;
 
         const htmlTiempos = tiempos.map(t => `
-            <button class="juego-ia-tiempo-btn ${Core.state.juegoIAConfig.tiempo === t.id ? 'activo' : ''}" data-tiempo="${t.id}">
+            <button class="juego-ia-tiempo-btn ${Core.state.juegoIAConfig.tiempo === t.id ? 'activo' : ''}" data-tiempo="${t.id}" aria-label="Tiempo: ${t.nombre}">
                 ${t.nombre}
             </button>
         `).join('');
@@ -1093,7 +1120,11 @@
     };
 
     // ============================================================
-    // PRECARGA DE STOCKFISH EN BACKGROUND
+    // PRECARGA DEL MOTOR EN BACKGROUND
+    // ⚠️ Fase 3 (Lozza): las funciones `precargarStockfish` y
+    //    `estadoStockfish` se renombrarán a `precargarMotor` y
+    //    `estadoMotor` cuando migremos. Por ahora se mantienen
+    //    para no romper el código.
     // ============================================================
     Render.precargarStockfishParaJuego = function () {
         if (!window.Entrenador || typeof window.Entrenador.precargarStockfish !== 'function') return;
@@ -1131,7 +1162,13 @@
             colorHumano = Math.random() < 0.5 ? 'w' : 'b';
         }
 
-        // Cambiar el contenido del modal a la sala de juego
+        // ⭐ v38: Guardar la config para la próxima vez
+        guardarUltimaConfigJuegoIA({
+            nivelSF: Core.state.juegoIAConfig.nivelSF,
+            colorHumano: Core.state.juegoIAConfig.colorHumano,
+            tiempo: Core.state.juegoIAConfig.tiempo
+        });
+
         const contentEl = dom.modalJuegoIA.querySelector('.modal-juego-ia-content');
         if (!contentEl) return;
 
@@ -1163,7 +1200,6 @@
             uid: Core.state.currentUser.uid,
             onSalirSalaLibre: () => {
                 Render.cerrarModalJuegoIA();
-                Core.state.juegoIAInstancia = null;
             },
             onFinPartida: (data) => {
                 console.log('[v20] Partida terminada:', data.resultado);
@@ -1186,19 +1222,32 @@
 
     // ============================================================
     // CIERRE DEL MODAL
+    // ⭐ v38: ahora destruye la instancia del tablero para liberar memoria
     // ============================================================
     Render.cerrarModalJuegoIA = function () {
         if (!dom.modalJuegoIA) return;
+
+        // ⭐ Destruir la instancia activa del tablero (si existe)
+        if (Core.state.juegoIAInstancia) {
+            try {
+                const contenedor = document.getElementById('contenedor-juego-ia');
+                if (contenedor && window.Entrenador && typeof window.Entrenador.destroy === 'function') {
+                    window.Entrenador.destroy(contenedor);
+                }
+            } catch (e) {
+                console.warn('[v38] Error al destruir instancia del juego IA:', e);
+            }
+            Core.state.juegoIAInstancia = null;
+        }
+
         dom.modalJuegoIA.classList.remove('active');
     };
 
     Render.cerrarSalaLibre = function () {
         Render.cerrarModalJuegoIA();
-        Core.state.juegoIAInstancia = null;
     };
 
-// === FIN DE LA PARTE 3/4 ===
-     // ============================================================
+    // ============================================================
     // EXPOSICIÓN GLOBAL (para que onclick del HTML funcione)
     // ============================================================
     window.renderizarSidebar = Render.renderizarSidebar;
@@ -1240,6 +1289,6 @@
     // ============================================================
     // LOG FINAL
     // ============================================================
-    console.log('✅ CMRender cargado (sidebar + temas + entrenador + juego vs IA + Fix F)');
+    console.log('✅ CMRender cargado (sidebar + temas + entrenador + juego vs IA)');
 
 })();
