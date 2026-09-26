@@ -189,8 +189,11 @@
         return (peones > 0 ? '+' : '') + peones.toFixed(2);
     };
 
-    // ============================================================
-    // STOCKFISH
+       // ============================================================
+    // MOTOR DE AJEDREZ — Lozza (reemplaza a Stockfish)
+    // ⚠️ Fase 3: antes era Stockfish, ahora Lozza (JS puro, ~2340 ELO)
+    // Se mantiene el nombre Core.SF por compatibilidad con
+    // entrenador-tablero.js (que sigue llamando a Core.SF.*).
     // ============================================================
     Core.SF = {
         worker: null,
@@ -201,8 +204,10 @@
         init() {
             if (this.worker || this.inicializado) return;
             this.inicializado = true;
-const url = window.stockfishWorkerUrl ||
-    'https://cdn.jsdelivr.net/npm/stockfish.wasm@0.10.0/stockfish.js';
+
+            // Ruta local del motor Lozza (servido desde nuestro dominio)
+            const url = window.lozzaWorkerUrl || 'assets/lozza/lozza.js';
+
             try {
                 this.worker = new Worker(url);
                 this.worker.addEventListener('message', (e) => {
@@ -217,13 +222,12 @@ const url = window.stockfishWorkerUrl ||
                     }
                 });
                 this.worker.addEventListener('error', (e) => {
-                    console.error('[Entrenador] Stockfish error:', e);
+                    console.error('[Entrenador] Lozza error:', e);
                 });
                 this.worker.postMessage('uci');
-                this.worker.postMessage('setoption name Threads value 1');
                 this.worker.postMessage('setoption name Hash value 32');
             } catch (e) {
-                console.error('[Entrenador] No se pudo inicializar Stockfish:', e);
+                console.error('[Entrenador] No se pudo inicializar Lozza:', e);
             }
         },
 
@@ -243,10 +247,16 @@ const url = window.stockfishWorkerUrl ||
         async mejorMovimiento(fen, nivel) {
             if (!this.worker || !this.ready) return null;
             const cfg = Core.NIVELES_SF[nivel] || Core.NIVELES_SF[5];
+
             this.enviar('stop');
-            this.enviar('setoption name Skill Level value ' + cfg.skill);
+            // Lozza usa "strength" (0-100) en lugar de "Skill Level" (0-20 de Stockfish).
+            // Convertimos el skill 0-20 a strength 0-100.
+            const strength = Math.round((cfg.skill / 20) * 100);
+            this.enviar('setoption name strength value ' + strength);
+            this.enviar('ucinewgame');
             this.enviar('position fen ' + fen);
             this.enviar('go depth ' + cfg.depth + ' movetime ' + cfg.movetime);
+
             try {
                 const msg = await this.esperar(/^bestmove\s+(\S+)/, 8000);
                 const match = msg.match(/^bestmove\s+(\S+)/);
@@ -261,9 +271,11 @@ const url = window.stockfishWorkerUrl ||
                     resolve({ cp: 0, mate: null, mejor: null }); return;
                 }
                 this.enviar('stop');
-                this.enviar('setoption name Skill Level value 20');
+                this.enviar('setoption name strength value 100'); // máxima fuerza para análisis
+                this.enviar('ucinewgame');
                 this.enviar('position fen ' + fen);
                 this.enviar('go depth ' + depth);
+
                 let ultimaEval = { cp: 0, mate: null, mejor: null };
                 const handler = (e) => {
                     const msg = typeof e.data === 'string' ? e.data : (e.data && e.data.data) || '';
