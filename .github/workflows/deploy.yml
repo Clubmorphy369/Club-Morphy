@@ -7,8 +7,14 @@ on:
     paths:
       - 'index.html'
       - 'offline.html'
-      - 'styles.css'
+      - 'styles-base.css'
+      - 'styles-layout.css'
+      - 'styles-componentes.css'
+      - 'styles-curso.css'
+      - 'styles-extras.css'
+      - 'styles-responsive.css'
       - 'entrenador.css'
+      - 'entrenador-responsive.css'
       - 'sw.js'
       - 'manifest.json'
       - 'firebase.json'
@@ -53,13 +59,20 @@ jobs:
       - name: Verify critical files
         run: |
           test -f index.html || (echo "Falta index.html" && exit 1)
+          test -f offline.html || (echo "Falta offline.html" && exit 1)
           test -f sw.js || (echo "Falta sw.js" && exit 1)
           test -f manifest.json || (echo "Falta manifest.json" && exit 1)
           test -f firebase.json || (echo "Falta firebase.json" && exit 1)
           test -f firestore.rules || (echo "Falta firestore.rules" && exit 1)
           test -f firestore.indexes.json || (echo "Falta firestore.indexes.json" && exit 1)
-          test -f styles.css || (echo "Falta styles.css" && exit 1)
+          test -f styles-base.css || (echo "Falta styles-base.css" && exit 1)
+          test -f styles-layout.css || (echo "Falta styles-layout.css" && exit 1)
+          test -f styles-componentes.css || (echo "Falta styles-componentes.css" && exit 1)
+          test -f styles-curso.css || (echo "Falta styles-curso.css" && exit 1)
+          test -f styles-extras.css || (echo "Falta styles-extras.css" && exit 1)
+          test -f styles-responsive.css || (echo "Falta styles-responsive.css" && exit 1)
           test -f entrenador.css || (echo "Falta entrenador.css" && exit 1)
+          test -f entrenador-responsive.css || (echo "Falta entrenador-responsive.css" && exit 1)
           test -f entrenador-core.js || (echo "Falta entrenador-core.js" && exit 1)
           test -f entrenador-tablero.js || (echo "Falta entrenador-tablero.js" && exit 1)
           test -f entrenador-api.js || (echo "Falta entrenador-api.js" && exit 1)
