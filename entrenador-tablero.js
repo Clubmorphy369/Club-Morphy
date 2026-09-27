@@ -819,9 +819,12 @@
                 this.orientacion = this.config.orientacion;
             }
 
-            this.hojasTotales = recolectarHojas(this.arbol);
+           // ⭐ v51: Calcular hojas según el modo
+            this.hojasTotales = this.modoEstricto
+                ? recolectarHojas(this.arbol)
+                : this._recolectarHojasPrincipales(this.arbol);
             this._restaurarProgresoDeCapitulo();
-
+           
             this.esperandoRespuesta = false;
             this.casillaSeleccionada = null;
             this.bloqueado = false;
