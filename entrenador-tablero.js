@@ -3494,6 +3494,56 @@
             this.dibujarPiezas();
         }
 
+         // ⭐ v48: Actualizar el indicador de turno (blancas/negras)
+        _actualizarIndicadorTurno() {
+            if (!this.$turnoIndicador || !this.chess) return;
+
+            const turno = this.chess.turn();
+            const esBlancas = turno === 'w';
+
+            // Determinar si es MI turno y quién soy
+            let esMiTurno = false;
+
+            if (this.esSalaLibre) {
+                esMiTurno = turno === this.colorHumano;
+            } else if (this.config.modo === 'ordenador') {
+                const colorHumano = this.config.colorHumano || 'w';
+                esMiTurno = turno === colorHumano;
+            } else {
+                // Modo ejercicio: el humano empieza
+                esMiTurno = turno === this.turnoInicial;
+            }
+
+            // Texto según contexto
+            let textoQuien = '';
+            if (this.esSalaLibre || this.config.modo === 'ordenador') {
+                textoQuien = esMiTurno ? 'Te toca a ti' : 'Le toca a la IA';
+            } else {
+                textoQuien = esMiTurno ? 'Tu turno' : 'El rival juega';
+            }
+
+            const iconoPieza = esBlancas ? PIEZAS.wp : PIEZAS.bp;
+            const nombreTurno = esBlancas ? 'Blancas' : 'Negras';
+            const claseBlancasNegras = esBlancas ? 'cm-turno-blancas' : 'cm-turno-negras';
+            const claseMiTurno = esMiTurno ? 'cm-turno-mi-turno' : '';
+
+            this.$turnoIndicador.className = `cm-turno-indicador ${claseBlancasNegras} ${claseMiTurno}`;
+            this.$turnoIndicador.innerHTML = `
+                <img class="cm-turno-icono" src="${iconoPieza}" alt="" onerror="this.style.display='none'">
+                <span class="cm-turno-texto">
+                    <strong>${nombreTurno}</strong>
+                    <span class="cm-turno-quien">· ${textoQuien}</span>
+                </span>
+            `;
+
+            // Borde del tablero
+            const boardWrap = this.contenedor.querySelector('.cm-tablero-board-wrap');
+            if (boardWrap) {
+                boardWrap.classList.remove('cm-borde-blancas', 'cm-borde-negras');
+                boardWrap.classList.add(esBlancas ? 'cm-borde-blancas' : 'cm-borde-negras');
+            }
+        }
+
         // --------------------------------------------------------
         // UI HELPERS
         // --------------------------------------------------------
