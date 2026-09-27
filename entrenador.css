@@ -2564,3 +2564,90 @@
     .cm-quiz-resumen-precision { width: 110px; height: 110px; }
     .cm-quiz-resumen-precision .valor { font-size: 1.8rem; }
 }
+/* ============================================================
+   ⭐ v48: INDICADOR DE TURNO (blancas/negras)
+   ============================================================ */
+.cm-turno-indicador {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 8px 14px;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 0.9rem;
+    margin-bottom: 8px;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+    font-family: 'Lato', sans-serif;
+}
+
+/* Turno de blancas */
+.cm-turno-indicador.cm-turno-blancas {
+    background: linear-gradient(135deg, #ffffff, #f1f5f9);
+    color: #1e293b;
+    border-color: #94a3b8;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+/* Turno de negras */
+.cm-turno-indicador.cm-turno-negras {
+    background: linear-gradient(135deg, #334155, #1e293b);
+    color: #f8fafc;
+    border-color: #0f172a;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+}
+
+.cm-turno-indicador .cm-turno-icono {
+    width: 22px;
+    height: 22px;
+    object-fit: contain;
+    flex-shrink: 0;
+}
+
+.cm-turno-indicador .cm-turno-texto {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+}
+
+.cm-turno-indicador .cm-turno-quien {
+    opacity: 0.75;
+    font-weight: 600;
+    font-size: 0.8rem;
+}
+
+/* Animación de pulso cuando es TU turno */
+.cm-turno-indicador.cm-turno-mi-turno {
+    animation: cm-turno-pulse 2s infinite;
+}
+
+@keyframes cm-turno-pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.02); box-shadow: 0 4px 20px rgba(14,165,233,0.4); }
+}
+
+/* Borde del tablero según el turno */
+.cm-tablero-board-wrap.cm-borde-blancas {
+    box-shadow: 0 0 0 3px #f8fafc, 0 4px 16px rgba(0,0,0,0.15);
+}
+
+.cm-tablero-board-wrap.cm-borde-negras {
+    box-shadow: 0 0 0 3px #1e293b, 0 4px 16px rgba(0,0,0,0.25);
+}
+
+@media (max-width: 600px) {
+    .cm-turno-indicador {
+        font-size: 0.82rem;
+        padding: 6px 12px;
+        margin-bottom: 6px;
+    }
+    .cm-turno-indicador .cm-turno-icono {
+        width: 18px;
+        height: 18px;
+    }
+    .cm-turno-indicador .cm-turno-quien {
+        font-size: 0.72rem;
+    }
+}
