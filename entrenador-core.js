@@ -428,7 +428,7 @@
         return tokens;
     };
 
-    Core.construirArbolPGN = function (movText, fenInicial, idCounter) {
+        Core.construirArbolPGN = function (movText, fenInicial, idCounter) {
         const tokens = Core.tokenizePGN(movText);
         const root = {
             id: idCounter.next(),
@@ -440,22 +440,29 @@
         };
         let currentNode = root;
         let currentChess = new Chess(fenInicial);
-        const savedStates = [];
 
-        for (const tok of tokens) {
+        for (let i = 0; i < tokens.length; i++) {
+            const tok = tokens[i];
+
             if (tok.type === 'open') {
-                savedStates.push({ node: currentNode, chess: new Chess(currentChess.fen()) });
-                if (currentNode.parent) {
-                    currentNode = currentNode.parent;
-                    currentChess = new Chess(currentNode.fen);
+                // ⭐ v49: Ignorar variantes. Saltamos hasta el ')' correspondiente.
+                let depth = 1;
+                while (i + 1 < tokens.length && depth > 0) {
+                    i++;
+                    const t = tokens[i];
+                    if (!t) break;
+                    if (t.type === 'open') depth++;
+                    else if (t.type === 'close') depth--;
                 }
-            } else if (tok.type === 'close') {
-                if (savedStates.length) {
-                    const saved = savedStates.pop();
-                    currentNode = saved.node;
-                    currentChess = saved.chess;
-                }
-            } else if (tok.type === 'comment') {
+                continue;
+            }
+
+            if (tok.type === 'close') {
+                // No debería llegar aquí, pero por seguridad lo ignoramos.
+                continue;
+            }
+
+            if (tok.type === 'comment') {
                 if (currentNode && currentNode.move) {
                     if (currentNode.comentario) {
                         currentNode.comentario += ' ' + tok.value;
@@ -463,7 +470,10 @@
                         currentNode.comentario = tok.value;
                     }
                 }
-            } else if (tok.type === 'text') {
+                continue;
+            }
+
+            if (tok.type === 'text') {
                 if (/^\d+\.+$/.test(tok.value)) continue;
                 if (/^(1-0|0-1|1\/2-1\/2|\*)$/.test(tok.value)) continue;
                 if (/^\$\d+$/.test(tok.value)) continue;
