@@ -266,8 +266,11 @@
             this.contenedor.innerHTML = `
                 <div class="cm-tablero-wrap ${esSalaLibre ? 'cm-sala-libre' : ''}">
                     <div class="cm-tablero-game">
-                        <div>
+                                              <div>
                             ${headerExtra}
+                            <div class="cm-turno-indicador" data-rol="turnoIndicador">
+                                <span class="cm-turno-texto">Cargando…</span>
+                            </div>
                             <div class="cm-tablero-board-wrap">
                                 <div class="cm-tablero-board" data-rol="board"></div>
                             </div>
