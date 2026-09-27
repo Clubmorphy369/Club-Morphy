@@ -628,6 +628,25 @@
                 });
             }
             if (esAdmin) {
+
+                               // ⭐ v51: Checkbox de modo estricto
+                if (this.$modoEstrictoCheck) {
+                    this.$modoEstrictoCheck.checked = this.modoEstricto;
+                    this.$modoEstrictoCheck.addEventListener('change', (e) => {
+                        this.modoEstricto = e.target.checked;
+                        try {
+                            localStorage.setItem('cm-tablero-modo-estricto', e.target.checked ? 'true' : 'false');
+                        } catch (err) { /* ignorar */ }
+                        this.mostrarToast(
+                            e.target.checked
+                                ? '🎯 Modo estricto activado (todas las variantes)'
+                                : '📖 Modo relajado (solo línea principal)',
+                            ''
+                        );
+                        this.cargarCapitulo(this.capituloActual);
+                    });
+                }
+               
                 if (this.$persistCheck) {
                     this.$persistCheck.checked = this.modoEdicionPersistente;
                     this.$persistCheck.addEventListener('change', (e) => {
