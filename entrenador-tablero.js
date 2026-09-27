@@ -1390,6 +1390,8 @@
                     if (el) el.classList.add(m.captured ? 'legal-capture' : 'legal-move');
                 });
             }
+            // ⭐ v48: Actualizar el indicador de turno
+            this._actualizarIndicadorTurno();
         }
 
         // --------------------------------------------------------
