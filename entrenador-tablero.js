@@ -894,7 +894,10 @@
                 if (!cap.arbol) return;
 
                 const prefijo = `tablero_${this.claseIdContexto}_${this.temaIdContexto}_${this.bloqueIdContexto}_cap${idx}_`;
-                const lineas = obtenerLineasCompletas(cap.arbol);
+            // ⭐ v51: En modo relajado, solo contar la línea principal
+                const lineas = this.modoEstricto
+                    ? obtenerLineasCompletas(cap.arbol)
+                    : this._obtenerLineasPrincipales(cap.arbol);
 
                 let completadas = 0;
                 lineas.forEach(linea => {
