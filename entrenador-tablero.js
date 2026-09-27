@@ -910,6 +910,15 @@
                 }
             });
         }
+        // ⭐ v51: Recolectar solo las hojas de la línea principal (hijos[0] en cada nivel)
+        _recolectarHojasPrincipales(nodo, hojas = []) {
+            if (!nodo.children || nodo.children.length === 0) {
+                if (nodo.move) hojas.push(nodo);
+                return hojas;
+            }
+            this._recolectarHojasPrincipales(nodo.children[0], hojas);
+            return hojas;
+        }
 
         _restaurarProgresoDeCapitulo() {
             this.hojasCompletadas = new Set();
