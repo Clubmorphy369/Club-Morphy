@@ -559,6 +559,7 @@
             this.$relojTiempoPC = this.contenedor.querySelector('[data-rol="relojTiempoPC"]');
             this.$relojTiempoHumano = this.contenedor.querySelector('[data-rol="relojTiempoHumano"]');
             this.$panelAnalisis = this.contenedor.querySelector('[data-rol="panelAnalisis"]');
+            this.$turnoIndicador = this.contenedor.querySelector('[data-rol="turnoIndicador"]');
         }
 
         _configurarSelectsIniciales() {
