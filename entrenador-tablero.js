@@ -144,6 +144,15 @@
             this.quizMaxIntentos = 2;
             this.quizEsperandoAuto = false;
             this.quizFlechaSVG = null;             // Referencia al overlay SVG
+
+                       // ⭐ v51: Modo estricto (todas las variantes) vs relajado (solo principal)
+            this.modoEstricto = true;
+            try {
+                const guardado = localStorage.getItem('cm-tablero-modo-estricto');
+                if (guardado !== null) {
+                    this.modoEstricto = guardado === 'true';
+                }
+            } catch (e) { /* ignorar */ }
            
             // Callbacks externos
             this.onGuardarPGN = this.contexto.onGuardarPGN || null;
