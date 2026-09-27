@@ -576,6 +576,7 @@
             this.$relojTiempoHumano = this.contenedor.querySelector('[data-rol="relojTiempoHumano"]');
             this.$panelAnalisis = this.contenedor.querySelector('[data-rol="panelAnalisis"]');
             this.$turnoIndicador = this.contenedor.querySelector('[data-rol="turnoIndicador"]');
+            this.$modoEstrictoCheck = this.contenedor.querySelector('[data-rol="modoEstrictoCheck"]');
         }
 
         _configurarSelectsIniciales() {
