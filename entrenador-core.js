@@ -428,7 +428,7 @@
         return tokens;
     };
 
-        Core.construirArbolPGN = function (movText, fenInicial, idCounter) {
+      Core.construirArbolPGN = function (movText, fenInicial, idCounter) {
         const tokens = Core.tokenizePGN(movText);
         const root = {
             id: idCounter.next(),
@@ -440,25 +440,32 @@
         };
         let currentNode = root;
         let currentChess = new Chess(fenInicial);
+        const savedStates = [];
 
         for (let i = 0; i < tokens.length; i++) {
             const tok = tokens[i];
 
             if (tok.type === 'open') {
-                // ⭐ v49: Ignorar variantes. Saltamos hasta el ')' correspondiente.
-                let depth = 1;
-                while (i + 1 < tokens.length && depth > 0) {
-                    i++;
-                    const t = tokens[i];
-                    if (!t) break;
-                    if (t.type === 'open') depth++;
-                    else if (t.type === 'close') depth--;
+                // ⭐ v51: Guardar estado y subir al padre para procesar la variante
+                // como hermana del nodo actual.
+                savedStates.push({
+                    node: currentNode,
+                    chess: new Chess(currentChess.fen())
+                });
+                if (currentNode.parent) {
+                    currentNode = currentNode.parent;
+                    currentChess = new Chess(currentNode.fen);
                 }
                 continue;
             }
 
             if (tok.type === 'close') {
-                // No debería llegar aquí, pero por seguridad lo ignoramos.
+                // Volver al estado guardado antes de entrar a la variante.
+                if (savedStates.length) {
+                    const saved = savedStates.pop();
+                    currentNode = saved.node;
+                    currentChess = saved.chess;
+                }
                 continue;
             }
 
