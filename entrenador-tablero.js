@@ -881,6 +881,16 @@
             this.actualizarVariantesProgreso();
             this.renderizarBarraCapitulos();
         }
+        // ⭐ v51: Obtener solo la línea principal (una sola)
+        _obtenerLineasPrincipales(arbol) {
+            const linea = [];
+            let nodo = arbol;
+            while (nodo && nodo.children && nodo.children.length > 0) {
+                nodo = nodo.children[0];
+                linea.push(nodo);
+            }
+            return linea.length > 0 ? [linea] : [];
+        }
 
         // Marca TODOS los capítulos completados (no solo el actual)
         _marcarCapitulosCompletados() {
