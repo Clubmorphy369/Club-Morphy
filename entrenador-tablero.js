@@ -932,7 +932,17 @@
             this._recolectarHojasPrincipales(nodo.children[0], hojas);
             return hojas;
         }
-
+        // ⭐ v53: ¿La rama de este nodo ya está completada al 100%?
+        _ramaCompletada(nodo) {
+            if (!nodo) return false;
+            if (!nodo.children || nodo.children.length === 0) {
+                return this.hojasCompletadas.has(nodo.id);
+            }
+            const hojas = recolectarHojas(nodo);
+            if (hojas.length === 0) return false;
+            return hojas.every(h => this.hojasCompletadas.has(h.id));
+        }
+       
         _restaurarProgresoDeCapitulo() {
             this.hojasCompletadas = new Set();
 
