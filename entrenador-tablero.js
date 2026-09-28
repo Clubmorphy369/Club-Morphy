@@ -2052,6 +2052,8 @@
                 } else if (this.autoAvance && !this.esModoAdmin && this.capituloActual >= this.capitulos.length - 1) {
                     this.mostrarToast('🎉 ¡Último ejercicio completado!', 'elo-up');
                 }
+               // ⭐ v55: Mostrar aviso final con botones también en la última rama
+                this._mostrarAvisoRamaCompletada(null, completadas, total);
                 return;
             }
 
