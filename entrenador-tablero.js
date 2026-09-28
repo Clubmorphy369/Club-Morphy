@@ -4130,6 +4130,140 @@
             }
             this._atajosAnalisisActivos = false;
         }
+        // ============================================================
+        // ⭐ v56: TEMPORIZADOR DE LECCIÓN (por bloque completo)
+        // ============================================================
+        _iniciarTemporizadorSiCorresponde() {
+            if (this.esModoAdmin) return;               // admin sin presión
+            if (this.tiempoLimiteBloque <= 0) return;   // sin límite
+            if (this.temporizadorExpirado) return;      // ya expiró antes
+            if (this.temporizadorIniciado) return;      // ya iniciado antes
+
+            const alLatir = (seg, tot) => this._actualizarTemporizadorUI(seg, tot);
+            const alExpirar = () => this._alExpirarTemporizador();
+
+            this.temporizadorBloque = new Core.TemporizadorLeccion(this.tiempoLimiteBloque, alLatir, alExpirar);
+            this.temporizadorBloque.iniciar();
+            this.temporizadorIniciado = true;
+
+            if (this.$temporizadorBloque) {
+                this.$temporizadorBloque.classList.remove('cm-tablero-hidden');
+            }
+            this._vincularSalida();
+            this._vincularObservadorModales();
+        }
+
+        _actualizarTemporizadorUI(segundosRestantes, segundosTotales) {
+            if (!this.$temporizadorTiempo) return;
+            this.$temporizadorTiempo.textContent = Core.formatearTiempo(Math.ceil(segundosRestantes));
+
+            if (!this.$temporizadorBloque) return;
+            const porcentaje = segundosTotales > 0 ? (segundosRestantes / segundosTotales) * 100 : 100;
+
+            // Estados visuales
+            this.$temporizadorBloque.classList.remove('cm-tablero-temporizador-alerta', 'cm-tablero-temporizador-aviso');
+            if (porcentaje <= 10) this.$temporizadorBloque.classList.add('cm-tablero-temporizador-alerta');
+            else if (porcentaje <= 30) this.$temporizadorBloque.classList.add('cm-tablero-temporizador-aviso');
+        }
+
+        _alExpirarTemporizador() {
+            if (this.destroyed) return;
+            this.temporizadorExpirado = true;
+            this.bloqueado = true;
+            this.esperandoRespuesta = false;
+            if (this.respuestaAutoTimeout) {
+                clearTimeout(this.respuestaAutoTimeout);
+                this.respuestaAutoTimeout = null;
+            }
+            this._mostrarAvisoTiempoAgotado();
+        }
+
+        _mostrarAvisoTiempoAgotado() {
+            const avisoViejo = this.contenedor.querySelector('.cm-temporizador-overlay');
+            if (avisoViejo) avisoViejo.remove();
+
+            const aviso = document.createElement('div');
+            aviso.className = 'cm-temporizador-overlay';
+            aviso.innerHTML = `
+                <div class="cm-temporizador-overlay-tarjeta">
+                    <div class="cm-temporizador-overlay-icono">⏱️</div>
+                    <h3>¡Se acabó el tiempo!</h3>
+                    <p>No completaste el bloque dentro del tiempo asignado.</p>
+                    <div class="cm-temporizador-overlay-acciones">
+                        <button class="cm-tablero-btn cm-tablero-btn-sec" data-accion="reintentar">🔄 Reintentar</button>
+                    </div>
+                </div>
+            `;
+            this.contenedor.appendChild(aviso);
+
+            aviso.querySelector('[data-accion="reintentar"]')?.addEventListener('click', () => {
+                aviso.remove();
+                this._reiniciarBloquePorTiempoAgotado();
+            });
+        }
+
+        _reiniciarBloquePorTiempoAgotado() {
+            // Reset local del bloque
+            this.temporizadorExpirado = false;
+            this.temporizadorIniciado = false;
+            this.bloqueado = false;
+            this.esperandoRespuesta = false;
+            this.hojasCompletadas = new Set();
+            this.capitulos.forEach(c => { c.completado = false; });
+
+            // Limpiar aviso y temporizador UI
+            if (this.temporizadorBloque) this.temporizadorBloque.resetear();
+            if (this.$temporizadorBloque) {
+                this.$temporizadorBloque.classList.add('cm-tablero-hidden');
+                this.$temporizadorBloque.classList.remove('cm-tablero-temporizador-alerta', 'cm-tablero-temporizador-aviso');
+            }
+
+            // Volver al primer capítulo
+            this.cargarCapitulo(0);
+            this.setStatus('info', '🔄 Reiniciando el bloque. ¡Tú puedes!');
+            this.mostrarToast('🔄 Bloque reiniciado', '');
+        }
+
+        _marcarResetPendiente() {
+            // Marca local para resetear al volver a entrar (si el temporizador estaba activo)
+            if (!this.claseIdContexto || !this.temaIdContexto || !this.bloqueIdContexto) return;
+            try {
+                const clave = `cm-tablero-reset-pendiente-${this.claseIdContexto}_${this.temaIdContexto}_${this.bloqueIdContexto}`;
+                localStorage.setItem(clave, '1');
+            } catch (e) { /* ignorar */ }
+        }
+
+        _vincularSalida() {
+            if (this._manejadorSalida) return;
+            this._manejadorSalida = () => {
+                if (this.temporizadorBloque && this.temporizadorBloque.activo && this.temporizadorIniciado && !this.temporizadorExpirado) {
+                    this._marcarResetPendiente();
+                }
+            };
+            window.addEventListener('beforeunload', this._manejadorSalida);
+        }
+
+        _vincularObservadorModales() {
+            if (this._observadorModales) return;
+            // Detecta aparición/desaparición de modales propios (.cm-tablero-modal-overlay)
+            this._observadorModales = new MutationObserver(() => {
+                const abiertos = document.querySelectorAll('.cm-tablero-modal-overlay').length;
+                const antes = this._modalesActivos;
+                this._modalesActivos = abiertos;
+
+                if (!this.temporizadorBloque || this.temporizadorExpirado) return;
+
+                if (abiertos > 0 && antes === 0) {
+                    // Primer modal abierto → pausar
+                    if (this.temporizadorBloque.activo) this.temporizadorBloque.pausar();
+                } else if (abiertos === 0 && antes > 0) {
+                    // Último modal cerrado → reanudar
+                    if (this.temporizadorIniciado && !this.temporizadorExpirado) this.temporizadorBloque.reanudar();
+                }
+            });
+            this._observadorModales.observe(document.body, { childList: true, subtree: true });
+        }
+       
                // ============================================================
         // ⭐ v47: MODO QUIZ DE ERRORES (estilo Lichess)
         // ============================================================
