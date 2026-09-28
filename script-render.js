@@ -254,15 +254,15 @@
                             html = `<a href="${escapeAttr(href)}" target="_blank" rel="noopener noreferrer" style="${estilosAdicionales}">${escapeHtml(bloque.label)}</a>`;
                             break;
                         }
-                        case 'tablero': {
+                                               case 'tablero': {
                             if (!bloque.config || !bloque.config.pgn || !bloque.config.pgn.trim()) return '';
                             const cfg = bloque.config || {};
                             // ⚠️ Fase 3 (Lozza): data-nivel se seguirá usando igual,
                             //    el cambio es interno en entrenador-core.js.
-                            html = `<div class="cm-tablero-bloque-alumno" data-bloque-id="${bloque.id}" data-clase="${claseId}" data-tema="${tema.id}" data-pgn="${encodeURIComponent(cfg.pgn || '')}" data-modo="${escapeAttr(cfg.modo || 'ejercicio')}" data-color="${escapeAttr(cfg.colorHumano || 'w')}" data-nivel="${cfg.nivelSF || 5}" data-orientacion="${escapeAttr(cfg.orientacion || 'auto')}"></div>`;
+                            // ⭐ v56: data-tiempo-limite y data-porcentaje-minimo (opcionales)
+                            html = `<div class="cm-tablero-bloque-alumno" data-bloque-id="${bloque.id}" data-clase="${claseId}" data-tema="${tema.id}" data-pgn="${encodeURIComponent(cfg.pgn || '')}" data-modo="${escapeAttr(cfg.modo || 'ejercicio')}" data-color="${escapeAttr(cfg.colorHumano || 'w')}" data-nivel="${cfg.nivelSF || 5}" data-orientacion="${escapeAttr(cfg.orientacion || 'auto')}" data-tiempo-limite="${parseInt(cfg.tiempoLimite, 10) || 0}" data-porcentaje-minimo="${parseInt(cfg.porcentajeMinimo, 10) || 0}"></div>`;
                             break;
-                        }
-                        case 'consejo': {
+                        }                        case 'consejo': {
                             const tieneImagen = bloque.imagenURL && bloque.imagenURL.trim();
                             const tieneTexto = bloque.texto && bloque.texto.trim();
                             if (!tieneImagen && !tieneTexto) return '';
