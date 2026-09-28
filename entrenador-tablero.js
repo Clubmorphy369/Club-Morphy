@@ -2112,9 +2112,10 @@
                 console.error('[Entrenador] Error al guardar progreso de capítulo:', e);
             }
         }
-
+        // ⭐ v56: Devuelve SIEMPRE un nodo válido (nunca null).
+        // El fallback final es this.arbol para garantizar que irANodo() nunca reciba null.
         encontrarPuntoDesviacion(hojaObjetivo, completadas) {
-            if (!hojaObjetivo) return this.arbol;
+            if (!hojaObjetivo) return this.arbol || null;
             const camino = [];
             let n = hojaObjetivo;
             while (n && n.move) { camino.unshift(n); n = n.parent; }
@@ -2130,13 +2131,13 @@
             for (let i = 0; i < camino.length; i++) {
                 const nodo = camino[i];
                 if (!caminosCompletados.some(c => c.includes(nodo))) {
-                    return nodo.parent || this.arbol;
+                    return nodo.parent || this.arbol || null;
                 }
             }
-            return this.arbol;
+            return this.arbol || null;
         }
-
-        irANodo(nodo) {
+       
+                irANodo(nodo) {
             if (this.respuestaAutoTimeout) { clearTimeout(this.respuestaAutoTimeout); this.respuestaAutoTimeout = null; }
             this.nodoActual = nodo;
             this.chess = new Chess(nodo.fen);
