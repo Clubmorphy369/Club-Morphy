@@ -447,8 +447,8 @@
                                             </label>
                                             <div class="campos-tiempo-limite"
                                                  style="display:${((bloque.config||{}).tiempoLimite > 0) ? 'flex' : 'none'}; align-items:center; gap:6px; margin-top:6px;">
-                                                <input type="number" class="input-min-tiempo" min="0" max="99" placeholder="5"
-                                                       value="${Math.floor(((bloque.config||{}).tiempoLimite || 0) / 60)}"
+                                                                                               <input type="number" class="input-min-tiempo" min="0" max="99" placeholder="5"
+                                                       value="${((bloque.config||{}).tiempoLimite || 0) > 0 ? Math.floor(((bloque.config||{}).tiempoLimite || 0) / 60) : ''}"
                                                        onchange="(function(inp){
                                                            const wrap = inp.closest('.campos-tiempo-limite');
                                                            const min = parseInt(inp.value,10) || 0;
