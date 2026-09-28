@@ -293,8 +293,12 @@
                     <div class="cm-tablero-game">
                                               <div>
                             ${headerExtra}
-                            <div class="cm-turno-indicador" data-rol="turnoIndicador">
+                                                        <div class="cm-turno-indicador" data-rol="turnoIndicador">
                                 <span class="cm-turno-texto">Cargando…</span>
+                            </div>
+                            <div class="cm-tablero-temporizador cm-tablero-hidden" data-rol="temporizadorBloque">
+                                <span class="cm-tablero-temporizador-icono">⏱️</span>
+                                <span class="cm-tablero-temporizador-tiempo" data-rol="temporizadorTiempo">--:--</span>
                             </div>
                             <div class="cm-tablero-board-wrap">
                                 <div class="cm-tablero-board" data-rol="board"></div>
