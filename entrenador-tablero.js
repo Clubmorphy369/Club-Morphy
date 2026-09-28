@@ -1551,11 +1551,14 @@
                 return;
             }
 
-            const from = this.casillaSeleccionada;
+                        const from = this.casillaSeleccionada;
             const match = this.nodoActual.children.find(c =>
                 c.move.from === from && c.move.to === sq
             );
             if (match) {
+                // ⭐ v56: Iniciar temporizador al primer movimiento válido del alumno
+                this._iniciarTemporizadorSiCorresponde();
+
                 const esAlt = this.nodoActual.children.indexOf(match) > 0;
                 this.chess.move({ from, to: sq, promotion: match.move.promotion });
                 this.nodoActual = match;
