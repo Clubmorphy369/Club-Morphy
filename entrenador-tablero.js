@@ -123,7 +123,14 @@
             // ⭐ v56: Temporizador de lección (un temporizador por bloque completo)
             // Valor de config: config.tiempoLimite en segundos. 0 = sin límite.
             // Prueba: localStorage 'cm-tablero-temporizador-prueba' con un número (segundos) lo fuerza.
-            let tiempoLimite = parseInt((this.config || {}).tiempoLimite, 10) || 0;
+                        let tiempoLimite = parseInt((this.config || {}).tiempoLimite, 10) || 0;
+            // Prueba por URL: ?timer=60 (segundos). Útil para probar en móvil/tablet sin consola.
+            try {
+                const params = new URLSearchParams(window.location.search);
+                const tiempoURL = parseInt(params.get('timer'), 10);
+                if (!isNaN(tiempoURL) && tiempoURL > 0) tiempoLimite = tiempoURL;
+            } catch (e) { /* ignorar */ }
+            // Prueba por localStorage (desarrollo en PC)
             try {
                 const tiempoPrueba = parseInt(localStorage.getItem('cm-tablero-temporizador-prueba'), 10);
                 if (!isNaN(tiempoPrueba) && tiempoPrueba > 0) tiempoLimite = tiempoPrueba;
