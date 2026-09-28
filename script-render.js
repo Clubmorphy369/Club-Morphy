@@ -897,17 +897,17 @@
     // ============================================================
     // BLOQUES DEL TABLERO (admin)
     // ============================================================
-    Render.actualizarBloqueTablero = function (claseId, temaId, bloqueId, campo, valor) {
+       Render.actualizarBloqueTablero = function (claseId, temaId, bloqueId, campo, valor) {
         const clase = Core.state.curso.clases.find(c => c.id === claseId);
         if (!clase) return;
         const tema = Curso.buscarTemaRecursivo(clase.temas, temaId);
         const bloque = tema?.bloques?.find(b => b.id === bloqueId);
         if (!bloque || bloque.tipo !== 'tablero') return;
-        if (!bloque.config) bloque.config = { pgn: '', modo: 'ejercicio', colorHumano: 'w', nivelSF: 5, orientacion: 'auto' };
+        if (!bloque.config) bloque.config = { pgn: '', modo: 'ejercicio', colorHumano: 'w', nivelSF: 5, orientacion: 'auto', tiempoLimite: 0, porcentajeMinimo: 0 };
         bloque.config[campo] = valor;
-        Curso.guardarCurso().then(() => Render.actualizarUI());
+        // ⭐ v56: NO re-renderizar (evita perder foco/scroll al escribir en inputs)
+        Curso.guardarCurso().catch(err => console.error('[v56] Error al guardar config del tablero:', err));
     };
-
     Render.actualizarBloqueConsejo = function (claseId, temaId, bloqueId, campo, valor) {
         const clase = Core.state.curso.clases.find(c => c.id === claseId);
         if (!clase) return;
