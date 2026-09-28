@@ -1978,13 +1978,11 @@
 
             const siguiente = this.hojasTotales.find(h => !this.hojasCompletadas.has(h.id));
             const desviacion = this.encontrarPuntoDesviacion(siguiente, this.hojasCompletadas);
-            this.setStatus('alt', `✅ ${completadas}/${total}. Quedan ${total - completadas}.`);
-            this.mostrarToast(`🌿 ¡Encuentra la solución ${completadas + 1}!`, '');
-            setTimeout(() => {
-                if (this.destroyed) return;
-                this.irANodo(desviacion || this.arbol);
-                this.setStatus('info', 'Tu turno.');
-            }, 1600);
+            this.setStatus('alt', `✅ ${completadas}/${total}. ¡Rama completada!`);
+            this.mostrarToast(`🎉 Rama ${completadas} de ${total} completada.`, 'elo-up');
+
+            // ⭐ v54: Mostrar aviso con botón "Siguiente rama" en vez de auto-resetear
+            this._mostrarAvisoRamaCompletada(desviacion, completadas, total);
         }
 
         _guardarProgresoVarianteActual() {
