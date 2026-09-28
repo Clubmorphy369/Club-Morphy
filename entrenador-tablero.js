@@ -1883,11 +1883,25 @@
         // --------------------------------------------------------
         // RESPUESTA DEL RIVAL (modo estudio)
         // --------------------------------------------------------
-        jugarRespuestaRival() {
+               jugarRespuestaRival() {
             if (this.destroyed || !this.nodoActual || this.nodoActual.children.length === 0) return;
-            const child = this.nodoActual.children[0];
-            this.chess.move({ from: child.move.from, to: child.move.to, promotion: child.move.promotion });
-            this.nodoActual = child;
+
+            // ⭐ v53: Elegir el primer hijo cuya rama NO esté completada.
+            // Esto permite iterar por todas las respuestas del rival.
+            let elegido = null;
+            for (const child of this.nodoActual.children) {
+                if (!this._ramaCompletada(child)) {
+                    elegido = child;
+                    break;
+                }
+            }
+            if (!elegido) {
+                // Todas completadas: usar la principal como fallback
+                elegido = this.nodoActual.children[0];
+            }
+
+            this.chess.move({ from: elegido.move.from, to: elegido.move.to, promotion: elegido.move.promotion });
+            this.nodoActual = elegido;
             this.esperandoRespuesta = false;
             this.dibujarPiezas();
             this.actualizarMovimientos();
@@ -1900,7 +1914,6 @@
                 this.setStatus('info', 'Tu turno.');
             }
         }
-
         // --------------------------------------------------------
         // COMPLETAR HOJA
         // --------------------------------------------------------
