@@ -2736,3 +2736,110 @@
     .cm-rama-completada-texto { font-size: 0.78rem; }
     .cm-rama-completada-acciones .cm-tablero-btn { min-width: 110px; font-size: 0.8rem; }
 }
+/* ============================================================
+   ⭐ v56: Temporizador de lección (por bloque completo)
+   ============================================================ */
+.cm-tablero-temporizador {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px 14px;
+    margin: 8px 0 12px;
+    border-radius: 10px;
+    background: #f1f5f9;
+    border: 1px solid #cbd5e1;
+    color: #334155;
+    font-family: 'Courier New', monospace;
+    font-weight: 700;
+    font-size: 1.1rem;
+    transition: background 0.3s, border-color 0.3s, color 0.3s;
+}
+.cm-tablero-temporizador .cm-tablero-temporizador-icono {
+    font-size: 1rem;
+}
+.cm-tablero-temporizador .cm-tablero-temporizador-tiempo {
+    letter-spacing: 1px;
+}
+.cm-tablero-temporizador.cm-tablero-temporizador-aviso {
+    background: #fef3c7;
+    border-color: #fbbf24;
+    color: #92400e;
+}
+.cm-tablero-temporizador.cm-tablero-temporizador-alerta {
+    background: #fee2e2;
+    border-color: #ef4444;
+    color: #991b1b;
+    animation: cm-temporizador-pulso 1s ease-in-out infinite;
+}
+.cm-tablero-temporizador.cm-tablero-temporizador-detendido {
+    background: #dcfce7;
+    border-color: #16a34a;
+    color: #166534;
+}
+@keyframes cm-temporizador-pulso {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.03); }
+}
+
+/* Modo Zen: visible pero discreto */
+.cm-tablero-zen .cm-tablero-temporizador {
+    opacity: 0.55;
+    font-size: 0.9rem;
+    padding: 5px 10px;
+}
+.cm-tablero-zen .cm-tablero-temporizador.cm-tablero-temporizador-alerta {
+    animation: none;
+    opacity: 0.85;
+}
+
+/* Aviso de tiempo agotado */
+.cm-temporizador-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.75);
+    backdrop-filter: blur(3px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 50;
+    animation: cm-temporizador-overlay-aparecer 0.3s ease-out;
+}
+@keyframes cm-temporizador-overlay-aparecer {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+.cm-temporizador-overlay-tarjeta {
+    background: white;
+    border-radius: 16px;
+    padding: 28px 32px;
+    text-align: center;
+    max-width: 360px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+    animation: cm-temporizador-overlay-brotar 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes cm-temporizador-overlay-brotar {
+    from { transform: scale(0.85); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+.cm-temporizador-overlay-icono {
+    font-size: 3rem;
+    line-height: 1;
+    margin-bottom: 12px;
+}
+.cm-temporizador-overlay-tarjeta h3 {
+    color: #dc2626;
+    margin: 0 0 8px;
+    font-size: 1.3rem;
+}
+.cm-temporizador-overlay-tarjeta p {
+    color: #64748b;
+    margin: 0 0 20px;
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+.cm-temporizador-overlay-acciones {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+}
