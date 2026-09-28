@@ -1804,7 +1804,7 @@
             bloque.url = bloque.url || '';
             delete bloque.contenido;
         } else if (nuevoTipo === 'tablero') {
-            bloque.config = bloque.config || { pgn: '', modo: 'ejercicio', colorHumano: 'w', nivelSF: 5, orientacion: 'auto' };
+            bloque.config = bloque.config || { pgn: '', modo: 'ejercicio', colorHumano: 'w', nivelSF: 5, orientacion: 'auto', tiempoLimite: 0, porcentajeMinimo: 0 };
             delete bloque.contenido;
             delete bloque.label;
             delete bloque.url;
