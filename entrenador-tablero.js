@@ -117,8 +117,24 @@
             this.tiempoConfig = this.config.tiempo || 'libre';
             this.reloj = null;
 
-            // Historial de la partida vs PC para análisis
+                       // Historial de la partida vs PC para análisis
             this.historialCompletoPartida = [];
+
+            // ⭐ v56: Temporizador de lección (un temporizador por bloque completo)
+            // Valor de config: config.tiempoLimite en segundos. 0 = sin límite.
+            // Prueba: localStorage 'cm-tablero-temporizador-prueba' con un número (segundos) lo fuerza.
+            let tiempoLimite = parseInt((this.config || {}).tiempoLimite, 10) || 0;
+            try {
+                const tiempoPrueba = parseInt(localStorage.getItem('cm-tablero-temporizador-prueba'), 10);
+                if (!isNaN(tiempoPrueba) && tiempoPrueba > 0) tiempoLimite = tiempoPrueba;
+            } catch (e) { /* ignorar */ }
+            this.tiempoLimiteBloque = tiempoLimite;
+            this.temporizadorBloque = null;
+            this.temporizadorIniciado = false;
+            this.temporizadorExpirado = false;
+            this._modalesActivos = 0;
+            this._manejadorSalida = null;
+            this._observadorModales = null;
 
             // Estado del análisis post-partida
             this.analisis = null;
