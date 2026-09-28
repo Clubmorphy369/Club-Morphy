@@ -413,6 +413,7 @@
                                             </select>
                                         </div>
                                         <div>
+                                                                                  <div>
                                             <label style="display:block; font-size:0.72rem; color:#92400e; font-weight:700; text-transform:uppercase; margin-bottom:3px;">Orientación</label>
                                             <select onchange="actualizarBloqueTablero('${claseId}','${tema.id}','${bloque.id}', 'orientacion', this.value)" style="width:100%; padding:6px; border:1px solid #fdba74; border-radius:6px; font-size:0.82rem; background:white;">
                                                 <option value="auto" ${((bloque.config||{}).orientacion||'auto')==='auto'?'selected':''}>🔄 Auto</option>
@@ -421,6 +422,86 @@
                                             </select>
                                         </div>
                                     </div>
+
+                                    <!-- ⭐ v56: Requisitos de completado (opcionales) -->
+                                    <div style="margin-top:12px; padding-top:10px; border-top:1px dashed #fdba74;">
+                                        <p style="font-size:0.72rem; color:#c2410c; font-weight:700; text-transform:uppercase; margin-bottom:8px;">🏁 Requisitos de completado (opcional)</p>
+
+                                        <!-- Tiempo límite -->
+                                        <div style="background:white; border:1px solid #f59e0b; border-radius:6px; padding:8px; margin-bottom:8px;">
+                                            <label style="display:flex; align-items:center; gap:6px; font-size:0.82rem; color:#92400e; font-weight:700; cursor:pointer;">
+                                                <input type="checkbox"
+                                                       ${((bloque.config||{}).tiempoLimite > 0) ? 'checked' : ''}
+                                                       onchange="(function(cb){
+                                                           const wrap = cb.closest('div').querySelector('.campos-tiempo-limite');
+                                                           wrap.style.display = cb.checked ? 'flex' : 'none';
+                                                           if (cb.checked) {
+                                                               const min = cb.closest('div').querySelector('.input-min-tiempo').value || '5';
+                                                               const seg = cb.closest('div').querySelector('.input-seg-tiempo').value || '0';
+                                                               actualizarBloqueTablero('${claseId}','${tema.id}','${bloque.id}', 'tiempoLimite', (parseInt(min,10)*60) + parseInt(seg,10));
+                                                           } else {
+                                                               actualizarBloqueTablero('${claseId}','${tema.id}','${bloque.id}', 'tiempoLimite', 0);
+                                                           }
+                                                       })(this)">
+                                                ⏱️ Activar tiempo límite
+                                            </label>
+                                            <div class="campos-tiempo-limite"
+                                                 style="display:${((bloque.config||{}).tiempoLimite > 0) ? 'flex' : 'none'}; align-items:center; gap:6px; margin-top:6px;">
+                                                <input type="number" class="input-min-tiempo" min="0" max="99" placeholder="5"
+                                                       value="${Math.floor(((bloque.config||{}).tiempoLimite || 0) / 60)}"
+                                                       onchange="(function(inp){
+                                                           const wrap = inp.closest('.campos-tiempo-limite');
+                                                           const min = parseInt(inp.value,10) || 0;
+                                                           const seg = parseInt(wrap.querySelector('.input-seg-tiempo').value,10) || 0;
+                                                           actualizarBloqueTablero('${claseId}','${tema.id}','${bloque.id}', 'tiempoLimite', (min*60) + seg);
+                                                       })(this)"
+                                                       style="width:60px; padding:5px; border:1px solid #fdba74; border-radius:5px; text-align:center; font-size:0.85rem;">
+                                                <span style="font-size:0.8rem; color:#92400e;">min</span>
+                                                <input type="number" class="input-seg-tiempo" min="0" max="59" placeholder="0"
+                                                       value="${((bloque.config||{}).tiempoLimite || 0) % 60}"
+                                                       onchange="(function(inp){
+                                                           const wrap = inp.closest('.campos-tiempo-limite');
+                                                           const min = parseInt(wrap.querySelector('.input-min-tiempo').value,10) || 0;
+                                                           const seg = parseInt(inp.value,10) || 0;
+                                                           actualizarBloqueTablero('${claseId}','${tema.id}','${bloque.id}', 'tiempoLimite', (min*60) + seg);
+                                                       })(this)"
+                                                       style="width:60px; padding:5px; border:1px solid #fdba74; border-radius:5px; text-align:center; font-size:0.85rem;">
+                                                <span style="font-size:0.8rem; color:#92400e;">seg</span>
+                                            </div>
+                                        </div>
+
+                                        <!-- Porcentaje mínimo -->
+                                        <div style="background:white; border:1px solid #f59e0b; border-radius:6px; padding:8px;">
+                                            <label style="display:flex; align-items:center; gap:6px; font-size:0.82rem; color:#92400e; font-weight:700; cursor:pointer;">
+                                                <input type="checkbox"
+                                                       ${((bloque.config||{}).porcentajeMinimo > 0) ? 'checked' : ''}
+                                                       onchange="(function(cb){
+                                                           const wrap = cb.closest('div').querySelector('.campo-porcentaje');
+                                                           wrap.style.display = cb.checked ? 'flex' : 'none';
+                                                           if (cb.checked) {
+                                                               const val = cb.closest('div').querySelector('.input-porcentaje').value || '80';
+                                                               actualizarBloqueTablero('${claseId}','${tema.id}','${bloque.id}', 'porcentajeMinimo', parseInt(val,10));
+                                                           } else {
+                                                               actualizarBloqueTablero('${claseId}','${tema.id}','${bloque.id}', 'porcentajeMinimo', 0);
+                                                           }
+                                                       })(this)">
+                                                🎯 Activar porcentaje mínimo
+                                            </label>
+                                            <div class="campo-porcentaje"
+                                                 style="display:${((bloque.config||{}).porcentajeMinimo > 0) ? 'flex' : 'none'}; align-items:center; gap:6px; margin-top:6px;">
+                                                <select class="input-porcentaje"
+                                                        onchange="actualizarBloqueTablero('${claseId}','${tema.id}','${bloque.id}', 'porcentajeMinimo', parseInt(this.value,10))"
+                                                        style="padding:5px; border:1px solid #fdba74; border-radius:5px; font-size:0.85rem;">
+                                                    <option value="60" ${((bloque.config||{}).porcentajeMinimo)==60?'selected':''}>60%</option>
+                                                    <option value="70" ${((bloque.config||{}).porcentajeMinimo)==70?'selected':''}>70%</option>
+                                                    <option value="80" ${((bloque.config||{}).porcentajeMinimo)==80?'selected':''}>80%</option>
+                                                    <option value="90" ${((bloque.config||{}).porcentajeMinimo)==90?'selected':''}>90%</option>
+                                                    <option value="100" ${((bloque.config||{}).porcentajeMinimo)==100?'selected':''}>100% (perfecto)</option>
+                                                </select>
+                                                <span style="font-size:0.75rem; color:#92400e;">de capítulos perfectos</span>
+                                            </div>
+                                        </div>
+                                    </div>                                    </div>
                                 </div>
                             ` : bloque.tipo === 'consejo' ? `
                                 <div class="bloque-consejo-config" style="background:#fffbeb; border:1px dashed #f59e0b; border-radius:8px; padding:10px; margin-top:6px;">
