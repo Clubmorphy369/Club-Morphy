@@ -1691,10 +1691,10 @@
             nota: ''
         };
         if (tipo === 'enlace') { nuevo.label = ''; nuevo.url = ''; }
-        if (tipo === 'tablero') {
-            nuevo.config = { pgn: '', modo: 'ejercicio', colorHumano: 'w', nivelSF: 5, orientacion: 'auto' };
+               if (tipo === 'tablero') {
+            nuevo.config = { pgn: '', modo: 'ejercicio', colorHumano: 'w', nivelSF: 5, orientacion: 'auto', tiempoLimite: 0, porcentajeMinimo: 0 };
         }
-        if (tipo === 'consejo') {
+       if (tipo === 'consejo') {
             nuevo.imagenURL = '';
             nuevo.texto = '';
         }
