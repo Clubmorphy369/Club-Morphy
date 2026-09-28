@@ -53,7 +53,12 @@
     Core.ELO_MAX = 3000;
     Core.ELO_STORAGE_KEY = 'entrenadorEloData_v2';
 
-    Core.MODO_EDICION_KEY = 'cm-tablero-modo-edicion-persistente';
+        Core.MODO_EDICION_KEY = 'cm-tablero-modo-edicion-persistente';
+
+    // ⭐ v56: Clave de persistencia para el modo exhaustivo (checkbox admin)
+    // ON → el capítulo se completa SOLO con todas las combinaciones resueltas.
+    // OFF → el alumno decide cuándo terminar (Opción C híbrida).
+    Core.MODO_EXHAUSTIVO_KEY = 'cm-tablero-modo-exhaustivo';
 
     Core.ELO_BOT = { 1: 800, 2: 1000, 3: 1200, 4: 1400, 5: 1600, 6: 1800, 7: 2100, 8: 2400 };
 
