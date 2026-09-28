@@ -788,12 +788,15 @@
         bloques.forEach(bloqueEl => {
             if (bloqueEl.dataset.inicializado === 'true') return;
             try {
-                const config = {
+                                const config = {
                     pgn: decodeURIComponent(bloqueEl.dataset.pgn || ''),
                     modo: bloqueEl.dataset.modo || 'ejercicio',
                     colorHumano: bloqueEl.dataset.color || 'w',
                     nivelSF: parseInt(bloqueEl.dataset.nivel || '5', 10),
-                    orientacion: bloqueEl.dataset.orientacion || 'auto'
+                    orientacion: bloqueEl.dataset.orientacion || 'auto',
+                    // ⭐ v56: Requisitos de completado (opcionales, 0 = desactivado)
+                    tiempoLimite: parseInt(bloqueEl.dataset.tiempoLimite, 10) || 0,
+                    porcentajeMinimo: parseInt(bloqueEl.dataset.porcentajeMinimo, 10) || 0
                 };
                 if (!config.pgn || !config.pgn.trim()) return;
 
