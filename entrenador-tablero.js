@@ -4740,6 +4740,20 @@
             this.destroyed = true;
             if (this.respuestaAutoTimeout) { clearTimeout(this.respuestaAutoTimeout); this.respuestaAutoTimeout = null; }
             if (this.reloj) this.reloj.detener();
+          
+            // ⭐ v56: Si sale con temporizador activo, marcar reset pendiente del bloque
+            if (this.temporizadorBloque && this.temporizadorBloque.activo && this.temporizadorIniciado && !this.temporizadorExpirado) {
+                this._marcarResetPendiente();
+            }
+            if (this.temporizadorBloque) this.temporizadorBloque.detener();
+            if (this._manejadorSalida) {
+                window.removeEventListener('beforeunload', this._manejadorSalida);
+                this._manejadorSalida = null;
+            }
+            if (this._observadorModales) {
+                this._observadorModales.disconnect();
+                this._observadorModales = null;
+            }
             if (this._relojUiTimer) clearTimeout(this._relojUiTimer);
             if (this._sfReadyHandler) {
                 document.removeEventListener('cm-tablero-sf-ready', this._sfReadyHandler);
