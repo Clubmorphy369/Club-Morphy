@@ -808,6 +808,104 @@
             return Core.formatearTiempo(Math.ceil(t));
         }
     };
+    // ============================================================
+    // ⭐ v56: TEMPORIZADOR DE LECCIÓN (por bloque completo)
+    // - Un temporizador por instancia de tablero (= un bloque del curso).
+    // - Corre desde el primer movimiento válido hasta completar el bloque.
+    // - Se pausa al abrir modales, se reanuda al cerrarlos.
+    // - Al expirar dispara alExpirar() para mostrar aviso.
+    // ============================================================
+    Core.TemporizadorLeccion = class TemporizadorLeccion {
+        constructor(segundosIniciales, alLatir, alExpirar) {
+            this.segundosIniciales = Math.max(0, parseInt(segundosIniciales, 10) || 0);
+            this.segundosRestantes = this.segundosIniciales;
+            this.alLatir = alLatir || null;
+            this.alExpirar = alExpirar || null;
+            this.activo = false;
+            this.expirado = false;
+            this._intervaloId = null;
+            this._ultimoLatido = 0;
+        }
 
+        get sinLimite() { return this.segundosIniciales <= 0; }
+
+        iniciar() {
+            if (this.sinLimite || this.activo || this.expirado) return;
+            this.activo = true;
+            this._ultimoLatido = performance.now();
+            if (this._intervaloId) clearInterval(this._intervaloId);
+            this._intervaloId = setInterval(() => this._latir(), 250);
+            this._emitirLatido();
+        }
+
+        pausar() {
+            if (!this.activo) return;
+            this.activo = false;
+            if (this._intervaloId) {
+                clearInterval(this._intervaloId);
+                this._intervaloId = null;
+            }
+        }
+
+        reanudar() {
+            if (this.sinLimite || this.activo || this.expirado) return;
+            this.activo = true;
+            this._ultimoLatido = performance.now();
+            if (this._intervaloId) clearInterval(this._intervaloId);
+            this._intervaloId = setInterval(() => this._latir(), 250);
+        }
+
+        detener() {
+            this.activo = false;
+            if (this._intervaloId) {
+                clearInterval(this._intervaloId);
+                this._intervaloId = null;
+            }
+        }
+
+        resetear() {
+            this.detener();
+            this.segundosRestantes = this.segundosIniciales;
+            this.expirado = false;
+            this._emitirLatido();
+        }
+
+        _latir() {
+            if (!this.activo) return;
+            const ahora = performance.now();
+            const delta = (ahora - this._ultimoLatido) / 1000;
+            this._ultimoLatido = ahora;
+            this.segundosRestantes -= delta;
+
+            if (this.segundosRestantes <= 0) {
+                this.segundosRestantes = 0;
+                this.expirado = true;
+                this.detener();
+                this._emitirLatido();
+                if (this.alExpirar) {
+                    try { this.alExpirar(); } catch (e) { console.error('[Temporizador] Error al expirar:', e); }
+                }
+                return;
+            }
+            this._emitirLatido();
+        }
+
+        _emitirLatido() {
+            if (this.alLatir) {
+                try { this.alLatir(this.segundosRestantes, this.segundosIniciales); } catch (e) {}
+            }
+        }
+
+        obtenerTiempoFormateado() {
+            if (this.sinLimite) return '∞';
+            return Core.formatearTiempo(Math.ceil(this.segundosRestantes));
+        }
+
+        obtenerPorcentajeRestante() {
+            if (this.sinLimite || this.segundosIniciales === 0) return 100;
+            return Math.max(0, Math.min(100, (this.segundosRestantes / this.segundosIniciales) * 100));
+        }
+    };
+   
      console.log('✅ CMEntrenadorCore cargado (constantes + utilidades + Lozza + ELO + PGN + RelojPartida)');
 })();
