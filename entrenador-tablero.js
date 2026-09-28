@@ -597,6 +597,8 @@
             this.$panelAnalisis = this.contenedor.querySelector('[data-rol="panelAnalisis"]');
             this.$turnoIndicador = this.contenedor.querySelector('[data-rol="turnoIndicador"]');
             this.$modoEstrictoCheck = this.contenedor.querySelector('[data-rol="modoEstrictoCheck"]');
+            this.$temporizadorBloque = this.contenedor.querySelector('[data-rol="temporizadorBloque"]');
+            this.$temporizadorTiempo = this.contenedor.querySelector('[data-rol="temporizadorTiempo"]');
         }
 
         _configurarSelectsIniciales() {
