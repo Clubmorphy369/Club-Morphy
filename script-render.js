@@ -789,13 +789,33 @@
             return;
         }
 
-        // ⭐ Limpiar instancias destruidas antes de añadir nuevas
-        Render.instanciasTablero = Render.instanciasTablero.filter(inst => inst && !inst.destroyed);
+              // ⭐ v58: Destruir instancias huérfanas (cuyo bloque ya no está en el DOM)
+        const bloquesEnDOM = new Set();
+        document.querySelectorAll('.cm-tablero-bloque-alumno').forEach(el => {
+            bloquesEnDOM.add(el.dataset.bloqueId);
+        });
+        Render.instanciasTablero = Render.instanciasTablero.filter(inst => {
+            if (!inst || inst.destroyed) return false;
+            if (inst.bloqueIdContexto && !bloquesEnDOM.has(inst.bloqueIdContexto)) {
+                try { if (typeof inst.destroy === 'function') inst.destroy(); } catch (e) {}
+                return false;
+            }
+            return true;
+        });
 
         const bloques = document.querySelectorAll('.cm-tablero-bloque-alumno');
         bloques.forEach(bloqueEl => {
             if (bloqueEl.dataset.inicializado === 'true') return;
-            try {
+
+            // ⭐ v58: Si ya existe una instancia para este bloqueId, NO crear otra
+            const bloqueIdExistente = bloqueEl.dataset.bloqueId;
+            const yaExiste = Render.instanciasTablero.some(inst =>
+                inst && !inst.destroyed && inst.bloqueIdContexto === bloqueIdExistente
+            );
+            if (yaExiste) {
+                bloqueEl.dataset.inicializado = 'true';
+                return;
+            }            try {
                                 const config = {
                     pgn: decodeURIComponent(bloqueEl.dataset.pgn || ''),
                     modo: bloqueEl.dataset.modo || 'ejercicio',
