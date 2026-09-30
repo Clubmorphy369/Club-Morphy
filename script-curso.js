@@ -294,11 +294,16 @@
         });
     };
 
-    // Guardar curso con transacción + fusión (fix multi-dispositivo)
+      // Guardar curso con transacción + fusión (fix multi-dispositivo)
     Curso.guardarCurso = async function () {
+        // ⭐ v57: Solo el admin puede escribir al documento del curso.
+        // Evita que alumnos (o sesiones residuales) generen conflictos con el admin.
+        if (!Core.state.currentUser || !Core.state.currentUser.esAdmin) {
+            return;
+        }
+
         Core.state._guardandoCursoContador++;
         const cursoLocalSnapshot = JSON.parse(JSON.stringify(Core.state.curso));
-
         try {
             // Si hay una eliminación en curso, hacer set directo (sin fusión)
             // Esto evita que fusionarCursos reinserten las clases/temas eliminados
