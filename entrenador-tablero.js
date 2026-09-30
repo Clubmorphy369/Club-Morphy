@@ -2085,9 +2085,12 @@
                     this.mostrarToast('🎉 ¡Último ejercicio completado!', 'elo-up');
                 }
 
-                               // ⭐ v56: Detener temporizador SOLO cuando TODOS los capítulos del bloque estén completos
+                // ⭐ v58: Detener temporizador SOLO al completar el ÚLTIMO capítulo del bloque.
+                // No basta con `todosCaps` porque bloques ya completados de antes lo activarían
+                // al primer mate. Con `esUltimoCapitulo` solo se detiene al final real del recorrido.
+                const esUltimoCapitulo = this.capituloActual === this.capitulos.length - 1;
                 const todosCaps = this.capitulos.length > 0 && this.capitulos.every(c => c.completado);
-                if (todosCaps && this.temporizadorBloque && this.temporizadorBloque.activo) {
+                if (esUltimoCapitulo && todosCaps && this.temporizadorBloque && this.temporizadorBloque.activo) {
                     this.temporizadorBloque.detener();
                     if (this.$temporizadorBloque) {
                         this.$temporizadorBloque.classList.add('cm-tablero-temporizador-detendido');
