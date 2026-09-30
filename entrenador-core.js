@@ -855,18 +855,13 @@
             this._intervaloId = setInterval(() => this._latir(), 250);
         }
 
-              detener() {
-            if (this.activo) {
-                console.log('[Timer] ⛔ detener() llamado desde:');
-                console.trace();
-            }
+                    detener() {
             this.activo = false;
             if (this._intervaloId) {
                 clearInterval(this._intervaloId);
                 this._intervaloId = null;
             }
         }
-
         resetear() {
             this.detener();
             this.segundosRestantes = this.segundosIniciales;
