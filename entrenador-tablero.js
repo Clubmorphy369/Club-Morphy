@@ -2084,14 +2084,13 @@
                 } else if (this.autoAvance && !this.esModoAdmin && this.capituloActual >= this.capitulos.length - 1) {
                     this.mostrarToast('🎉 ¡Último ejercicio completado!', 'elo-up');
                 }
-                             // ⭐ v56: Detener temporizador — el bloque entero está completo
+                // ⭐ v56: Detener temporizador — el bloque entero está completo
                 if (this.temporizadorBloque && this.temporizadorBloque.activo) {
                     this.temporizadorBloque.detener();
                 }
                 if (this.$temporizadorBloque) {
                     this.$temporizadorBloque.classList.add('cm-tablero-temporizador-detendido');
                 }
-
                // ⭐ v55: Mostrar aviso final con botones también en la última rama
                 this._mostrarAvisoRamaCompletada(null, completadas, total);
                 return;
