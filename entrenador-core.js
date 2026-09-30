@@ -838,10 +838,8 @@
             this._emitirLatido();
         }
 
-               pausar() {
+                   pausar() {
             if (!this.activo) return;
-            console.log('[Timer] 🔴 pausar() llamado desde:');
-            console.trace();
             this.activo = false;
             if (this._intervaloId) {
                 clearInterval(this._intervaloId);
