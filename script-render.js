@@ -482,7 +482,7 @@
                             </div>
 
                             ${bloque.tipo === 'texto' ? `
-                                ${window.buildTextEditorToolbar(bloque.id)}
+                                                            ${(typeof window.buildTextEditorToolbar === 'function') ? window.buildTextEditorToolbar(bloque.id) : ''}
                                 <div class="bloque-texto-editor"
                                      contenteditable="true" spellcheck="true"
                                      data-placeholder="Escribe el texto aquí…"
