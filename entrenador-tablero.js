@@ -1591,8 +1591,17 @@
                     this.esperandoRespuesta = true;
                     this.respuestaAutoTimeout = setTimeout(() => this.jugarRespuestaRival(), 500);
                 }
-                       } else {
+                                  } else {
                 this.erroresEnCapitulo++;
+
+                // ⭐ v58: Registrar intento fallido en el capítulo actual (Entrega 2)
+                const idxCap = this.capituloActual;
+                if (!this.evaluacionPorCapitulo[idxCap]) {
+                    this.evaluacionPorCapitulo[idxCap] = { intentos: 0, usoPista: false, usoVerSolucion: false, estado: null };
+                }
+                this.evaluacionPorCapitulo[idxCap].intentos++;
+                const intentosRestantes = 3 - this.evaluacionPorCapitulo[idxCap].intentos;
+
                 const mv = this.chess.move({ from, to: sq, promotion: 'q' });
                 const sanRealizado = mv ? mv.san : '';
                 this.casillaSeleccionada = null;
@@ -1603,10 +1612,32 @@
                     sqEl.classList.add('error-shake');
                     setTimeout(() => sqEl.classList.remove('error-shake'), 300);
                 }
-                this.setStatus('bad', `❌ ${sanRealizado} no es la mejor jugada.`);
-                const cap = this.capitulos[this.capituloActual];
-                const cambio = this.aplicarCambioELOSeguro(cap.estudio, this.capituloActual, -3, `Error en ${cap.nombre}`);
-                if (cambio !== 0) this.mostrarToast(`❌ Error · ${cambio} ELO`, 'elo-down');
+
+                // ⭐ v58: Si agotó los 3 intentos → marcar "no_resuelto" y auto-avanzar
+                if (intentosRestantes <= 0) {
+                    this.evaluacionPorCapitulo[idxCap].estado = 'no_resuelto';
+                    this.setStatus('bad', `❌ ${sanRealizado}. Agotaste los 3 intentos. Pasando al siguiente…`);
+                    this.bloqueado = true;
+                    setTimeout(() => {
+                        if (this.destroyed) return;
+                        this.chess.undo();
+                        this.casillaSeleccionada = null;
+                        this.bloqueado = false;
+                        this.dibujarPiezas();
+                        this.actualizarMovimientos();
+                        // Avanzar al siguiente capítulo (o terminar si es el último)
+                        if (this.capituloActual < this.capitulos.length - 1) {
+                            this._aplicarELOCapitulo(idxCap);
+                            this.capituloSiguiente();
+                        } else {
+                            this.alCompletarHoja();
+                        }
+                    }, 1500);
+                    return;
+                }
+
+                // Aún tiene intentos disponibles → mostrar aviso y permitir reintento
+                this.setStatus('bad', `❌ ${sanRealizado} no es la mejor jugada. Te quedan ${intentosRestantes} intento${intentosRestantes === 1 ? '' : 's'}.`);
                 this.bloqueado = true;
                 setTimeout(() => {
                     if (this.destroyed) return;
