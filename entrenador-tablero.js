@@ -2117,6 +2117,40 @@
             this._mostrarAvisoRamaCompletada(desviacion, completadas, total);
         }
 
+               // ============================================================
+        // ⭐ v58: Aplicar ELO según el estado del capítulo (Entrega 2)
+        // Estados: 'perfecto' (+6), 'con_ayuda' (+3), 'no_resuelto' (-10)
+        // ============================================================
+        _aplicarELOCapitulo(idxCap) {
+            if (this.esModoAdmin) return;
+            const cap = this.capitulos[idxCap];
+            if (!cap) return;
+            const ev = this.evaluacionPorCapitulo[idxCap];
+            if (!ev || !ev.estado) return;
+
+            let cambio = 0;
+            let razon = '';
+            if (ev.estado === 'perfecto') {
+                cambio = 6;
+                razon = `Capítulo perfecto (${idxCap + 1})`;
+            } else if (ev.estado === 'con_ayuda') {
+                cambio = 3;
+                razon = `Capítulo con ayuda (${idxCap + 1})`;
+            } else if (ev.estado === 'no_resuelto') {
+                cambio = -10;
+                razon = `Capítulo no resuelto (${idxCap + 1})`;
+            }
+            if (cambio === 0) return;
+
+            const cambioReal = ELO.aplicar(cap.estudio, idxCap, cambio, razon);
+            if (cambioReal !== 0) {
+                const tipo = cambioReal > 0 ? 'elo-up' : 'elo-down';
+                const signo = cambioReal > 0 ? '+' : '';
+                this.mostrarToast(`🏆 ${signo}${cambioReal} ELO · ${razon}`, tipo);
+            }
+            this.actualizarMeta();
+        }
+
         _guardarProgresoVarianteActual() {
             if (this.esModoAdmin) return;
             if (!this.onGuardarProgresoVariante) return;
