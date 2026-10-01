@@ -271,8 +271,11 @@
     // ============================================================
     // RENDERIZADO RECURSIVO DE TEMAS
     // ============================================================
-        Render.renderizarTemaRecursivo = function (tema, claseId, nivel = 0) {
-        const accesible = Curso.temaAccesible(tema, Core.state.currentUser);
+            Render.renderizarTemaRecursivo = function (tema, claseId, nivel = 0) {
+        let accesible = Curso.temaAccesible(tema, Core.state.currentUser);
+        if (accesible && Render.temaBloqueadoPorProgreso(tema, claseId, nivel)) {
+            accesible = false;
+        }
         const completado = Curso.estaCompletado(claseId, tema.id);
         const esAdmin = Core.state.currentUser?.esAdmin;
 
