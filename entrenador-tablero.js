@@ -3898,10 +3898,17 @@
             );
         }
 
-        ejecutarVerSolucion() {
+               ejecutarVerSolucion() {
             this.solucionVista = true;
             this.bloqueado = true;
             const cap = this.capitulos[this.capituloActual];
+
+            // ⭐ v58: Registrar uso de ver solución en el capítulo actual
+            const idxCapSol = this.capituloActual;
+            if (!this.evaluacionPorCapitulo[idxCapSol]) {
+                this.evaluacionPorCapitulo[idxCapSol] = { intentos: 0, usoPista: false, usoVerSolucion: false, estado: null, eloAplicado: false };
+            }
+            this.evaluacionPorCapitulo[idxCapSol].usoVerSolucion = true;
             const cambio = this.aplicarCambioELOSeguro(cap.estudio, this.capituloActual, -8, `Solución vista en ${cap.nombre}`);
             if (cambio !== 0) this.mostrarToast(`❌ Solución vista · ${cambio} ELO`, 'elo-down');
             this.actualizarMeta();
