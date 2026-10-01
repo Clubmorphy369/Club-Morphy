@@ -139,10 +139,22 @@
         return false;
     };
 
-    Render.tieneAccesoEspecial = function (claseId, uid) {
+       Render.tieneAccesoEspecial = function (claseId, uid) {
         if (!uid) return false;
         const uids = Core.state.accesosEspeciales[claseId] || [];
         return uids.includes(uid);
+    };
+
+    // ⭐ v62: Detectar si un alumno ya tiene progreso previo.
+    // Alumnos con progreso previo → sin bloqueo por progresión (todo libre).
+    // Alumnos nuevos → sí se les aplica el bloqueo por progresión.
+    Render.tieneProgresoPrevio = function () {
+        const prog = Core.state.progresoTableros || {};
+        // Cuenta cuántas claves tienen valor true
+        for (const k in prog) {
+            if (prog[k] === true) return true;
+        }
+        return false;
     };
 
     Render.gestionarAccesosClase = async function (claseId) {
