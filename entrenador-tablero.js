@@ -3854,7 +3854,7 @@
             this.dibujarPiezas();
         }
 
-        pista() {
+               pista() {
             if (this.modoEdicionVariantes) return;
             const modo = this.config.modo || 'ejercicio';
             if (modo !== 'ejercicio' || !this.nodoActual || this.nodoActual.children.length === 0) {
@@ -3862,6 +3862,13 @@
             }
             const child = this.nodoActual.children[0];
             this.pistasUsadas++;
+
+            // ⭐ v58: Registrar uso de pista en el capítulo actual
+            const idxCapPista = this.capituloActual;
+            if (!this.evaluacionPorCapitulo[idxCapPista]) {
+                this.evaluacionPorCapitulo[idxCapPista] = { intentos: 0, usoPista: false, usoVerSolucion: false, estado: null, eloAplicado: false };
+            }
+            this.evaluacionPorCapitulo[idxCapPista].usoPista = true;
             const cap = this.capitulos[this.capituloActual];
             const cambio = this.aplicarCambioELOSeguro(cap.estudio, this.capituloActual, -3, `Pista en ${cap.nombre}`);
             if (cambio !== 0) this.mostrarToast(`💡 Pista · ${cambio} ELO`, 'elo-down');
