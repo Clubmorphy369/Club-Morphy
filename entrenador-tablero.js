@@ -3897,7 +3897,6 @@
 
                ejecutarVerSolucion() {
             this.solucionVista = true;
-            const cap = this.capitulos[this.capituloActual];
 
             // ⭐ v58: Registrar uso de ver solución en el capítulo actual
             const idxCapSol = this.capituloActual;
@@ -3905,7 +3904,6 @@
                 this.evaluacionPorCapitulo[idxCapSol] = { intentos: 0, usoPista: false, usoVerSolucion: false, estado: null, eloAplicado: false };
             }
             this.evaluacionPorCapitulo[idxCapSol].usoVerSolucion = true;
-            const cambio = this.aplicarCambioELOSeguro(cap.estudio, this.capituloActual, -8, `Solución vista en ${cap.nombre}`);
             
             this.chess = new Chess(this.arbol.fen);
             this.nodoActual = this.arbol;
