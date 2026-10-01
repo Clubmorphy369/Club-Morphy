@@ -2173,13 +2173,15 @@
             }
             if (cambio === 0) return;
 
-            const cambioReal = ELO.aplicar(cap.estudio, idxCap, cambio, razon);
+                      const cambioReal = ELO.aplicar(cap.estudio, idxCap, cambio, razon);
             if (cambioReal !== 0) {
                 const tipo = cambioReal > 0 ? 'elo-up' : 'elo-down';
                 const signo = cambioReal > 0 ? '+' : '';
                 this.mostrarToast(`🏆 ${signo}${cambioReal} ELO · ${razon}`, tipo);
             }
+            ev.eloAplicado = true; // ⭐ v58: marcar como aplicado
             this.actualizarMeta();
+        }
         }
 
         _guardarProgresoVarianteActual() {
