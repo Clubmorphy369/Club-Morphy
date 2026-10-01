@@ -297,7 +297,7 @@
     // ============================================================
              Render.renderizarTemaRecursivo = function (tema, claseId, nivel = 0, temaPadre = null) {
         let accesible = Curso.temaAccesible(tema, Core.state.currentUser);
-        if (accesible && Render.temaBloqueadoPorProgreso(tema, claseId, nivel)) {
+                if (accesible && Render.temaBloqueadoPorProgreso(tema, claseId, nivel, temaPadre)) {
             accesible = false;
         }
         const completado = Curso.estaCompletado(claseId, tema.id);
