@@ -391,7 +391,7 @@
             if (tema.subtemas && tema.subtemas.length > 0) {
                 contenidoHTML += `<div class="subtemas-container">`;
                 tema.subtemas.forEach(st => {
-                    contenidoHTML += Render.renderizarTemaRecursivo(st, claseId, nivel + 1);
+                contenidoHTML += Render.renderizarTemaRecursivo(st, claseId, nivel + 1, tema);
                 });
                 contenidoHTML += `</div>`;
             }
