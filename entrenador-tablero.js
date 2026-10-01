@@ -2065,9 +2065,22 @@
         // --------------------------------------------------------
         // COMPLETAR HOJA
         // --------------------------------------------------------
-        alCompletarHoja() {
+               alCompletarHoja() {
             if (this.destroyed || !this.nodoActual) return;
             this.hojasCompletadas.add(this.nodoActual.id);
+
+            // ⭐ v58: Evaluar el capítulo actual (perfecto / con_ayuda) y aplicar ELO
+            const idxCapEval = this.capituloActual;
+            if (!this.evaluacionPorCapitulo[idxCapEval]) {
+                this.evaluacionPorCapitulo[idxCapEval] = { intentos: 0, usoPista: false, usoVerSolucion: false, estado: null, eloAplicado: false };
+            }
+            const evCap = this.evaluacionPorCapitulo[idxCapEval];
+            if (!evCap.estado) {
+                const sinErrores = evCap.intentos === 0 && !evCap.usoPista && !evCap.usoVerSolucion;
+                evCap.estado = sinErrores ? 'perfecto' : 'con_ayuda';
+                this._aplicarELOCapitulo(idxCapEval);
+            }
+
             this._guardarProgresoVarianteActual();
             this.actualizarVariantesProgreso();
             const total = this.hojasTotales.length;
