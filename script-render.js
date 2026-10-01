@@ -399,7 +399,7 @@
                 });
                 contenidoHTML += `</div>`;
             }
-        } else {
+               } else {
             const yaSolicitada = Core.state.misSolicitudes.some(s => s.temaId === tema.id && s.estado === 'pendiente');
             contenidoHTML = `
                 <div style="color:var(--texto-suave); padding:10px; border:1px dashed var(--borde); border-radius:8px; margin:8px 0;">
