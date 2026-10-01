@@ -2125,7 +2125,7 @@
                     this.mostrarToast('🎉 ¡Último ejercicio completado!', 'elo-up');
                 }
 
-                // ⭐ v58: Detener temporizador SOLO al completar el ÚLTIMO capítulo del bloque.
+                               // ⭐ v58: Detener temporizador SOLO al completar el ÚLTIMO capítulo del bloque.
                 // No basta con `todosCaps` porque bloques ya completados de antes lo activarían
                 // al primer mate. Con `esUltimoCapitulo` solo se detiene al final real del recorrido.
                 const esUltimoCapitulo = this.capituloActual === this.capitulos.length - 1;
@@ -2135,6 +2135,9 @@
                     if (this.$temporizadorBloque) {
                         this.$temporizadorBloque.classList.add('cm-tablero-temporizador-detendido');
                     }
+
+                    // ⭐ v58: Evaluar % de perfectos y aprobar/rechazar el bloque (Entrega 2)
+                    this._evaluarBloqueCompleto();
                 }
                
                // ⭐ v55: Mostrar aviso final con botones también en la última rama
