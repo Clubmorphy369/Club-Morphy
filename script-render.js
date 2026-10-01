@@ -399,16 +399,27 @@
                 });
                 contenidoHTML += `</div>`;
             }
-               } else {
-            const yaSolicitada = Core.state.misSolicitudes.some(s => s.temaId === tema.id && s.estado === 'pendiente');
-            contenidoHTML = `
-                <div style="color:var(--texto-suave); padding:10px; border:1px dashed var(--borde); border-radius:8px; margin:8px 0;">
-                    <p>🔒 Este tema está bloqueado. Solicita acceso al administrador.</p>
-                    <button class="btn btn-azul" onclick="solicitarAccesoTema('${claseId}','${tema.id}')" ${yaSolicitada ? 'disabled' : ''}>
-                        ${yaSolicitada ? '⏳ Solicitud enviada' : '📩 Solicitar acceso'}
-                    </button>
-                </div>
-            `;
+                      } else {
+            if (razonBloqueo === 'progreso') {
+                // Bloqueo automático por progresión: mensaje informativo, sin botón de solicitud
+                contenidoHTML = `
+                    <div style="color:#92400e; padding:14px; border:1px dashed #f59e0b; background:#fffbeb; border-radius:8px; margin:8px 0;">
+                        <p style="margin:0; font-weight:600;">🔒 Completa el tema anterior para desbloquear este.</p>
+                        <p style="margin:6px 0 0; font-size:0.85rem; color:#a16207;">Cuando resuelvas todos los ejercicios del tema previo, este se abrirá automáticamente.</p>
+                    </div>
+                `;
+            } else {
+                // Bloqueo manual por el admin
+                const yaSolicitada = Core.state.misSolicitudes.some(s => s.temaId === tema.id && s.estado === 'pendiente');
+                contenidoHTML = `
+                    <div style="color:var(--texto-suave); padding:10px; border:1px dashed var(--borde); border-radius:8px; margin:8px 0;">
+                        <p>🔒 Este tema está bloqueado. Solicita acceso al administrador.</p>
+                        <button class="btn btn-azul" onclick="solicitarAccesoTema('${claseId}','${tema.id}')" ${yaSolicitada ? 'disabled' : ''}>
+                            ${yaSolicitada ? '⏳ Solicitud enviada' : '📩 Solicitar acceso'}
+                        </button>
+                    </div>
+                `;
+            }
         }
 
         const TIPOS_BLOQUE = {
