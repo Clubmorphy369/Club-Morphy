@@ -296,11 +296,16 @@
     // RENDERIZADO RECURSIVO DE TEMAS
     // ============================================================
              Render.renderizarTemaRecursivo = function (tema, claseId, nivel = 0, temaPadre = null) {
-        let accesible = Curso.temaAccesible(tema, Core.state.currentUser);
-                if (accesible && Render.temaBloqueadoPorProgreso(tema, claseId, nivel, temaPadre)) {
+                let accesible = Curso.temaAccesible(tema, Core.state.currentUser);
+        let razonBloqueo = null;
+        if (!accesible) {
+            razonBloqueo = 'admin';  // Bloqueo manual por el admin
+        } else if (Render.temaBloqueadoPorProgreso(tema, claseId, nivel, temaPadre)) {
             accesible = false;
+            razonBloqueo = 'progreso';  // Bloqueo automático por progresión
         }
         const completado = Curso.estaCompletado(claseId, tema.id);
+        const esAdmin = Core.state.currentUser?.esAdmin;
         const esAdmin = Core.state.currentUser?.esAdmin;
 
                 const tieneTableros = Array.isArray(tema.bloques) &&
