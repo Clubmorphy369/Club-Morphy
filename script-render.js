@@ -583,7 +583,6 @@
                 ${!accesible ? '<span>🔒</span>' : ''}
                 ${completado ? '<span class="badge">✓</span>' : ''}
                 <span style="flex:1;"></span>
-                ${accesible && !tieneTableros ? `<button class="btn btn-exito btn-small" onclick="event.stopPropagation(); marcarVisto('${claseId}','${tema.id}')">${completado ? '✓ Completado' : '👁️ Visto'}</button>` : ''}
                 ${accesible && tieneTableros && completado ? '<span class="badge">✓ Completado</span>' : ''}
                 ${esAdmin ? `
                     <button class="btn-reorder" aria-label="Subir tema" onclick="event.stopPropagation(); moverTemaArriba('${claseId}','${tema.id}')" title="Subir tema">↑</button>
