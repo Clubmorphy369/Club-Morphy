@@ -306,7 +306,6 @@
         }
         const completado = Curso.estaCompletado(claseId, tema.id);
         const esAdmin = Core.state.currentUser?.esAdmin;
-        const esAdmin = Core.state.currentUser?.esAdmin;
 
                 const tieneTableros = Array.isArray(tema.bloques) &&
                               tema.bloques.some(b => b.tipo === 'tablero' && (b.config || {}).pgn && b.config.pgn.trim());
