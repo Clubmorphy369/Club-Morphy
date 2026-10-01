@@ -3,7 +3,7 @@
 // =============================================================
 
 // ⚠️ Sube la versión cuando hagas cambios importantes
-// ⭐ v61: fix ignoredHosts + unificar STATIC_ASSETS + añadir Lozza
+// ⭐ v61: Sistema de evaluación (intentos, ELO +6/+3/-10, % mínimo, bonus 100%) + aspect-ratio tablero + guard admin
 const CACHE_NAME = 'club-morphy-v61';
 
 // Scope dinámico: funciona tanto en "/" (Firebase) como en "/Club-Morphy/" (GitHub Pages)
