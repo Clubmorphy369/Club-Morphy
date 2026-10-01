@@ -2152,13 +2152,13 @@
         // ⭐ v58: Aplicar ELO según el estado del capítulo (Entrega 2)
         // Estados: 'perfecto' (+6), 'con_ayuda' (+3), 'no_resuelto' (-10)
         // ============================================================
-        _aplicarELOCapitulo(idxCap) {
+                _aplicarELOCapitulo(idxCap) {
             if (this.esModoAdmin) return;
             const cap = this.capitulos[idxCap];
             if (!cap) return;
             const ev = this.evaluacionPorCapitulo[idxCap];
             if (!ev || !ev.estado) return;
-
+            if (ev.eloAplicado) return; // ⭐ v58: no aplicar dos veces
             let cambio = 0;
             let razon = '';
             if (ev.estado === 'perfecto') {
