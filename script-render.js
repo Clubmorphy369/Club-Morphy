@@ -185,6 +185,43 @@
         return true;
     };
 
+    // ============================================================
+    // ⭐ v62 C4: Verificar si un tema está bloqueado por progresión.
+    // Reglas:
+    //   - Admin → nunca bloqueado.
+    //   - Alumno con progreso previo → nunca bloqueado.
+    //   - Tema sin ejercicios (sin tableros con PGN) → nunca bloqueado.
+    //   - Tema con ejercicios → bloqueado si el ANTERIOR tiene ejercicios
+    //     y NO está completado.
+    // ============================================================
+    Render.temaBloqueadoPorProgreso = function (tema, claseId, nivel) {
+        if (nivel !== 0) return false;  // Solo temas padre
+        if (!Core.state.currentUser) return false;
+        if (Core.state.currentUser.esAdmin) return false;
+        if (Render.tieneProgresoPrevio()) return false;
+
+        // ¿Este tema tiene ejercicios? Si no, no se bloquea nunca.
+        const tieneEjercicios = Array.isArray(tema.bloques) &&
+            tema.bloques.some(b => b.tipo === 'tablero' && (b.config || {}).pgn && b.config.pgn.trim());
+        if (!tieneEjercicios) return false;
+
+        const clase = Core.state.curso.clases.find(c => c.id === claseId);
+        if (!clase || !Array.isArray(clase.temas)) return false;
+
+        const idxTema = clase.temas.findIndex(t => t.id === tema.id);
+        if (idxTema <= 0) return false;  // El primero siempre libre
+
+        const anterior = clase.temas[idxTema - 1];
+        if (!anterior) return false;
+
+        // ¿El anterior tiene ejercicios? Si no, no bloquea.
+        const anteriorTieneEjercicios = Array.isArray(anterior.bloques) &&
+            anterior.bloques.some(b => b.tipo === 'tablero' && (b.config || {}).pgn && b.config.pgn.trim());
+        if (!anteriorTieneEjercicios) return false;
+
+        // Bloquea si el anterior NO está completado
+        return !Curso.estaCompletado(claseId, anterior.id);
+    };
     Render.gestionarAccesosClase = async function (claseId) {
         if (!Core.state.currentUser?.esAdmin) return;
         const clase = Core.state.curso.clases.find(c => c.id === claseId);
