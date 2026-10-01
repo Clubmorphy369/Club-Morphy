@@ -184,18 +184,19 @@
         }
         return true;
     };
-
-    // ============================================================
+   
+        // ============================================================
     // ⭐ v62 C4: Verificar si un tema está bloqueado por progresión.
     // Reglas:
     //   - Admin → nunca bloqueado.
     //   - Alumno con progreso previo → nunca bloqueado.
-    //   - Tema sin ejercicios (sin tableros con PGN) → nunca bloqueado.
-    //   - Tema con ejercicios → bloqueado si el ANTERIOR tiene ejercicios
-    //     y NO está completado.
+    //   - Tema sin ejercicios → nunca bloqueado.
+    //   - Tema con ejercicios → bloqueado si el ANTERIOR (con ejercicios)
+    //     no está completado.
+    // Soporta tanto temas padre como subtemas.
     // ============================================================
-    Render.temaBloqueadoPorProgreso = function (tema, claseId, nivel) {
-        if (nivel !== 0) return false;  // Solo temas padre
+    Render.temaBloqueadoPorProgreso = function (tema, claseId, nivel, temaPadre) {
+        // Admin, progreso previo o sin usuario: nunca bloqueado
         if (!Core.state.currentUser) return false;
         if (Core.state.currentUser.esAdmin) return false;
         if (Render.tieneProgresoPrevio()) return false;
@@ -205,23 +206,46 @@
             tema.bloques.some(b => b.tipo === 'tablero' && (b.config || {}).pgn && b.config.pgn.trim());
         if (!tieneEjercicios) return false;
 
-        const clase = Core.state.curso.clases.find(c => c.id === claseId);
-        if (!clase || !Array.isArray(clase.temas)) return false;
+        // --- TEMA PADRE (nivel 0) ---
+        if (nivel === 0) {
+            const clase = Core.state.curso.clases.find(c => c.id === claseId);
+            if (!clase || !Array.isArray(clase.temas)) return false;
 
-        const idxTema = clase.temas.findIndex(t => t.id === tema.id);
-        if (idxTema <= 0) return false;  // El primero siempre libre
+            const idxTema = clase.temas.findIndex(t => t.id === tema.id);
+            if (idxTema <= 0) return false; // El primero siempre libre
 
-        const anterior = clase.temas[idxTema - 1];
-        if (!anterior) return false;
+            const anterior = clase.temas[idxTema - 1];
+            if (!anterior) return false;
 
-        // ¿El anterior tiene ejercicios? Si no, no bloquea.
-        const anteriorTieneEjercicios = Array.isArray(anterior.bloques) &&
-            anterior.bloques.some(b => b.tipo === 'tablero' && (b.config || {}).pgn && b.config.pgn.trim());
-        if (!anteriorTieneEjercicios) return false;
+            // ¿El anterior tiene ejercicios? Si no, no bloquea.
+            const anteriorTieneEjercicios = Array.isArray(anterior.bloques) &&
+                anterior.bloques.some(b => b.tipo === 'tablero' && (b.config || {}).pgn && b.config.pgn.trim());
+            if (!anteriorTieneEjercicios) return false;
 
-        // Bloquea si el anterior NO está completado
-        return !Curso.estaCompletado(claseId, anterior.id);
+            return !Curso.estaCompletado(claseId, anterior.id);
+        }
+
+        // --- SUBTEMA (nivel > 0) ---
+        if (nivel > 0 && temaPadre && Array.isArray(temaPadre.subtemas)) {
+            const idxSubtema = temaPadre.subtemas.findIndex(st => st.id === tema.id);
+            if (idxSubtema <= 0) {
+                // Es el primer subtema: heredar el bloqueo del tema padre
+                return Render.temaBloqueadoPorProgreso(temaPadre, claseId, 0, null);
+            }
+
+            const anteriorSubtema = temaPadre.subtemas[idxSubtema - 1];
+            if (!anteriorSubtema) return false;
+
+            const anteriorTieneEjercicios = Array.isArray(anteriorSubtema.bloques) &&
+                anteriorSubtema.bloques.some(b => b.tipo === 'tablero' && (b.config || {}).pgn && b.config.pgn.trim());
+            if (!anteriorTieneEjercicios) return false;
+
+            return !Curso.estaCompletado(claseId, anteriorSubtema.id);
+        }
+
+        return false;
     };
+
     Render.gestionarAccesosClase = async function (claseId) {
         if (!Core.state.currentUser?.esAdmin) return;
         const clase = Core.state.curso.clases.find(c => c.id === claseId);
