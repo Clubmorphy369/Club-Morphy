@@ -2154,6 +2154,109 @@
             this._mostrarAvisoRamaCompletada(desviacion, completadas, total);
         }
 
+        // ============================================================
+        // ⭐ v58: Evaluar el bloque completo al terminar todos los capítulos.
+        // Calcula % de capítulos perfectos y decide si aprueba o no.
+        // ============================================================
+        _evaluarBloqueCompleto() {
+            if (this.esModoAdmin) return;
+            const total = this.capitulos.length;
+            if (total === 0) return;
+
+            let perfectos = 0;
+            let conAyuda = 0;
+            let noResueltos = 0;
+            for (let i = 0; i < total; i++) {
+                const ev = this.evaluacionPorCapitulo[i];
+                if (!ev || !ev.estado) { noResueltos++; continue; }
+                if (ev.estado === 'perfecto') perfectos++;
+                else if (ev.estado === 'con_ayuda') conAyuda++;
+                else noResueltos++;
+            }
+
+            const porcentaje = Math.round((perfectos / total) * 100);
+            const minimo = this.porcentajeMinimo || 0;
+            const aprobado = minimo > 0 ? porcentaje >= minimo : true;
+
+            // Bonus si el bloque quedó 100% perfecto
+            let bonusAplicado = 0;
+            if (aprobado && perfectos === total && !this._bonus100YaAplicado) {
+                this._bonus100YaAplicado = true;
+                const cap0 = this.capitulos[0];
+                const cambioReal = ELO.aplicar(cap0.estudio, 0, 20, 'Bonus bloque perfecto (100%)');
+                if (cambioReal !== 0) {
+                    bonusAplicado = cambioReal;
+                    const signo = cambioReal > 0 ? '+' : '';
+                    this.mostrarToast(`🎁 ${signo}${cambioReal} ELO · Bonus 100% perfecto`, 'elo-up');
+                }
+                this.actualizarMeta();
+            }
+
+            // Mostrar overlay de resultado
+            this._mostrarOverlayResultadoBloque({
+                total,
+                perfectos,
+                conAyuda,
+                noResueltos,
+                porcentaje,
+                minimo,
+                aprobado,
+                bonusAplicado
+            });
+        }
+
+        _mostrarOverlayResultadoBloque(datos) {
+            const overlayViejo = this.contenedor.querySelector('.cm-bloque-resultado-overlay');
+            if (overlayViejo) overlayViejo.remove();
+
+            const { total, perfectos, conAyuda, noResueltos, porcentaje, minimo, aprobado, bonusAplicado } = datos;
+
+            const titulo = aprobado ? '🎉 ¡Bloque aprobado!' : '⚠️ Bloque no aprobado';
+            const color = aprobado ? '#16a34a' : '#dc2626';
+            const mensaje = aprobado
+                ? (bonusAplicado > 0 ? '¡100% perfecto! Te llevaste el bonus.' : '¡Buen trabajo! Completaste todos los capítulos.')
+                : `Necesitas al menos ${minimo}% de capítulos perfectos. Vuelve a intentarlo.`;
+
+            const overlay = document.createElement('div');
+            overlay.className = 'cm-bloque-resultado-overlay';
+            overlay.innerHTML = `
+                <div class="cm-bloque-resultado-tarjeta">
+                    <div class="cm-bloque-resultado-icono">${aprobado ? '🏆' : '😢'}</div>
+                    <h3 style="color:${color};">${titulo}</h3>
+                    <p>${mensaje}</p>
+                    <div class="cm-bloque-resultado-stats">
+                        <div><strong>${perfectos}</strong><br><small>🏆 Perfectos</small></div>
+                        <div><strong>${conAyuda}</strong><br><small>🤝 Con ayuda</small></div>
+                        <div><strong>${noResueltos}</strong><br><small>❌ Sin resolver</small></div>
+                    </div>
+                    <div class="cm-bloque-resultado-porcentaje" style="color:${color};">
+                        ${porcentaje}% <small>de ${total} capítulos</small>
+                    </div>
+                    <div class="cm-bloque-resultado-acciones">
+                        ${aprobado
+                            ? `<button class="cm-tablero-btn" data-accion="cerrar">✅ Continuar</button>`
+                            : `<button class="cm-tablero-btn cm-tablero-btn-sec" data-accion="reintentar">🔄 Reintentar bloque</button>`
+                        }
+                    </div>
+                </div>
+            `;
+            this.contenedor.appendChild(overlay);
+
+            overlay.querySelector('[data-accion="cerrar"]')?.addEventListener('click', () => {
+                overlay.remove();
+            });
+            overlay.querySelector('[data-accion="reintentar"]')?.addEventListener('click', () => {
+                overlay.remove();
+                // Reset completo del bloque
+                this.evaluacionPorCapitulo = {};
+                this._bonus100YaAplicado = false;
+                this.hojasCompletadas = new Set();
+                this.capitulos.forEach(c => { c.completado = false; });
+                this.cargarCapitulo(0);
+            });
+        }
+
+        _aplicarELOCapitulo(idxCap) {
                // ============================================================
         // ⭐ v58: Aplicar ELO según el estado del capítulo (Entrega 2)
         // Estados: 'perfecto' (+6), 'con_ayuda' (+3), 'no_resuelto' (-10)
