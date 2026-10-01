@@ -3895,8 +3895,9 @@
             );
         }
 
-               ejecutarVerSolucion() {
+          ejecutarVerSolucion() {
             this.solucionVista = true;
+            this.bloqueado = true;
 
             // ⭐ v58: Registrar uso de ver solución en el capítulo actual
             const idxCapSol = this.capituloActual;
