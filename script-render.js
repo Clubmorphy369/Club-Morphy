@@ -1416,3 +1416,5 @@
     console.log('✅ CMRender cargado (sidebar + temas + entrenador + juego vs IA)');
 
 })();
+
+
