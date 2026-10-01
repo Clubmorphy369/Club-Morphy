@@ -234,11 +234,26 @@
     // ============================================================
     // RENDERIZADO RECURSIVO DE TEMAS
     // ============================================================
-    Render.renderizarTemaRecursivo = function (tema, claseId, nivel = 0) {
-        const accesible = Curso.temaAccesible(tema, Core.state.currentUser);
+        Render.renderizarTemaRecursivo = function (tema, claseId, nivel = 0) {
+        let accesible = Curso.temaAccesible(tema, Core.state.currentUser);
         const completado = Curso.estaCompletado(claseId, tema.id);
         const esAdmin = Core.state.currentUser?.esAdmin;
 
+        // ⭐ v62 C4: Bloqueo progresivo para alumnos nuevos (sin progreso previo).
+        // Solo aplica a TEMAS de nivel 0 (dentro de una clase).
+        if (accesible && !esAdmin && nivel === 0) {
+            const sinProgreso = !Render.tieneProgresoPrevio();
+            if (sinProgreso) {
+                const clase = Core.state.curso.clases.find(c => c.id === claseId);
+                if (clase && Array.isArray(clase.temas)) {
+                    const idxTema = clase.temas.findIndex(t => t.id === tema.id);
+                    if (idxTema > 0) {
+                        const anteriorOk = Render.temaAnteriorCompletado(clase.temas, idxTema, claseId);
+                        if (!anteriorOk) accesible = false;
+                    }
+                }
+            }
+        }
         const tieneTableros = Array.isArray(tema.bloques) &&
                               tema.bloques.some(b => b.tipo === 'tablero' && (b.config || {}).pgn && b.config.pgn.trim());
 
