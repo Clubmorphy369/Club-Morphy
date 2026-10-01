@@ -3897,7 +3897,6 @@
 
                ejecutarVerSolucion() {
             this.solucionVista = true;
-            this.bloqueado = true;
             const cap = this.capitulos[this.capituloActual];
 
             // ⭐ v58: Registrar uso de ver solución en el capítulo actual
@@ -3907,9 +3906,7 @@
             }
             this.evaluacionPorCapitulo[idxCapSol].usoVerSolucion = true;
             const cambio = this.aplicarCambioELOSeguro(cap.estudio, this.capituloActual, -8, `Solución vista en ${cap.nombre}`);
-            if (cambio !== 0) this.mostrarToast(`❌ Solución vista · ${cambio} ELO`, 'elo-down');
-            this.actualizarMeta();
-            if (this.respuestaAutoTimeout) { clearTimeout(this.respuestaAutoTimeout); this.respuestaAutoTimeout = null; }
+            
             this.chess = new Chess(this.arbol.fen);
             this.nodoActual = this.arbol;
             this.casillaSeleccionada = null;
