@@ -159,6 +159,31 @@
         }
         return false;
     };
+   
+    // ============================================================
+    // ⭐ v62 C3: Verificar si el tema anterior en la misma lista está completado.
+    // Se usa para bloquear por progresión a los alumnos nuevos.
+    // ============================================================
+    Render.temaAnteriorCompletado = function (temas, idxActual, claseId) {
+        if (idxActual === 0) return true;  // el primero siempre es accesible
+        const anterior = temas[idxActual - 1];
+        if (!anterior) return true;
+        return Curso.estaCompletado(claseId, anterior.id);
+    };
+
+    // ============================================================
+    // ⭐ v62 C3: Verificar si TODOS los subtemas anteriores están completados.
+    // Los subtemas van en cadena: 1.2 requiere 1.1, 1.3 requiere 1.2, etc.
+    // ============================================================
+    Render.subtemasPreviosCompletados = function (subtemas, idxActual, claseId) {
+        if (idxActual === 0) return true;
+        for (let i = 0; i < idxActual; i++) {
+            const st = subtemas[i];
+            if (!st) continue;
+            if (!Curso.estaCompletado(claseId, st.id)) return false;
+        }
+        return true;
+    };
 
     Render.gestionarAccesosClase = async function (claseId) {
         if (!Core.state.currentUser?.esAdmin) return;
