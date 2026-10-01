@@ -134,8 +134,14 @@
             try {
                 const tiempoPrueba = parseInt(localStorage.getItem('cm-tablero-temporizador-prueba'), 10);
                 if (!isNaN(tiempoPrueba) && tiempoPrueba > 0) tiempoLimite = tiempoPrueba;
-            } catch (e) { /* ignorar */ }
+                      } catch (e) { /* ignorar */ }
             this.tiempoLimiteBloque = tiempoLimite;
+           
+            // ⭐ v58: Estado de evaluación por capítulo (Entrega 2)
+            // Cada capítulo guarda: { intentos, usoPista, usoVerSolucion, estado }
+            // estado: null (sin resolver) | 'perfecto' | 'con_ayuda' | 'no_resuelto'
+            this.evaluacionPorCapitulo = {};
+            this.porcentajeMinimo = parseInt((this.config || {}).porcentajeMinimo, 10) || 0;
             this.temporizadorBloque = null;
             this.temporizadorIniciado = false;
             this.temporizadorExpirado = false;
