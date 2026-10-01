@@ -145,12 +145,15 @@
         return uids.includes(uid);
     };
 
-    // ⭐ v62: Detectar si un alumno ya tiene progreso previo.
-    // Alumnos con progreso previo → sin bloqueo por progresión (todo libre).
-    // Alumnos nuevos → sí se les aplica el bloqueo por progresión.
-    Render.tieneProgresoPrevio = function () {
+      Render.tieneProgresoPrevio = function () {
+        // ⭐ v62: Modo pruebas — añadir ?novato=1 a la URL fuerza "alumno nuevo"
+        // Útil para probar el bloqueo progresivo con cuentas que ya tienen datos.
+        try {
+            const params = new URLSearchParams(window.location.search);
+            if (params.get('novato') === '1') return false;
+        } catch (e) { /* ignorar */ }
+
         const prog = Core.state.progresoTableros || {};
-        // Cuenta cuántas claves tienen valor true
         for (const k in prog) {
             if (prog[k] === true) return true;
         }
