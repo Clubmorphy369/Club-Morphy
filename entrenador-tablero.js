@@ -2104,19 +2104,9 @@
                     }
                 }
 
-                if (!this.eloAplicado && !this.esModoAdmin) {
-                    this.eloAplicado = true;
-                    const cap = this.capitulos[this.capituloActual];
-                    let cambio = 15;
-                    cambio -= Math.min(10, this.erroresEnCapitulo * 2);
-                    cambio -= this.pistasUsadas * 3;
-                    if (this.solucionVista) cambio -= 8;
-                    if (total > 1) cambio += total * 2;
-                    cambio = Math.max(2, cambio);
-                    const cambioReal = ELO.aplicar(cap.estudio, this.capituloActual, cambio, 'Ejercicio resuelto');
-                    if (cambioReal !== 0) this.mostrarToast(`🏆 Ejercicio resuelto · +${cambioReal} ELO`, 'elo-up');
-                    this.actualizarMeta();
-                } else if (this.esModoAdmin) {
+                               // ⭐ v58: La lógica vieja de ELO fue reemplazada por _aplicarELOCapitulo.
+                // Solo conservamos el toast informativo para el admin.
+                if (this.esModoAdmin) {
                     this.mostrarToast(`✅ Ejercicio resuelto (admin · sin cambio ELO)`, '');
                 }
 
