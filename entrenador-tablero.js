@@ -1591,7 +1591,7 @@
                     this.esperandoRespuesta = true;
                     this.respuestaAutoTimeout = setTimeout(() => this.jugarRespuestaRival(), 500);
                 }
-            } else {
+                       } else {
                 this.erroresEnCapitulo++;
                 const mv = this.chess.move({ from, to: sq, promotion: 'q' });
                 const sanRealizado = mv ? mv.san : '';
