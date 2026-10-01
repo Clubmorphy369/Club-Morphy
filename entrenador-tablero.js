@@ -2195,7 +2195,6 @@
             ev.eloAplicado = true; // ⭐ v58: marcar como aplicado
             this.actualizarMeta();
         }
-        }
 
         _guardarProgresoVarianteActual() {
             if (this.esModoAdmin) return;
