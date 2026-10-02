@@ -145,14 +145,22 @@
         return uids.includes(uid);
     };
 
-      Render.tieneProgresoPrevio = function () {
+        Render.tieneProgresoPrevio = function () {
         // ⭐ v62: Modo pruebas — añadir ?novato=1 a la URL fuerza "alumno nuevo"
-        // Útil para probar el bloqueo progresivo con cuentas que ya tienen datos.
         try {
             const params = new URLSearchParams(window.location.search);
             if (params.get('novato') === '1') return false;
         } catch (e) { /* ignorar */ }
 
+        const uid = Core.state.currentUser?.uid;
+        if (!uid) return false;
+
+        // ⭐ v63: Leer el flag guardado (fijo durante toda la vida del alumno).
+        const saved = localStorage.getItem(`cm-es-novato-${uid}`);
+        if (saved === 'true') return false;  // novato → no tiene progreso previo
+        if (saved === 'false') return true;  // viejo → tiene progreso previo
+
+        // Fallback: aún no se ha decidido el flag.
         const prog = Core.state.progresoTableros || {};
         for (const k in prog) {
             if (prog[k] === true) return true;
