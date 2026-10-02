@@ -787,7 +787,7 @@
 
         document.querySelectorAll('[data-accion="toggle-tema"]').forEach(header => {
             header.addEventListener('click', (e) => {
-                if (e.target.closest('button') || e.target.closest('[data-accion="renombrarTema"]')) return;
+                if (e.target.closest('button') || e.target.tagName === 'INPUT') return;
                 const temaId = header.dataset.temaId;
                 const temaDiv = document.querySelector(`.tema[data-tema-id="${temaId}"]`);
                 if (!temaDiv) return;
