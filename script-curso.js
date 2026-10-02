@@ -134,12 +134,17 @@
         }, error => console.warn('Error snapshot club:', error));
     };
 
-    Curso.suscribirProgresoTableros = function () {
-        if (!Core.state.currentUser) {
-            Core.state.progresoTableros = {};
-            return;
-        }
-       db.collection('progreso').doc(Core.state.currentUser.uid).onSnapshot(doc => {
+   Curso.suscribirProgresoTableros = function () {
+    // ⭐ v69: Limpiar listener previo (evita fuga de memoria)
+    if (Core.state.unsubscribeProgresoTableros) {
+        Core.state.unsubscribeProgresoTableros();
+        Core.state.unsubscribeProgresoTableros = null;
+    }
+    if (!Core.state.currentUser) {
+        Core.state.progresoTableros = {};
+        return;
+    }
+   Core.state.unsubscribeProgresoTableros = db.collection('progreso').doc(Core.state.currentUser.uid).onSnapshot(doc => {
         const dataRaw = doc.exists ? (doc.data() || {}) : {};
         // Separar el flag interno del resto del progreso
         const { _esNovato, ...progresoSinFlag } = dataRaw;
