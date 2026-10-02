@@ -1274,27 +1274,31 @@ ${esAdmin ? `
             );
         }
 
-        _reconstruirPGNCompleto() {
-            return this.capitulos.map(cap => {
-                let headers = '';
-                const h = cap.headersOriginales || {};
-                if (h.Event) headers += `[Event "${h.Event}"]\n`;
-                if (h.StudyName) headers += `[StudyName "${h.StudyName}"]\n`;
-                headers += `[ChapterName "${cap.nombre}"]\n`;
-                if (h.FEN) headers += `[FEN "${h.FEN}"]\n`;
-                if (h.SetUp) headers += `[SetUp "${h.SetUp}"]\n`;
-                if (h.ChapterMode) headers += `[ChapterMode "${h.ChapterMode}"]\n`;
+       _reconstruirPGNCompleto() {
+    return this.capitulos.map(cap => {
+        let headers = '';
+        const h = cap.headersOriginales || {};
 
-                let movesText = '';
-                try {
-                    movesText = arbolAPGN(cap.arbol, null).split('\n').filter(l => !l.startsWith('[')).join(' ').trim();
-                } catch (e) {
-                    movesText = '*';
-                }
-                return headers + '\n' + movesText;
-            }).join('\n\n');
+        // ⭐ v74: Reproducir TODAS las cabeceras originales (excepto ChapterName que se reescribe)
+        Object.entries(h).forEach(([k, v]) => {
+            if (k === 'ChapterName') return;
+            // Escapar comillas dobles en el valor
+            const valorEscapado = String(v).replace(/"/g, '\\"');
+            headers += `[${k} "${valorEscapado}"]\n`;
+        });
+
+        // Asegurar que ChapterName esté siempre (con el nombre actual del capítulo)
+        headers += `[ChapterName "${String(cap.nombre).replace(/"/g, '\\"')}"]\n`;
+
+        let movesText = '';
+        try {
+            movesText = arbolAPGN(cap.arbol, null).split('\n').filter(l => !l.startsWith('[')).join(' ').trim();
+        } catch (e) {
+            movesText = '*';
         }
-
+        return headers + '\n' + movesText;
+    }).join('\n\n');
+}
         // --------------------------------------------------------
         // LISTA ADMIN DE CAPÍTULOS
         // --------------------------------------------------------
