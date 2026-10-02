@@ -704,18 +704,21 @@
     // ============================================================
     // ACTUALIZAR UI COMPLETA
     // ============================================================
-       Render.actualizarUI = function () {
-        // ⭐ v56: Si el admin está escribiendo/marcando algo dentro del editor de bloques,
-        // no re-renderizar (evita perder foco, scroll y cerrar el tema).
-        if (Core.state.currentUser?.esAdmin) {
-            const activo = document.activeElement;
-            if (activo && typeof activo.closest === 'function' && activo.closest('.bloque-editor')) {
-                return;
-            }
+      Render.actualizarUI = function () {
+    // ⭐ v56: Si el admin está escribiendo/marcando algo dentro del editor de bloques,
+    // no re-renderizar (evita perder foco, scroll y cerrar el tema).
+    if (Core.state.currentUser?.esAdmin) {
+        const activo = document.activeElement;
+        if (activo && typeof activo.closest === 'function' && activo.closest('.bloque-editor')) {
+            return;
         }
+    }
 
-        const contentDiv = document.getElementById('main-content');
-        if (!contentDiv) return
+    const contentDiv = document.getElementById('main-content');
+    if (!contentDiv) return;
+
+    // ⭐ v70: Guardar scrollTop antes de re-renderizar (evita salto al inicio)
+    const scrollTopAnterior = contentDiv.scrollTop || 0;
         const btnJugarIA = document.getElementById('btn-jugar-ia');
         if (btnJugarIA) {
             btnJugarIA.style.display = Core.state.currentUser ? 'inline-flex' : 'none';
