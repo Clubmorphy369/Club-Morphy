@@ -86,6 +86,7 @@
         unsubscribeAccesosTema: null,
         unsubscribeClub: null,
         unsubscribeCurso: null,
+        unsubscribeProgresoTableros: null,   // ⭐ v69
         migracionRealizada: false,
         terminoBusqueda: '',
         modalCompletarPerfilYaMostrado: false,
