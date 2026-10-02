@@ -2106,83 +2106,86 @@ async importarDesdeLichess() {
             }
         }
                // ⭐ v54: Mostrar aviso cuando se completa una rama (con botón para siguiente)
-        _mostrarAvisoRamaCompletada(nodoDestino, completadas, total) {
-            // Eliminar aviso anterior si existe
-            const avisoViejo = this.contenedor.querySelector('.cm-rama-completada-aviso');
-            if (avisoViejo) avisoViejo.remove();
+       _mostrarAvisoRamaCompletada(nodoDestino, completadas, total) {
+    // Eliminar aviso anterior si existe
+    const avisoViejo = this.contenedor.querySelector('.cm-rama-completada-aviso');
+    if (avisoViejo) avisoViejo.remove();
 
-            // Guardar destino para el click
-            this._ramaDestinoPendiente = nodoDestino || this.arbol;
+    // Guardar destino para el click
+    this._ramaDestinoPendiente = nodoDestino || this.arbol;
 
-            const esUltima = completadas >= total;
+    const esUltima = completadas >= total;
 
-            const aviso = document.createElement('div');
-            aviso.className = 'cm-rama-completada-aviso';
-            aviso.innerHTML = `
-                <div class="cm-rama-completada-header">
-                    <span class="cm-rama-completada-icono">${esUltima ? '🏆' : '✅'}</span>
-                    <span>${esUltima ? '¡Todas las ramas completadas!' : `Rama ${completadas} de ${total} completada`}</span>
-                </div>
-                <div class="cm-rama-completada-texto">
-                    ${esUltima
-                        ? 'Has resuelto todas las variantes de este capítulo.'
-                        : `Quedan ${total - completadas} rama${(total - completadas) === 1 ? '' : 's'} por resolver.`}
-                </div>
-                <div class="cm-rama-completada-acciones">
-                    ${esUltima
-                        ? `<button class="cm-tablero-btn cm-rama-btn-terminar" data-accion="terminar">🏆 Terminar</button>`
-                        : `<button class="cm-tablero-btn cm-rama-btn-siguiente" data-accion="siguiente">🔄 Siguiente rama</button>`}
-                    <button class="cm-tablero-btn cm-tablero-btn-sec" data-accion="revisar">🔍 Revisar esta rama</button>
-                </div>
-            `;
+    const aviso = document.createElement('div');
+    aviso.className = 'cm-rama-completada-aviso';
+    aviso.innerHTML = `
+        <div class="cm-rama-completada-header">
+            <span class="cm-rama-completada-icono">${esUltima ? '🏆' : '✅'}</span>
+            <span>${esUltima ? '¡Todas las ramas completadas!' : `Rama ${completadas} de ${total} completada`}</span>
+        </div>
+        <div class="cm-rama-completada-texto">
+            ${esUltima
+                ? 'Has resuelto todas las variantes de este capítulo.'
+                : `Quedan ${total - completadas} rama${(total - completadas) === 1 ? '' : 's'} por resolver.`}
+        </div>
+        <div class="cm-rama-completada-acciones">
+            ${esUltima
+                ? `<button class="cm-tablero-btn cm-rama-btn-terminar" data-accion="terminar">🏆 Terminar</button>`
+                : `<button class="cm-tablero-btn cm-rama-btn-siguiente" data-accion="siguiente">🔄 Siguiente rama</button>`}
+            <button class="cm-tablero-btn cm-tablero-btn-sec" data-accion="revisar">🔍 Revisar esta rama</button>
+        </div>
+    `;
 
-            // Insertar arriba del panel
-            if (this.$modoIndicator && this.$modoIndicator.parentNode) {
-                this.$modoIndicator.parentNode.insertBefore(aviso, this.$modoIndicator.nextSibling);
-            } else if (this.$panelAnalisis) {
-                this.$panelAnalisis.insertBefore(aviso, this.$panelAnalisis.firstChild);
-            } else {
-                this.contenedor.appendChild(aviso);
+    // Insertar arriba del panel
+    if (this.$modoIndicator && this.$modoIndicator.parentNode) {
+        this.$modoIndicator.parentNode.insertBefore(aviso, this.$modoIndicator.nextSibling);
+    } else if (this.$panelAnalisis) {
+        this.$panelAnalisis.insertBefore(aviso, this.$panelAnalisis.firstChild);
+    } else {
+        this.contenedor.appendChild(aviso);
+    }
+
+    // Listeners de los botones
+    aviso.querySelector('[data-accion="siguiente"]')?.addEventListener('click', () => {
+        aviso.remove();
+        this._ramaDestinoPendiente = null;
+        this.mostrarToast('🔄 Preparando siguiente rama…', '');
+        setTimeout(() => {
+            if (this.destroyed) return;
+            this.irANodo(nodoDestino || this.arbol);
+            this.setStatus('info', 'Tu turno. Encuentra la nueva solución.');
+        }, 300);
+    });
+
+    aviso.querySelector('[data-accion="terminar"]')?.addEventListener('click', () => {
+        aviso.remove();
+        this._ramaDestinoPendiente = null;
+        this.mostrarToast('🏆 ¡Capítulo completado al 100%!', 'elo-up');
+    });
+
+    aviso.querySelector('[data-accion="revisar"]')?.addEventListener('click', () => {
+        aviso.remove();
+        // ⭐ v72: Guardar destino ANTES de limpiar (fix: antes se borraba y se perdía)
+        const destinoRevision = this._ramaDestinoPendiente || this.arbol;
+        this._ramaDestinoPendiente = null;
+
+        // Volver al inicio de la rama actual sin cambiar de rama
+        const cap = this.capitulos[this.capituloActual];
+        this.chess = new Chess(cap.fen);
+        this.nodoActual = this.arbol;
+        this.casillaSeleccionada = null;
+        this.esperandoRespuesta = false;
+        this.dibujarPiezas();
+        this.actualizarMovimientos();
+        this.setStatus('info', '🔍 Revisando desde el inicio del capítulo.');
+        // Re-mostrar el aviso tras 0.5s usando el destino guardado
+        setTimeout(() => {
+            if (!this.destroyed) {
+                this._mostrarAvisoRamaCompletada(destinoRevision, completadas, total);
             }
-
-            // Listeners de los botones
-            aviso.querySelector('[data-accion="siguiente"]')?.addEventListener('click', () => {
-                aviso.remove();
-                this._ramaDestinoPendiente = null;
-                this.mostrarToast('🔄 Preparando siguiente rama…', '');
-                setTimeout(() => {
-                    if (this.destroyed) return;
-                    this.irANodo(nodoDestino || this.arbol);
-                    this.setStatus('info', 'Tu turno. Encuentra la nueva solución.');
-                }, 300);
-            });
-
-            aviso.querySelector('[data-accion="terminar"]')?.addEventListener('click', () => {
-                aviso.remove();
-                this._ramaDestinoPendiente = null;
-                this.mostrarToast('🏆 ¡Capítulo completado al 100%!', 'elo-up');
-            });
-
-            aviso.querySelector('[data-accion="revisar"]')?.addEventListener('click', () => {
-                aviso.remove();
-                this._ramaDestinoPendiente = null;
-                // Volver al inicio de la rama actual sin cambiar de rama
-                const cap = this.capitulos[this.capituloActual];
-                this.chess = new Chess(cap.fen);
-                this.nodoActual = this.arbol;
-                this.casillaSeleccionada = null;
-                this.esperandoRespuesta = false;
-                this.dibujarPiezas();
-                this.actualizarMovimientos();
-                this.setStatus('info', '🔍 Revisando desde el inicio del capítulo.');
-                // Re-mostrar el aviso tras 0.5s
-                setTimeout(() => {
-                    if (!this.destroyed) {
-                        this._mostrarAvisoRamaCompletada(this._ramaDestinoPendiente || this.arbol, completadas, total);
-                    }
-                }, 500);
-            });
-        }
+        }, 500);
+    });
+}
 
         // --------------------------------------------------------
         // COMPLETAR HOJA
