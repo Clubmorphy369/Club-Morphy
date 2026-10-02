@@ -736,13 +736,13 @@
             this.tiempoIncrementoPendiente = 0;
         }
 
-        iniciar() {
-            if (this.sinLimite) return;
+              iniciar() {
+            if (this.sinLimite || this.activo) return;
             this.activo = true;
             this._ultimoTick = performance.now();
+            if (this._intervalId) clearInterval(this._intervalId);
             this._intervalId = setInterval(() => this._tick(), 250);
         }
-
         detener() {
             this.activo = false;
             if (this._intervalId) {
