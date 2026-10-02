@@ -1824,33 +1824,37 @@
     };
 
     Curso.cambiarTipoBloque = function (claseId, temaId, bloqueId, nuevoTipo) {
-        const clase = Core.state.curso.clases.find(c => c.id === claseId);
-        const tema = Curso.buscarTemaRecursivo(clase.temas, temaId);
-        const bloque = tema?.bloques?.find(b => b.id === bloqueId);
-        if (!bloque) return;
-        bloque.tipo = nuevoTipo;
-        if (nuevoTipo === 'enlace') {
-            bloque.label = bloque.label || '';
-            bloque.url = bloque.url || '';
-            delete bloque.contenido;
-        } else if (nuevoTipo === 'tablero') {
-            bloque.config = bloque.config || { pgn: '', modo: 'ejercicio', colorHumano: 'w', nivelSF: 5, orientacion: 'auto', tiempoLimite: 0, porcentajeMinimo: 0 };
-            delete bloque.contenido;
-            delete bloque.label;
-            delete bloque.url;
-        } else if (nuevoTipo === 'consejo') {
-            bloque.imagenURL = bloque.imagenURL || '';
-            bloque.texto = bloque.texto || '';
-            delete bloque.contenido;
-            delete bloque.label;
-            delete bloque.url;
-        } else {
-            bloque.contenido = bloque.contenido || '';
-            delete bloque.label;
-            delete bloque.url;
-        }
-        Curso.guardarCurso().then(() => window.actualizarUI());
-    };
+    const clase = Core.state.curso.clases.find(c => c.id === claseId);
+    const tema = Curso.buscarTemaRecursivo(clase.temas, temaId);
+    const bloque = tema?.bloques?.find(b => b.id === bloqueId);
+    if (!bloque) return;
+
+    // ⭐ v70: Limpieza TOTAL de campos antes de asignar los del tipo nuevo.
+    // Evita configs huérfanas al cambiar tipo (ej: tablero → consejo dejaba bloque.config).
+    delete bloque.contenido;
+    delete bloque.label;
+    delete bloque.url;
+    delete bloque.config;
+    delete bloque.imagenURL;
+    delete bloque.texto;
+
+    bloque.tipo = nuevoTipo;
+
+    if (nuevoTipo === 'enlace') {
+        bloque.label = '';
+        bloque.url = '';
+    } else if (nuevoTipo === 'tablero') {
+        bloque.config = { pgn: '', modo: 'ejercicio', colorHumano: 'w', nivelSF: 5, orientacion: 'auto', tiempoLimite: 0, porcentajeMinimo: 0 };
+    } else if (nuevoTipo === 'consejo') {
+        bloque.imagenURL = '';
+        bloque.texto = '';
+    } else {
+        // video, texto, iframe, imagen → solo `contenido`
+        bloque.contenido = '';
+    }
+
+    Curso.guardarCurso().then(() => window.actualizarUI());
+};
 
     // ============================================================
     // EXPOSICIÓN GLOBAL (compatibilidad con HTML onclick)
