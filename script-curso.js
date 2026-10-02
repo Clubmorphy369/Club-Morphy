@@ -822,18 +822,25 @@
     // PROGRESO DEL USUARIO
     // ============================================================
     Curso.sincronizarProgresoDesdeFirestore = async function () {
-        if (!Core.state.currentUser) return;
-        try {
-            const doc = await db.collection('progreso').doc(Core.state.currentUser.uid).get();
-            if (doc.exists) {
-                const data = doc.data();
-                const local = JSON.parse(localStorage.getItem(`progreso_${Core.state.currentUser.uid}`) || '{}');
-                const combinado = { ...local, ...data };
-                localStorage.setItem(`progreso_${Core.state.currentUser.uid}`, JSON.stringify(combinado));
-                Core.state.progresoTableros = data || {};
+    if (!Core.state.currentUser) return;
+    try {
+        const doc = await db.collection('progreso').doc(Core.state.currentUser.uid).get();
+        if (doc.exists) {
+            const data = doc.data();
+            // ⭐ v73: EXCLUIR _esNovato del progreso (es un flag interno, no un ejercicio)
+            const { _esNovato, ...progresoSinFlag } = data;
+            const local = JSON.parse(localStorage.getItem(`progreso_${Core.state.currentUser.uid}`) || '{}');
+            const combinado = { ...local, ...progresoSinFlag };
+            localStorage.setItem(`progreso_${Core.state.currentUser.uid}`, JSON.stringify(combinado));
+            Core.state.progresoTableros = progresoSinFlag;
+
+            // ⭐ v73: Guardar esNovato si existe (así no dependemos solo del onSnapshot)
+            if (typeof _esNovato === 'boolean') {
+                Core.state.esNovato = _esNovato;
             }
-        } catch (err) { console.warn('No se pudo sincronizar progreso', err); }
-    };
+        }
+    } catch (err) { console.warn('No se pudo sincronizar progreso', err); }
+};
 
     Curso.estaCompletado = function (claseId, temaId) {
         if (!Core.state.currentUser) return false;
