@@ -1,15 +1,24 @@
 /* ============================================================
    ENTRENADOR CORE — Club Morphy
-   
+
    Contiene:
    - Constantes (PIEZAS, SIMBOLOS, ELO_*, TIEMPOS_PARTIDA, etc.)
    - Utilidades (escapeHtml, convertirUrlImagen, formatearTiempo, ...)
-   - Stockfish (SF)
+   - Motor de ajedrez Lozza (SF/Motor)
    - Sistema ELO
    - Parser PGN (tokenizePGN, construirArbolPGN, arbolAPGN, ...)
    - Utilidades de análisis (extraerJugadasLineales, calcularACPL, ...)
    - Clase RelojPartida
-   
+   - Clase TemporizadorLeccion
+
+   ⭐ v66 — Fix crítico de Lozza:
+     - Lozza solo tiene 2 opciones UCI: `Hash` y `MultiPV`
+     - NO acepta `strength`, `UCI_LimitStrength`, `UCI_Elo` ni `Skill Level`
+     - Simulamos la fuerza con MultiPV + selección ponderada
+     - Protocolo UCI correcto: uci → uciok → setoption → isready → readyok
+     - `evaluarPosicion` sin doble-resolve ni listeners colgando
+     - `ucinewgame` solo una vez al iniciar análisis (no por jugada)
+
    Expone: window.CMEntrenadorCore
    Cargado ANTES de entrenador-tablero.js
    ============================================================ */
@@ -53,25 +62,37 @@
     Core.ELO_MAX = 3000;
     Core.ELO_STORAGE_KEY = 'entrenadorEloData_v2';
 
-        Core.MODO_EDICION_KEY = 'cm-tablero-modo-edicion-persistente';
+    Core.MODO_EDICION_KEY = 'cm-tablero-modo-edicion-persistente';
 
     // ⭐ v56: Clave de persistencia para el modo exhaustivo (checkbox admin)
-    // ON → el capítulo se completa SOLO con todas las combinaciones resueltas.
-    // OFF → el alumno decide cuándo terminar (Opción C híbrida).
     Core.MODO_EXHAUSTIVO_KEY = 'cm-tablero-modo-exhaustivo';
 
     Core.ELO_BOT = { 1: 800, 2: 1000, 3: 1200, 4: 1400, 5: 1600, 6: 1800, 7: 2100, 8: 2400 };
 
-    Core.NIVELES_SF = {
-        1: { skill: 0, depth: 1, movetime: 50, nombre: 'Principiante' },
-        2: { skill: 2, depth: 1, movetime: 100, nombre: 'Muy fácil' },
-        3: { skill: 4, depth: 2, movetime: 200, nombre: 'Fácil' },
-        4: { skill: 7, depth: 3, movetime: 300, nombre: 'Normal' },
-        5: { skill: 10, depth: 4, movetime: 500, nombre: 'Intermedio' },
-        6: { skill: 13, depth: 6, movetime: 800, nombre: 'Difícil' },
-        7: { skill: 17, depth: 10, movetime: 1500, nombre: 'Muy difícil' },
-        8: { skill: 20, depth: 16, movetime: 3000, nombre: 'Maestro' }
+    // ============================================================
+    // ⭐ v66: NIVELES DEL MOTOR (LOZZA)
+    // Como Lozza no acepta opciones de fuerza, simulamos los niveles
+    // combinando: profundidad baja + tiempo corto + MultiPV + pesos.
+    //
+    // - `depth`: profundidad máxima de búsqueda (menor = juega peor)
+    // - `movetime`: tiempo máximo de búsqueda en ms
+    // - `multiPV`: cuántos candidatos pedir a Lozza
+    // - `pesos`: probabilidad relativa de elegir cada candidato
+    //             (los primeros son los mejores según Lozza)
+    // ============================================================
+    Core.NIVELES_MOTOR = {
+        1: { depth: 1,  movetime: 80,   multiPV: 5, pesos: [5, 12, 18, 28, 37], nombre: 'Principiante' },
+        2: { depth: 1,  movetime: 120,  multiPV: 4, pesos: [12, 20, 28, 40],    nombre: 'Muy fácil' },
+        3: { depth: 2,  movetime: 200,  multiPV: 3, pesos: [25, 35, 40],        nombre: 'Fácil' },
+        4: { depth: 3,  movetime: 300,  multiPV: 3, pesos: [55, 25, 20],        nombre: 'Normal' },
+        5: { depth: 4,  movetime: 500,  multiPV: 2, pesos: [75, 25],            nombre: 'Intermedio' },
+        6: { depth: 6,  movetime: 800,  multiPV: 2, pesos: [88, 12],            nombre: 'Difícil' },
+        7: { depth: 10, movetime: 1500, multiPV: 1, pesos: [100],               nombre: 'Muy difícil' },
+        8: { depth: 16, movetime: 3000, multiPV: 1, pesos: [100],               nombre: 'Maestro' }
     };
+
+    // Alias para compatibilidad con código antiguo (entrenador-api.js desestructura NIVELES_SF)
+    Core.NIVELES_SF = Core.NIVELES_MOTOR;
 
     Core.VALORES = { p: 100, n: 320, b: 330, r: 500, q: 900, k: 20000 };
 
@@ -84,14 +105,14 @@
     };
 
     Core.CLASIFICACION_JUGADAS = {
-        brillante:   { icono: '!!', color: '#22d3ee', nombre: 'Brillante',  label: 'Brillante'  },
-        excelente:   { icono: '!',  color: '#16a34a', nombre: 'Excelente',  label: 'Excelente'  },
-        buena:       { icono: '✓',  color: '#65a30d', nombre: 'Buena',      label: 'Buena'      },
+        brillante:   { icono: '!!', color: '#22d3ee', nombre: 'Brillante',   label: 'Brillante'   },
+        excelente:   { icono: '!',  color: '#16a34a', nombre: 'Excelente',   label: 'Excelente'   },
+        buena:       { icono: '✓',  color: '#65a30d', nombre: 'Buena',       label: 'Buena'       },
         imprecision: { icono: '?!', color: '#f59e0b', nombre: 'Imprecisión', label: 'Imprecisión' },
-        error:       { icono: '?',  color: '#ef4444', nombre: 'Error',      label: 'Error'      },
+        error:       { icono: '?',  color: '#ef4444', nombre: 'Error',       label: 'Error'       },
         blunder:     { icono: '??', color: '#b91c1c', nombre: 'Error grave', label: 'Error grave' },
-        libro:       { icono: '📖', color: '#8b5cf6', nombre: 'Libro',      label: 'Libro'      },
-        forzada:     { icono: '→',  color: '#64748b', nombre: 'Forzada',    label: 'Forzada'    }
+        libro:       { icono: '📖', color: '#8b5cf6', nombre: 'Libro',       label: 'Libro'       },
+        forzada:     { icono: '→',  color: '#64748b', nombre: 'Forzada',     label: 'Forzada'     }
     };
 
     // ============================================================
@@ -194,18 +215,28 @@
         return (peones > 0 ? '+' : '') + peones.toFixed(2);
     };
 
-       // ============================================================
-    // MOTOR DE AJEDREZ — Lozza (reemplaza a Stockfish)
-    // ⚠️ Fase 3: antes era Stockfish, ahora Lozza (JS puro, ~2340 ELO)
-    // Se mantiene el nombre Core.SF por compatibilidad con
-    // entrenador-tablero.js (que sigue llamando a Core.SF.*).
     // ============================================================
-    Core.SF = {
+    // MOTOR DE AJEDREZ — LOZZA (v66)
+    //
+    // Protocolo UCI correcto:
+    //   uci → esperar "uciok" → setoption → isready → esperar "readyok"
+    //
+    // Lozza solo acepta 2 opciones: `Hash` y `MultiPV`.
+    // La "fuerza" se simula con MultiPV + selección ponderada.
+    //
+    // Se mantiene el nombre `SF` por compatibilidad con
+    // entrenador-tablero.js (que desestructura `SF` de Core).
+    // ============================================================
+    const Motor = {
         worker: null,
         ready: false,
-        listeners: [],
         inicializado: false,
+        _uciokRecibido: false,
+        listeners: [],
 
+        // ------------------------------------------
+        // INIT — Protocolo UCI correcto
+        // ------------------------------------------
         init() {
             if (this.worker || this.inicializado) return;
             this.inicializado = true;
@@ -215,100 +246,249 @@
 
             try {
                 this.worker = new Worker(url);
+
                 this.worker.addEventListener('message', (e) => {
                     const msg = typeof e.data === 'string' ? e.data : (e.data && e.data.data) || '';
+                    if (!msg) return;
+
+                    // Resolver listeners de espera
                     this.listeners = this.listeners.filter(l => {
                         if (l.pattern.test(msg)) { l.resolve(msg); return false; }
                         return true;
                     });
-                    if (/uciok/.test(msg) && !this.ready) {
+
+                    // ⭐ v66: Detectar uciok para enviar setoption DESPUÉS
+                    if (/^uciok\b/m.test(msg) && !this._uciokRecibido) {
+                        this._uciokRecibido = true;
+                        // Ahora sí, configurar opciones (Lozza solo acepta Hash y MultiPV)
+                        this.worker.postMessage('setoption name Hash value 32');
+                        this.worker.postMessage('setoption name MultiPV value 1');
+                        this.worker.postMessage('isready');
+                    }
+
+                    // ⭐ v66: Detectar readyok para marcar "ready"
+                    if (/^readyok\b/m.test(msg) && !this.ready) {
                         this.ready = true;
                         document.dispatchEvent(new CustomEvent('cm-tablero-sf-ready'));
                     }
                 });
+
                 this.worker.addEventListener('error', (e) => {
                     console.error('[Entrenador] Lozza error:', e);
                 });
+
+                // Arrancar protocolo UCI
                 this.worker.postMessage('uci');
-                this.worker.postMessage('setoption name Hash value 32');
+
             } catch (e) {
                 console.error('[Entrenador] No se pudo inicializar Lozza:', e);
             }
         },
 
-        enviar(cmd) { if (this.worker) this.worker.postMessage(cmd); },
+        enviar(cmd) {
+            if (this.worker) this.worker.postMessage(cmd);
+        },
 
+        // Espera un mensaje que coincida con un patrón
         esperar(pattern, timeout = 5000) {
             return new Promise((resolve, reject) => {
                 const listener = { pattern, resolve };
                 this.listeners.push(listener);
                 setTimeout(() => {
                     const idx = this.listeners.indexOf(listener);
-                    if (idx >= 0) { this.listeners.splice(idx, 1); reject(new Error('timeout')); }
+                    if (idx >= 0) {
+                        this.listeners.splice(idx, 1);
+                        reject(new Error('timeout'));
+                    }
                 }, timeout);
             });
         },
 
+        // ------------------------------------------
+        // MEJOR MOVIMIENTO — Selección ponderada por nivel
+        // ------------------------------------------
         async mejorMovimiento(fen, nivel) {
             if (!this.worker || !this.ready) return null;
-            const cfg = Core.NIVELES_SF[nivel] || Core.NIVELES_SF[5];
 
+            const cfg = Core.NIVELES_MOTOR[nivel] || Core.NIVELES_MOTOR[5];
+
+            // Detener cualquier búsqueda anterior
             this.enviar('stop');
-            // Lozza usa "strength" (0-100) en lugar de "Skill Level" (0-20 de Stockfish).
-            // Convertimos el skill 0-20 a strength 0-100.
-            const strength = Math.round((cfg.skill / 20) * 100);
-            this.enviar('setoption name strength value ' + strength);
+
+            // ⭐ v66: Configurar MultiPV para este nivel
+            this.enviar('setoption name MultiPV value ' + cfg.multiPV);
             this.enviar('ucinewgame');
+            this.enviar('isready');
+
+            // Esperar readyok antes de mandar position/go
+            try {
+                await this.esperar(/^readyok\b/m, 2000);
+            } catch (e) {
+                // Si tarda, seguimos de todos modos
+            }
+
+            // Enviar posición y comando de búsqueda
             this.enviar('position fen ' + fen);
+            // ⭐ v66: NO combinar depth + movetime. Usamos depth como límite principal
+            // y movetime como red de seguridad. Lozza respeta ambos bien en la práctica.
             this.enviar('go depth ' + cfg.depth + ' movetime ' + cfg.movetime);
 
-            try {
-                const msg = await this.esperar(/^bestmove\s+(\S+)/, 8000);
-                const match = msg.match(/^bestmove\s+(\S+)/);
-                if (match && match[1] && match[1] !== '(none)') return match[1];
-            } catch (e) { /* timeout */ }
-            return null;
+            // Recolectar todos los candidatos MultiPV
+            const candidatos = await this._recolectarMultiPV(cfg.multiPV, cfg.movetime + 5000);
+
+            if (candidatos.length === 0) return null;
+
+            // Elegir uno con pesos
+            return this._elegirPonderado(candidatos, cfg.pesos);
         },
 
+        // Recolecta los N mejores movimientos según MultiPV
+        _recolectarMultiPV(numPV, timeout) {
+            return new Promise((resolve) => {
+                const candidatos = {};
+                let resuelto = false;
+
+                const resolver = () => {
+                    if (resuelto) return;
+                    resuelto = true;
+                    this.worker.removeEventListener('message', handler);
+                    clearTimeout(timeoutId);
+
+                    // Convertir a array ordenado por multipv (1 = mejor)
+                    const resultado = [];
+                    for (let i = 1; i <= numPV; i++) {
+                        if (candidatos[i]) resultado.push(candidatos[i]);
+                    }
+                    resolve(resultado);
+                };
+
+                const handler = (e) => {
+                    const msg = typeof e.data === 'string' ? e.data : (e.data && e.data.data) || '';
+                    if (!msg) return;
+
+                    // Parsear: "info ... multipv N ... pv MOVE ..."
+                    const multiMatch = msg.match(/\bmultipv\s+(\d+)/);
+                    const pvMatch = msg.match(/\bpv\s+(\S+)/);
+
+                    if (multiMatch && pvMatch) {
+                        const idx = parseInt(multiMatch[1], 10);
+                        // Guardar el último PV visto para cada multipv (mayor profundidad)
+                        candidatos[idx] = pvMatch[1];
+                    }
+
+                    // bestmove = fin de búsqueda
+                    if (/^bestmove\b/m.test(msg)) {
+                        const bm = msg.match(/bestmove\s+(\S+)/);
+                        if (bm && bm[1] !== '(none)' && Object.keys(candidatos).length === 0) {
+                            // Si Lozza no dio multiPV (raro), usar el bestmove
+                            candidatos[1] = bm[1];
+                        }
+                        resolver();
+                    }
+                };
+
+                this.worker.addEventListener('message', handler);
+
+                const timeoutId = setTimeout(() => {
+                    resolver();
+                }, timeout);
+            });
+        },
+
+        // Elige uno de los candidatos usando pesos ponderados
+        _elegirPonderado(movimientos, pesos) {
+            if (!movimientos || movimientos.length === 0) return null;
+            if (movimientos.length === 1) return movimientos[0];
+
+            // Ajustar pesos al número real de movimientos disponibles
+            const pesosAjustados = [];
+            for (let i = 0; i < movimientos.length; i++) {
+                pesosAjustados.push((pesos && pesos[i] !== undefined) ? pesos[i] : 1);
+            }
+
+            const total = pesosAjustados.reduce((a, b) => a + b, 0);
+            if (total <= 0) return movimientos[0];
+
+            let random = Math.random() * total;
+            for (let i = 0; i < movimientos.length; i++) {
+                random -= pesosAjustados[i];
+                if (random <= 0) return movimientos[i];
+            }
+            return movimientos[0];
+        },
+
+        // ------------------------------------------
+        // EVALUAR POSICIÓN (análisis post-partida)
+        // ⭐ v66: Sin doble-resolve, sin ucinewgame por llamada
+        // ------------------------------------------
         evaluarPosicion(fen, depth = 12) {
             return new Promise((resolve) => {
                 if (!this.worker || !this.ready) {
-                    resolve({ cp: 0, mate: null, mejor: null }); return;
+                    resolve({ cp: 0, mate: null, mejor: null });
+                    return;
                 }
-                this.enviar('stop');
-                this.enviar('setoption name strength value 100'); // máxima fuerza para análisis
-                this.enviar('ucinewgame');
+
+                // Configurar MultiPV=1 para análisis limpio (una sola línea)
+                this.enviar('setoption name MultiPV value 1');
                 this.enviar('position fen ' + fen);
                 this.enviar('go depth ' + depth);
 
+                let resuelto = false;
                 let ultimaEval = { cp: 0, mate: null, mejor: null };
+
+                const resolver = (val) => {
+                    if (resuelto) return;
+                    resuelto = true;
+                    this.worker.removeEventListener('message', handler);
+                    clearTimeout(timeoutId);
+                    resolve(val);
+                };
+
                 const handler = (e) => {
                     const msg = typeof e.data === 'string' ? e.data : (e.data && e.data.data) || '';
+                    if (!msg) return;
+
                     const cpMatch = msg.match(/\bscore cp (-?\d+)/);
                     const mateMatch = msg.match(/\bscore mate (-?\d+)/);
-                    if (cpMatch) { ultimaEval.cp = parseInt(cpMatch[1], 10); ultimaEval.mate = null; }
-                    else if (mateMatch) {
+
+                    if (cpMatch) {
+                        ultimaEval.cp = parseInt(cpMatch[1], 10);
+                        ultimaEval.mate = null;
+                    } else if (mateMatch) {
                         const n = parseInt(mateMatch[1], 10);
                         ultimaEval.mate = n;
                         ultimaEval.cp = n > 0 ? (10000 - Math.abs(n) * 50) : (-10000 + Math.abs(n) * 50);
                     }
+
                     const pvMatch = msg.match(/\bpv\s+(\S+)/);
                     if (pvMatch && !ultimaEval.mejor) ultimaEval.mejor = pvMatch[1];
-                    if (msg.startsWith('bestmove')) {
+
+                    if (/^bestmove\b/m.test(msg)) {
                         const bm = msg.match(/bestmove\s+(\S+)/);
                         if (bm && bm[1] !== '(none)') ultimaEval.mejor = bm[1];
-                        this.worker.removeEventListener('message', handler);
-                        resolve(ultimaEval);
+                        resolver(ultimaEval);
                     }
                 };
+
                 this.worker.addEventListener('message', handler);
-                setTimeout(() => {
-                    this.worker.removeEventListener('message', handler);
-                    resolve(ultimaEval);
+
+                const timeoutId = setTimeout(() => {
+                    resolver(ultimaEval);
                 }, 3000);
             });
+        },
+
+        // Reinicia el motor entre partidas (opcional)
+        reiniciar() {
+            if (this.worker && this.ready) {
+                this.enviar('ucinewgame');
+            }
         }
     };
+
+    // Exponer como Core.SF (compatibilidad) y Core.Motor (nombre nuevo)
+    Core.Motor = Motor;
+    Core.SF = Motor;
 
     // ============================================================
     // SISTEMA ELO
@@ -391,8 +571,7 @@
     // ⭐ Cargar ELO al inicializar Core
     Core.ELO.cargar();
 
-// === FIN DE LA PARTE 1/2 de entrenador-core.js ===
-     // ============================================================
+    // ============================================================
     // PGN PARSER
     // ============================================================
     Core.tokenizePGN = function (texto) {
@@ -433,7 +612,7 @@
         return tokens;
     };
 
-      Core.construirArbolPGN = function (movText, fenInicial, idCounter) {
+    Core.construirArbolPGN = function (movText, fenInicial, idCounter) {
         const tokens = Core.tokenizePGN(movText);
         const root = {
             id: idCounter.next(),
@@ -451,8 +630,6 @@
             const tok = tokens[i];
 
             if (tok.type === 'open') {
-                // ⭐ v51: Guardar estado y subir al padre para procesar la variante
-                // como hermana del nodo actual.
                 savedStates.push({
                     node: currentNode,
                     chess: new Chess(currentChess.fen())
@@ -465,7 +642,6 @@
             }
 
             if (tok.type === 'close') {
-                // Volver al estado guardado antes de entrar a la variante.
                 if (savedStates.length) {
                     const saved = savedStates.pop();
                     currentNode = saved.node;
@@ -736,13 +912,14 @@
             this.tiempoIncrementoPendiente = 0;
         }
 
-              iniciar() {
+        iniciar() {
             if (this.sinLimite || this.activo) return;
             this.activo = true;
             this._ultimoTick = performance.now();
             if (this._intervalId) clearInterval(this._intervalId);
             this._intervalId = setInterval(() => this._tick(), 250);
         }
+
         detener() {
             this.activo = false;
             if (this._intervalId) {
@@ -808,12 +985,9 @@
             return Core.formatearTiempo(Math.ceil(t));
         }
     };
+
     // ============================================================
-    // ⭐ v56: TEMPORIZADOR DE LECCIÓN (por bloque completo)
-    // - Un temporizador por instancia de tablero (= un bloque del curso).
-    // - Corre desde el primer movimiento válido hasta completar el bloque.
-    // - Se pausa al abrir modales, se reanuda al cerrarlos.
-    // - Al expirar dispara alExpirar() para mostrar aviso.
+    // TEMPORIZADOR DE LECCIÓN (por bloque completo)
     // ============================================================
     Core.TemporizadorLeccion = class TemporizadorLeccion {
         constructor(segundosIniciales, alLatir, alExpirar) {
@@ -838,7 +1012,7 @@
             this._emitirLatido();
         }
 
-                   pausar() {
+        pausar() {
             if (!this.activo) return;
             this.activo = false;
             if (this._intervaloId) {
@@ -855,13 +1029,14 @@
             this._intervaloId = setInterval(() => this._latir(), 250);
         }
 
-                    detener() {
+        detener() {
             this.activo = false;
             if (this._intervaloId) {
                 clearInterval(this._intervaloId);
                 this._intervaloId = null;
             }
         }
+
         resetear() {
             this.detener();
             this.segundosRestantes = this.segundosIniciales;
@@ -905,6 +1080,6 @@
             return Math.max(0, Math.min(100, (this.segundosRestantes / this.segundosIniciales) * 100));
         }
     };
-   
-     console.log('✅ CMEntrenadorCore cargado (constantes + utilidades + Lozza + ELO + PGN + RelojPartida)');
+
+    console.log('✅ CMEntrenadorCore v66 cargado (Lozza con MultiPV + selección ponderada)');
 })();
