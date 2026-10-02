@@ -1,9 +1,14 @@
 /* ============================================================
    ENTRENADOR API — Club Morphy
-   
+
    Contiene: API pública window.Entrenador.
    Depende de: entrenador-core.js + entrenador-tablero.js
    Expone: window.Entrenador
+
+   ⭐ v66 — Renombres Fase 3:
+     - initStockfish  → initMotor   (con alias)
+     - precargarStockfish → precargarMotor (con alias)
+     - estadoStockfish → estadoMotor (con alias)
    ============================================================ */
 
 (function () {
@@ -104,13 +109,17 @@
         permitirELO() { ELO.bloquearCambios = false; },
 
         // --------------------------------------------------------
-        // STOCKFISH
+        // MOTOR (Fase 3 completada — antes "Stockfish")
         // --------------------------------------------------------
+        initMotor() {
+            SF.init();
+        },
+        // Alias retrocompatible
         initStockfish() {
             SF.init();
         },
 
-        precargarStockfish() {
+        precargarMotor() {
             SF.init();
             return new Promise((resolve) => {
                 if (SF.ready) return resolve(true);
@@ -125,11 +134,19 @@
                 }, 8000);
             });
         },
+        // Alias retrocompatible
+        precargarStockfish() {
+            return this.precargarMotor();
+        },
 
-        estadoStockfish() {
+        estadoMotor() {
             if (SF.ready) return 'listo';
             if (SF.worker) return 'cargando';
             return 'inactivo';
+        },
+        // Alias retrocompatible
+        estadoStockfish() {
+            return this.estadoMotor();
         },
 
         // --------------------------------------------------------
@@ -205,6 +222,6 @@
         }
     };
 
-    console.log('✅ CMEntrenadorAPI cargado — window.Entrenador listo');
+    console.log('✅ CMEntrenadorAPI v66 cargado — window.Entrenador listo (initMotor con alias initStockfish)');
 
 })();
