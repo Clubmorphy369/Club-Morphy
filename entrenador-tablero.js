@@ -1032,14 +1032,7 @@ ${esAdmin ? `
         // --------------------------------------------------------
         // BARRA DE CAPÍTULOS
         // --------------------------------------------------------
-        renderizarBarraCapitulos() {
-            if (!this.$capsLista) return;
-
-            this._marcarCapitulosCompletados();
-
-            const esAdmin = this.esModoAdmin;
-            this.$capsLista.innerHTML = this.capitulos.map((cap, idx) => {
-               renderizarBarraCapitulos() {
+       renderizarBarraCapitulos() {
     if (!this.$capsLista) return;
 
     this._marcarCapitulosCompletados();
