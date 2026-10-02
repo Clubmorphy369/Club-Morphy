@@ -139,29 +139,35 @@
             Core.state.progresoTableros = {};
             return;
         }
-                db.collection('progreso').doc(Core.state.currentUser.uid).onSnapshot(doc => {
-            if (doc.exists) {
-                Core.state.progresoTableros = doc.data() || {};
-            } else {
-                Core.state.progresoTableros = {};
-            }
+       db.collection('progreso').doc(Core.state.currentUser.uid).onSnapshot(doc => {
+        const dataRaw = doc.exists ? (doc.data() || {}) : {};
+        // Separar el flag interno del resto del progreso
+        const { _esNovato, ...progresoSinFlag } = dataRaw;
+        Core.state.progresoTableros = progresoSinFlag;
 
-            // ⭐ v63: Guardar el flag "es novato" la primera vez que llega el snapshot.
-            // Una vez guardado, NO cambia aunque el alumno complete temas después.
-            const uidSnap = Core.state.currentUser?.uid;
-            if (uidSnap && !localStorage.getItem(`cm-es-novato-${uidSnap}`)) {
-                const prog = Core.state.progresoTableros || {};
-                let tieneAlgo = false;
-                for (const k in prog) {
-                    if (prog[k] === true) { tieneAlgo = true; break; }
-                }
-                localStorage.setItem(`cm-es-novato-${uidSnap}`, tieneAlgo ? 'false' : 'true');
-                console.log('[v63] Alumno marcado como:', tieneAlgo ? 'VIEJO' : 'NOVATO');
-            }
+        // ⭐ v64: Decidir si el alumno es NOVATO o VIEJO UNA SOLA VEZ y guardarlo en Firestore.
+        // Al guardarlo en Firestore, se comparte entre todos los dispositivos del alumno.
+        const uidSnap = Core.state.currentUser.uid;
 
-            // Actualizar progreso en tableros ya inicializados
-            if (typeof window.actualizarProgresoTableros === 'function') {
-                setTimeout(() => window.actualizarProgresoTableros(), 100);
+        if (typeof _esNovato === 'boolean') {
+            // Ya decidido previamente → solo leer
+            Core.state.esNovato = _esNovato;
+            console.log('[v64] Alumno ya marcado como:', _esNovato ? 'NOVATO' : 'VIEJO');
+        } else {
+            // Primera vez: decidir y persistir en Firestore
+            const tieneAlgo = Object.keys(progresoSinFlag).some(k => progresoSinFlag[k] === true);
+            const esNovato = !tieneAlgo;
+            Core.state.esNovato = esNovato;
+            db.collection('progreso').doc(uidSnap)
+                .set({ _esNovato: esNovato }, { merge: true })
+                .catch(err => console.warn('[v64] No se pudo guardar _esNovato:', err));
+            console.log('[v64] Alumno marcado como:', esNovato ? 'NOVATO' : 'VIEJO');
+        }
+
+        // Actualizar progreso en tableros ya inicializados
+        if (typeof window.actualizarProgresoTableros === 'function') {
+       
+       setTimeout(() => window.actualizarProgresoTableros(), 100);
             } else if (typeof window.inicializarTablerosEntrenador === 'function') {
                 setTimeout(() => window.inicializarTablerosEntrenador(), 100);
             }
