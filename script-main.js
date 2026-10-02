@@ -354,7 +354,9 @@
                 if (Core.state.unsubscribeSolicitudesAdmin) { Core.state.unsubscribeSolicitudesAdmin(); Core.state.unsubscribeSolicitudesAdmin = null; }
                 if (Core.state.unsubscribeMisSolicitudes) { Core.state.unsubscribeMisSolicitudes(); Core.state.unsubscribeMisSolicitudes = null; }
                 if (Core.state.unsubscribeCurso) { Core.state.unsubscribeCurso(); Core.state.unsubscribeCurso = null; }
-
+                if (Core.state.unsubscribeCurso) { Core.state.unsubscribeCurso(); Core.state.unsubscribeCurso = null; }
+                if (Core.state.unsubscribeProgresoTableros) { Core.state.unsubscribeProgresoTableros(); Core.state.unsubscribeProgresoTableros = null; }   // ⭐ v69
+               
                 Core.state.notificaciones = [];
                 Core.state.solicitudesPendientes = [];
                 Core.state.misSolicitudes = [];
