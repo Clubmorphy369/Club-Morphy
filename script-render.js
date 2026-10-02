@@ -1294,7 +1294,7 @@
             <div class="juego-ia-preview">
                 <span class="preview-item">🤖 <strong>IA Nv${Core.state.juegoIAConfig.nivelSF}</strong></span>
                 <span class="preview-item">🎨 <strong>${Core.state.juegoIAConfig.colorHumano === 'w' ? 'Blancas' : Core.state.juegoIAConfig.colorHumano === 'b' ? 'Negras' : 'Aleatorio'}</strong></span>
-                <span class="preview-item">⏱️ <strong>${Core.TIEMPOS_PARTIDA_MAP[Core.state.juegoIAConfig.tiempo] || 'Sin límite'}</strong></span>
+                <span class="preview-item">⏱️ <strong>${(Core.TIEMPOS_PARTIDA[Core.state.juegoIAConfig.tiempo]?.nombre) || 'Sin límite'}</strong></span>
             </div>
 
             <div class="juego-ia-acciones">
