@@ -1594,6 +1594,7 @@ Render.importarLichessEnBloque = async function (claseId, temaId, bloqueId) {
     window.actualizarBloqueTablero = Render.actualizarBloqueTablero;
     window.actualizarBloqueConsejo = Render.actualizarBloqueConsejo;
     window.cargarPGNArchivoEnBloque = Render.cargarPGNArchivoEnBloque;
+    window.importarLichessEnBloque = Render.importarLichessEnBloque;
 
     window.guardarVarianteEnFirestore = Render.guardarVarianteEnFirestore;
     window.guardarPGNEnFirestore = Render.guardarPGNEnFirestore;
