@@ -1306,7 +1306,9 @@
                     ${Core.state.juegoIAEsperandoStockfish ? '⏳ Cargando motor…' : '▶ Empezar partida'}
                 </button>
             </div>
-        `;
+               `;
+
+        mostrarToast('🔍 [H] HTML insertado', '');
 
         // Listeners de los botones
         dom.modalJuegoIA.querySelectorAll('.juego-ia-nivel-btn').forEach(btn => {
