@@ -1,20 +1,6 @@
 /* ============================================================
    SCRIPT MAIN — Club Morphy
-   
-   Contiene:
-   - Funciones de autenticación (login, registro, perfil, logout)
-   - auth.onAuthStateChanged (orquestador principal)
-   - Eventos del DOM (submit, change, click, keydown)
-   - Configuración de autofill
-   - Registro del Service Worker
-   - Inicialización global
-   
-   Depende de: script-core.js + script-curso.js + script-render.js + entrenador-*.js
-   Expone: window.CMMain
-   Cargado AL FINAL (después de script-render.js)
-   
-   ⚠️ Fase 3 (migración a Lozza): buscar comentarios "⚠️ Fase 3"
-      para saber qué renombrar cuando se reemplace Stockfish.
+   (idéntico al actual, solo cambia la línea marcada con ⭐ v66)
    ============================================================ */
 
 (function () {
@@ -279,7 +265,7 @@
         mostrarToast(Core.state.modoAdmin ? 'Modo administrador activado' : 'Modo usuario', 'success');
         Render.actualizarUI();
     };
-   
+
     // ============================================================
     // ON AUTH STATE CHANGED (orquestador principal)
     // ============================================================
@@ -311,8 +297,6 @@
                 Curso.suscribirNotificaciones();
                 Curso.suscribirSolicitudesAdmin();
                 Curso.suscribirMisSolicitudes();
-                // Cargar progreso ANTES de iniciar la escucha del curso
-                // para que los tableros se inicialicen con el progreso ya cargado
                 await Curso.sincronizarProgresoDesdeFirestore();
                 Curso.suscribirProgresoTableros();
                 Curso.iniciarEscuchaCurso();
@@ -335,17 +319,15 @@
                 }
                 Curso.actualizarBotonDatosClub();
 
-                // Activar badge ELO en header
                 Render.inicializarBadgeELO();
 
-                // ⚠️ Fase 3 (Lozza): cuando migremos, esta llamada se renombrará
-                //    a window.Entrenador.initMotor() y el log dirá "motor".
-                if (window.Entrenador && typeof window.Entrenador.initStockfish === 'function') {
+                // ⭐ v66: Fase 3 completada — antes era initStockfish()
+                if (window.Entrenador && typeof window.Entrenador.initMotor === 'function') {
                     try {
-                        window.Entrenador.initStockfish();
-                        console.log('[v29] Stockfish precargando en background...');
+                        window.Entrenador.initMotor();
+                        console.log('[v66] Lozza precargando en background...');
                     } catch (e) {
-                        console.warn('[v29] Error al precargar Stockfish:', e);
+                        console.warn('[v66] Error al precargar Lozza:', e);
                     }
                 }
 
@@ -437,7 +419,6 @@
 
     document.addEventListener('selectionchange', Curso.textEditorUpdateState);
 
-    // Toggle password
     const elTogglePassword = document.getElementById('toggle-password');
     if (elTogglePassword) {
         elTogglePassword.addEventListener('click', function() {
@@ -449,7 +430,6 @@
         });
     }
 
-    // Formulario de autenticación
     const elAuthForm = document.getElementById('auth-form');
     if (elAuthForm) {
         elAuthForm.addEventListener('submit', async (e) => {
@@ -505,7 +485,6 @@
         });
     }
 
-    // Cambiar a modo registro
     const elSwitchAuth = document.getElementById('switch-auth');
     if (elSwitchAuth) {
         elSwitchAuth.addEventListener('click', (e) => {
@@ -525,7 +504,6 @@
         });
     }
 
-    // Recuperar contraseña
     const elBtnForgot = document.getElementById('btn-forgot-password');
     if (elBtnForgot) {
         elBtnForgot.addEventListener('click', async () => {
@@ -640,7 +618,6 @@
     // ATAJOS DE TECLADO
     // ============================================================
     document.addEventListener('keydown', (e) => {
-        // Escape: cerrar modal más reciente
         if (e.key === 'Escape') {
             if (dom.modalJuegoIA && dom.modalJuegoIA.classList.contains('active') && !Core.state.juegoIAInstancia) {
                 Render.cerrarModalJuegoIA();
@@ -654,7 +631,6 @@
             ultimoModal.classList.remove('active');
         }
 
-        // Z: modo zen (si no hay input activo)
         if ((e.key === 'z' || e.key === 'Z') && !e.ctrlKey && !e.metaKey && !e.altKey) {
             const tag = document.activeElement?.tagName?.toLowerCase();
             if (tag === 'input' || tag === 'textarea' || document.activeElement?.isContentEditable) return;
@@ -698,13 +674,10 @@
         console.error('[Init] Error en suscribirDatosClub:', err);
     }
 
-    console.log('✅ Club Morphy — refactor modular completo (4 scripts + 3 entrenador)');
+    console.log('✅ Club Morphy v66 — main cargado');
 
     // ============================================================
     // REGISTRO DEL SERVICE WORKER
-    // ✅ FIX: ruta RELATIVA ('sw.js') en vez de absoluta ('/sw.js')
-    //    Esto funciona tanto en Firebase (raíz) como en GitHub Pages
-    //    (subcarpeta /Club-Morphy/).
     // ============================================================
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
@@ -726,9 +699,6 @@
         });
     }
 
-    // ============================================================
-    // LOG FINAL DEL ARCHIVO
-    // ============================================================
-    console.log('✅ CMMain cargado (auth + eventos + Service Worker + inicialización)');
+    console.log('✅ CMMain v66 cargado (auth + eventos + Service Worker + inicialización)');
 
 })();
