@@ -318,15 +318,18 @@
                             </div>
                             <div class="cm-tablero-progress-info" data-rol="progressInfo"></div>
 
-                            ${!esSalaLibre ? `
-                            <div class="cm-tablero-capitulos-bar" data-rol="capitulosBar">
-                                <div class="cm-tablero-capitulos-titulo">
-                                    <span>📚 Capítulos del ejercicio</span>
-                                    <span class="cm-progreso-caps" data-rol="capsProgreso">0/0</span>
-                                </div>
-                                <div class="cm-tablero-capitulos-lista" data-rol="capsLista"></div>
-                            </div>
-                            ` : ''}
+${!esSalaLibre ? `
+<div class="cm-tablero-capitulos-bar" data-rol="capitulosBar">
+    <div class="cm-tablero-capitulos-titulo" data-rol="capsToggle" style="cursor:pointer; user-select:none;">
+        <span class="cm-caps-arrow" data-rol="capsArrow" style="display:inline-block; transition:transform 0.2s; margin-right:6px;">▶</span>
+        <span>📚 Capítulos del ejercicio</span>
+        <span class="cm-progreso-caps" data-rol="capsProgreso">0/0</span>
+        <span style="flex:1;"></span>
+        <span class="cm-caps-hint" style="font-size:0.72rem; color:var(--cm-texto-suave); font-weight:400;">clic para ver</span>
+    </div>
+    <div class="cm-tablero-capitulos-lista" data-rol="capsLista" style="display:none;"></div>
+</div>
+` : ''}
                         </div>
 
                         <div class="cm-tablero-panel">
