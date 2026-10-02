@@ -1189,16 +1189,18 @@
         } catch (e) { /* ignorar */ }
     }
 
-    Render.abrirModalJuegoIA = function () {
+      Render.abrirModalJuegoIA = function () {
+        mostrarToast('🔍 [A] Botón pulsado', '');
         if (!Core.state.currentUser) {
-            mostrarToast('Debes iniciar sesión para jugar', 'error');
+            mostrarToast('🔍 [B] Sin usuario logueado', 'error');
             return;
         }
-
+        mostrarToast('🔍 [C] Usuario OK', '');
         if (!dom.modalJuegoIA) {
-            console.warn('[v20] Modal de juego IA no encontrado en el DOM');
+            mostrarToast('🔍 [D] Modal no encontrado en DOM', 'error');
             return;
         }
+        mostrarToast('🔍 [E] Modal encontrado, abriendo...', '');
 
         // ⭐ v38: Recuperar la última configuración guardada (o usar defaults)
         const ultimaConfig = cargarUltimaConfigJuegoIA();
