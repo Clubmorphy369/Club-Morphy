@@ -145,26 +145,37 @@
         return uids.includes(uid);
     };
 
-           Render.tieneProgresoPrevio = function () {
-        // ⭐ v62: Modo pruebas — añadir ?novato=1 a la URL fuerza "alumno nuevo"
-        try {
-            const params = new URLSearchParams(window.location.search);
-            if (params.get('novato') === '1') return false;
-        } catch (e) { /* ignorar */ }
+         Render.tieneProgresoPrevio = function () {
+    // Modo pruebas: ?novato=1 fuerza "nuevo", ?novato=0 fuerza "viejo"
+    try {
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('novato') === '1') return false;
+        if (params.get('novato') === '0') return true;
+    } catch (e) { /* ignorar */ }
 
-        // ⭐ v64: Leer del estado global (viene de Firestore → se comparte entre dispositivos).
-        if (typeof Core.state.esNovato === 'boolean') {
-            return !Core.state.esNovato; // si es novato → false; si es viejo → true
-        }
+    const uid = Core.state.currentUser?.uid;
+    if (!uid) return false;
 
-        // Fallback: aún no llegó el snapshot de Firestore.
-        const prog = Core.state.progresoTableros || {};
-        for (const k in prog) {
-            if (prog[k] === true) return true;
-        }
-        return false;
-    };
-   
+    // ⭐ v73: Fuente principal = esNovato (persistido en Firestore)
+    if (typeof Core.state.esNovato === 'boolean') {
+        return !Core.state.esNovato;
+    }
+
+    // Fallback 1: localStorage (compatibilidad con versiones antiguas)
+    const saved = localStorage.getItem(`cm-es-novato-${uid}`);
+    if (saved === 'true') return false;
+    if (saved === 'false') return true;
+
+    // Fallback 2: revisar progreso real (excluyendo keys internas)
+    // ⭐ v73: ignora _esNovato y tablero_actual_ (no son logros del alumno)
+    const prog = Core.state.progresoTableros || {};
+    for (const k in prog) {
+        if (k.startsWith('_')) continue;
+        if (k.startsWith('tablero_actual_')) continue;
+        if (prog[k] === true) return true;
+    }
+    return false;
+};   
     // ============================================================
     // ⭐ v62 C3: Verificar si el tema anterior en la misma lista está completado.
     // Se usa para bloquear por progresión a los alumnos nuevos.
