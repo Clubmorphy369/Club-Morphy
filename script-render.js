@@ -1097,7 +1097,60 @@
         };
         reader.readAsText(file);
     };
+// ⭐ v68: Importar PGN desde Lichess directamente en el editor de bloques
+Render.importarLichessEnBloque = async function (claseId, temaId, bloqueId) {
+    const input = document.getElementById(`input-lichess-${bloqueId}`);
+    if (!input) return;
 
+    const url = input.value.trim();
+    if (!url) {
+        mostrarToast('⚠️ Pega una URL de estudio de Lichess', 'error');
+        return;
+    }
+
+    const match = url.match(/lichess\.org\/study\/([a-zA-Z0-9]{8})/);
+    if (!match) {
+        mostrarToast('⚠️ URL no válida. Formato: https://lichess.org/study/XXXXXXXX', 'error');
+        return;
+    }
+    const studyId = match[1];
+
+    mostrarToast('⏳ Importando desde Lichess…', 'success');
+
+    try {
+        const resp = await fetch(`https://lichess.org/api/study/${studyId}.pgn`, {
+            headers: { 'Accept': 'application/x-chess-pgn' }
+        });
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+
+        const pgn = await resp.text();
+        if (!pgn || !pgn.trim()) throw new Error('PGN vacío');
+
+        const bloques = pgn.split(/(?=\[Event\s)/i).filter(b => b.trim());
+        const numCaps = bloques.length;
+
+        if (numCaps === 0) {
+            mostrarToast('⚠️ El estudio no contiene capítulos', 'error');
+            return;
+        }
+
+        // Guardar en Firestore (sin re-renderizar para no perder scroll)
+        Render.actualizarBloqueTablero(claseId, temaId, bloqueId, 'pgn', pgn);
+
+        // Actualizar el textarea en pantalla (feedback visual)
+        const config = input.closest('.bloque-tablero-config');
+        const textarea = config?.querySelector('textarea');
+        if (textarea) textarea.value = pgn;
+
+        // Limpiar input
+        input.value = '';
+
+        mostrarToast(`✅ ${numCaps} capítulo${numCaps === 1 ? '' : 's'} importado${numCaps === 1 ? '' : 's'} desde Lichess`, 'success');
+    } catch (err) {
+        console.error('[Lichess] Error al importar:', err);
+        mostrarToast('❌ No se pudo importar. Verifica que el estudio sea público.', 'error');
+    }
+};
     // ============================================================
     // PERSISTENCIA DE VARIANTES/PGN
     // ============================================================
