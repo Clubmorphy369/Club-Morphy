@@ -5247,11 +5247,11 @@ mejorMovimientoFallback(c) {
                 document.removeEventListener('cm-tablero-sf-ready', this._sfReadyHandler);
                 this._sfReadyHandler = null;
             }
-                this._desregistrarAtajosAnalisis();
-            if (this.esModoAdmin) {
-                ELO.bloquearCambios = false;
-            }
-            this.contenedor.innerHTML = '';
+                      if (this.esModoAdmin) {
+                // ⭐ v74: decrementar contador (nunca por debajo de 0)
+                ELO._bloqueadoresAdmin = Math.max(0, ELO._bloqueadoresAdmin - 1);
+            }    
+          this.contenedor.innerHTML = '';
         }
     }
 
