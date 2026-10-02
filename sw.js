@@ -3,8 +3,8 @@
 // =============================================================
 
 // ⚠️ Sube la versión cuando hagas cambios importantes
-// ⭐ v63: Sistema de evaluación (intentos, ELO +6/+3/-10, % mínimo, bonus 100%) + aspect-ratio tablero + guard admin
-const CACHE_NAME = 'club-morphy-v63';
+// ⭐ v64: Sistema de evaluación (intentos, ELO +6/+3/-10, % mínimo, bonus 100%) + aspect-ratio tablero + guard admin
+const CACHE_NAME = 'club-morphy-v64';
 
 // Scope dinámico: funciona tanto en "/" (Firebase) como en "/Club-Morphy/" (GitHub Pages)
 const ROOT = self.registration.scope;
