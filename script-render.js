@@ -1200,10 +1200,11 @@
             mostrarToast('🔍 [D] Modal no encontrado en DOM', 'error');
             return;
         }
-        mostrarToast('🔍 [E] Modal encontrado, abriendo...', '');
+               mostrarToast('🔍 [E] Modal encontrado, abriendo...', '');
 
         // ⭐ v38: Recuperar la última configuración guardada (o usar defaults)
         const ultimaConfig = cargarUltimaConfigJuegoIA();
+        mostrarToast('🔍 [F] Config cargada', '');
         if (ultimaConfig) {
             Core.state.juegoIAConfig = {
                 nivelSF: ultimaConfig.nivelSF || 5,
