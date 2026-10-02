@@ -501,12 +501,30 @@
                                     <p style="font-size:0.78rem; color:#c2410c; font-weight:700; text-transform:uppercase; margin-bottom:8px;">🎯 Configuración del Tablero</p>
                                     <label style="display:block; font-size:0.75rem; color:#92400e; font-weight:700; text-transform:uppercase; margin-bottom:3px;">📋 PGN del estudio</label>
                                     <textarea placeholder="Pega aquí el PGN de tu estudio…" onchange="actualizarBloqueTablero('${claseId}','${tema.id}','${bloque.id}', 'pgn', this.value)" style="width:100%; min-height:90px; font-family:'Courier New',monospace; font-size:0.78rem; padding:8px; border:1px solid #fdba74; border-radius:6px; resize:vertical; background:white;">${esc((bloque.config||{}).pgn || '')}</textarea>
-                                    <div style="display:flex; gap:6px; margin-top:6px; flex-wrap:wrap;">
-                                        <label style="background:white; border:1px solid #f59e0b; color:#92400e; padding:6px 12px; border-radius:6px; font-weight:700; font-size:0.78rem; cursor:pointer; display:inline-flex; align-items:center; gap:5px;">
-                                            📂 Subir archivo .pgn
-                                            <input type="file" accept=".pgn,.txt" style="display:none;" onchange="cargarPGNArchivoEnBloque('${claseId}','${tema.id}','${bloque.id}', event)">
-                                        </label>
-                                    </div>
+                                  <div style="display:flex; gap:6px; margin-top:6px; flex-wrap:wrap;">
+    <label style="background:white; border:1px solid #f59e0b; color:#92400e; padding:6px 12px; border-radius:6px; font-weight:700; font-size:0.78rem; cursor:pointer; display:inline-flex; align-items:center; gap:5px;">
+        📂 Subir archivo .pgn
+        <input type="file" accept=".pgn,.txt" style="display:none;" onchange="cargarPGNArchivoEnBloque('${claseId}','${tema.id}','${bloque.id}', event)">
+    </label>
+</div>
+<!-- ⭐ v68: Importar desde Lichess directamente en el editor -->
+<div style="margin-top:8px; padding-top:8px; border-top:1px dashed #fdba74;">
+    <label style="display:block; font-size:0.72rem; color:#92400e; font-weight:700; text-transform:uppercase; margin-bottom:4px;">🔗 O importar desde Lichess</label>
+    <div style="display:flex; gap:6px; flex-wrap:wrap;">
+        <input type="url"
+               id="input-lichess-${bloque.id}"
+               placeholder="https://lichess.org/study/..."
+               style="flex:1; min-width:180px; padding:6px 10px; border:1px solid #fdba74; border-radius:6px; font-size:0.82rem; background:white; color:#1e293b;">
+        <button type="button"
+                onclick="importarLichessEnBloque('${claseId}','${tema.id}','${bloque.id}')"
+                style="background:#f59e0b; color:white; border:none; padding:6px 14px; border-radius:6px; font-weight:700; font-size:0.78rem; cursor:pointer; display:inline-flex; align-items:center; gap:5px;">
+            📥 Importar
+        </button>
+    </div>
+    <p style="font-size:0.68rem; color:#a16207; margin-top:4px; font-style:italic;">
+        ℹ️ Pega la URL de un estudio público de Lichess (ej: https://lichess.org/study/xxxxxxxx)
+    </p>
+</div>
                                     <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:8px; margin-top:10px;">
                                         <div>
                                             <label style="display:block; font-size:0.72rem; color:#92400e; font-weight:700; text-transform:uppercase; margin-bottom:3px;">Modo</label>
