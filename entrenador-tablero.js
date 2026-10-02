@@ -3578,31 +3578,43 @@ mejorMovimientoFallback(c) {
         // --------------------------------------------------------
         // DESHACER / REINICIAR / COMPARTIR (sala libre)
         // --------------------------------------------------------
-        deshacerPartida() {
-            if (!this.esSalaLibre) return;
-            if (this.historialCompletoPartida.length < 2) {
-                this.mostrarToast('No hay jugadas para deshacer', '');
-                return;
-            }
-            if (this.esperandoRespuesta) {
-                this.mostrarToast('Espera a que la IA termine su jugada', '');
-                return;
-            }
+       deshacerPartida() {
+    if (!this.esSalaLibre) return;
+    if (this.historialCompletoPartida.length < 1) {
+        this.mostrarToast('No hay jugadas para deshacer', '');
+        return;
+    }
+    if (this.esperandoRespuesta) {
+        this.mostrarToast('Espera a que la IA termine su jugada', '');
+        return;
+    }
 
-            this.chess.undo();
-            this.chess.undo();
-            this.historialCompletoPartida.pop();
-            this.historialCompletoPartida.pop();
+    // ⭐ v72: Detectar cuántas jugadas deshacer según quién movió último
+    const ultimaJugada = this.historialCompletoPartida[this.historialCompletoPartida.length - 1];
+    const ultimaEsHumano = ultimaJugada.esHumano;
 
-            this.dibujarPiezas();
-            this.actualizarMovimientosSalaLibre();
-            this._actualizarBarraMaterial();
-            this.casillaSeleccionada = null;
-            this.setStatus('ordenador', '↩️ Jugada deshecha. Tu turno.');
-            this.mostrarToast('↩️ Jugada deshecha', '');
-        }
+    // Si el último movimiento fue del humano (la IA aún no respondió),
+    // deshacemos solo 1. Si fue de la IA, deshacemos 2 (IA + humano).
+    const cuantasDeshacer = ultimaEsHumano ? 1 : 2;
 
-        reiniciarPartidaLibre() {
+    if (this.historialCompletoPartida.length < cuantasDeshacer) {
+        this.mostrarToast('No hay suficientes jugadas para deshacer', '');
+        return;
+    }
+
+    for (let i = 0; i < cuantasDeshacer; i++) {
+        this.chess.undo();
+        this.historialCompletoPartida.pop();
+    }
+
+    this.dibujarPiezas();
+    this.actualizarMovimientosSalaLibre();
+    this._actualizarBarraMaterial();
+    this.casillaSeleccionada = null;
+    this.setStatus('ordenador', '↩️ Jugada deshecha. Tu turno.');
+    this.mostrarToast('↩️ Jugada deshecha', '');
+}
+       reiniciarPartidaLibre() {
             this.abrirModalConfirmacion(
                 '⟲ Nueva partida',
                 'Se reiniciará la partida actual con la misma configuración. ¿Continuar?',
