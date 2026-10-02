@@ -793,10 +793,16 @@
             }, 50);
         }
 
-        setTimeout(() => Render.inicializarTablerosEntrenador(), 100);
+                setTimeout(() => Render.inicializarTablerosEntrenador(), 100);
         guardarEstadoNavegacion();
-    };
 
+        // ⭐ v70: Restaurar scrollTop tras el re-render
+        if (scrollTopAnterior > 0) {
+            requestAnimationFrame(() => {
+                if (contentDiv) contentDiv.scrollTop = scrollTopAnterior;
+            });
+        }
+    };
     Render.renderizarContenido = function (clase) {
         const temasHTML = clase.temas.map(t => Render.renderizarTemaRecursivo(t, clase.id, 0)).join('');
 
