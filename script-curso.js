@@ -749,7 +749,13 @@
         if (Core.state.claseActivaId === id) {
             Core.state.claseActivaId = Core.state.curso.clases.length > 0 ? Core.state.curso.clases[0].id : null;
         }
-        Core.state.temaAbiertoGlobal = null;
+                Core.state.temaAbiertoGlobal = null;
+
+        // ⭐ v70: Limpiar accesos especiales de la clase eliminada del state local
+        // (evita desbloqueo fantasma momentáneo hasta que llegue el snapshot de Firestore)
+        if (Core.state.accesosEspeciales && Core.state.accesosEspeciales[id]) {
+            delete Core.state.accesosEspeciales[id];
+        }
 
         // Marcar operación de eliminación
         Core.state._operacionEliminar = true;
