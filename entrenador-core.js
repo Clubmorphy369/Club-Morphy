@@ -525,13 +525,14 @@
             return this.data.estudios[estudio].capitulos[capIdx] || Core.ELO_INICIAL;
         },
 
-        aplicar(estudio, capIdx, cambio, razon) {
+                aplicar(estudio, capIdx, cambio, razon) {
             if (cambio === 0) return 0;
-            if (this.bloquearCambios) {
+            // ⭐ v74: comprobar contador (soporta múltiples instancias admin)
+            if (this.bloquearCambios || this._bloqueadoresAdmin > 0) {
                 console.log(`[Entrenador] ELO bloqueado (admin): ${cambio > 0 ? '+' : ''}${cambio} (${razon})`);
                 return 0;
             }
-            if (!this.data.estudios[estudio]) {
+      if (!this.data.estudios[estudio]) {
                 this.data.estudios[estudio] = { elo: Core.ELO_INICIAL, capitulos: {} };
             }
             const est = this.data.estudios[estudio];
