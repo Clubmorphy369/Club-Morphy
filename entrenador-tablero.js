@@ -1039,6 +1039,16 @@ ${esAdmin ? `
 
             const esAdmin = this.esModoAdmin;
             this.$capsLista.innerHTML = this.capitulos.map((cap, idx) => {
+               renderizarBarraCapitulos() {
+    if (!this.$capsLista) return;
+
+    this._marcarCapitulosCompletados();
+
+    // ⭐ v71: Restaurar estado plegable (persistente por instancia)
+    this._aplicarEstadoPlegableCaps();
+
+    const esAdmin = this.esModoAdmin;
+    this.$capsLista.innerHTML = this.capitulos.map((cap, idx) => {
                 const activo = idx === this.capituloActual;
                 const completado = cap.completado;
                 const badge = completado ? '<span class="cm-capitulo-check">✓</span>' : '';
