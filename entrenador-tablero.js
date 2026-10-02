@@ -4452,30 +4452,33 @@ mejorMovimientoFallback(c) {
 
         // ⭐ v44: Registrar atajos de teclado
         _registrarAtajosAnalisis() {
-            if (this._atajosAnalisisActivos) return;
-            this._atajosAnalisisActivos = true;
+    if (this._atajosAnalisisActivos) return;
+    this._atajosAnalisisActivos = true;
 
-            this._atajosHandler = (e) => {
-                if (!this.analisis || !this.$panelAnalisis || this.$panelAnalisis.classList.contains('cm-tablero-hidden')) return;
+    this._atajosHandler = (e) => {
+        if (!this.analisis || !this.$panelAnalisis || this.$panelAnalisis.classList.contains('cm-tablero-hidden')) return;
 
-                const tag = document.activeElement?.tagName?.toLowerCase();
-                if (tag === 'input' || tag === 'textarea' || document.activeElement?.isContentEditable) return;
+        // ⭐ v74: Solo actuar si el foco está dentro de ESTE contenedor
+        // (evita que múltiples tableros muevan sus análisis a la vez)
+        if (!this.contenedor.contains(document.activeElement)) return;
 
-                if (e.key === 'ArrowLeft') {
-                    e.preventDefault();
-                    this._navegarAnalisis(-1);
-                } else if (e.key === 'ArrowRight') {
-                    e.preventDefault();
-                    this._navegarAnalisis(1);
-                } else if (e.key === 'Escape' && this.practicandoDesdeIdx !== null) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    this._volverAlPresente();
-                }
-            };
-            document.addEventListener('keydown', this._atajosHandler);
+        const tag = document.activeElement?.tagName?.toLowerCase();
+        if (tag === 'input' || tag === 'textarea' || document.activeElement?.isContentEditable) return;
+
+        if (e.key === 'ArrowLeft') {
+            e.preventDefault();
+            this._navegarAnalisis(-1);
+        } else if (e.key === 'ArrowRight') {
+            e.preventDefault();
+            this._navegarAnalisis(1);
+        } else if (e.key === 'Escape' && this.practicandoDesdeIdx !== null) {
+            e.preventDefault();
+            e.stopPropagation();
+            this._volverAlPresente();
         }
-
+    };
+    document.addEventListener('keydown', this._atajosHandler);
+}
         // ⭐ v44: Desregistrar atajos
         _desregistrarAtajosAnalisis() {
             if (this._atajosHandler) {
