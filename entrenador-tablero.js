@@ -1096,12 +1096,81 @@ ${esAdmin ? `
                 });
             }
 
-            if (this.$capsProgreso) {
-                const completados = this.capitulos.filter(c => c.completado).length;
-                this.$capsProgreso.textContent = `${completados}/${this.capitulos.length}`;
-            }
+                    if (this.$capsProgreso) {
+            const completados = this.capitulos.filter(c => c.completado).length;
+            this.$capsProgreso.textContent = `${completados}/${this.capitulos.length}`;
         }
 
+        // ⭐ v71: Vincular el toggle plegable (solo una vez por instancia)
+        this._vincularToggleCaps();
+    }
+
+    // ⭐ v71: Aplicar estado plegable guardado
+    _aplicarEstadoPlegableCaps() {
+        if (!this.$capsLista) return;
+        const bar = this.contenedor.querySelector('[data-rol="capitulosBar"]');
+        if (!bar) return;
+
+        const arrow = bar.querySelector('[data-rol="capsArrow"]');
+        const hint = bar.querySelector('.cm-caps-hint');
+
+        // Leer estado guardado (por defecto: plegado)
+        let expandido = false;
+        try {
+            const guardado = localStorage.getItem('cm-caps-expandido');
+            if (guardado === 'true') expandido = true;
+        } catch (e) { /* ignorar */ }
+
+        this._capsExpandido = expandido;
+        if (expandido) {
+            this.$capsLista.style.display = '';
+            if (arrow) arrow.style.transform = 'rotate(90deg)';
+            if (hint) hint.textContent = 'clic para ocultar';
+        } else {
+            this.$capsLista.style.display = 'none';
+            if (arrow) arrow.style.transform = 'rotate(0deg)';
+            if (hint) hint.textContent = 'clic para ver';
+        }
+    }
+
+    // ⭐ v71: Vincular el toggle plegable
+    _vincularToggleCaps() {
+        const bar = this.contenedor.querySelector('[data-rol="capitulosBar"]');
+        if (!bar || bar._capsToggleVinculado) return;
+        bar._capsToggleVinculado = true;
+
+        const toggle = bar.querySelector('[data-rol="capsToggle"]');
+        if (!toggle) return;
+
+        toggle.addEventListener('click', () => this.toggleCapitulosBar());
+    }
+
+    // ⭐ v71: Alternar plegado/expandido
+    toggleCapitulosBar() {
+        if (!this.$capsLista) return;
+        const bar = this.contenedor.querySelector('[data-rol="capitulosBar"]');
+        if (!bar) return;
+
+        const arrow = bar.querySelector('[data-rol="capsArrow"]');
+        const hint = bar.querySelector('.cm-caps-hint');
+
+        this._capsExpandido = !this._capsExpandido;
+
+        if (this._capsExpandido) {
+            this.$capsLista.style.display = '';
+            if (arrow) arrow.style.transform = 'rotate(90deg)';
+            if (hint) hint.textContent = 'clic para ocultar';
+        } else {
+            this.$capsLista.style.display = 'none';
+            if (arrow) arrow.style.transform = 'rotate(0deg)';
+            if (hint) hint.textContent = 'clic para ver';
+        }
+
+        // Persistir preferencia (global, no por tablero)
+        try {
+            localStorage.setItem('cm-caps-expandido', this._capsExpandido ? 'true' : 'false');
+        } catch (e) { /* ignorar */ }
+    }
         _abrirModalRenombrarCapitulo(idx) {
             const cap = this.capitulos[idx];
             if (!cap) return;
