@@ -493,10 +493,10 @@
     // ============================================================
     // SISTEMA ELO
     // ============================================================
-    Core.ELO = {
-        data: null,
-        bloquearCambios: false,
-
+   Core.ELO = {
+    data: null,
+    bloquearCambios: false,
+    _bloqueadoresAdmin: 0,   // ⭐ v74: contador para múltiples instancias admin
         cargar() {
             try {
                 const raw = localStorage.getItem(Core.ELO_STORAGE_KEY);
