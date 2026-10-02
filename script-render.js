@@ -1237,7 +1237,10 @@
             { id: '10+0', nombre: '10 min' },
             { id: '15+10', nombre: '15 min + 10s' }
         ];
-        mostrarToast('🔍 [G] Construyendo HTML', '');
+                mostrarToast('🔍 [G] Construyendo HTML', '');
+
+        try {
+
         const htmlNiveles = niveles.map(n => `
             <button class="juego-ia-nivel-btn ${Core.state.juegoIAConfig.nivelSF === n.nivel ? 'activo' : ''}" data-nivel="${n.nivel}" aria-label="Nivel ${n.nivel}: ${n.nombre}">
                 <span class="nivel-num">Nv${n.nivel}</span>
