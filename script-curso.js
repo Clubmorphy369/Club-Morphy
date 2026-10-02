@@ -139,12 +139,26 @@
             Core.state.progresoTableros = {};
             return;
         }
-        db.collection('progreso').doc(Core.state.currentUser.uid).onSnapshot(doc => {
+                db.collection('progreso').doc(Core.state.currentUser.uid).onSnapshot(doc => {
             if (doc.exists) {
                 Core.state.progresoTableros = doc.data() || {};
             } else {
                 Core.state.progresoTableros = {};
             }
+
+            // ⭐ v63: Guardar el flag "es novato" la primera vez que llega el snapshot.
+            // Una vez guardado, NO cambia aunque el alumno complete temas después.
+            const uidSnap = Core.state.currentUser?.uid;
+            if (uidSnap && !localStorage.getItem(`cm-es-novato-${uidSnap}`)) {
+                const prog = Core.state.progresoTableros || {};
+                let tieneAlgo = false;
+                for (const k in prog) {
+                    if (prog[k] === true) { tieneAlgo = true; break; }
+                }
+                localStorage.setItem(`cm-es-novato-${uidSnap}`, tieneAlgo ? 'false' : 'true');
+                console.log('[v63] Alumno marcado como:', tieneAlgo ? 'VIEJO' : 'NOVATO');
+            }
+
             // Actualizar progreso en tableros ya inicializados
             if (typeof window.actualizarProgresoTableros === 'function') {
                 setTimeout(() => window.actualizarProgresoTableros(), 100);
