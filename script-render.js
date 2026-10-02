@@ -1309,7 +1309,6 @@
                     ${Core.state.juegoIAEsperandoStockfish ? '⏳ Cargando motor…' : '▶ Empezar partida'}
                 </button>
             </div>
-               `;
         `;
 
         mostrarToast('🔍 [H] HTML insertado', '');
