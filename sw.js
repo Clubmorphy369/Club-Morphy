@@ -2,9 +2,8 @@
 // SERVICE WORKER — Club Morphy
 // =============================================================
 
-// ⚠️ Sube la versión cuando hagas cambios importantes
-// ⭐ v65: Sistema de evaluación (intentos, ELO +6/+3/-10, % mínimo, bonus 100%) + aspect-ratio tablero + guard admin
-const CACHE_NAME = 'club-morphy-v65';
+// ⭐ v66: Fix crítico de Lozza (MultiPV + selección ponderada)
+const CACHE_NAME = 'club-morphy-v66';
 
 // Scope dinámico: funciona tanto en "/" (Firebase) como en "/Club-Morphy/" (GitHub Pages)
 const ROOT = self.registration.scope;
@@ -42,7 +41,6 @@ const STATIC_ASSETS = [
 
 // ============================
 // HOSTS A IGNORAR (no interceptar)
-// Firebase, CDNs y APIs externas que NO se cachean en el SW
 // ============================
 const ignoredHosts = [
     'firebase',
@@ -117,12 +115,10 @@ self.addEventListener('fetch', event => {
 
     if (request.method !== 'GET') return;
 
-    // Ignorar hosts externos (Firebase, CDNs, etc.)
     if (ignoredHosts.some(host => url.hostname.includes(host))) {
         return;
     }
 
-    // Ignorar peticiones fuera de nuestro origen
     if (url.origin !== self.location.origin) return;
 
     const esHtml = /\.html?$/i.test(url.pathname);
@@ -130,7 +126,6 @@ self.addEventListener('fetch', event => {
     const esCss = /\.css$/i.test(url.pathname);
     const esRaiz = url.pathname === '/' || url.pathname === '/Club-Morphy/' || url.pathname.endsWith('/');
 
-    // HTML/JS/CSS/raíz: NETWORK-FIRST (para tener siempre lo último, con fallback a caché)
     if (esHtml || esJs || esCss || esRaiz) {
         event.respondWith(
             fetch(request)
@@ -155,7 +150,6 @@ self.addEventListener('fetch', event => {
         return;
     }
 
-    // Todo lo demás: CACHE-FIRST con relleno progresivo
     event.respondWith(
         caches.match(request).then(cached => {
             if (cached) return cached;
@@ -187,4 +181,3 @@ self.addEventListener('message', event => {
         self.skipWaiting();
     }
 });
-
