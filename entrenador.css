@@ -2925,3 +2925,30 @@
     justify-content: center;
     gap: 10px;
 }
+/* ⭐ v71: Barra de capítulos plegable */
+.cm-tablero-capitulos-titulo {
+    transition: background 0.15s;
+}
+
+.cm-tablero-capitulos-titulo:hover {
+    background: rgba(14, 165, 233, 0.08);
+}
+
+.cm-tablero-capitulos-titulo:hover .cm-caps-hint {
+    color: var(--cm-acento);
+}
+
+.cm-caps-arrow {
+    color: var(--cm-acento);
+    font-size: 0.75rem;
+    line-height: 1;
+}
+
+.cm-tablero-capitulos-lista {
+    animation: cm-caps-fade 0.2s ease-out;
+}
+
+@keyframes cm-caps-fade {
+    from { opacity: 0; transform: translateY(-4px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
