@@ -536,17 +536,15 @@
                                                 <option value="8" ${((bloque.config||{}).nivelSF)==8?'selected':''}>8 — Maestro</option>
                                             </select>
                                         </div>
-                                        <div>
-                                                                                  <div>
-                                            <label style="display:block; font-size:0.72rem; color:#92400e; font-weight:700; text-transform:uppercase; margin-bottom:3px;">Orientación</label>
-                                            <select onchange="actualizarBloqueTablero('${claseId}','${tema.id}','${bloque.id}', 'orientacion', this.value)" style="width:100%; padding:6px; border:1px solid #fdba74; border-radius:6px; font-size:0.82rem; background:white;">
-                                                <option value="auto" ${((bloque.config||{}).orientacion||'auto')==='auto'?'selected':''}>🔄 Auto</option>
-                                                <option value="white" ${((bloque.config||{}).orientacion)==='white'?'selected':''}>♔ Blancas abajo</option>
-                                                <option value="black" ${((bloque.config||{}).orientacion)==='black'?'selected':''}>♚ Negras abajo</option>
-                                            </select>
-                                        </div>
+                                                                            <div>
+                                        <label style="display:block; font-size:0.72rem; color:#92400e; font-weight:700; text-transform:uppercase; margin-bottom:3px;">Orientación</label>
+                                        <select onchange="actualizarBloqueTablero('${claseId}','${tema.id}','${bloque.id}', 'orientacion', this.value)" style="width:100%; padding:6px; border:1px solid #fdba74; border-radius:6px; font-size:0.82rem; background:white;">
+                                            <option value="auto" ${((bloque.config||{}).orientacion||'auto')==='auto'?'selected':''}>🔄 Auto</option>
+                                            <option value="white" ${((bloque.config||{}).orientacion)==='white'?'selected':''}>♔ Blancas abajo</option>
+                                            <option value="black" ${((bloque.config||{}).orientacion)==='black'?'selected':''}>♚ Negras abajo</option>
+                                        </select>
                                     </div>
-
+                                    </div>
                                     <!-- ⭐ v56: Requisitos de completado (opcionales) -->
                                     <div style="margin-top:12px; padding-top:10px; border-top:1px dashed #fdba74;">
                                         <p style="font-size:0.72rem; color:#c2410c; font-weight:700; text-transform:uppercase; margin-bottom:8px;">🏁 Requisitos de completado (opcional)</p>
