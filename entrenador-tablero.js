@@ -2899,8 +2899,7 @@ async importarDesdeLichess() {
                     precisionHumano: 0,
                     evalFinal: evals[evals.length - 1] || { cp: 0, mate: null }
                 };
-                this.renderizarAnalisis();
-
+               
                 const evalsValidas = jugadasAnalizadas.filter(j =>
                     j.evalAntes && j.evalDespues &&
                     (j.evalAntes.cp !== 0 || j.evalAntes.mate !== null) &&
