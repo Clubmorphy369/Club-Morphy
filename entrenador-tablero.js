@@ -3515,32 +3515,32 @@ mejorMovimientoFallback(c) {
         // --------------------------------------------------------
         // RELOJ
         // --------------------------------------------------------
-        actualizarRelojUI() {
-            if (!this.reloj || !this.$relojTiempoPC || !this.$relojTiempoHumano) return;
+       actualizarRelojUI() {
+    if (!this.reloj || !this.$relojTiempoPC || !this.$relojTiempoHumano) return;
 
-            const colorPC = this.colorHumano === 'w' ? 'b' : 'w';
-            const tiempoPC = this.reloj.obtenerTiempoFormateado(colorPC);
-            const tiempoHumano = this.reloj.obtenerTiempoFormateado(this.colorHumano);
+    const colorPC = this.colorHumano === 'w' ? 'b' : 'w';
+    const tiempoPC = this.reloj.obtenerTiempoFormateado(colorPC);
+    const tiempoHumano = this.reloj.obtenerTiempoFormateado(this.colorHumano);
 
-            this.$relojTiempoPC.textContent = tiempoPC;
-            this.$relojTiempoHumano.textContent = tiempoHumano;
+    this.$relojTiempoPC.textContent = tiempoPC;
+    this.$relojTiempoHumano.textContent = tiempoHumano;
 
-            const turno = this.chess.turn();
-            if (this.$relojPC) this.$relojPC.classList.toggle('activo', turno === colorPC);
-            if (this.$relojHumano) this.$relojHumano.classList.toggle('activo', turno === this.colorHumano);
+    const turno = this.chess.turn();
+    if (this.$relojPC) this.$relojPC.classList.toggle('activo', turno === colorPC);
+    if (this.$relojHumano) this.$relojHumano.classList.toggle('activo', turno === this.colorHumano);
 
-            const segundosHumano = this.reloj.obtenerTiempo(this.colorHumano);
-            const segundosPC = this.reloj.obtenerTiempo(colorPC);
-            if (this.$relojHumano) this.$relojHumano.classList.toggle('alerta', segundosHumano > 0 && segundosHumano < 30);
-            if (this.$relojPC) this.$relojPC.classList.toggle('alerta', segundosPC > 0 && segundosPC < 30);
+    const segundosHumano = this.reloj.obtenerTiempo(this.colorHumano);
+    const segundosPC = this.reloj.obtenerTiempo(colorPC);
+    if (this.$relojHumano) this.$relojHumano.classList.toggle('alerta', segundosHumano > 0 && segundosHumano < 30);
+    if (this.$relojPC) this.$relojPC.classList.toggle('alerta', segundosPC > 0 && segundosPC < 30);
 
-            if (!this.sinLimite && this.reloj.activo && !this.destroyed) {
-                if (this._relojUiTimer) clearTimeout(this._relojUiTimer);
-                this._relojUiTimer = setTimeout(() => this.actualizarRelojUI(), 500);
-            }
-        }
-
-        _onTimeoutReloj(color) {
+    // ⭐ v72: usar this.reloj.sinLimite (antes this.sinLimite, que no existe)
+    if (!this.reloj.sinLimite && this.reloj.activo && !this.destroyed) {
+        if (this._relojUiTimer) clearTimeout(this._relojUiTimer);
+        this._relojUiTimer = setTimeout(() => this.actualizarRelojUI(), 500);
+    }
+}
+       _onTimeoutReloj(color) {
             if (this.destroyed) return;
 
             if (this.reloj) this.reloj.detener();
