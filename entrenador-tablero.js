@@ -1352,32 +1352,77 @@ ${esAdmin ? `
         // --------------------------------------------------------
         // IMPORTAR DESDE LICHESS
         // --------------------------------------------------------
-        async importarDesdeLichess() {
-            const input = this.contenedor.querySelector('[data-rol="inputLichessURL"]');
-            if (!input) return;
-            const url = input.value.trim();
-            if (!url) { this.mostrarToast('⚠️ Pega una URL de Lichess', ''); return; }
+async importarDesdeLichess() {
+    const input = this.contenedor.querySelector('[data-rol="inputLichessURL"]');
+    if (!input) return;
+    const url = input.value.trim();
+    if (!url) { this.mostrarToast('⚠️ Pega una URL de Lichess', ''); return; }
 
-            const match = url.match(/lichess\.org\/study\/([a-zA-Z0-9]{8})/);
-            if (!match) { this.mostrarToast('⚠️ URL de estudio no válida', 'error'); return; }
-            const studyId = match[1];
+    const match = url.match(/lichess\.org\/study\/([a-zA-Z0-9]{8})/);
+    if (!match) { this.mostrarToast('⚠️ URL de estudio no válida', 'error'); return; }
+    const studyId = match[1];
 
-            this.mostrarToast('⏳ Importando desde Lichess…', '');
+    this.mostrarToast('⏳ Importando desde Lichess…', '');
 
-            try {
-                const resp = await fetch(`https://lichess.org/api/study/${studyId}.pgn`, {
-                    headers: { 'Accept': 'application/x-chess-pgn' }
-                });
-                if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-                const pgn = await resp.text();
-                if (this.$pgnTextarea) this.$pgnTextarea.value = pgn;
-                this.actualizarListaAdminCaps();
-                this.mostrarToast('✅ PGN importado. Revisa y pulsa 💾 Guardar PGN.', 'elo-up');
-            } catch (err) {
-                console.error('[Entrenador] Error al importar:', err);
-                this.mostrarToast('❌ No se pudo importar. Verifica la URL y que el estudio sea público.', 'error');
-            }
+    try {
+        const resp = await fetch(`https://lichess.org/api/study/${studyId}.pgn`, {
+            headers: { 'Accept': 'application/x-chess-pgn' }
+        });
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        const pgn = await resp.text();
+
+        // ⭐ v67: Detectar cuántos capítulos vinieron
+        const bloques = pgn.split(/(?=\[Event\s)/i).filter(b => b.trim());
+        const numCaps = bloques.length;
+        if (numCaps === 0) {
+            this.mostrarToast('⚠️ El estudio no tiene capítulos', 'error');
+            return;
         }
+
+        const pgnActual = (this.config || {}).pgn || '';
+        const hayContenidoAnterior = pgnActual.trim().length > 0;
+
+        // Rellenar el textarea para que el usuario vea el contenido
+        if (this.$pgnTextarea) this.$pgnTextarea.value = pgn;
+        this.actualizarListaAdminCaps();
+
+        // ⭐ v67: Si NO había PGN previo, guardar directo sin preguntar
+        if (!hayContenidoAnterior) {
+            this._aplicarPGN(pgn);
+            this.mostrarToast(`✅ ${numCaps} capítulo${numCaps === 1 ? '' : 's'} importado${numCaps === 1 ? '' : 's'} desde Lichess`, 'elo-up');
+            return;
+        }
+
+        // ⭐ v67: Si YA había PGN, preguntar qué hacer
+        this.abrirModalOpciones(
+            '📥 PGN importado desde Lichess',
+            `Se importaron ${numCaps} capítulo${numCaps === 1 ? '' : 's'}. ¿Qué quieres hacer con el PGN actual?`,
+            [
+                {
+                    icon: '🔄',
+                    titulo: 'Reemplazar todo',
+                    desc: 'Descarta el PGN anterior y guarda solo el nuevo.',
+                    action: () => this._aplicarPGN(pgn)
+                },
+                {
+                    icon: '➕',
+                    titulo: 'Añadir al final',
+                    desc: 'Mantiene el PGN anterior y le añade los capítulos nuevos.',
+                    action: () => this._aplicarPGN(pgnActual + '\n\n' + pgn)
+                },
+                {
+                    icon: '❌',
+                    titulo: 'Cancelar',
+                    desc: 'No guardar nada. El PGN queda en el textarea por si quieres revisarlo.',
+                    action: () => this.mostrarToast('Cancelado. El PGN queda en el textarea.', '')
+                }
+            ]
+        );
+    } catch (err) {
+        console.error('[Entrenador] Error al importar:', err);
+        this.mostrarToast('❌ No se pudo importar. Verifica la URL y que el estudio sea público.', 'error');
+    }
+}
 
         resetearELO() {
             this.abrirModalConfirmacion(
