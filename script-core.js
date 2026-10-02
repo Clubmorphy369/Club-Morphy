@@ -370,7 +370,7 @@
         'accesosTema', 'datosClub', 'notificaciones', 'solicitudesPendientes',
         'misSolicitudes', 'unsubscribeNotificaciones', 'unsubscribeSolicitudesAdmin',
         'unsubscribeMisSolicitudes', 'unsubscribeAccesos', 'unsubscribeAccesosTema',
-        'unsubscribeClub', 'unsubscribeCurso', 'migracionRealizada', 'terminoBusqueda',
+        'unsubscribeClub', 'unsubscribeCurso', 'unsubscribeProgresoTableros', 'migracionRealizada', 'terminoBusqueda',
         'modalCompletarPerfilYaMostrado', '_guardandoCursoContador', 'modoZen',
         'progresoTableros', 'modoRegistro', 'claseActualGestion',
         'juegoIAConfig', 'juegoIAInstancia', 'juegoIAEsperandoStockfish',
