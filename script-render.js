@@ -1310,11 +1310,19 @@
                 </button>
             </div>
                `;
+        `;
 
         mostrarToast('🔍 [H] HTML insertado', '');
 
+        } catch (err) {
+            mostrarToast('❌ ERROR: ' + err.message, 'error');
+            console.error('Error en abrirModalJuegoIA:', err);
+            return;
+        }
+
         // Listeners de los botones
-        dom.modalJuegoIA.querySelectorAll('.juego-ia-nivel-btn').forEach(btn => {
+       
+           dom.modalJuegoIA.querySelectorAll('.juego-ia-nivel-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 dom.modalJuegoIA.querySelectorAll('.juego-ia-nivel-btn').forEach(b => b.classList.remove('activo'));
                 btn.classList.add('activo');
