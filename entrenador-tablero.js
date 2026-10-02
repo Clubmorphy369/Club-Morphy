@@ -369,19 +369,21 @@
 
                             <div class="cm-tablero-moves cm-tablero-hidden" data-rol="moves"></div>
 
-                            ${!esAdmin ? `
-                            <div class="cm-tablero-auto-avance" data-rol="autoAvancePanel">
-                                <input type="checkbox" id="${this.idInstancia}-autoAvance" data-rol="autoAvanceCheck">
-                                <label for="${this.idInstancia}-autoAvance">Avanzar al siguiente ejercicio automáticamente</label>
-                            </div>
-                            ` : ''}
-                                    <label class="cm-tablero-admin-field-label">Modo de ejercicios</label>
-                                    <div class="cm-tablero-persist-check" style="background:#e0f2fe;border-color:#7dd3fc;">
-                                        <input type="checkbox" id="${this.idInstancia}-modoEstricto" data-rol="modoEstrictoCheck">
-                                        <label for="${this.idInstancia}-modoEstricto">
-                                            🎯 <strong>Modo estricto</strong> — completar todas las variantes del PGN (si desactivas, solo la línea principal)
-                                        </label>
-                                    </div>
+                          ${!esAdmin ? `
+<div class="cm-tablero-auto-avance" data-rol="autoAvancePanel">
+    <input type="checkbox" id="${this.idInstancia}-autoAvance" data-rol="autoAvanceCheck">
+    <label for="${this.idInstancia}-autoAvance">Avanzar al siguiente ejercicio automáticamente</label>
+</div>
+` : ''}
+${esAdmin ? `
+        <label class="cm-tablero-admin-field-label">Modo de ejercicios</label>
+        <div class="cm-tablero-persist-check" style="background:#e0f2fe;border-color:#7dd3fc;">
+            <input type="checkbox" id="${this.idInstancia}-modoEstricto" data-rol="modoEstrictoCheck">
+            <label for="${this.idInstancia}-modoEstricto">
+                🎯 <strong>Modo estricto</strong> — completar todas las variantes del PGN (si desactivas, solo la línea principal)
+            </label>
+        </div>
+` : ''}
 
                             <div class="cm-tablero-row">
                                 <button class="cm-tablero-btn cm-tablero-btn-sec" data-rol="btnReiniciar">⟲ Reiniciar</button>
