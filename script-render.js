@@ -922,9 +922,10 @@
         });
 
         const bloques = document.querySelectorAll('.cm-tablero-bloque-alumno');
-        bloques.forEach(bloqueEl => {
-            if (bloqueEl.dataset.inicializado === 'true') return;
-
+                bloques.forEach(bloqueEl => {
+            // ⭐ v63: Solo saltar si está inicializado Y tiene tablero real dentro.
+            // Evita el bug de "marcado como hecho pero vacío" por fallo anterior.
+            if (bloqueEl.dataset.inicializado === 'true' && bloqueEl.querySelector('.cm-tablero-wrap')) return;
             // ⭐ v58: Si ya existe una instancia para este bloqueId, NO crear otra
             const bloqueIdExistente = bloqueEl.dataset.bloqueId;
             const yaExiste = Render.instanciasTablero.some(inst =>
