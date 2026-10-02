@@ -1344,7 +1344,9 @@
         const btnEmpezar = dom.modalJuegoIA.querySelector('[data-accion="empezar"]');
         if (btnEmpezar) btnEmpezar.addEventListener('click', () => Render.iniciarJuegoIA());
 
+                mostrarToast('🔍 [I] Antes de activar modal', '');
         dom.modalJuegoIA.classList.add('active');
+        mostrarToast('🔍 [J] Modal activado', '');
 
         Render.precargarStockfishParaJuego();
     };
