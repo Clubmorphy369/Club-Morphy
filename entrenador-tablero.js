@@ -46,9 +46,10 @@
             this.idInstancia = siguienteInstanciaId();
             this.destroyed = false;
 
-            this.esModoAdmin = !!this.contexto.esAdmin;
+                       this.esModoAdmin = !!this.contexto.esAdmin;
             if (this.esModoAdmin) {
-                ELO.bloquearCambios = true;
+                // ⭐ v74: usar contador para soportar múltiples instancias
+                ELO._bloqueadoresAdmin++;
             }
 
             // Estado del tablero
