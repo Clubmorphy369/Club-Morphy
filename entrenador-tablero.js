@@ -2651,23 +2651,23 @@ async importarDesdeLichess() {
                 return best;
             }
         }
-
-        mejorMovimientoFallback(c) {
-            const moves = c.moves({ verbose: true });
-            if (!moves.length) return null;
-            const max = c.turn() === 'w';
-            let mejor = moves[0];
-            let mejorVal = max ? -Infinity : Infinity;
-            for (const m of moves) {
-                c.move({ from: m.from, to: m.to, promotion: m.promotion || 'q' });
-                const val = this.minimax(c, 1, -Infinity, Infinity, !max);
-                c.undo();
-                if ((max && val > mejorVal) || (!max && val < mejorVal)) { mejorVal = val; mejor = m; }
-            }
-            return mejor;
-        }
-
-        // --------------------------------------------------------
+mejorMovimientoFallback(c) {
+    const moves = c.moves({ verbose: true });
+    if (!moves.length) return null;
+    const max = c.turn() === 'w';
+    let mejor = moves[0];
+    let mejorVal = max ? -Infinity : Infinity;
+    for (const m of moves) {
+        c.move({ from: m.from, to: m.to, promotion: m.promotion || 'q' });
+        // ⭐ v72: depth 3 (antes 1) — ve capturas del rival y evita errores triviales
+        const val = this.minimax(c, 3, -Infinity, Infinity, !max);
+        c.undo();
+        if ((max && val > mejorVal) || (!max && val < mejorVal)) { mejorVal = val; mejor = m; }
+    }
+    return mejor;
+}
+       
+                // --------------------------------------------------------
         // FIN DE PARTIDA
         // --------------------------------------------------------
         async manejarFinPartida() {
