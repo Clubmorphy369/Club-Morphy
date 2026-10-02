@@ -796,15 +796,29 @@ ${esAdmin ? `
         // CARGAR PGN Y CAPÍTULOS
         // --------------------------------------------------------
         cargarCapitulosDesdePGN(pgn) {
-            const bloques = pgn.split(/(?=\[Event\s)/i).filter(b => b.trim());
-            this.capitulos = [];
-            bloques.forEach((bloque, idx) => {
-                try {
-                    const cap = this.parsearCapitulo(bloque, idx);
-                    if (cap) this.capitulos.push(cap);
-                } catch (e) { /* ignorar */ }
-            });
-        }
+    // ⭐ v74: Split robusto con fallback en cascada
+    // Prioridad 1: [Event ...] (formato estándar de estudios Lichess)
+    // Prioridad 2: [ChapterName ...] (algunos exportadores)
+    // Prioridad 3: [FEN ...] (posiciones iniciales custom)
+    let bloques = pgn.split(/(?=\[Event\s)/i).filter(b => b.trim());
+
+    if (bloques.length <= 1) {
+        const alt = pgn.split(/(?=\[ChapterName\s)/i).filter(b => b.trim());
+        if (alt.length > 1) bloques = alt;
+    }
+    if (bloques.length <= 1) {
+        const alt = pgn.split(/(?=\[FEN\s)/i).filter(b => b.trim());
+        if (alt.length > 1) bloques = alt;
+    }
+
+    this.capitulos = [];
+    bloques.forEach((bloque, idx) => {
+        try {
+            const cap = this.parsearCapitulo(bloque, idx);
+            if (cap) this.capitulos.push(cap);
+        } catch (e) { /* ignorar */ }
+    });
+}
 
         parsearCapitulo(texto, idx) {
             const headers = {};
