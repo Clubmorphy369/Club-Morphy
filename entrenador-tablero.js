@@ -111,8 +111,15 @@
                 });
             }
 
-            // Sala libre
+                        // Sala libre
             this.esSalaLibre = !!this.config.esSalaLibre;
+
+            // ⭐ v75: Modo Zen fullscreen (persistente globalmente)
+            this._zenActivo = false;
+            this._zenKeydownHandler = null;
+            try {
+                this._zenActivo = localStorage.getItem('cm-tablero-modo-zen') === 'true';
+            } catch (e) { /* ignorar */ }
 
             // Reloj
             this.tiempoConfig = this.config.tiempo || 'libre';
