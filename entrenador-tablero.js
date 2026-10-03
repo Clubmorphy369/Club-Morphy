@@ -643,9 +643,12 @@ ${esAdmin ? `
             if (selOrient) selOrient.value = this.config.orientacion || 'auto';
         }
 
-        _configurarEventos() {
+               _configurarEventos() {
             const esAdmin = this.esModoAdmin;
             const esSalaLibre = this.esSalaLibre;
+
+            // ⭐ v75: Botón de modo zen (siempre disponible)
+            this._on('[data-rol="btnZenToggle"]', 'click', () => this.toggleModoZenTablero());
 
             this._on('[data-rol="btnVoltear"]', 'click', () => this.voltear());
 
