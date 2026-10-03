@@ -1,0 +1,2296 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes" />
+    <title>Reloj Club Morphy</title>
+    <meta name="theme-color" content="#4A8CFF">
+    <style>
+        /* ============================================================
+           CSS COMPLETO CON TODAS LAS FUNCIONALIDADES
+           ============================================================ */
+        * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+        :root {
+            --primary: #4A8CFF; --primary-hover: #3A7CEF;
+            --primary-light: rgba(74,140,255,0.2); --primary-glow: rgba(74,140,255,0.4);
+            --bg: #0B0F1A; --surface: rgba(26,31,46,0.75); --surface-2: rgba(42,48,64,0.6);
+            --text: #F0F4FF; --text-soft: #9AA6C0; --border: rgba(47,58,74,0.5);
+            --shadow: 0 8px 32px rgba(0,0,0,0.5); --radius: 20px;
+            --progress-bg: rgba(255,255,255,0.1); --glass-blur: blur(12px);
+            --success: #22C55E; --warning: #F59E0B; --danger: #EF4444;
+            --delay-color: #FBBF24;
+        }
+        [data-theme="blue"] { --primary: #4A8CFF; --primary-hover: #3A7CEF; --primary-light: rgba(74,140,255,0.2); --primary-glow: rgba(74,140,255,0.4); }
+        [data-theme="green"] { --primary: #22C55E; --primary-hover: #16A34A; --primary-light: rgba(34,197,94,0.2); --primary-glow: rgba(34,197,94,0.4); }
+        [data-theme="purple"] { --primary: #A855F7; --primary-hover: #9333EA; --primary-light: rgba(168,85,247,0.2); --primary-glow: rgba(168,85,247,0.4); }
+        [data-theme="red"] { --primary: #EF4444; --primary-hover: #DC2626; --primary-light: rgba(239,68,68,0.2); --primary-glow: rgba(239,68,68,0.4); }
+        [data-theme="amber"] { --primary: #F59E0B; --primary-hover: #D97706; --primary-light: rgba(245,158,11,0.2); --primary-glow: rgba(245,158,11,0.4); }
+        [data-theme-mode="light"] {
+            --bg: #F4F8FD; --surface: rgba(255,255,255,0.8); --surface-2: rgba(237,244,255,0.7);
+            --text: #1F2937; --text-soft: #6B7280; --border: rgba(217,230,248,0.6);
+            --shadow: 0 8px 32px rgba(37,99,235,0.12); --progress-bg: rgba(0,0,0,0.08);
+        }
+        [data-theme-mode="dark"] {
+            --bg: #0B0F1A; --surface: rgba(26,31,46,0.75); --surface-2: rgba(42,48,64,0.6);
+            --text: #F0F4FF; --text-soft: #9AA6C0; --border: rgba(47,58,74,0.5);
+            --shadow: 0 8px 32px rgba(0,0,0,0.5); --progress-bg: rgba(255,255,255,0.1);
+        }
+        html,body { height:100%; overflow:hidden; }
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--bg); color: var(--text);
+            display:flex; justify-content:center; align-items:center;
+            padding:0; margin:0;
+            transition: background 0.3s, color 0.3s;
+            touch-action: manipulation;
+        }
+        @media (prefers-reduced-motion: reduce) { * { animation-duration:0.01ms !important; transition-duration:0.01ms !important; } }
+        .container {
+            width:100%; height:100dvh; max-width:600px;
+            background: var(--surface); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
+            border:1px solid var(--border); box-shadow: var(--shadow);
+            display:flex; flex-direction:column; padding:12px 16px 16px;
+            transition: background 0.3s, border-color 0.3s;
+            position:relative; overflow:hidden; border-radius:var(--radius);
+        }
+        .header {
+            display:flex; justify-content:space-between; align-items:center;
+            padding:4px 0; flex-shrink:0; z-index:10; gap:4px; flex-wrap:wrap;
+        }
+        .header .title-area {
+            display:flex; align-items:center; gap:4px;
+            font-size:0.9rem; font-weight:600; color:var(--text-soft);
+            cursor:pointer; transition:color 0.2s;
+        }
+        .header .title-area:hover { color:var(--primary); }
+        .header .title-area .edit-icon { font-size:0.7rem; opacity:0.5; }
+        .header .badge-mode {
+            background:var(--primary-light); color:var(--primary);
+            padding:2px 12px; border-radius:30px;
+            font-size:0.65rem; font-weight:600;
+            border:1px solid var(--border); white-space:nowrap;
+        }
+        .header-actions {
+            display:flex; gap:4px; align-items:center; flex-wrap:wrap;
+        }
+        .header-actions button, .header-actions label {
+            background:transparent; border:none;
+            font-size:1.2rem; padding:4px 6px;
+            cursor:pointer; color:var(--text-soft);
+            transition:color 0.2s, background 0.2s;
+            border-radius:30px; display:flex; align-items:center;
+        }
+        .header-actions button:hover, .header-actions label:hover {
+            color:var(--primary); background:var(--surface-2);
+        }
+        .header-actions input[type="checkbox"] { width:0; height:0; opacity:0; position:absolute; }
+        .header-actions .auto-label {
+            font-size:1rem; padding:2px 8px; gap:2px;
+            cursor:pointer; border-radius:30px;
+            border:1px solid transparent; transition:all 0.2s;
+        }
+        .header-actions .auto-label.active {
+            border-color:var(--primary); background:var(--primary-light); color:var(--primary);
+        }
+        .header-actions .auto-label .icon { font-size:1.1rem; }
+        .clocks {
+            flex:1 1 auto; display:flex; flex-direction:column; gap:10px;
+            margin:6px 0 10px; min-height:0;
+        }
+        .clock {
+            background:var(--surface-2); backdrop-filter:var(--glass-blur); -webkit-backdrop-filter:var(--glass-blur);
+            border:2px solid var(--border); border-radius:16px;
+            padding:16px 18px;
+            display:flex; flex-direction:column; justify-content:center; align-items:center;
+            transition:all 0.3s cubic-bezier(0.22,1,0.36,1);
+            cursor:pointer; user-select:none; flex:1; min-height:80px;
+            position:relative; box-shadow:0 4px 16px rgba(0,0,0,0.2);
+        }
+        .clock:active { transform:scale(0.98); }
+        .clock.active {
+            border-color:var(--primary);
+            box-shadow:0 0 30px var(--primary-glow), inset 0 0 20px var(--primary-light);
+            background:var(--primary-light); transform:scale(1.01);
+        }
+        .clock.inactive { opacity:0.7; filter:grayscale(0.3); }
+        .clock.warning { border-color:var(--warning); animation:pulse-warning 1s infinite; }
+        .clock.flagged { border-color:var(--danger); background:rgba(239,68,68,0.2); animation:pulse-flag 0.5s infinite; }
+        .clock.winner {
+            border-color:var(--success); background:rgba(34,197,94,0.15);
+            box-shadow:0 0 40px rgba(34,197,94,0.4);
+            animation:glow-green 1.5s ease-in-out infinite alternate;
+        }
+        @keyframes pulse-warning { 0%,100%{ opacity:1; } 50%{ opacity:0.6; } }
+        @keyframes pulse-flag { 0%,100%{ opacity:1; transform:scale(1); } 50%{ opacity:0.4; transform:scale(0.98); } }
+        @keyframes glow-green { 0%{ box-shadow:0 0 10px rgba(34,197,94,0.2); } 100%{ box-shadow:0 0 50px rgba(34,197,94,0.6); } }
+        .clock .player {
+            font-size:1rem; font-weight:600; color:var(--text-soft);
+            display:flex; align-items:center; gap:6px; margin-bottom:2px;
+        }
+        .clock .player .icon { font-size:1.2rem; }
+        .turn-indicator {
+            width:12px; height:12px; border-radius:50%;
+            background:#4A5568; transition:background 0.3s;
+            display:inline-block;
+        }
+        .clock.active .turn-indicator { background:var(--success); box-shadow:0 0 12px rgba(34,197,94,0.6); }
+        .clock .time {
+            font-size:4.5rem; font-weight:700; font-variant-numeric:tabular-nums;
+            letter-spacing:2px; color:var(--text);
+            line-height:1.1; text-shadow:0 2px 8px rgba(0,0,0,0.3);
+            transition:color 0.3s;
+        }
+        .clock .time .decimals { font-size:0.5em; font-weight:500; color:var(--text-soft); }
+        .clock .time.warning { color:var(--warning); }
+        .clock .time.flagged { color:var(--danger); }
+        .clock .move-counter {
+            font-size:0.75rem; color:var(--text-soft);
+            background:var(--surface-2); padding:2px 14px; border-radius:20px;
+            margin-top:2px;
+        }
+        .clock .turn-counter {
+            font-size:0.65rem; color:var(--text-soft); opacity:0.7; margin-top:1px;
+        }
+        .turn-counter .delay-indicator {
+            display:inline-block; background:var(--delay-color); color:#000; font-weight:700;
+            padding:0 6px; border-radius:10px; margin-left:4px; font-size:0.7rem;
+            animation:delay-pulse 0.8s ease-in-out infinite alternate;
+        }
+        @keyframes delay-pulse { 0%{ opacity:0.6; transform:scale(0.95); } 100%{ opacity:1; transform:scale(1.05); } }
+        .time-progress {
+            width:100%; height:8px;
+            background:var(--progress-bg); border-radius:12px;
+            margin-top:6px; overflow:hidden; transition:background 0.3s;
+        }
+        .time-progress .fill {
+            height:100%; border-radius:12px;
+            transition:width 0.3s linear, background 0.5s;
+        }
+        .adjust-controls {
+            display:none; gap:6px; margin-top:4px;
+            justify-content:center; flex-wrap:wrap;
+        }
+        .adjust-controls.visible { display:flex; }
+        .adjust-controls button {
+            background:var(--surface); border:1px solid var(--border); border-radius:30px;
+            color:var(--text); font-size:1.2rem; font-weight:700;
+            padding:2px 14px; cursor:pointer; transition:background 0.2s;
+            touch-action:manipulation; min-height:36px; min-width:48px;
+        }
+        .adjust-controls button:hover { background:var(--primary-light); color:var(--primary); }
+        .adjust-controls button:active { transform:scale(0.95); }
+        .adjust-controls .manual-adjust-btn { font-size:1rem; padding:2px 10px; min-width:40px; }
+        .clock.paused .adjust-controls { display:flex; }
+        .manual-modal {
+            display:none; position:fixed; top:0; left:0; right:0; bottom:0;
+            background:rgba(0,0,0,0.6); backdrop-filter:blur(4px);
+            z-index:4000; align-items:center; justify-content:center;
+        }
+        .manual-modal.active { display:flex; }
+        .manual-modal-content {
+            background:var(--surface); backdrop-filter:var(--glass-blur);
+            border-radius:var(--radius); padding:24px; max-width:320px; width:90%;
+            border:1px solid var(--border); box-shadow:var(--shadow);
+            text-align:center;
+        }
+        .manual-modal-content h3 { margin-bottom:16px; color:var(--text); font-size:1.2rem; }
+        .manual-modal-content .time-inputs {
+            display:flex; gap:8px; justify-content:center; margin-bottom:16px; flex-wrap:wrap;
+        }
+        .manual-modal-content .time-inputs .input-group {
+            display:flex; flex-direction:column; align-items:center; gap:2px;
+        }
+        .manual-modal-content .time-inputs .input-group label {
+            font-size:0.6rem; color:var(--text-soft); text-transform:uppercase;
+        }
+        .manual-modal-content .time-inputs input {
+            width:60px; padding:6px 4px; font-size:1.2rem; text-align:center;
+            background:var(--surface); border:1px solid var(--border); border-radius:8px;
+            color:var(--text); outline:none; font-weight:600;
+        }
+        .manual-modal-content .time-inputs input:focus { border-color:var(--primary); box-shadow:0 0 8px var(--primary-glow); }
+        .manual-modal-content .modal-actions {
+            display:flex; gap:8px; justify-content:center;
+        }
+        .manual-modal-content .modal-actions button {
+            padding:8px 20px; border-radius:30px; border:none;
+            font-weight:600; cursor:pointer; transition:background 0.2s;
+            font-size:0.9rem; min-width:80px;
+        }
+        .manual-modal-content .modal-actions .btn-apply { background:var(--primary); color:#fff; }
+        .manual-modal-content .modal-actions .btn-apply:hover { background:var(--primary-hover); }
+        .manual-modal-content .modal-actions .btn-cancel-modal { background:var(--surface-2); color:var(--text-soft); }
+        .manual-modal-content .modal-actions .btn-cancel-modal:hover { background:var(--border); }
+        .controls {
+            display:flex; flex-wrap:wrap; gap:8px; justify-content:center;
+            flex-shrink:0; padding:4px 0;
+        }
+        .controls button {
+            font:inherit; border:none; border-radius:40px;
+            padding:16px 12px; min-height:52px;
+            font-weight:700; font-size:1.2rem;
+            cursor:pointer; transition:all 0.25s;
+            background:var(--surface-2); color:var(--text);
+            box-shadow:var(--shadow); flex:1 0 30%; min-width:80px;
+            text-align:center; touch-action:manipulation;
+            backdrop-filter:var(--glass-blur); border:1px solid var(--border);
+        }
+        .controls button:active { transform:scale(0.95); }
+        .controls button:disabled { opacity:0.4; pointer-events:none; transform:none; }
+        .btn-primary { background:var(--primary); color:#fff; border-color:var(--primary); }
+        .btn-primary:hover { background:var(--primary-hover); }
+        .btn-danger { background:var(--danger); color:#fff; border-color:var(--danger); }
+        .btn-danger:hover { background:#DC2626; }
+        .btn-outline { background:transparent; border:2px solid var(--border); }
+        .config-panel {
+            position:fixed; bottom:0; left:0; right:0;
+            background:var(--surface); backdrop-filter:var(--glass-blur); -webkit-backdrop-filter:var(--glass-blur);
+            border-top:2px solid var(--border);
+            border-radius:24px 24px 0 0;
+            padding:20px 20px 30px;
+            max-height:80vh; overflow-y:auto;
+            transform:translateY(100%);
+            transition:transform 0.4s cubic-bezier(0.22,1,0.36,1);
+            z-index:1000;
+            box-shadow:0 -10px 40px rgba(0,0,0,0.3);
+        }
+        .config-panel.open { transform:translateY(0); }
+        .config-panel .panel-handle {
+            width:40px; height:4px; background:var(--text-soft);
+            border-radius:10px; margin:0 auto 16px; opacity:0.5;
+        }
+        .config-panel .panel-header {
+            display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;
+        }
+        .config-panel .panel-header h2 { font-size:1.2rem; font-weight:600; color:var(--text); }
+        .config-panel .panel-close {
+            background:transparent; border:none; font-size:1.8rem;
+            color:var(--text-soft); cursor:pointer; padding:0 8px;
+        }
+        .config-panel .panel-close:hover { color:var(--text); }
+        .config-panel .presets {
+            display:flex; flex-wrap:wrap; gap:6px; margin-bottom:12px;
+        }
+        .config-panel .presets button {
+            background:var(--surface-2); border:1px solid var(--border); border-radius:30px;
+            padding:4px 14px; font-size:0.75rem; font-weight:500;
+            color:var(--text-soft); cursor:pointer; transition:all 0.2s;
+            white-space:nowrap;
+        }
+        .config-panel .presets button:hover { background:var(--primary-light); color:var(--primary); border-color:var(--primary); }
+        .config-panel .presets .delete-preset { margin-left:4px; font-size:0.7rem; opacity:0.5; cursor:pointer; }
+        .config-panel .presets .delete-preset:hover { opacity:1; }
+        .config-panel .presets .add-preset {
+            background:transparent; border:1px dashed var(--border);
+            color:var(--text-soft); font-size:1.2rem; padding:0 12px; line-height:1.8;
+        }
+        .config-panel .config {
+            display:flex; flex-wrap:wrap; gap:8px;
+            background:var(--surface-2); padding:12px 14px; border-radius:12px;
+            margin-bottom:12px;
+        }
+        .config-panel .config-group {
+            display:flex; align-items:center; gap:4px; flex-wrap:wrap;
+        }
+        .config-panel .config-group label {
+            font-size:0.7rem; font-weight:500; color:var(--text-soft);
+        }
+        .config-panel .config-group input, .config-panel .config-group select {
+            font:inherit; background:var(--surface); border:1px solid var(--border);
+            border-radius:8px; padding:4px 8px; color:var(--text);
+            outline:none; transition:all 0.2s; font-size:0.8rem;
+        }
+        .config-panel .config-group select { width:130px; }
+        .config-panel .config-group input:disabled, .config-panel .config-group select:disabled {
+            opacity:0.4; cursor:not-allowed;
+        }
+        .config-panel .config-group#byoyomi-group { display:none; }
+        .config-panel .config-group#byoyomi-group input { width:50px; }
+        .config-panel .config-group.time-input-group input {
+            width:50px; text-align:center;
+        }
+        .config-panel .config-group.time-input-group span {
+            font-size:0.8rem; color:var(--text-soft);
+        }
+        .config-panel .theme-selector {
+            display:flex; gap:8px; align-items:center; margin-bottom:10px; flex-wrap:wrap;
+        }
+        .config-panel .theme-selector label { font-size:0.7rem; font-weight:500; color:var(--text-soft); }
+        .config-panel .theme-selector .theme-btn {
+            width:28px; height:28px; border-radius:50%;
+            border:2px solid var(--border); cursor:pointer;
+            transition:transform 0.2s, border-color 0.2s;
+        }
+        .config-panel .theme-selector .theme-btn:hover { transform:scale(1.15); }
+        .config-panel .theme-selector .theme-btn.active {
+            border-color:var(--primary); box-shadow:0 0 12px var(--primary-glow);
+        }
+        .config-panel .stats {
+            display:flex; flex-wrap:wrap; gap:8px 16px;
+            background:var(--surface-2); border-radius:12px;
+            padding:8px 14px; font-size:0.75rem; color:var(--text-soft);
+            margin-bottom:12px;
+        }
+        .config-panel .stats .value { font-weight:600; color:var(--text); }
+        .config-panel .stats .highlight { color:var(--primary); }
+        .config-panel .panel-actions {
+            display:flex; gap:8px; justify-content:flex-end; margin-top:8px;
+        }
+        .config-panel .panel-actions button {
+            background:var(--surface-2); border:none; border-radius:30px;
+            padding:6px 16px; font-size:0.85rem; font-weight:500;
+            color:var(--text); cursor:pointer; transition:all 0.2s;
+        }
+        .config-panel .panel-actions button:hover { background:var(--primary-light); color:var(--primary); }
+        .config-panel .panel-actions .btn-ready {
+            background:var(--primary); color:#fff;
+        }
+        .config-panel .panel-actions .btn-ready:hover { background:var(--primary-hover); }
+        .config-panel .panel-actions .btn-cancel {
+            background:var(--surface); color:var(--text-soft);
+        }
+        .config-panel .panel-actions .btn-cancel:hover { background:var(--border); }
+        .config-panel .modal-inline {
+            background:var(--surface-2); border-radius:12px;
+            padding:12px 16px; margin:8px 0; display:none;
+        }
+        .config-panel .modal-inline.active { display:block; }
+        .config-panel .modal-inline .form-group { margin-bottom:8px; display:flex; flex-direction:column; gap:2px; }
+        .config-panel .modal-inline .form-group label {
+            font-size:0.7rem; font-weight:500; color:var(--text-soft);
+        }
+        .config-panel .modal-inline .form-group input, .config-panel .modal-inline .form-group select {
+            font:inherit; background:var(--surface); border:1px solid var(--border);
+            border-radius:8px; padding:6px 10px; color:var(--text);
+            outline:none; width:100%;
+        }
+        .config-panel .modal-inline .modal-actions {
+            display:flex; gap:8px; justify-content:flex-end; margin-top:8px;
+        }
+        .config-panel .modal-inline .modal-actions button {
+            padding:4px 16px; border-radius:30px; border:none; font-weight:500; cursor:pointer;
+        }
+        .config-panel .modal-inline .modal-actions .btn-cancel { background:var(--surface); color:var(--text-soft); }
+        .config-panel .modal-inline .modal-actions .btn-save { background:var(--primary); color:#fff; }
+        .celebration-overlay {
+            position:fixed; top:0; left:0; right:0; bottom:0;
+            background:rgba(0,0,0,0.8); backdrop-filter:blur(8px);
+            display:none; align-items:center; justify-content:center; flex-direction:column;
+            z-index:2000; animation:fadeInOverlay 0.6s ease;
+        }
+        .celebration-overlay.active { display:flex; }
+        @keyframes fadeInOverlay { from { opacity:0; transform:scale(0.95); } to { opacity:1; transform:scale(1); } }
+        .celebration-content {
+            text-align:center; padding:20px; max-width:400px;
+            background:var(--surface); backdrop-filter:var(--glass-blur);
+            border-radius:var(--radius); border:1px solid var(--border); box-shadow:var(--shadow);
+        }
+        .celebration-content .winner-text {
+            font-size:2.8rem; font-weight:700; color:#fff; margin-bottom:12px;
+            text-shadow:0 4px 20px var(--primary-glow);
+        }
+        .celebration-content .winner-text .trophy { display:block; font-size:4rem; margin-bottom:8px; }
+        .celebration-pieces {
+            font-size:3.5rem; letter-spacing:12px;
+            display:flex; justify-content:center; flex-wrap:wrap; gap:8px;
+            animation:spinPieces 3s linear infinite;
+        }
+        @keyframes spinPieces {
+            0%{ transform:rotate(0deg) scale(1); }
+            50%{ transform:rotate(180deg) scale(1.2); }
+            100%{ transform:rotate(360deg) scale(1); }
+        }
+        .celebration-pieces span { display:inline-block; animation:floatPiece 2s ease-in-out infinite alternate; }
+        .celebration-pieces span:nth-child(odd) { animation-delay:0.3s; }
+        @keyframes floatPiece { 0%{ transform:translateY(0) rotate(0deg); } 100%{ transform:translateY(-20px) rotate(20deg); } }
+        .celebration-sub { color:var(--text-soft); font-size:1rem; margin-top:16px; opacity:0.8; }
+        .celebration-stats-btn {
+            background:var(--primary); color:#fff; border:none; border-radius:30px;
+            padding:10px 24px; font-size:1rem; font-weight:600;
+            cursor:pointer; margin-top:16px; transition:background 0.2s;
+        }
+        .celebration-stats-btn:hover { background:var(--primary-hover); }
+        @media (max-width:700px) {
+            .container { padding:8px 10px 12px; }
+            .clock .time { font-size:3.8rem; }
+            .controls button { font-size:1.1rem; padding:14px 8px; flex:1 0 28%; }
+            .celebration-content .winner-text { font-size:2.2rem; }
+            .celebration-pieces { font-size:2.8rem; }
+        }
+        @media (max-width:450px) {
+            .clock .time { font-size:3.0rem; }
+            .controls button { font-size:0.95rem; padding:12px 6px; flex:1 0 30%; min-height:48px; }
+            .header .title-area { font-size:0.75rem; }
+            .header-actions .auto-label { font-size:0.85rem; padding:2px 6px; }
+            .celebration-content .winner-text { font-size:1.8rem; }
+            .celebration-pieces { font-size:2.2rem; }
+            .manual-modal-content .time-inputs input { width:50px; font-size:1rem; }
+        }
+        @media (orientation:landscape) and (max-height:500px) {
+            .container { padding:4px 8px; flex-direction:row; flex-wrap:wrap; }
+            .header { width:100%; order:0; }
+            .clocks { flex-direction:row; flex:1; min-height:0; order:1; gap:6px; }
+            .clock { min-height:60px; padding:8px; }
+            .clock .time { font-size:2.8rem; }
+            .controls { order:2; width:100%; gap:4px; }
+            .controls button { font-size:0.9rem; padding:10px 4px; flex:1; min-height:44px; }
+            .clock[data-player="black"] { transform:rotate(180deg); }
+            .clock[data-player="black"] .player, .clock[data-player="black"] .time,
+            .clock[data-player="black"] .move-counter, .clock[data-player="black"] .turn-indicator,
+            .clock[data-player="black"] .time-progress, .clock[data-player="black"] .turn-counter,
+            .clock[data-player="black"] .adjust-controls { transform:rotate(-180deg); }
+        }
+        ::-webkit-scrollbar { width:4px; }
+        ::-webkit-scrollbar-track { background:transparent; }
+        ::-webkit-scrollbar-thumb { background:var(--border); border-radius:10px; }
+        .sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); border:0; }
+        #live-announcer { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); border:0; }
+        .help-text { font-size:0.65rem; color:var(--text-soft); opacity:0.7; margin-top:4px; }
+        .help-text i { font-style:normal; }
+        .config-group .help-inline { font-size:0.6rem; color:var(--text-soft); opacity:0.6; margin-left:4px; }
+    </style>
+</head>
+<body>
+
+    <div class="container" role="main" aria-label="Reloj de ajedrez profesional">
+        <div id="live-announcer" aria-live="polite" aria-atomic="true" class="sr-only"></div>
+
+        <header class="header">
+            <div class="title-area" id="title-container">
+                <span id="title-display">♟️ Club Morphy</span>
+                <span class="edit-icon">✎</span>
+            </div>
+            <div class="header-actions">
+                <span class="badge-mode" id="mode-badge">Estándar</span>
+                <label class="auto-label" id="auto-label" title="Auto‑start: al tocar un reloj se inicia la partida">
+                    <input type="checkbox" id="auto-start" checked />
+                    <span class="icon">🔓</span>
+                </label>
+                <button id="btn-sound" aria-label="Sonido" title="Sonido">🔊</button>
+                <button id="btn-theme-mode" aria-label="Modo claro/oscuro" title="Modo claro/oscuro">🌙</button>
+                <button id="btn-fullscreen" aria-label="Pantalla completa" title="Pantalla completa">⛶</button>
+                <button id="btn-config" aria-label="Configuración" title="Configuración">⚙️</button>
+            </div>
+        </header>
+
+        <div class="clocks" role="group" aria-label="Relojes de los jugadores">
+            <!-- Reloj Blancas -->
+            <div class="clock" id="clock-white" data-player="white" tabindex="0" role="timer" aria-label="Blancas, pulsar para pasar turno" aria-valuenow="300" aria-valuemin="0" aria-valuemax="300">
+                <div class="player">
+                    <span class="icon">⚪</span> Blancas
+                    <span class="turn-indicator" aria-hidden="true"></span>
+                </div>
+                <div style="width:100%;">
+                    <div class="time" id="time-white">05:00.0</div>
+                    <div class="time-progress" aria-hidden="true">
+                        <div class="fill" id="progress-white" style="width:100%; background:#22C55E;"></div>
+                    </div>
+                </div>
+                <span class="move-counter" id="moves-white">Mov 0</span>
+                <span class="turn-counter" id="turn-counter-white">Turno 0s</span>
+                <div class="adjust-controls" id="adjust-white">
+                    <button class="adjust-btn" data-player="white" data-delta="-1" title="Restar tiempo">−</button>
+                    <span style="font-size:0.7rem; color:var(--text-soft);">Ajustar</span>
+                    <button class="adjust-btn" data-player="white" data-delta="1" title="Añadir tiempo">+</button>
+                    <button class="manual-adjust-btn" data-player="white" title="Ajuste manual (horas, minutos, segundos)">⚙️</button>
+                </div>
+            </div>
+            <!-- Reloj Negras -->
+            <div class="clock" id="clock-black" data-player="black" tabindex="0" role="timer" aria-label="Negras, pulsar para pasar turno" aria-valuenow="300" aria-valuemin="0" aria-valuemax="300">
+                <div class="player">
+                    <span class="icon">⚫</span> Negras
+                    <span class="turn-indicator" aria-hidden="true"></span>
+                </div>
+                <div style="width:100%;">
+                    <div class="time" id="time-black">05:00.0</div>
+                    <div class="time-progress" aria-hidden="true">
+                        <div class="fill" id="progress-black" style="width:100%; background:#22C55E;"></div>
+                    </div>
+                </div>
+                <span class="move-counter" id="moves-black">Mov 0</span>
+                <span class="turn-counter" id="turn-counter-black">Turno 0s</span>
+                <div class="adjust-controls" id="adjust-black">
+                    <button class="adjust-btn" data-player="black" data-delta="-1" title="Restar tiempo">−</button>
+                    <span style="font-size:0.7rem; color:var(--text-soft);">Ajustar</span>
+                    <button class="adjust-btn" data-player="black" data-delta="1" title="Añadir tiempo">+</button>
+                    <button class="manual-adjust-btn" data-player="black" title="Ajuste manual (horas, minutos, segundos)">⚙️</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="controls" role="toolbar" aria-label="Controles de la partida">
+            <button class="btn-primary" id="btn-start">▶ Iniciar</button>
+            <button class="btn-outline" id="btn-pause" disabled>⏸ Pausa</button>
+            <button class="btn-danger" id="btn-reset">⟲ Reiniciar</button>
+        </div>
+
+        <!-- ========== PANEL DE CONFIGURACIÓN ========== -->
+        <div class="config-panel" id="config-panel">
+            <div class="panel-handle"></div>
+            <div class="panel-header">
+                <h2>⚙️ Configuración</h2>
+                <button class="panel-close" id="panel-close">✕</button>
+            </div>
+
+            <div class="theme-selector">
+                <label>🎨 Tema:</label>
+                <button class="theme-btn active" data-theme="blue" style="background:#4A8CFF;" title="Azul"></button>
+                <button class="theme-btn" data-theme="green" style="background:#22C55E;" title="Verde"></button>
+                <button class="theme-btn" data-theme="purple" style="background:#A855F7;" title="Púrpura"></button>
+                <button class="theme-btn" data-theme="red" style="background:#EF4444;" title="Rojo"></button>
+                <button class="theme-btn" data-theme="amber" style="background:#F59E0B;" title="Ámbar"></button>
+                <label style="margin-left:8px;">🌓</label>
+                <button id="btn-theme-mode-panel" class="btn-outline" style="padding:2px 10px; font-size:0.8rem;">Modo claro</button>
+            </div>
+
+            <div class="presets" id="presets-container"></div>
+            <p class="help-text">💡 Modifica los valores y pulsa <strong>"Listo"</strong> para guardarlos. <strong>"Cancelar"</strong> descarta los cambios. Guardar preset es opcional.</p>
+
+            <div class="config">
+                <!-- Modo -->
+                <div class="config-group">
+                    <label for="mode">Modo</label>
+                    <select id="mode">
+                        <option value="standard">Estándar (Finis)</option>
+                        <option value="increment">Incremento (Fischer)</option>
+                        <option value="bronstein">Bronstein</option>
+                        <option value="delay">Delay</option>
+                        <option value="hourglass">Reloj de Arena</option>
+                        <option value="byoyomi">Byoyomi (Shogi)</option>
+                        <option value="movetimer">Game timer</option>
+                    </select>
+                </div>
+
+                <!-- Tiempo base en HH:MM:SS -->
+                <div class="config-group time-input-group" id="base-time-group">
+                    <label>Tiempo base</label>
+                    <input type="number" id="base-hours" value="0" min="0" max="23" placeholder="HH" />
+                    <span>:</span>
+                    <input type="number" id="base-minutes" value="5" min="0" max="59" placeholder="MM" />
+                    <span>:</span>
+                    <input type="number" id="base-seconds" value="0" min="0" max="59" placeholder="SS" />
+                    <span class="help-inline">(horas:min:seg)</span>
+                </div>
+
+                <!-- Incremento (se muestra según modo) -->
+                <div class="config-group" id="increment-group" style="display:none;">
+                    <label for="increment" id="increment-label">Incremento (seg)</label>
+                    <input type="number" id="increment" value="3" min="0" step="1" />
+                </div>
+
+                <!-- Byoyomi -->
+                <div class="config-group" id="byoyomi-group" style="display:none;">
+                    <label for="byoyomiPeriods">Períodos</label>
+                    <input type="number" id="byoyomiPeriods" value="3" min="1" step="1" />
+                    <label for="byoyomiTime">Seg/Período</label>
+                    <input type="number" id="byoyomiTime" value="30" min="1" step="1" />
+                </div>
+
+                <!-- Game timer -->
+                <div class="config-group" id="move-time-group" style="display:none;">
+                    <label for="moveTime">Segundos por movimiento</label>
+                    <input type="number" id="moveTime" value="30" min="1" step="1" />
+                </div>
+
+                <!-- Ajuste manual -->
+                <div class="config-group">
+                    <label for="adjustStep">Ajuste manual (+/-)</label>
+                    <select id="adjustStep">
+                        <option value="1">1 segundo</option>
+                        <option value="5">5 segundos</option>
+                        <option value="10">10 segundos</option>
+                        <option value="30" selected>30 segundos</option>
+                        <option value="60">1 minuto (60s)</option>
+                    </select>
+                    <span class="help-inline">(para los botones ± en pausa)</span>
+                </div>
+            </div>
+
+            <div class="config" style="margin-bottom:12px; display: flex; flex-wrap: wrap; gap: 10px;">
+                <label style="font-size:0.7rem; color:var(--text-soft); display:flex; align-items:center; gap:6px;">
+                    <input type="checkbox" id="auto-pause" checked /> Pausar al perder foco
+                </label>
+                <label style="font-size:0.7rem; color:var(--text-soft); display:flex; align-items:center; gap:6px;">
+                    <input type="checkbox" id="show-stats" /> Mostrar estadísticas al finalizar
+                </label>
+            </div>
+
+            <!-- Estadísticas -->
+            <div class="stats" id="stats-panel">
+                <span>⏱️ Duración: <span class="value" id="stat-duration">00:00</span></span>
+                <span>♟️ Movimientos: <span class="value" id="stat-moves">0</span></span>
+                <span>⚪ Prom.: <span class="value" id="stat-avg-white">--</span></span>
+                <span>⚫ Prom.: <span class="value" id="stat-avg-black">--</span></span>
+                <span>🏆 Ganador: <span class="value highlight" id="stat-winner">--</span></span>
+            </div>
+
+            <!-- Guardar preset -->
+            <div class="modal-inline" id="modal-inline">
+                <div class="form-group">
+                    <label for="preset-name">Nombre del preset (opcional)</label>
+                    <input type="text" id="preset-name" placeholder="Deja en blanco para nombre automático" />
+                </div>
+                <div class="form-group">
+                    <label for="preset-mode">Modo</label>
+                    <select id="preset-mode">
+                        <option value="standard">Estándar</option>
+                        <option value="increment">Incremento</option>
+                        <option value="bronstein">Bronstein</option>
+                        <option value="delay">Delay</option>
+                        <option value="hourglass">Reloj de Arena</option>
+                        <option value="byoyomi">Byoyomi</option>
+                        <option value="movetimer">Game timer</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="preset-base">Tiempo base (segundos)</label>
+                    <input type="number" id="preset-base" value="300" min="1" step="1" />
+                </div>
+                <div class="form-group">
+                    <label for="preset-inc">Incremento / Retraso / Seg x Período</label>
+                    <input type="number" id="preset-inc" value="3" min="0" step="1" />
+                </div>
+                <div class="modal-actions">
+                    <button class="btn-cancel" id="modal-cancel">Cancelar</button>
+                    <button class="btn-save" id="modal-save">Guardar</button>
+                </div>
+            </div>
+
+            <!-- Botones -->
+            <div class="panel-actions">
+                <button class="btn-cancel" id="panel-cancel">Cancelar</button>
+                <button class="btn-ready" id="panel-ready">Listo</button>
+                <button id="btn-add-preset" class="btn-outline">✚ Guardar preset</button>
+            </div>
+        </div>
+
+        <!-- Modal manual -->
+        <div class="manual-modal" id="manual-modal">
+            <div class="manual-modal-content">
+                <h3 id="manual-modal-title">Ajustar tiempo de Blancas</h3>
+                <div class="time-inputs">
+                    <div class="input-group">
+                        <label for="manual-hours">Horas</label>
+                        <input type="number" id="manual-hours" min="0" max="23" value="0" />
+                    </div>
+                    <div class="input-group">
+                        <label for="manual-minutes">Minutos</label>
+                        <input type="number" id="manual-minutes" min="0" max="59" value="0" />
+                    </div>
+                    <div class="input-group">
+                        <label for="manual-seconds">Segundos</label>
+                        <input type="number" id="manual-seconds" min="0" max="59" value="0" />
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button class="btn-cancel-modal" id="manual-cancel">Cancelar</button>
+                    <button class="btn-apply" id="manual-apply">Aplicar</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Overlay de celebración -->
+        <div class="celebration-overlay" id="celebration-overlay">
+            <div class="celebration-content">
+                <div class="winner-text">
+                    <span class="trophy">🏆</span>
+                    <span id="winner-name">¡Blancas ganan!</span>
+                </div>
+                <div class="celebration-pieces">
+                    <span>♔</span><span>♕</span><span>♖</span><span>♗</span><span>♘</span><span>♙</span>
+                    <span>♚</span><span>♛</span><span>♜</span><span>♝</span><span>♞</span><span>♟</span>
+                </div>
+                <button class="celebration-stats-btn" id="celebration-stats-btn">📊 Ver estadísticas</button>
+                <div class="celebration-sub">Toca fuera para cerrar</div>
+            </div>
+        </div>
+
+        <div id="stats-modal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); backdrop-filter:blur(4px); z-index:3000; align-items:center; justify-content:center;">
+            <div style="background:var(--surface); border-radius:var(--radius); padding:24px; max-width:400px; width:90%; border:1px solid var(--border); box-shadow:var(--shadow);">
+                <h3 style="margin-bottom:12px;">📊 Estadísticas de la partida</h3>
+                <div id="stats-detail" style="font-size:0.9rem; line-height:1.8; color:var(--text);"></div>
+                <button id="stats-modal-close" style="margin-top:16px; background:var(--primary); color:#fff; border:none; border-radius:30px; padding:8px 20px; cursor:pointer;">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            'use strict';
+
+            // ---------- DOM refs ----------
+            const clockWhite = document.getElementById('clock-white');
+            const clockBlack = document.getElementById('clock-black');
+            const timeWhite = document.getElementById('time-white');
+            const timeBlack = document.getElementById('time-black');
+            const progressWhite = document.getElementById('progress-white');
+            const progressBlack = document.getElementById('progress-black');
+            const movesWhite = document.getElementById('moves-white');
+            const movesBlack = document.getElementById('moves-black');
+            const turnCounterWhite = document.getElementById('turn-counter-white');
+            const turnCounterBlack = document.getElementById('turn-counter-black');
+            const btnStart = document.getElementById('btn-start');
+            const btnPause = document.getElementById('btn-pause');
+            const btnReset = document.getElementById('btn-reset');
+            const modeSelect = document.getElementById('mode');
+            const baseHours = document.getElementById('base-hours');
+            const baseMinutes = document.getElementById('base-minutes');
+            const baseSeconds = document.getElementById('base-seconds');
+            const incrementInput = document.getElementById('increment');
+            const moveTimeInput = document.getElementById('moveTime');
+            const incrementGroup = document.getElementById('increment-group');
+            const moveTimeGroup = document.getElementById('move-time-group');
+            const baseTimeGroup = document.getElementById('base-time-group');
+            const byoyomiGroup = document.getElementById('byoyomi-group');
+            const byoyomiPeriodsInput = document.getElementById('byoyomiPeriods');
+            const byoyomiTimeInput = document.getElementById('byoyomiTime');
+            const modeBadge = document.getElementById('mode-badge');
+            const btnThemeMode = document.getElementById('btn-theme-mode');
+            const btnThemeModePanel = document.getElementById('btn-theme-mode-panel');
+            const btnFullscreen = document.getElementById('btn-fullscreen');
+            const btnSound = document.getElementById('btn-sound');
+            const btnConfig = document.getElementById('btn-config');
+            const panel = document.getElementById('config-panel');
+            const panelClose = document.getElementById('panel-close');
+            const panelReady = document.getElementById('panel-ready');
+            const panelCancel = document.getElementById('panel-cancel');
+            const presetsContainer = document.getElementById('presets-container');
+            const modalInline = document.getElementById('modal-inline');
+            const presetName = document.getElementById('preset-name');
+            const presetMode = document.getElementById('preset-mode');
+            const presetBase = document.getElementById('preset-base');
+            const presetInc = document.getElementById('preset-inc');
+            const modalCancel = document.getElementById('modal-cancel');
+            const modalSave = document.getElementById('modal-save');
+            const btnAddPreset = document.getElementById('btn-add-preset');
+            const titleDisplay = document.getElementById('title-display');
+            const titleContainer = document.getElementById('title-container');
+            const announcer = document.getElementById('live-announcer');
+            const autoStartCheck = document.getElementById('auto-start');
+            const autoLabel = document.getElementById('auto-label');
+            const autoIcon = autoLabel.querySelector('.icon');
+            const celebrationOverlay = document.getElementById('celebration-overlay');
+            const winnerNameSpan = document.getElementById('winner-name');
+            const statDuration = document.getElementById('stat-duration');
+            const statMoves = document.getElementById('stat-moves');
+            const statAvgWhite = document.getElementById('stat-avg-white');
+            const statAvgBlack = document.getElementById('stat-avg-black');
+            const statWinner = document.getElementById('stat-winner');
+            const autoPauseCheck = document.getElementById('auto-pause');
+            const showStatsCheck = document.getElementById('show-stats');
+            const celebrationStatsBtn = document.getElementById('celebration-stats-btn');
+            const statsModal = document.getElementById('stats-modal');
+            const statsDetail = document.getElementById('stats-detail');
+            const statsModalClose = document.getElementById('stats-modal-close');
+            const adjustStepSelect = document.getElementById('adjustStep');
+            const adjustBtns = document.querySelectorAll('.adjust-btn');
+            const manualModal = document.getElementById('manual-modal');
+            const manualHours = document.getElementById('manual-hours');
+            const manualMinutes = document.getElementById('manual-minutes');
+            const manualSeconds = document.getElementById('manual-seconds');
+            const manualApply = document.getElementById('manual-apply');
+            const manualCancel = document.getElementById('manual-cancel');
+            const manualTitle = document.getElementById('manual-modal-title');
+            const manualAdjustBtns = document.querySelectorAll('.manual-adjust-btn');
+
+            // ---------- Estado principal ----------
+            const state = {
+                whiteTime: 3000,
+                blackTime: 3000,
+                whiteMoves: 0,
+                blackMoves: 0,
+                whiteTotalTimeUsed: 0,
+                blackTotalTimeUsed: 0,
+                baseTime: 300,
+                increment: 3,
+                moveTime: 30,
+                mode: 'standard',
+                isRunning: false,
+                isPaused: false,
+                activePlayer: 'white',
+                gameOver: false,
+                winner: null,
+                moveRemaining: 0,
+                soundEnabled: true,
+                vibrateEnabled: 'vibrate' in navigator,
+                wakeLock: null,
+                startTime: null,
+                endTime: null,
+                turnElapsed: 0,
+                customPresets: [],
+                clockName: '♟️ Club Morphy',
+                autoStart: true,
+                autoPause: true,
+                theme: 'blue',
+                themeMode: 'dark',
+                wasAutoPaused: false, // true si la última pausa fue automática (por ocultar pestaña)
+                animFrameId: null,
+                timeAccumulator: 0,
+                adjustStep: 300,
+                manualTarget: null,
+                showStats: false,
+                delayTime: 0,
+                whiteDelay: 0,
+                blackDelay: 0,
+                maxTime: 0,
+                byoyomiPeriods: 3,
+                byoyomiTime: 30,
+                whiteByoyomiLeft: 0,
+                blackByoyomiLeft: 0,
+                whiteByoyomiTimer: 0,
+                blackByoyomiTimer: 0,
+            };
+
+            // ---------- Copia de trabajo para el panel ----------
+            let panelState = {
+                mode: state.mode,
+                baseTime: state.baseTime,
+                increment: state.increment,
+                moveTime: state.moveTime,
+                adjustStep: state.adjustStep,
+                byoyomiPeriods: state.byoyomiPeriods,
+                byoyomiTime: state.byoyomiTime,
+                autoPause: state.autoPause,
+                showStats: state.showStats,
+            };
+
+            // ---------- Persistencia ----------
+            function loadSettings() {
+                try {
+                    const saved = localStorage.getItem('chessClockSettings');
+                    if (saved) {
+                        const settings = JSON.parse(saved);
+                        if (settings.mode) modeSelect.value = settings.mode;
+                        if (settings.baseTime) {
+                            const totalSeg = parseInt(settings.baseTime) || 300;
+                            setTimeInputsFromSeconds(totalSeg);
+                            state.baseTime = totalSeg;
+                        }
+                        if (settings.increment !== undefined) incrementInput.value = settings.increment;
+                        if (settings.moveTime) moveTimeInput.value = settings.moveTime;
+                        if (settings.theme) {
+                            state.theme = settings.theme;
+                            document.documentElement.setAttribute('data-theme', settings.theme);
+                        }
+                        if (settings.themeMode) {
+                            state.themeMode = settings.themeMode;
+                            document.documentElement.setAttribute('data-theme-mode', settings.themeMode);
+                            updateThemeModeUI();
+                        }
+                        if (settings.sound !== undefined) {
+                            state.soundEnabled = settings.sound;
+                            btnSound.textContent = state.soundEnabled ? '🔊' : '🔇';
+                        }
+                        if (settings.clockName) {
+                            state.clockName = settings.clockName;
+                            titleDisplay.textContent = state.clockName;
+                        }
+                        if (settings.autoStart !== undefined) {
+                            state.autoStart = settings.autoStart;
+                            autoStartCheck.checked = state.autoStart;
+                            updateAutoIcon();
+                        } else {
+                            state.autoStart = true;
+                            autoStartCheck.checked = true;
+                            updateAutoIcon();
+                        }
+                        if (settings.autoPause !== undefined) {
+                            state.autoPause = settings.autoPause;
+                            autoPauseCheck.checked = state.autoPause;
+                        }
+                        if (settings.showStats !== undefined) {
+                            state.showStats = settings.showStats;
+                            showStatsCheck.checked = state.showStats;
+                        } else {
+                            state.showStats = false;
+                            showStatsCheck.checked = false;
+                        }
+                        if (settings.adjustStep) {
+                            adjustStepSelect.value = settings.adjustStep;
+                            state.adjustStep = parseInt(settings.adjustStep) * 10;
+                        }
+                        if (settings.byoyomiPeriods) byoyomiPeriodsInput.value = settings.byoyomiPeriods;
+                        if (settings.byoyomiTime) byoyomiTimeInput.value = settings.byoyomiTime;
+                    } else {
+                        state.autoStart = true;
+                        autoStartCheck.checked = true;
+                        updateAutoIcon();
+                        state.showStats = false;
+                        showStatsCheck.checked = false;
+                        baseHours.value = 0;
+                        baseMinutes.value = 5;
+                        baseSeconds.value = 0;
+                        state.baseTime = 300;
+                    }
+                    const savedPresets = localStorage.getItem('chessClockCustomPresets');
+                    if (savedPresets) {
+                        try { state.customPresets = JSON.parse(savedPresets); } catch (_) { state.customPresets = []; }
+                    } else {
+                        state.customPresets = [
+                            { id: 'default-move', name: 'Game timer 30s', mode: 'movetimer', base: 30, inc: 0 },
+                            { id: 'default-delay', name: 'Delay 5m+3s', mode: 'delay', base: 300, inc: 3 }
+                        ];
+                        saveCustomPresets();
+                    }
+                    const savedGame = localStorage.getItem('chessClockGame');
+                    if (savedGame) {
+                        const game = JSON.parse(savedGame);
+                        state.whiteTime = game.whiteTime || 3000;
+                        state.blackTime = game.blackTime || 3000;
+                        state.whiteMoves = game.whiteMoves || 0;
+                        state.blackMoves = game.blackMoves || 0;
+                        state.whiteTotalTimeUsed = game.whiteTotalTimeUsed || 0;
+                        state.blackTotalTimeUsed = game.blackTotalTimeUsed || 0;
+                        state.activePlayer = game.activePlayer || 'white';
+                        state.isRunning = game.isRunning || false;
+                        state.isPaused = game.isPaused || false;
+                        state.gameOver = game.gameOver || false;
+                        state.winner = game.winner || null;
+                        state.startTime = game.startTime ? new Date(game.startTime) : null;
+                        state.endTime = game.endTime ? new Date(game.endTime) : null;
+                        state.mode = game.mode || 'standard';
+                        modeSelect.value = state.mode;
+                        onModeChange(false);
+                        setTimeInputsFromSeconds(state.baseTime);
+                        incrementInput.value = state.increment;
+                        moveTimeInput.value = state.moveTime;
+                        state.byoyomiPeriods = game.byoyomiPeriods || 3;
+                        state.byoyomiTime = game.byoyomiTime || 30;
+                        state.whiteByoyomiLeft = game.whiteByoyomiLeft || 0;
+                        state.blackByoyomiLeft = game.blackByoyomiLeft || 0;
+                        state.whiteByoyomiTimer = game.whiteByoyomiTimer || 0;
+                        state.blackByoyomiTimer = game.blackByoyomiTimer || 0;
+                        state.whiteDelay = game.whiteDelay || 0;
+                        state.blackDelay = game.blackDelay || 0;
+                        state.maxTime = game.maxTime || 0;
+                        state.delayTime = game.delayTime || 0;
+                        if (state.isRunning && !state.isPaused && !state.gameOver) {
+                            startTimerLoop();
+                        }
+                        announce('Partida cargada');
+                    }
+                    updateThemeButtons();
+                    onModeChange(false);
+                    updateAdjustVisibility();
+                } catch (_) {}
+            }
+
+            function saveSettings() {
+                try {
+                    const settings = {
+                        mode: state.mode,
+                        baseTime: state.baseTime,
+                        increment: state.increment,
+                        moveTime: state.moveTime,
+                        theme: state.theme,
+                        themeMode: state.themeMode,
+                        sound: state.soundEnabled,
+                        clockName: state.clockName,
+                        autoStart: state.autoStart,
+                        autoPause: state.autoPause,
+                        showStats: state.showStats,
+                        adjustStep: adjustStepSelect.value,
+                        byoyomiPeriods: state.byoyomiPeriods,
+                        byoyomiTime: state.byoyomiTime,
+                    };
+                    localStorage.setItem('chessClockSettings', JSON.stringify(settings));
+                } catch (_) {}
+            }
+
+            function saveGame() {
+                try {
+                    const game = {
+                        whiteTime: state.whiteTime,
+                        blackTime: state.blackTime,
+                        whiteMoves: state.whiteMoves,
+                        blackMoves: state.blackMoves,
+                        whiteTotalTimeUsed: state.whiteTotalTimeUsed,
+                        blackTotalTimeUsed: state.blackTotalTimeUsed,
+                        activePlayer: state.activePlayer,
+                        isRunning: state.isRunning,
+                        isPaused: state.isPaused,
+                        gameOver: state.gameOver,
+                        winner: state.winner,
+                        startTime: state.startTime ? state.startTime.toISOString() : null,
+                        endTime: state.endTime ? state.endTime.toISOString() : null,
+                        mode: state.mode,
+                        baseTime: state.baseTime,
+                        increment: state.increment,
+                        moveTime: state.moveTime,
+                        byoyomiPeriods: state.byoyomiPeriods,
+                        byoyomiTime: state.byoyomiTime,
+                        whiteByoyomiLeft: state.whiteByoyomiLeft,
+                        blackByoyomiLeft: state.blackByoyomiLeft,
+                        whiteByoyomiTimer: state.whiteByoyomiTimer,
+                        blackByoyomiTimer: state.blackByoyomiTimer,
+                        whiteDelay: state.whiteDelay,
+                        blackDelay: state.blackDelay,
+                        maxTime: state.maxTime,
+                        delayTime: state.delayTime,
+                    };
+                    localStorage.setItem('chessClockGame', JSON.stringify(game));
+                } catch (_) {}
+            }
+
+            function clearSavedGame() { localStorage.removeItem('chessClockGame'); }
+
+            function saveCustomPresets() {
+                localStorage.setItem('chessClockCustomPresets', JSON.stringify(state.customPresets));
+                renderPresets();
+            }
+
+            // ---------- Utilidades de tiempo ----------
+            function getBaseTimeFromInputs() {
+                const h = parseInt(baseHours.value) || 0;
+                const m = parseInt(baseMinutes.value) || 0;
+                const s = parseInt(baseSeconds.value) || 0;
+                return h * 3600 + m * 60 + s;
+            }
+
+            function setTimeInputsFromSeconds(totalSeg) {
+                const h = Math.floor(totalSeg / 3600);
+                const m = Math.floor((totalSeg % 3600) / 60);
+                const s = totalSeg % 60;
+                baseHours.value = h;
+                baseMinutes.value = m;
+                baseSeconds.value = s;
+            }
+
+            // ---------- Sonido ----------
+            let audioCtx = null;
+
+            function initAudio() {
+                if (!audioCtx) {
+                    try { audioCtx = new(window.AudioContext || window.webkitAudioContext)(); } catch (_) { console.warn(
+                            'Web Audio no soportado'); }
+                }
+                if (audioCtx && audioCtx.state === 'suspended') {
+                    audioCtx.resume().catch(() => {});
+                }
+                return audioCtx;
+            }
+
+            function playBeep(freq, duration, count) {
+                if (!state.soundEnabled) return;
+                try {
+                    const ctx = initAudio();
+                    if (!ctx) return;
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.type = 'square';
+                    osc.frequency.value = freq || 800;
+                    gain.gain.value = 0.15;
+                    osc.start();
+                    setTimeout(() => {
+                        osc.stop();
+                        if (count && count > 1) {
+                            setTimeout(() => playBeep(freq, duration, count - 1), 200);
+                        }
+                    }, duration || 300);
+                } catch (_) {}
+            }
+
+            function playMelody(notes) {
+                if (!state.soundEnabled) return;
+                try {
+                    const ctx = initAudio();
+                    if (!ctx) return;
+                    notes.forEach((note, i) => {
+                        setTimeout(() => {
+                            const osc = ctx.createOscillator();
+                            const gain = ctx.createGain();
+                            osc.connect(gain);
+                            gain.connect(ctx.destination);
+                            osc.type = 'sine';
+                            osc.frequency.value = note;
+                            gain.gain.value = 0.12;
+                            osc.start();
+                            setTimeout(() => osc.stop(), 200);
+                        }, i * 200);
+                    });
+                } catch (_) {}
+            }
+
+            function soundAlert() { playBeep(800, 300, 2); }
+
+            function soundWarning() { playBeep(600, 200, 1); }
+
+            function soundStart() { playBeep(1000, 150, 1); }
+
+            function soundEndGame() { playMelody([523, 659, 784]); }
+
+            // ---------- Notificaciones ----------
+            function requestNotificationPermission() {
+                if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission();
+            }
+
+            function sendNotification(title, body) {
+                if ('Notification' in window && Notification.permission === 'granted') {
+                    try { new Notification(title, { body, icon: '♟️' }); } catch (_) {}
+                }
+            }
+
+            // ---------- Vibración ----------
+            function vibrate(pattern) {
+                if (state.vibrateEnabled) { try { navigator.vibrate(pattern); } catch (_) {} }
+            }
+
+            // ---------- Wake Lock ----------
+            async function requestWakeLock() {
+                try { if ('wakeLock' in navigator) { state.wakeLock = await navigator.wakeLock.request('screen'); } } catch (_) {}
+            }
+            async function releaseWakeLock() {
+                try { if (state.wakeLock) { await state.wakeLock.release();
+                        state.wakeLock = null; } } catch (_) {}
+            }
+
+            // ---------- UI Helpers ----------
+            function formatTime(decimas) {
+                const totalSeg = Math.floor(decimas / 10);
+                const mins = Math.floor(totalSeg / 60);
+                const segs = totalSeg % 60;
+                const dec = decimas % 10;
+                return `${mins.toString().padStart(2,'0')}:${segs.toString().padStart(2,'0')}.${dec}`;
+            }
+
+            function formatDuration(seconds) {
+                const m = Math.floor(seconds / 60);
+                const s = Math.floor(seconds % 60);
+                return `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+            }
+
+            function getProgressColor(ratio) {
+                if (ratio > 0.5) return '#22C55E';
+                if (ratio > 0.2) return '#F59E0B';
+                return '#EF4444';
+            }
+
+            function updateDisplay() {
+                timeWhite.textContent = formatTime(state.whiteTime);
+                timeBlack.textContent = formatTime(state.blackTime);
+                movesWhite.textContent = `Mov ${state.whiteMoves}`;
+                movesBlack.textContent = `Mov ${state.blackMoves}`;
+
+                let turnTextWhite = `Turno ${Math.floor(state.turnElapsed / 10)}s`;
+                let turnTextBlack = `Turno ${Math.floor(state.turnElapsed / 10)}s`;
+
+                // Mostrar delay si está activo
+                if (state.mode === 'delay') {
+                    if (state.whiteDelay > 0) {
+                        turnTextWhite += ` <span class="delay-indicator">⏱${(state.whiteDelay/10).toFixed(1)}s</span>`;
+                    }
+                    if (state.blackDelay > 0) {
+                        turnTextBlack += ` <span class="delay-indicator">⏱${(state.blackDelay/10).toFixed(1)}s</span>`;
+                    }
+                }
+
+                if (state.mode === 'byoyomi') {
+                    if (state.whiteTime <= 0) turnTextWhite += ` ⏳${state.whiteByoyomiLeft}`;
+                    if (state.blackTime <= 0) turnTextBlack += ` ⏳${state.blackByoyomiLeft}`;
+                }
+                turnCounterWhite.textContent = turnTextWhite;
+                turnCounterBlack.textContent = turnTextBlack;
+
+                const warn = 30,
+                    warnDec = warn * 10;
+                const wWarn = state.whiteTime <= warnDec && state.whiteTime > 0;
+                const bWarn = state.blackTime <= warnDec && state.blackTime > 0;
+                timeWhite.classList.toggle('warning', wWarn);
+                timeBlack.classList.toggle('warning', bWarn);
+                timeWhite.classList.toggle('flagged', state.whiteTime <= 0);
+                timeBlack.classList.toggle('flagged', state.blackTime <= 0);
+                clockWhite.classList.toggle('warning', wWarn);
+                clockBlack.classList.toggle('warning', bWarn);
+                clockWhite.classList.toggle('flagged', state.whiteTime <= 0);
+                clockBlack.classList.toggle('flagged', state.blackTime <= 0);
+                clockWhite.classList.toggle('winner', state.winner === 'white');
+                clockBlack.classList.toggle('winner', state.winner === 'black');
+
+                if (state.whiteTime <= 0) timeWhite.textContent = '⛳ 00:00.0';
+                if (state.blackTime <= 0) timeBlack.textContent = '⛳ 00:00.0';
+
+                const isActive = state.isRunning && !state.isPaused && !state.gameOver;
+                clockWhite.classList.toggle('active', isActive && state.activePlayer === 'white');
+                clockBlack.classList.toggle('active', isActive && state.activePlayer === 'black');
+                clockWhite.classList.toggle('inactive', isActive && state.activePlayer !== 'white');
+                clockBlack.classList.toggle('inactive', isActive && state.activePlayer !== 'black');
+
+                clockWhite.classList.toggle('paused', state.isPaused && state.isRunning && !state.gameOver);
+                clockBlack.classList.toggle('paused', state.isPaused && state.isRunning && !state.gameOver);
+
+                clockWhite.setAttribute('aria-valuenow', Math.floor(state.whiteTime / 10));
+                clockBlack.setAttribute('aria-valuenow', Math.floor(state.blackTime / 10));
+
+                // Progreso
+                let maxDec;
+                if (state.mode === 'movetimer') {
+                    maxDec = state.moveTime * 10;
+                } else {
+                    maxDec = state.baseTime * 10;
+                }
+                const pctWhite = Math.min(100, (state.whiteTime / maxDec) * 100);
+                const pctBlack = Math.min(100, (state.blackTime / maxDec) * 100);
+                progressWhite.style.width = `${pctWhite}%`;
+                progressBlack.style.width = `${pctBlack}%`;
+                progressWhite.style.background = getProgressColor(pctWhite / 100);
+                progressBlack.style.background = getProgressColor(pctBlack / 100);
+
+                const labels = {
+                    standard: 'Estándar',
+                    increment: 'Incremento',
+                    bronstein: 'Bronstein',
+                    delay: 'Delay',
+                    hourglass: 'Reloj Arena',
+                    byoyomi: 'Byoyomi',
+                    movetimer: 'Game timer'
+                };
+                modeBadge.textContent = labels[state.mode] || 'Estándar';
+            }
+
+            function updateControls() {
+                btnStart.disabled = state.isRunning && !state.isPaused;
+                btnPause.disabled = !state.isRunning || state.gameOver;
+                btnStart.textContent = (state.isRunning && state.isPaused) ? '▶ Reanudar' : '▶ Iniciar';
+                btnPause.textContent = state.isPaused ? '⏸ Pausado' : '⏸ Pausa';
+            }
+
+            function announce(message) {
+                announcer.textContent = '';
+                setTimeout(() => { announcer.textContent = message; }, 50);
+            }
+
+            function updateStats() {
+                let duration = 0;
+                if (state.startTime) {
+                    const end = state.endTime || new Date();
+                    duration = (end - state.startTime) / 1000;
+                }
+                statDuration.textContent = formatDuration(duration);
+                const totalMoves = state.whiteMoves + state.blackMoves;
+                statMoves.textContent = totalMoves;
+                if (state.whiteMoves > 0) {
+                    const avg = (state.whiteTotalTimeUsed / 10) / state.whiteMoves;
+                    statAvgWhite.textContent = avg.toFixed(1) + 's';
+                } else { statAvgWhite.textContent = '--'; }
+                if (state.blackMoves > 0) {
+                    const avg = (state.blackTotalTimeUsed / 10) / state.blackMoves;
+                    statAvgBlack.textContent = avg.toFixed(1) + 's';
+                } else { statAvgBlack.textContent = '--'; }
+                if (state.winner) {
+                    statWinner.textContent = state.winner === 'white' ? '⚪ Blancas' : '⚫ Negras';
+                } else if (state.gameOver) { statWinner.textContent = 'Empate?'; } else { statWinner.textContent = '--'; }
+            }
+
+            function updateAdjustVisibility() {
+                const show = state.isPaused && state.isRunning && !state.gameOver;
+                document.querySelectorAll('.adjust-controls').forEach(el => {
+                    el.classList.toggle('visible', show);
+                });
+            }
+
+            function handleAdjust(player, delta) {
+                const step = state.adjustStep;
+                const timeKey = player === 'white' ? 'whiteTime' : 'blackTime';
+                const newTime = Math.max(0, state[timeKey] + delta * step);
+                state[timeKey] = newTime;
+                updateDisplay();
+                saveGame();
+                const playerName = player === 'white' ? 'Blancas' : 'Negras';
+                const action = delta > 0 ? 'aumentado' : 'reducido';
+                const seconds = step / 10;
+                announce(`${playerName}: tiempo ${action} en ${seconds} segundos`);
+                vibrate(50);
+                playBeep(600, 100, 1);
+            }
+
+            // ---------- Ajuste manual ----------
+            function openManualModal(player) {
+                if (!state.isPaused || !state.isRunning || state.gameOver) {
+                    announce('La partida debe estar pausada para ajustar manualmente');
+                    return;
+                }
+                state.manualTarget = player;
+                const time = player === 'white' ? state.whiteTime : state.blackTime;
+                const totalSec = Math.floor(time / 10);
+                const hours = Math.floor(totalSec / 3600);
+                const minutes = Math.floor((totalSec % 3600) / 60);
+                const seconds = totalSec % 60;
+                manualHours.value = hours;
+                manualMinutes.value = minutes;
+                manualSeconds.value = seconds;
+                const playerName = player === 'white' ? 'Blancas' : 'Negras';
+                manualTitle.textContent = `Ajustar tiempo de ${playerName}`;
+                manualModal.classList.add('active');
+            }
+
+            function closeManualModal() {
+                manualModal.classList.remove('active');
+                state.manualTarget = null;
+            }
+
+            function applyManualAdjust() {
+                const player = state.manualTarget;
+                if (!player) return;
+                let h = parseInt(manualHours.value) || 0;
+                let m = parseInt(manualMinutes.value) || 0;
+                let s = parseInt(manualSeconds.value) || 0;
+                h = Math.max(0, Math.min(23, h));
+                m = Math.max(0, Math.min(59, m));
+                s = Math.max(0, Math.min(59, s));
+                const totalDec = (h * 3600 + m * 60 + s) * 10;
+                const timeKey = player === 'white' ? 'whiteTime' : 'blackTime';
+                state[timeKey] = totalDec;
+                updateDisplay();
+                saveGame();
+                const playerName = player === 'white' ? 'Blancas' : 'Negras';
+                announce(`${playerName}: tiempo ajustado a ${h}h ${m}m ${s}s`);
+                vibrate(50);
+                playBeep(800, 150, 1);
+                closeManualModal();
+            }
+
+            // ---------- Auto-start icon ----------
+            function updateAutoIcon() {
+                autoIcon.textContent = state.autoStart ? '🔓' : '🔒';
+                autoLabel.classList.toggle('active', state.autoStart);
+                autoLabel.title = state.autoStart ?
+                    'Auto‑start activado 🔓 (se inicia al tocar un reloj)' :
+                    'Auto‑start desactivado 🔒 (hay que pulsar Iniciar)';
+            }
+
+            // ---------- Timer ----------
+            let lastTimestamp = 0;
+
+            function startTimerLoop() {
+                if (state.animFrameId) cancelAnimationFrame(state.animFrameId);
+                state.isRunning = true;
+                state.isPaused = false;
+                state.timeAccumulator = 0;
+                lastTimestamp = performance.now();
+                requestWakeLock();
+                tickLoop(performance.now());
+                updateControls();
+                saveGame();
+                updateAdjustVisibility();
+            }
+
+            function stopTimerLoop() {
+                if (state.animFrameId) {
+                    cancelAnimationFrame(state.animFrameId);
+                    state.animFrameId = null;
+                }
+                state.isRunning = false;
+                state.isPaused = false;
+                releaseWakeLock();
+                updateControls();
+                saveGame();
+                updateAdjustVisibility();
+            }
+
+            function tickLoop(timestamp) {
+                if (!state.isRunning || state.isPaused || state.gameOver) {
+                    state.animFrameId = null;
+                    return;
+                }
+
+                const delta = (timestamp - lastTimestamp) / 1000;
+                lastTimestamp = timestamp;
+                state.timeAccumulator += delta;
+
+                while (state.timeAccumulator >= 0.1) {
+                    state.timeAccumulator -= 0.1;
+                    const player = state.activePlayer;
+
+                    // ============================================================
+                    //  LÓGICA DE MODOS (delay corregido)
+                    // ============================================================
+                    if (state.mode === 'hourglass') {
+                        if (player === 'white') {
+                            state.whiteTime = Math.max(0, state.whiteTime - 1);
+                            state.blackTime = state.blackTime + 1;
+                        } else {
+                            state.blackTime = Math.max(0, state.blackTime - 1);
+                            state.whiteTime = state.whiteTime + 1;
+                        }
+                        state.turnElapsed += 1;
+                    } else if (state.mode === 'byoyomi') {
+                        const timerKey = player + 'ByoyomiTimer';
+                        const leftKey = player + 'ByoyomiLeft';
+                        const timeKey = player + 'Time';
+                        if (state[timeKey] > 0) {
+                            state[timeKey] = Math.max(0, state[timeKey] - 1);
+                            state.turnElapsed += 1;
+                        } else {
+                            if (state[timerKey] > 0) {
+                                state[timerKey] -= 1;
+                                state.turnElapsed += 1;
+                                if (state[timerKey] <= 50 && state[timerKey] > 0 && state[timerKey] % 10 === 0) {
+                                    playBeep(1200, 80, 1);
+                                }
+                                if (state[timerKey] === 10) {
+                                    playBeep(1500, 200, 1);
+                                }
+                            } else {
+                                if (state[leftKey] > 0) {
+                                    state[leftKey] -= 1;
+                                    state[timerKey] = state.byoyomiTime * 10;
+                                    playBeep(600, 200, 2);
+                                    announce(`${player === 'white' ? 'Blancas' : 'Negras'}: ${state[leftKey]} períodos restantes`);
+                                } else {
+                                    endGame(player);
+                                    return;
+                                }
+                            }
+                        }
+                    } else if (state.mode === 'delay') {
+                        const delayKey = player + 'Delay';
+                        // CONGELAR TIEMPO PRINCIPAL MIENTRAS HAYA DELAY
+                        if (state[delayKey] > 0) {
+                            state[delayKey] -= 1;
+                            state.turnElapsed += 1;
+                            // Log de depuración (opcional)
+                            // console.log(`Delay ${player}: ${state[delayKey]/10}s restante`);
+                        } else {
+                            // Una vez agotado, descuenta el tiempo principal
+                            if (player === 'white') {
+                                state.whiteTime = Math.max(0, state.whiteTime - 1);
+                            } else {
+                                state.blackTime = Math.max(0, state.blackTime - 1);
+                            }
+                            state.turnElapsed += 1;
+                        }
+                    } else {
+                        // Estándar, Incremento, Bronstein, Game timer
+                        if (player === 'white') {
+                            state.whiteTime = Math.max(0, state.whiteTime - 1);
+                        } else {
+                            state.blackTime = Math.max(0, state.blackTime - 1);
+                        }
+                        state.turnElapsed += 1;
+                    }
+
+                    if (state.whiteTime <= 0 || state.blackTime <= 0) {
+                        endGame(state.whiteTime <= 0 ? 'white' : 'black');
+                        return;
+                    }
+
+                    const remaining = (player === 'white') ? state.whiteTime : state.blackTime;
+                    if (remaining === 100) {
+                        soundWarning();
+                        vibrate(200);
+                        if (document.hidden) {
+                            sendNotification('⏰ ¡Tiempo bajo!', `${player === 'white' ? 'Blancas' : 'Negras'} tienen 10 segundos.`);
+                        }
+                    }
+                }
+
+                updateDisplay();
+                updateStats();
+                state.animFrameId = requestAnimationFrame(tickLoop);
+            }
+
+            // ---------- Fin de partida ----------
+            function endGame(loser) {
+                if (state.gameOver) return;
+                state.gameOver = true;
+                state.isRunning = false;
+                state.winner = (loser === 'white') ? 'black' : 'white';
+                state.endTime = new Date();
+                if (state.animFrameId) {
+                    cancelAnimationFrame(state.animFrameId);
+                    state.animFrameId = null;
+                }
+                soundEndGame();
+                soundAlert();
+                vibrate([100, 100, 100, 100, 200]);
+                const winnerName = state.winner === 'white' ? 'Blancas' : 'Negras';
+                announce(`¡Partida finalizada! ${winnerName} ganan.`);
+                sendNotification('🏆 Partida finalizada', `${winnerName} ganan por tiempo.`);
+                updateDisplay();
+                updateControls();
+                updateStats();
+                releaseWakeLock();
+                clearSavedGame();
+
+                if (state.showStats) {
+                    showCelebration(winnerName);
+                } else {
+                    setTimeout(() => { resetGame(); }, 600);
+                }
+                updateAdjustVisibility();
+            }
+
+            function showCelebration(winnerName) {
+                winnerNameSpan.textContent = `¡${winnerName} ganan!`;
+                celebrationOverlay.classList.add('active');
+                celebrationOverlay.onclick = function(e) {
+                    if (e.target === this) {
+                        celebrationOverlay.classList.remove('active');
+                    }
+                };
+            }
+
+            function showStatsDetail() {
+                const winner = state.winner ? (state.winner === 'white' ? 'Blancas' : 'Negras') : '--';
+                let duration = 0;
+                if (state.startTime) {
+                    const end = state.endTime || new Date();
+                    duration = (end - state.startTime) / 1000;
+                }
+                const totalMoves = state.whiteMoves + state.blackMoves;
+                const avgW = state.whiteMoves > 0 ? ((state.whiteTotalTimeUsed / 10) / state.whiteMoves).toFixed(1) : '--';
+                const avgB = state.blackMoves > 0 ? ((state.blackTotalTimeUsed / 10) / state.blackMoves).toFixed(1) : '--';
+                statsDetail.innerHTML = `
+                    <p><strong>Ganador:</strong> ${winner}</p>
+                    <p><strong>Duración:</strong> ${formatDuration(duration)}</p>
+                    <p><strong>Movimientos totales:</strong> ${totalMoves}</p>
+                    <p><strong>⚪ Blancas:</strong> ${state.whiteMoves} movs, promedio ${avgW}s</p>
+                    <p><strong>⚫ Negras:</strong> ${state.blackMoves} movs, promedio ${avgB}s</p>
+                    <p><strong>Tiempo usado (Blancas):</strong> ${formatDuration(state.whiteTotalTimeUsed / 10)}</p>
+                    <p><strong>Tiempo usado (Negras):</strong> ${formatDuration(state.blackTotalTimeUsed / 10)}</p>
+                `;
+                statsModal.style.display = 'flex';
+            }
+
+            function closeStatsModal() {
+                statsModal.style.display = 'none';
+            }
+
+            // ---------- Acciones del juego ----------
+            function startGame() {
+                if (state.isRunning && !state.isPaused) return;
+                if (state.gameOver) resetGame();
+                requestNotificationPermission(); // Pedir permiso solo cuando el usuario pulsa Iniciar
+                if (state.isPaused) {
+                    state.isPaused = false;
+                    state.isRunning = true;
+                    state.timeAccumulator = 0;
+                    lastTimestamp = performance.now();
+                    startTimerLoop();
+                    updateControls();
+                    updateDisplay();
+                    announce('Reanudada');
+                    saveGame();
+                    updateAdjustVisibility();
+                    return;
+                }
+
+                // Leer valores actuales del DOM
+                const base = getBaseTimeFromInputs();
+                const inc = parseInt(incrementInput.value) || 0;
+                const move = parseInt(moveTimeInput.value) || 30;
+                const byoPeriods = parseInt(byoyomiPeriodsInput.value) || 3;
+                const byoTime = parseInt(byoyomiTimeInput.value) || 30;
+
+                // Actualizar estado
+                state.baseTime = base;
+                state.increment = inc;
+                state.moveTime = move;
+                state.byoyomiPeriods = byoPeriods;
+                state.byoyomiTime = byoTime;
+
+                // Si es modo delay, guardar el retraso
+                if (state.mode === 'delay') {
+                    state.delayTime = inc;
+                }
+
+                let initial;
+                if (state.mode === 'movetimer') {
+                    initial = state.moveTime * 10;
+                } else {
+                    initial = state.baseTime * 10;
+                }
+                state.whiteTime = initial;
+                state.blackTime = initial;
+                state.maxTime = initial;
+                state.whiteMoves = 0;
+                state.blackMoves = 0;
+                state.whiteTotalTimeUsed = 0;
+                state.blackTotalTimeUsed = 0;
+                state.gameOver = false;
+                state.winner = null;
+                state.isRunning = true;
+                state.isPaused = false;
+                state.activePlayer = 'white';
+                state.startTime = new Date();
+                state.endTime = null;
+                state.turnElapsed = 0;
+                state.timeAccumulator = 0;
+
+                state.whiteDelay = 0;
+                state.blackDelay = 0;
+                state.whiteByoyomiLeft = state.byoyomiPeriods;
+                state.blackByoyomiLeft = state.byoyomiPeriods;
+                state.whiteByoyomiTimer = 0;
+                state.blackByoyomiTimer = 0;
+
+                // Asignar delay inicial a Blancas si estamos en modo delay
+                if (state.mode === 'delay') {
+                    state.whiteDelay = state.delayTime * 10;
+                }
+
+                soundStart();
+                vibrate(50);
+                lastTimestamp = performance.now();
+                startTimerLoop();
+                updateDisplay();
+                updateControls();
+                updateStats();
+                announce('Partida iniciada. Turno de Blancas.');
+                saveGame();
+                updateAdjustVisibility();
+            }
+
+            function togglePause() {
+                if (!state.isRunning || state.gameOver) return;
+                state.isPaused = !state.isPaused;
+                if (state.isPaused) {
+                    state.wasAutoPaused = false; // pausa manual
+                    if (state.animFrameId) {
+                        cancelAnimationFrame(state.animFrameId);
+                        state.animFrameId = null;
+                    }
+                    releaseWakeLock();
+                    announce('Pausada');
+                } else {
+                    state.timeAccumulator = 0;
+                    lastTimestamp = performance.now();
+                    startTimerLoop();
+                    requestWakeLock();
+                    announce('Reanudada');
+                }
+                updateControls();
+                updateDisplay();
+                saveGame();
+                updateAdjustVisibility();
+                closeManualModal();
+            }
+
+            function resetGame() {
+                if (state.animFrameId) {
+                    cancelAnimationFrame(state.animFrameId);
+                    state.animFrameId = null;
+                }
+                state.isRunning = false;
+                state.isPaused = false;
+                state.gameOver = false;
+                state.winner = null;
+                state.activePlayer = 'white';
+                state.startTime = null;
+                state.endTime = null;
+                state.whiteTotalTimeUsed = 0;
+                state.blackTotalTimeUsed = 0;
+                state.turnElapsed = 0;
+                state.timeAccumulator = 0;
+                state.wasAutoPaused = false;
+                state.whiteDelay = 0;
+                state.blackDelay = 0;
+                state.maxTime = 0;
+                state.whiteByoyomiLeft = 0;
+                state.blackByoyomiLeft = 0;
+                state.whiteByoyomiTimer = 0;
+                state.blackByoyomiTimer = 0;
+
+                let initial;
+                if (state.mode === 'movetimer') {
+                    initial = state.moveTime * 10;
+                } else {
+                    initial = state.baseTime * 10;
+                }
+                state.whiteTime = initial;
+                state.blackTime = initial;
+                state.maxTime = initial;
+                state.whiteMoves = 0;
+                state.blackMoves = 0;
+                state.moveRemaining = 0;
+
+                clockWhite.classList.remove('active', 'winner', 'flagged', 'warning', 'inactive', 'paused');
+                clockBlack.classList.remove('active', 'winner', 'flagged', 'warning', 'inactive', 'paused');
+                timeWhite.classList.remove('warning', 'flagged');
+                timeBlack.classList.remove('warning', 'flagged');
+                celebrationOverlay.classList.remove('active');
+                closeStatsModal();
+                closeManualModal();
+                updateDisplay();
+                updateControls();
+                updateStats();
+                announce('Reiniciada');
+                clearSavedGame();
+                releaseWakeLock();
+                updateAdjustVisibility();
+            }
+
+            // ---------- Reset con confirmación ----------
+            function resetGameConConfirmacion() {
+                // Si la partida está en curso (con movimientos y sin game over), pedir confirmación
+                const hayPartidaEnCurso = state.isRunning && !state.gameOver &&
+                    (state.whiteMoves > 0 || state.blackMoves > 0);
+
+                if (hayPartidaEnCurso) {
+                    const confirmar = window.confirm(
+                        '⚠️ ¿Reiniciar la partida?\n\n' +
+                        'Se perderá el tiempo y los movimientos actuales.\n' +
+                        'Esta acción no se puede deshacer.'
+                    );
+                    if (!confirmar) return;
+                }
+                resetGame();
+            }
+
+            // ---------- Clic en reloj ----------
+            function handleClockClick(player) {
+                initAudio();
+                if (state.autoStart && !state.isRunning && !state.isPaused && !state.gameOver) {
+                    startGame();
+                }
+                if (state.autoStart && state.isPaused) {
+                    togglePause();
+                }
+                if (!state.isRunning || state.isPaused || state.gameOver) {
+                    vibrate(50);
+                    return;
+                }
+                if (player !== state.activePlayer) {
+                    vibrate(50);
+                    return;
+                }
+
+                let timeUsed = state.turnElapsed;
+                if (player === 'white') {
+                    state.whiteMoves++;
+                    state.whiteTotalTimeUsed += timeUsed;
+                    if (state.mode === 'increment') {
+                        state.whiteTime += state.increment * 10;
+                    } else if (state.mode === 'bronstein') {
+                        const incDec = state.increment * 10;
+                        state.whiteTime += Math.min(incDec, timeUsed);
+                    } else if (state.mode === 'movetimer') {
+                        state.whiteTime = state.moveTime * 10;
+                    }
+                } else {
+                    state.blackMoves++;
+                    state.blackTotalTimeUsed += timeUsed;
+                    if (state.mode === 'increment') {
+                        state.blackTime += state.increment * 10;
+                    } else if (state.mode === 'bronstein') {
+                        const incDec = state.increment * 10;
+                        state.blackTime += Math.min(incDec, timeUsed);
+                    } else if (state.mode === 'movetimer') {
+                        state.blackTime = state.moveTime * 10;
+                    }
+                }
+
+                state.activePlayer = (player === 'white') ? 'black' : 'white';
+                state.turnElapsed = 0;
+                state.timeAccumulator = 0;
+
+                // Asignar delay al siguiente jugador si es modo delay
+                if (state.mode === 'delay') {
+                    const next = state.activePlayer;
+                    state[next + 'Delay'] = state.delayTime * 10;
+                }
+
+                if (state.mode === 'byoyomi') {
+                    const next = state.activePlayer;
+                    const timerKey = next + 'ByoyomiTimer';
+                    if (state[next + 'Time'] <= 0) {
+                        state[timerKey] = state.byoyomiTime * 10;
+                    }
+                }
+
+                vibrate(30);
+                const next = state.activePlayer === 'white' ? 'Blancas' : 'Negras';
+                announce(`Turno de ${next}`);
+                if (document.hidden) { sendNotification('♟️ Cambio de turno', `Turno de ${next}`); }
+                updateDisplay();
+                updateStats();
+                saveGame();
+            }
+
+            // ---------- Cambio de modo (solo UI) ----------
+            function onModeChange(reset = true) {
+                const mode = modeSelect.value;
+                const showBase = (mode !== 'movetimer');
+                const showIncrement = (mode === 'increment' || mode === 'bronstein' || mode === 'delay');
+                const showMoveTime = (mode === 'movetimer');
+                const showByoyomi = (mode === 'byoyomi');
+
+                baseTimeGroup.style.display = showBase ? 'flex' : 'none';
+                incrementGroup.style.display = showIncrement ? 'flex' : 'none';
+                moveTimeGroup.style.display = showMoveTime ? 'flex' : 'none';
+                byoyomiGroup.style.display = showByoyomi ? 'flex' : 'none';
+
+                incrementInput.disabled = !showIncrement;
+                moveTimeInput.disabled = !showMoveTime;
+                byoyomiPeriodsInput.disabled = !showByoyomi;
+                byoyomiTimeInput.disabled = !showByoyomi;
+
+                const label = document.getElementById('increment-label');
+                if (mode === 'delay') label.textContent = 'Retraso (seg)';
+                else label.textContent = 'Incremento (seg)';
+
+                if (mode === 'standard') {
+                    incrementGroup.style.display = 'none';
+                    incrementInput.disabled = true;
+                }
+
+                if (reset && state.isRunning) stopTimerLoop();
+                if (reset) resetGame();
+                else { updateDisplay(); updateControls(); }
+            }
+
+            // ---------- Tema ----------
+            function setTheme(theme) {
+                state.theme = theme;
+                document.documentElement.setAttribute('data-theme', theme);
+                updateThemeButtons();
+                saveSettings();
+            }
+
+            function updateThemeButtons() {
+                document.querySelectorAll('.theme-btn').forEach(btn => {
+                    btn.classList.toggle('active', btn.dataset.theme === state.theme);
+                });
+            }
+
+            function toggleThemeMode() {
+                state.themeMode = state.themeMode === 'dark' ? 'light' : 'dark';
+                document.documentElement.setAttribute('data-theme-mode', state.themeMode);
+                updateThemeModeUI();
+                saveSettings();
+            }
+
+            function updateThemeModeUI() {
+                const mode = state.themeMode;
+                btnThemeMode.textContent = mode === 'dark' ? '☀️' : '🌙';
+                btnThemeModePanel.textContent = mode === 'dark' ? 'Modo claro' : 'Modo oscuro';
+            }
+
+            function toggleFullscreen() {
+                if (!document.fullscreenElement) { document.documentElement.requestFullscreen().catch(() => {}); } else { document
+                        .exitFullscreen().catch(() => {}); }
+            }
+
+            function toggleSound() {
+                state.soundEnabled = !state.soundEnabled;
+                btnSound.textContent = state.soundEnabled ? '🔊' : '🔇';
+                saveSettings();
+                if (state.soundEnabled) playBeep(1000, 100, 1);
+            }
+
+            // ---------- Auto-start ----------
+            function toggleAutoStart() {
+                state.autoStart = autoStartCheck.checked;
+                updateAutoIcon();
+                saveSettings();
+                announce(state.autoStart ? 'Auto‑start activado 🔓' : 'Auto‑start desactivado 🔒');
+            }
+
+            // ---------- Panel de configuración ----------
+            function openPanel() {
+                // Cargar la configuración actual en el panel (copia de trabajo)
+                panelState.mode = state.mode;
+                panelState.baseTime = state.baseTime;
+                panelState.increment = state.increment;
+                panelState.moveTime = state.moveTime;
+                panelState.adjustStep = state.adjustStep;
+                panelState.byoyomiPeriods = state.byoyomiPeriods;
+                panelState.byoyomiTime = state.byoyomiTime;
+                panelState.autoPause = state.autoPause;
+                panelState.showStats = state.showStats;
+
+                // Sincronizar inputs del panel con panelState
+                modeSelect.value = panelState.mode;
+                setTimeInputsFromSeconds(panelState.baseTime);
+                incrementInput.value = panelState.increment;
+                moveTimeInput.value = panelState.moveTime;
+                adjustStepSelect.value = panelState.adjustStep / 10;
+                byoyomiPeriodsInput.value = panelState.byoyomiPeriods;
+                byoyomiTimeInput.value = panelState.byoyomiTime;
+                autoPauseCheck.checked = panelState.autoPause;
+                showStatsCheck.checked = panelState.showStats;
+
+                onModeChange(false);
+                panel.classList.add('open');
+            }
+
+            function closePanel(save = false) {
+                if (save) {
+                    // Aplicar cambios al estado principal
+                    state.mode = panelState.mode;
+                    state.baseTime = panelState.baseTime;
+                    state.increment = panelState.increment;
+                    state.moveTime = panelState.moveTime;
+                    state.adjustStep = panelState.adjustStep;
+                    state.byoyomiPeriods = panelState.byoyomiPeriods;
+                    state.byoyomiTime = panelState.byoyomiTime;
+                    state.autoPause = panelState.autoPause;
+                    state.showStats = panelState.showStats;
+
+                    // En modo estándar, el incremento no se usa
+                    if (state.mode === 'standard') {
+                        state.increment = 0;
+                    }
+
+                    // Si el modo cambió, resetear el juego para aplicar nueva configuración
+                    if (state.isRunning) resetGame();
+                    else resetGame(); // forzar reset para que coja los nuevos valores
+
+                    saveSettings();
+                    announce('Configuración aplicada y guardada.');
+                } else {
+                    announce('Cambios descartados.');
+                }
+                panel.classList.remove('open');
+                modalInline.classList.remove('active');
+            }
+
+            // ---------- Presets ----------
+            function renderPresets() {
+                presetsContainer.innerHTML = '';
+                const fixedPresets = [
+                    { id: 'fixed-1', name: '1 min', mode: 'standard', base: 60, inc: 0 },
+                    { id: 'fixed-3', name: '3 min', mode: 'standard', base: 180, inc: 0 },
+                    { id: 'fixed-5', name: '5 min', mode: 'standard', base: 300, inc: 0 },
+                    { id: 'fixed-10', name: '10 min', mode: 'standard', base: 600, inc: 0 },
+                    { id: 'fixed-3+2', name: '3+2', mode: 'increment', base: 180, inc: 2 },
+                    { id: 'fixed-5+3', name: '5+3', mode: 'increment', base: 300, inc: 3 },
+                    { id: 'fixed-delay-5+3', name: 'Delay 5m+3s', mode: 'delay', base: 300, inc: 3 },
+                    { id: 'fixed-byo-5+3x30', name: 'Byo 5m+3x30s', mode: 'byoyomi', base: 300, inc: 30 },
+                    { id: 'fixed-move-30', name: 'Game timer 30s', mode: 'movetimer', base: 30, inc: 0 },
+                ];
+                const allPresets = [...fixedPresets, ...state.customPresets];
+                allPresets.forEach(preset => {
+                    const btn = document.createElement('button');
+                    btn.textContent = preset.name;
+                    btn.dataset.mode = preset.mode;
+                    btn.dataset.base = preset.base;
+                    btn.dataset.inc = preset.inc;
+                    btn.addEventListener('click', () => applyPreset(btn));
+                    if (preset.id && preset.id.startsWith('custom-')) {
+                        const del = document.createElement('span');
+                        del.className = 'delete-preset';
+                        del.textContent = '×';
+                        del.title = 'Eliminar';
+                        del.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            deleteCustomPreset(preset.id);
+                        });
+                        btn.appendChild(del);
+                    }
+                    presetsContainer.appendChild(btn);
+                });
+                const addBtn = document.createElement('button');
+                addBtn.className = 'add-preset';
+                addBtn.textContent = '✚';
+                addBtn.title = 'Guardar como preset (opcional)';
+                addBtn.addEventListener('click', () => {
+                    modalInline.classList.toggle('active');
+                    if (modalInline.classList.contains('active')) {
+                        presetName.value = '';
+                        presetMode.value = modeSelect.value;
+                        presetBase.value = state.baseTime;
+                        presetInc.value = state.increment;
+                        presetName.focus();
+                    }
+                });
+                presetsContainer.appendChild(addBtn);
+            }
+
+            function applyPreset(btn) {
+                const mode = btn.dataset.mode;
+                const base = parseInt(btn.dataset.base) || 300;
+                const inc = parseInt(btn.dataset.inc) || 0;
+
+                panelState.mode = mode;
+                panelState.baseTime = base;
+                panelState.increment = inc;
+                if (mode === 'movetimer') panelState.moveTime = inc > 0 ? inc : 30;
+                else panelState.moveTime = 30;
+                if (mode === 'byoyomi') {
+                    panelState.byoyomiPeriods = 3;
+                    panelState.byoyomiTime = inc > 0 ? inc : 30;
+                }
+
+                modeSelect.value = mode;
+                setTimeInputsFromSeconds(base);
+                incrementInput.value = inc;
+                moveTimeInput.value = panelState.moveTime;
+                byoyomiPeriodsInput.value = panelState.byoyomiPeriods;
+                byoyomiTimeInput.value = panelState.byoyomiTime;
+                onModeChange(false);
+                announce(`Preset cargado: ${btn.textContent.replace('×','').trim()}`);
+                vibrate(30);
+                // No aplicar automáticamente, el usuario debe pulsar "Listo"
+            }
+
+            function deleteCustomPreset(id) {
+                state.customPresets = state.customPresets.filter(p => p.id !== id);
+                saveCustomPresets();
+                announce('Preset eliminado');
+            }
+
+            function saveCustomPresetFromModal() {
+                let name = presetName.value.trim();
+                if (!name) {
+                    const modeLabel = presetMode.options[presetMode.selectedIndex].text;
+                    const base = presetBase.value;
+                    const inc = presetInc.value;
+                    name = `${modeLabel} ${base}s`;
+                    if (inc > 0) name += ` +${inc}s`;
+                }
+                const mode = presetMode.value;
+                const base = parseFloat(presetBase.value) || 300;
+                const inc = parseInt(presetInc.value) || 0;
+                if (mode === 'movetimer' && inc < 1) { alert('Para "Game timer" el tiempo por movimiento debe ser >=1.'); return; }
+                const newPreset = { id: 'custom-' + Date.now(), name, mode, base, inc };
+                state.customPresets.push(newPreset);
+                saveCustomPresets();
+                modalInline.classList.remove('active');
+                announce(`Preset "${name}" guardado.`);
+                vibrate(30);
+            }
+
+            // ---------- Editar título ----------
+            function enableTitleEdit() {
+                const currentText = titleDisplay.textContent;
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.className = 'header-title-input';
+                input.value = currentText;
+                input.maxLength = 40;
+                titleContainer.replaceChild(input, titleDisplay);
+                input.focus();
+                input.select();
+                const finishEdit = () => {
+                    const newName = input.value.trim() || '♟️ Club Morphy';
+                    state.clockName = newName;
+                    const span = document.createElement('span');
+                    span.id = 'title-display';
+                    span.textContent = newName;
+                    titleContainer.replaceChild(span, input);
+                    saveSettings();
+                    announce(`Nombre: ${newName}`);
+                };
+                input.addEventListener('blur', finishEdit);
+                input.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') { e.preventDefault();
+                        input.blur(); }
+                    if (e.key === 'Escape') { input.value = currentText;
+                        input.blur(); }
+                });
+            }
+
+            // ---------- Atajos de teclado ----------
+            function handleKeydown(e) {
+                if (e.key === ' ' || e.key === 'Space' || e.key === 'Enter') {
+                    const active = document.activeElement;
+                    if (active && (active.id === 'clock-white' || active.id === 'clock-black')) {
+                        e.preventDefault();
+                        const player = active.id === 'clock-white' ? 'white' : 'black';
+                        handleClockClick(player);
+                        return;
+                    }
+                }
+                if (e.key === 'p' || e.key === 'P') { e.preventDefault();
+                    togglePause(); }
+                if (e.key === 'r' || e.key === 'R') { e.preventDefault();
+                    resetGameConConfirmacion(); }
+                if (e.key === 'c' || e.key === 'C') { e.preventDefault(); if (panel.classList.contains('open')) closePanel(
+                        false); else openPanel(); }
+                if (e.key === 'Escape') { if (panel.classList.contains('open')) closePanel(false);
+                    closeStatsModal();
+                    celebrationOverlay.classList.remove('active');
+                    closeManualModal(); }
+            }
+
+            // ---------- Pausa automática ----------
+            function handleVisibilityChange() {
+                // Al ocultar la pestaña → pausar automáticamente
+                if (state.autoPause && state.isRunning && !state.isPaused && !state.gameOver) {
+                    if (document.hidden) {
+                        togglePause();
+                        state.wasAutoPaused = true;
+                        announce('Pausa automática (pestaña oculta)');
+                    }
+                    return;
+                }
+
+                // Al volver a la pestaña → reanudar si fue auto-pausa
+                if (!document.hidden && state.wasAutoPaused && state.autoPause) {
+                    state.wasAutoPaused = false;
+                    if (state.isRunning && state.isPaused && !state.gameOver) {
+                        togglePause();
+                        announce('Partida reanudada');
+                        // Re-adquirir wake lock (el navegador lo libera al ocultar la pestaña)
+                        if (state.isRunning && !state.isPaused && !state.gameOver) {
+                            requestWakeLock();
+                        }
+                    }
+                }
+            }
+
+            // ---------- Inicialización ----------
+            function init() {
+                loadSettings();
+                // Nota: requestNotificationPermission() se llama al pulsar "Iniciar partida"
+
+                state.baseTime = getBaseTimeFromInputs();
+                state.increment = parseInt(incrementInput.value) || 0;
+                state.moveTime = parseInt(moveTimeInput.value) || 30;
+                state.byoyomiPeriods = parseInt(byoyomiPeriodsInput.value) || 3;
+                state.byoyomiTime = parseInt(byoyomiTimeInput.value) || 30;
+                state.adjustStep = parseInt(adjustStepSelect.value) * 10;
+
+                onModeChange(false);
+                renderPresets();
+                updateAutoIcon();
+                updateDisplay();
+                updateControls();
+                updateStats();
+                updateAdjustVisibility();
+
+                // Eventos del panel
+                btnConfig.addEventListener('click', openPanel);
+                panelClose.addEventListener('click', () => closePanel(false));
+                panelCancel.addEventListener('click', () => closePanel(false));
+                panelReady.addEventListener('click', () => closePanel(true));
+
+                // Eventos de inputs (modifican panelState en tiempo real)
+                modeSelect.addEventListener('change', function() {
+                    panelState.mode = this.value;
+                    onModeChange(false);
+                    if (this.value === 'standard') {
+                        incrementInput.disabled = true;
+                        panelState.increment = 0;
+                    } else {
+                        incrementInput.disabled = false;
+                    }
+                });
+
+                baseHours.addEventListener('input', function() { panelState.baseTime = getBaseTimeFromInputs(); });
+                baseMinutes.addEventListener('input', function() { panelState.baseTime = getBaseTimeFromInputs(); });
+                baseSeconds.addEventListener('input', function() { panelState.baseTime = getBaseTimeFromInputs(); });
+
+                incrementInput.addEventListener('input', function() {
+                    panelState.increment = parseInt(this.value) || 0;
+                });
+
+                moveTimeInput.addEventListener('input', function() {
+                    panelState.moveTime = parseInt(this.value) || 30;
+                });
+
+                adjustStepSelect.addEventListener('change', function() {
+                    panelState.adjustStep = parseInt(this.value) * 10;
+                });
+
+                byoyomiPeriodsInput.addEventListener('input', function() {
+                    panelState.byoyomiPeriods = parseInt(this.value) || 3;
+                });
+
+                byoyomiTimeInput.addEventListener('input', function() {
+                    panelState.byoyomiTime = parseInt(this.value) || 30;
+                });
+
+                autoPauseCheck.addEventListener('change', function() {
+                    panelState.autoPause = this.checked;
+                });
+
+                showStatsCheck.addEventListener('change', function() {
+                    panelState.showStats = this.checked;
+                });
+
+                // Otros eventos
+                btnStart.addEventListener('click', startGame);
+                btnPause.addEventListener('click', togglePause);
+                btnReset.addEventListener('click', resetGameConConfirmacion);
+                btnThemeMode.addEventListener('click', toggleThemeMode);
+                btnThemeModePanel.addEventListener('click', toggleThemeMode);
+                btnFullscreen.addEventListener('click', toggleFullscreen);
+                btnSound.addEventListener('click', toggleSound);
+                clockWhite.addEventListener('click', () => handleClockClick('white'));
+                clockBlack.addEventListener('click', () => handleClockClick('black'));
+                document.addEventListener('keydown', handleKeydown);
+                titleContainer.addEventListener('click', enableTitleEdit);
+                autoStartCheck.addEventListener('change', toggleAutoStart);
+
+                document.querySelectorAll('.theme-btn').forEach(btn => {
+                    btn.addEventListener('click', () => setTheme(btn.dataset.theme));
+                });
+
+                // Presets
+                modalCancel.addEventListener('click', () => modalInline.classList.remove('active'));
+                modalSave.addEventListener('click', saveCustomPresetFromModal);
+                btnAddPreset.addEventListener('click', () => {
+                    modalInline.classList.toggle('active');
+                    if (modalInline.classList.contains('active')) {
+                        presetName.value = '';
+                        presetMode.value = modeSelect.value;
+                        presetBase.value = state.baseTime;
+                        presetInc.value = state.increment;
+                        presetName.focus();
+                    }
+                });
+
+                // Ajustes manuales
+                adjustBtns.forEach(btn => {
+                    btn.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        const player = this.dataset.player;
+                        const delta = parseInt(this.dataset.delta);
+                        if (state.isPaused && state.isRunning && !state.gameOver) {
+                            handleAdjust(player, delta);
+                        } else {
+                            vibrate(50);
+                            announce('La partida debe estar pausada para ajustar');
+                        }
+                    });
+                });
+
+                manualAdjustBtns.forEach(btn => {
+                    btn.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        const player = this.dataset.player;
+                        openManualModal(player);
+                    });
+                });
+
+                manualApply.addEventListener('click', applyManualAdjust);
+                manualCancel.addEventListener('click', closeManualModal);
+                manualModal.addEventListener('click', function(e) {
+                    if (e.target === this) closeManualModal();
+                });
+                [manualHours, manualMinutes, manualSeconds].forEach(input => {
+                    input.addEventListener('keydown', function(e) {
+                        if (e.key === 'Enter') applyManualAdjust();
+                        if (e.key === 'Escape') closeManualModal();
+                    });
+                });
+
+                celebrationStatsBtn.addEventListener('click', showStatsDetail);
+                statsModalClose.addEventListener('click', closeStatsModal);
+                statsModal.addEventListener('click', (e) => {
+                    if (e.target === statsModal) closeStatsModal();
+                });
+
+                document.addEventListener('visibilitychange', handleVisibilityChange);
+
+                // NOTA: no registramos Service Worker aquí.
+                // La app anfitriona (Club Morphy) ya lo gestiona.
+
+                updateDisplay();
+                updateControls();
+                updateStats();
+                updateAdjustVisibility();
+                announce('Reloj listo. ⚙️ para ajustes. 🔓 auto‑start.');
+
+                document.addEventListener('click', () => initAudio(), { once: true });
+            }
+
+            init();
+        })();
+    </script>
+</body>
+</html>
