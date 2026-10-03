@@ -119,13 +119,9 @@
   .btn:focus-visible { outline: 3px solid rgba(52,152,219,.35); outline-offset: 2px; }
 
   .btn-primary   { background: #8e44ad; box-shadow: 0 2px 6px rgba(142,68,173,.3); }
-  .btn-primary:hover:not(:disabled) { box-shadow: 0 6px 14px rgba(142,68,173,.4); }
   .btn-success   { background: var(--success); box-shadow: 0 2px 6px rgba(39,174,96,.3); }
-  .btn-success:hover:not(:disabled) { box-shadow: 0 6px 14px rgba(39,174,96,.4); }
   .btn-warning   { background: var(--warning); box-shadow: 0 2px 6px rgba(243,156,18,.3); }
-  .btn-warning:hover:not(:disabled) { box-shadow: 0 6px 14px rgba(243,156,18,.4); }
   .btn-danger    { background: var(--accent); box-shadow: 0 2px 6px rgba(231,76,60,.3); }
-  .btn-danger:hover:not(:disabled) { box-shadow: 0 6px 14px rgba(231,76,60,.4); }
   .btn-outline {
     background: transparent;
     border: 2px solid var(--secondary);
@@ -201,7 +197,7 @@
   }
   .file-info.hidden { display: none; }
 
-  /* CROP AREA */
+  /* CROP AREA — imagen ajustada al ancho, sin scroll interno */
   .crop-toolbar {
     display: flex;
     justify-content: space-between;
@@ -223,8 +219,6 @@
   }
   .toolbar-actions { display: flex; gap: 6px; }
 
-  /* ✅ Contenedor sin scroll interno: la imagen se ajusta al ancho,
-     la página entera hace scroll si es necesario */
   #cropContainer {
     position: relative;
     overflow: hidden;
@@ -238,12 +232,19 @@
     line-height: 0;
   }
 
+  #cropStage {
+    position: relative;
+    display: inline-block;
+    line-height: 0;
+    font-size: 0;
+    max-width: 100%;
+  }
+
   #imageToCrop {
     display: block;
     max-width: 100%;
-    width: auto;
     height: auto;
-    margin: 0 auto;
+    width: auto;
     user-select: none;
     -webkit-user-drag: none;
     -webkit-user-select: none;
@@ -258,12 +259,7 @@
     box-shadow:
       0 0 0 1px rgba(52,152,219,.9),
       0 0 0 9999px rgba(0,0,0,.40);
-    /* ✅ CLAVE: permite que el navegador sintetice eventos mouse desde toques */
-    touch-action: auto;
-    pointer-events: auto;
-    will-change: left, top, width, height;
     z-index: 5;
-    outline: none;
   }
   .crop-box.hidden { display: none; }
 
@@ -274,18 +270,6 @@
 
   .crop-box.pan-mode { pointer-events: none; }
   .crop-box.pan-mode .resize-handle { pointer-events: none; }
-
-  .crop-box:focus-visible {
-    box-shadow:
-      0 0 0 1px rgba(52,152,219,.9),
-      0 0 0 9999px rgba(0,0,0,.40),
-      0 0 0 4px rgba(52,152,219,.5);
-  }
-  .crop-box.no-overlay:focus-visible {
-    box-shadow:
-      0 0 0 2px rgba(52,152,219,.95),
-      0 0 0 4px rgba(52,152,219,.5);
-  }
 
   .crop-box::before {
     content: "";
@@ -300,7 +284,7 @@
   }
   .crop-box.show-grid::before { opacity: 1; }
 
-  /* ✅ Handles grandes y con zona de toque ampliada, touch-action: auto */
+  /* ✅ Handles con área de toque ampliada (::before transparente) */
   .resize-handle {
     position: absolute;
     width: 22px;
@@ -309,8 +293,6 @@
     border: 2px solid #fff;
     border-radius: 50%;
     box-shadow: 0 0 4px rgba(0,0,0,.5);
-    touch-action: auto;
-    pointer-events: auto;
     z-index: 6;
     -webkit-user-select: none;
     user-select: none;
@@ -656,7 +638,7 @@
     .crop-actions .btn { flex: 1 1 48%; }
     .progress-text { font-size: .75rem; }
 
-    /* Handles más grandes en móvil (más fáciles de tocar) */
+    /* Handles un poco más grandes para dedos */
     .resize-handle { width: 26px; height: 26px; }
     .resize-handle::before { inset: -22px; }
     .resize-nw { top: -14px; left: -14px; }
@@ -689,7 +671,6 @@
     </ol>
   </div>
 
-  <!-- PASO 1 -->
   <section class="card" id="uploadSection">
     <div class="card-header">
       <i class="fas fa-upload"></i><h2>Paso 1 — Subir imágenes</h2>
@@ -708,7 +689,6 @@
     </div>
   </section>
 
-  <!-- PASO 2 -->
   <section class="card hidden" id="cropSection">
     <div class="card-header">
       <i class="fas fa-crop-alt"></i><h2>Paso 2 — Ajustar recuadro</h2>
@@ -727,13 +707,15 @@
     </div>
 
     <div id="cropContainer">
-      <img id="imageToCrop" alt="" />
-      <div class="crop-box hidden" id="cropBox" tabindex="0"
-           role="group" aria-label="Área de recorte del tablero">
-        <div class="resize-handle resize-nw" data-dir="nw"></div>
-        <div class="resize-handle resize-ne" data-dir="ne"></div>
-        <div class="resize-handle resize-sw" data-dir="sw"></div>
-        <div class="resize-handle resize-se" data-dir="se"></div>
+      <div id="cropStage">
+        <img id="imageToCrop" alt="" />
+        <div class="crop-box hidden" id="cropBox" tabindex="0"
+             role="group" aria-label="Área de recorte del tablero">
+          <div class="resize-handle resize-nw" data-dir="nw"></div>
+          <div class="resize-handle resize-ne" data-dir="ne"></div>
+          <div class="resize-handle resize-sw" data-dir="sw"></div>
+          <div class="resize-handle resize-se" data-dir="se"></div>
+        </div>
       </div>
     </div>
 
@@ -781,9 +763,6 @@
           <option value="10">Permisiva</option>
         </select>
       </label>
-      <label title="Bloquea el recuadro para poder desplazar la imagen con un dedo">
-        <input type="checkbox" id="panMode" /> Modo desplazar
-      </label>
     </div>
 
     <div class="crop-actions">
@@ -820,7 +799,6 @@
     </div>
   </section>
 
-  <!-- PASO 3 -->
   <section class="card hidden" id="previewSection">
     <div class="section-title">
       <div class="card-header">
@@ -839,7 +817,6 @@
     <div id="chessboards" class="chessboards-grid"></div>
   </section>
 
-  <!-- PASO 4 -->
   <section class="card hidden" id="pdfSection">
     <div class="card-header">
       <i class="fas fa-file-pdf"></i><h2>Paso 3 — Vista previa y PDF</h2>
@@ -890,14 +867,16 @@ const state = {
   showGrid: true,
   dedupe: false,
   dedupeThreshold: 6,
-  panMode: false,
   overlayHidden: false,
   cropTemplate: null,
   headerText: '',
   footerText: '',
   itemsPerPage: 6,
   crop: { x: 0, y: 0, w: 0, h: 0 },
-  mode: null,
+  // Estado de arrastre
+  isDragging: false,
+  isResizing: false,
+  resizeDir: null,
   startX: 0, startY: 0,
   startCrop: { x: 0, y: 0, w: 0, h: 0 }
 };
@@ -907,7 +886,7 @@ const MEMORY_WARN_THRESHOLD = 30;
 let _memoryWarned = false;
 
 // =========================================================
-// LAYOUTS PDF (mm, A4 = 210 x 297)
+// LAYOUTS PDF
 // =========================================================
 const LAYOUTS = {
   4: {
@@ -956,7 +935,6 @@ const previewSection   = $('previewSection');
 const pdfSection       = $('pdfSection');
 const imageCounter     = $('imageCounter');
 const imageToCrop      = $('imageToCrop');
-const cropContainer    = $('cropContainer');
 const cropBox          = $('cropBox');
 const cropBtn          = $('cropBtn');
 const prevImageBtn     = $('prevImageBtn');
@@ -969,7 +947,6 @@ const showGrid         = $('showGrid');
 const dedupeCheck      = $('dedupeCheck');
 const dedupeThreshold  = $('dedupeThreshold');
 const dedupeThresholdWrap = $('dedupeThresholdWrap');
-const panModeChk       = $('panMode');
 const centerCropBtn    = $('centerCropBtn');
 const fullCropBtn      = $('fullCropBtn');
 const toggleOverlayBtn = $('toggleOverlayBtn');
@@ -1105,7 +1082,6 @@ function saveSettings() {
       showGrid: state.showGrid,
       dedupe: state.dedupe,
       dedupeThreshold: state.dedupeThreshold,
-      panMode: state.panMode,
       overlayHidden: state.overlayHidden,
       headerText: state.headerText,
       footerText: state.footerText,
@@ -1132,7 +1108,6 @@ function loadSettings() {
     if (typeof s.showGrid === 'boolean')        state.showGrid = s.showGrid;
     if (typeof s.dedupe === 'boolean')          state.dedupe = s.dedupe;
     if (typeof s.dedupeThreshold === 'number')  state.dedupeThreshold = s.dedupeThreshold;
-    if (typeof s.panMode === 'boolean')         state.panMode = s.panMode;
     if (typeof s.overlayHidden === 'boolean')   state.overlayHidden = s.overlayHidden;
     if (typeof s.headerText === 'string')       state.headerText = s.headerText;
     if (typeof s.footerText === 'string')       state.footerText = s.footerText;
@@ -1272,28 +1247,12 @@ function applyCropStyles() {
   cropBox.style.height = h + 'px';
 }
 
-function applyPanMode() {
-  cropBox.classList.toggle('pan-mode', state.panMode);
-  cropBox.style.cursor = state.panMode ? 'grab' : 'move';
-}
-
 function applyOverlayMode() {
   cropBox.classList.toggle('no-overlay', state.overlayHidden);
   toggleOverlayBtn.classList.toggle('toggle-active', state.overlayHidden);
   toggleOverlayBtn.innerHTML = state.overlayHidden
     ? '<i class="fas fa-eye-slash"></i> Oscurecer'
     : '<i class="fas fa-eye"></i> Ver completa';
-}
-
-function showPanHint() {
-  if (!isMobileViewport()) return;
-  if (localStorage.getItem('chessExtract.panHintShown')) return;
-  localStorage.setItem('chessExtract.panHintShown', '1');
-  notify(
-    'Consejo: usa el "Modo desplazar" si necesitas mover la imagen sin tocar el recuadro',
-    'info',
-    { duration: 6500 }
-  );
 }
 
 function initCropBox() {
@@ -1313,7 +1272,7 @@ function initCropBox() {
     const t = state.cropTemplate;
     state.crop = { x: t.x * dW, y: t.y * dH, w: t.w * dW, h: t.h * dH };
   } else {
-    const factor = isMobileViewport() ? 0.7 : 0.7;
+    const factor = 0.7;
     const side = Math.min(dW, dH) * factor;
     state.crop = { x: (dW - side) / 2, y: (dH - side) / 2, w: side, h: side };
   }
@@ -1321,10 +1280,8 @@ function initCropBox() {
   cropBox.classList.remove('hidden');
   cropBox.classList.toggle('show-grid', state.showGrid);
   applyOverlayMode();
-  applyPanMode();
   cropBtn.disabled = false;
   updateTemplateButtons();
-  showPanHint();
 }
 
 // =========================================================
@@ -1357,40 +1314,45 @@ function getHandleFromPoint(clientX, clientY) {
 }
 
 // =========================================================
-// INTERACCIÓN UNIFICADA (mouse + touch)
-// - El navegador sintetiza eventos mouse desde toques porque touch-action: auto
-// - Listeners de move y end en document → nunca se pierden
+// INTERACCIÓN: SOLO MOUSE (mousedown en cropBox, move/up en document)
+// El navegador sintetiza eventos mouse desde toques en móvil.
 // =========================================================
-function detectMode(target, clientX, clientY) {
+function startGesture(clientX, clientY, target) {
+  if (state.isDragging || state.isResizing) return;
+
   const handle = target.closest && target.closest('.resize-handle');
+  let mode = null;
+
   if (handle) {
     for (const dir of ['nw', 'ne', 'sw', 'se']) {
-      if (handle.classList.contains('resize-' + dir)) return dir;
+      if (handle.classList.contains('resize-' + dir)) { mode = dir; break; }
     }
   }
-  return getHandleFromPoint(clientX, clientY) || 'drag';
-}
+  if (!mode) {
+    mode = getHandleFromPoint(clientX, clientY);
+  }
 
-function onGestureStart(clientX, clientY, target) {
-  if (state.panMode) return;
-  if (state.mode) return;
+  if (mode) {
+    state.isResizing = true;
+    state.resizeDir = mode;
+  } else {
+    state.isDragging = true;
+  }
 
-  const mode = detectMode(target, clientX, clientY);
-  state.mode = mode;
   state.startX = clientX;
   state.startY = clientY;
   state.startCrop = { ...state.crop };
 }
 
-function onGestureMove(clientX, clientY) {
-  if (!state.mode) return;
+function moveGesture(clientX, clientY) {
+  if (!state.isDragging && !state.isResizing) return;
 
   const dx = clientX - state.startX;
   const dy = clientY - state.startY;
   const { w: dW, h: dH } = getDisplaySize();
   const sc = state.startCrop;
 
-  if (state.mode === 'drag') {
+  if (state.isDragging) {
     let nx = sc.x + dx;
     let ny = sc.y + dy;
     nx = Math.max(0, Math.min(nx, dW - sc.w));
@@ -1401,7 +1363,7 @@ function onGestureMove(clientX, clientY) {
     let nx = sc.x, ny = sc.y, nw = sc.w, nh = sc.h;
     const min = 30;
 
-    switch (state.mode) {
+    switch (state.resizeDir) {
       case 'nw': nw = sc.w - dx; nh = sc.h - dy; nx = sc.x + dx; ny = sc.y + dy; break;
       case 'ne': nw = sc.w + dx; nh = sc.h - dy; ny = sc.y + dy; break;
       case 'sw': nw = sc.w - dx; nh = sc.h + dy; nx = sc.x + dx; break;
@@ -1410,7 +1372,7 @@ function onGestureMove(clientX, clientY) {
 
     if (state.squareLock) {
       const side = Math.min(nw, nh);
-      switch (state.mode) {
+      switch (state.resizeDir) {
         case 'nw': nx = sc.x + sc.w - side; ny = sc.y + sc.h - side; break;
         case 'ne': ny = sc.y + sc.h - side; break;
         case 'sw': nx = sc.x + sc.w - side; break;
@@ -1419,11 +1381,11 @@ function onGestureMove(clientX, clientY) {
     }
 
     if (nw < min) {
-      if (state.mode === 'nw' || state.mode === 'sw') nx = sc.x + sc.w - min;
+      if (state.resizeDir === 'nw' || state.resizeDir === 'sw') nx = sc.x + sc.w - min;
       nw = min;
     }
     if (nh < min) {
-      if (state.mode === 'nw' || state.mode === 'ne') ny = sc.y + sc.h - min;
+      if (state.resizeDir === 'nw' || state.resizeDir === 'ne') ny = sc.y + sc.h - min;
       nh = min;
     }
     if (nx < 0) { nw += nx; nx = 0; }
@@ -1440,49 +1402,27 @@ function onGestureMove(clientX, clientY) {
   applyCropStyles();
 }
 
-function onGestureEnd() {
-  state.mode = null;
+function endGesture() {
+  state.isDragging = false;
+  state.isResizing = false;
+  state.resizeDir = null;
 }
 
-// --- MOUSE (funciona en escritorio y móvil vía síntesis) ---
 cropBox.addEventListener('mousedown', (e) => {
   if (e.button !== 0) return;
-  onGestureStart(e.clientX, e.clientY, e.target);
-  if (state.mode) e.preventDefault();
+  startGesture(e.clientX, e.clientY, e.target);
+  if (state.isDragging || state.isResizing) e.preventDefault();
 });
 
 document.addEventListener('mousemove', (e) => {
-  if (!state.mode) return;
-  onGestureMove(e.clientX, e.clientY);
+  if (!state.isDragging && !state.isResizing) return;
+  moveGesture(e.clientX, e.clientY);
   e.preventDefault();
 });
 
 document.addEventListener('mouseup', () => {
-  if (state.mode) onGestureEnd();
-});
-
-// --- TOUCH (para navegadores que no sintetizan bien los eventos mouse) ---
-cropBox.addEventListener('touchstart', (e) => {
-  if (e.touches.length !== 1) return;
-  const t = e.touches[0];
-  onGestureStart(t.clientX, t.clientY, e.target);
-  if (state.mode) e.preventDefault();
-}, { passive: false });
-
-document.addEventListener('touchmove', (e) => {
-  if (!state.mode) return;
-  if (e.touches.length !== 1) return;
-  const t = e.touches[0];
-  onGestureMove(t.clientX, t.clientY);
-  e.preventDefault();
-}, { passive: false });
-
-document.addEventListener('touchend', () => {
-  if (state.mode) onGestureEnd();
-});
-
-document.addEventListener('touchcancel', () => {
-  if (state.mode) onGestureEnd();
+  if (!state.isDragging && !state.isResizing) return;
+  endGesture();
 });
 
 // =========================================================
@@ -1687,7 +1627,6 @@ async function startEdit(index) {
     cropBox.classList.remove('hidden');
     cropBox.classList.toggle('show-grid', state.showGrid);
     applyOverlayMode();
-    applyPanMode();
     cropBtn.disabled = false;
 
     cropSection.classList.remove('hidden');
@@ -1855,16 +1794,6 @@ toggleOverlayBtn.addEventListener('click', () => {
 });
 
 // =========================================================
-// MODO DESPLAZAR
-// =========================================================
-panModeChk.addEventListener('change', function () {
-  state.panMode = this.checked;
-  applyPanMode();
-  saveSettings();
-  notify(this.checked ? 'Modo desplazar activado' : 'Modo ajuste activado', 'info');
-});
-
-// =========================================================
 // BARRA DE PROGRESO
 // =========================================================
 function showProgress(current, total) {
@@ -1895,7 +1824,6 @@ async function processAllImages(useTemplate) {
 
   const previousIndex = state.currentIndex;
 
-  // Usar el recorte actual (o la plantilla) como referencia
   let activeTemplate = state.cropTemplate;
   if (!useTemplate) {
     const { w: cW, h: cH } = getDisplaySize();
@@ -1950,8 +1878,7 @@ async function processAllImages(useTemplate) {
             h: activeTemplate.h * dH
           };
         } else {
-          const factor = 0.7;
-          const side = Math.min(dW, dH) * factor;
+          const side = Math.min(dW, dH) * 0.7;
           state.crop = { x: (dW - side) / 2, y: (dH - side) / 2, w: side, h: side };
         }
         applyCropStyles();
@@ -2294,7 +2221,6 @@ window.addEventListener('beforeunload', () => {
   dedupeCheck.checked = state.dedupe;
   dedupeThreshold.value = String(state.dedupeThreshold);
   dedupeThresholdWrap.style.display = state.dedupe ? '' : 'none';
-  panModeChk.checked = state.panMode;
   headerInput.value = state.headerText;
   footerInput.value = state.footerText;
   itemsPerPageSelect.value = String(state.itemsPerPage);
