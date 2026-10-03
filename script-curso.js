@@ -915,37 +915,161 @@
         };
     };
 
-    Curso.abrirPanelProgreso = function () {
+        Curso.abrirPanelProgreso = function () {
         const contenedor = document.getElementById('progreso-contenido');
-        const clasesVisibles = Core.state.currentUser?.esAdmin
+        if (!contenedor) return;
+        if (!Core.state.currentUser) return;
+
+        const esAdmin = Core.state.currentUser.esAdmin;
+        const clasesVisibles = esAdmin
             ? Core.state.curso.clases
             : Core.state.curso.clases.filter(c => c.publicada === true);
 
         if (!clasesVisibles || clasesVisibles.length === 0) {
-            contenedor.innerHTML = '<p style="color:var(--texto-suave);">No hay clases disponibles para calcular progreso.</p>';
-        } else {
-            let html = '<div style="max-height:400px; overflow-y:auto;">';
-            let totalCompletados = 0, totalTemas = 0;
-            clasesVisibles.forEach(clase => {
-                const prog = Curso.calcularProgresoClase(clase);
-                totalCompletados += prog.completados;
-                totalTemas += prog.total;
-                html += `
-                    <div style="margin-bottom:10px; border-bottom:1px solid var(--borde); padding-bottom:8px;">
-                        <strong>${escapeHtml(clase.titulo)}</strong>
-                        <div style="display:flex; align-items:center; gap:8px;">
-                            <progress value="${prog.porcentaje}" max="100" style="flex:1; height:12px;"></progress>
-                            <span style="font-size:0.85rem;">${prog.porcentaje}% (${prog.completados}/${prog.total})</span>
-                        </div>
-                    </div>`;
-            });
-            const porcentajeGeneral = totalTemas > 0 ? Math.round((totalCompletados / totalTemas) * 100) : 0;
-            html += `<div style="margin-top:15px; font-weight:bold;">📈 Progreso general: ${porcentajeGeneral}%</div></div>`;
-            contenedor.innerHTML = html;
+            contenedor.innerHTML = '<p style="color:var(--texto-suave); text-align:center; padding:24px;">No hay clases disponibles para calcular progreso.</p>';
+            document.getElementById('modal-progreso').classList.add('active');
+            return;
         }
+
+        let totalTemas = 0;
+        let completados = 0;
+        const clasesHTML = clasesVisibles.map(clase => {
+            const prog = Curso.calcularProgresoClase(clase);
+            totalTemas += prog.total;
+            completados += prog.completados;
+            return Curso._renderizarClaseProgresoHTML(clase, prog);
+        }).join('');
+
+        const pctGlobal = totalTemas > 0 ? Math.round((completados / totalTemas) * 100) : 0;
+        const colorGlobal = pctGlobal >= 80 ? '#16a34a' : (pctGlobal >= 40 ? '#0ea5e9' : '#f59e0b');
+        const circunferencia = 283;
+        const offset = circunferencia - (pctGlobal / 100) * circunferencia;
+
+        contenedor.innerHTML = `
+            <div class="cm-progreso-panel">
+                <div class="cm-progreso-hero">
+                    <div class="cm-progreso-circulo-wrap">
+                        <svg class="cm-progreso-circulo" viewBox="0 0 120 120">
+                            <circle cx="60" cy="60" r="45" fill="none" stroke="#e2e8f0" stroke-width="10" />
+                            <circle cx="60" cy="60" r="45" fill="none"
+                                stroke="${colorGlobal}" stroke-width="10" stroke-linecap="round"
+                                stroke-dasharray="${circunferencia}"
+                                stroke-dashoffset="${offset}"
+                                transform="rotate(-90 60 60)" />
+                        </svg>
+                        <div class="cm-progreso-circulo-texto">
+                            <span class="cm-progreso-circulo-pct" style="color:${colorGlobal};">${pctGlobal}%</span>
+                            <span class="cm-progreso-circulo-label">Completado</span>
+                        </div>
+                    </div>
+                    <div class="cm-progreso-resumen">
+                        <div class="cm-progreso-resumen-item">
+                            <span class="cm-progreso-resumen-valor" style="color:#16a34a;">${completados}</span>
+                            <span class="cm-progreso-resumen-label">Completados</span>
+                        </div>
+                        <div class="cm-progreso-resumen-item">
+                            <span class="cm-progreso-resumen-valor" style="color:#f59e0b;">${totalTemas - completados}</span>
+                            <span class="cm-progreso-resumen-label">Pendientes</span>
+                        </div>
+                        <div class="cm-progreso-resumen-item">
+                            <span class="cm-progreso-resumen-valor" style="color:#0ea5e9;">${clasesVisibles.length}</span>
+                            <span class="cm-progreso-resumen-label">Clases</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="cm-progreso-clases">
+                    ${clasesHTML}
+                </div>
+            </div>
+        `;
+
+        // Listeners de los toggles de clase
+        contenedor.querySelectorAll('[data-progreso-clase-toggle]').forEach(header => {
+            header.addEventListener('click', () => {
+                const claseId = header.dataset.progresoClaseToggle;
+                const seccion = contenedor.querySelector(`[data-progreso-clase-body="${claseId}"]`);
+                if (!seccion) return;
+                const abierta = header.classList.toggle('abierta');
+                seccion.style.display = abierta ? 'block' : 'none';
+            });
+        });
+
         document.getElementById('modal-progreso').classList.add('active');
     };
 
+    // ============================================================
+    // ⭐ v80: Helpers de renderizado del panel
+    // ============================================================
+    Curso._renderizarClaseProgresoHTML = function (clase, prog) {
+        const pct = prog.porcentaje;
+        const colorBarra = pct >= 80 ? '#16a34a' : (pct >= 40 ? '#0ea5e9' : '#f59e0b');
+
+        const temasHTML = (clase.temas || []).map((t) => {
+            return Curso._renderizarTemaProgresoHTML(t, clase.id, 0, null);
+        }).join('');
+
+        return `
+            <div class="cm-progreso-clase">
+                <div class="cm-progreso-clase-header" data-progreso-clase-toggle="${clase.id}">
+                    <span class="cm-progreso-clase-arrow">▶</span>
+                    <span class="cm-progreso-clase-num">${clase.numero}.</span>
+                    <span class="cm-progreso-clase-titulo">${escapeHtml(clase.titulo)}</span>
+                    <div class="cm-progreso-clase-barra">
+                        <div class="cm-progreso-clase-barra-fill" style="width:${pct}%; background:${colorBarra};"></div>
+                    </div>
+                    <span class="cm-progreso-clase-pct" style="color:${colorBarra};">${pct}%</span>
+                    <span class="cm-progreso-clase-count">${prog.completados}/${prog.total}</span>
+                </div>
+                <div class="cm-progreso-clase-body" data-progreso-clase-body="${clase.id}" style="display:none;">
+                    ${temasHTML || '<p style="color:var(--texto-suave); padding:8px 12px; font-size:0.85rem;">Sin temas todavía.</p>'}
+                </div>
+            </div>
+        `;
+    };
+
+    Curso._renderizarTemaProgresoHTML = function (tema, claseId, nivel, padre) {
+        const completado = Curso.estaCompletado(claseId, tema.id);
+
+        let bloqueado = false;
+        try {
+            if (window.CMRender && typeof window.CMRender.temaBloqueadoPorProgreso === 'function') {
+                bloqueado = window.CMRender.temaBloqueadoPorProgreso(tema, claseId, nivel, padre);
+            }
+        } catch (e) { /* ignorar */ }
+
+        // ¿Tiene algún progreso? (busca keys de tableros de este tema)
+        const prefijo1 = `tablero_${claseId}_${tema.id}_`;
+        const prefijo2 = `tablero_cap_${claseId}_${tema.id}_`;
+        let tieneProgreso = false;
+        const prog = Core.state.progresoTableros || {};
+        for (const k in prog) {
+            if (k.startsWith(prefijo1) || k.startsWith(prefijo2)) {
+                tieneProgreso = true;
+                break;
+            }
+        }
+
+        let icono = '⚪';
+        let estado = 'sin-empezar';
+        if (completado) { icono = '✓'; estado = 'completado'; }
+        else if (bloqueado) { icono = '🔒'; estado = 'bloqueado'; }
+        else if (tieneProgreso) { icono = '⏳'; estado = 'en-progreso'; }
+
+        // HTML propio
+        const propiosHTML = `
+            <div class="cm-progreso-tema cm-progreso-tema-${estado}" style="padding-left:${nivel * 16}px;">
+                <span class="cm-progreso-tema-icono">${icono}</span>
+                <span class="cm-progreso-tema-titulo">${escapeHtml(tema.titulo)}</span>
+            </div>
+        `;
+
+        // Subtemas recursivos (aplanados en el mismo nivel de lista)
+        const subtemasHTML = (tema.subtemas || []).map(st => {
+            return Curso._renderizarTemaProgresoHTML(st, claseId, nivel + 1, tema);
+        }).join('');
+
+        return propiosHTML + subtemasHTML;
+    };
     // ============================================================
     // SOLICITUDES DE ACCESO
     // ============================================================
