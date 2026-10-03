@@ -271,7 +271,7 @@
         }
 
         /* ============================================================
-           CROP AREA — SIN CAMBIOS
+           CROP AREA
            ============================================================ */
         #cropContainer {
             position: relative;
@@ -317,10 +317,9 @@
         .resize-ne { top: -11px; right: -11px; cursor: ne-resize; }
         .resize-sw { bottom: -11px; left: -11px; cursor: sw-resize; }
         .resize-se { bottom: -11px; right: -11px; cursor: se-resize; }
-        /* ============================================================ */
 
         /* ============================================================
-           BARRA DE PROGRESO — NUEVA
+           BARRA DE PROGRESO
            ============================================================ */
         .progress-bar {
             position: relative;
@@ -350,7 +349,6 @@
             text-shadow: 0 1px 2px rgba(255,255,255,0.7);
             letter-spacing: 0.3px;
         }
-        /* ============================================================ */
 
         .image-counter {
             text-align: center;
@@ -435,7 +433,6 @@
             gap: 12px;
             flex: 1;
         }
-        /* Layouts dinámicos según tableros por página */
         .page-content.cols-2.rows-2 { grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(2, 1fr); }
         .page-content.cols-2.rows-3 { grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(3, 1fr); }
         .page-content.cols-2.rows-4 { grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(4, 1fr); }
@@ -482,7 +479,6 @@
             font-size: 0.95rem;
         }
         .notification.show { opacity: 1; transform: translateX(0); }
-        /* Colores por tipo */
         .notification.success { background: var(--success); }
         .notification.warning { background: var(--warning); }
         .notification.error   { background: var(--accent); }
@@ -624,9 +620,6 @@
             </div>
         </div>
 
-        <!-- ============================================================
-             BARRA DE PROGRESO
-             ============================================================ -->
         <div class="progress-bar hidden" id="progressBar">
             <div class="progress-fill" id="progressFill"></div>
             <span class="progress-text" id="progressText">0 %</span>
@@ -664,9 +657,6 @@
         <input type="text" id="headerInput" class="form-control" placeholder="Encabezado (opcional)" />
         <input type="text" id="footerInput" class="form-control" placeholder="Pie de página (opcional)" />
 
-        <!-- ============================================================
-             SELECTOR 4 / 6 / 8 POR PÁGINA
-             ============================================================ -->
         <div class="quality-control">
             <span class="form-label">Tableros por página:</span>
             <select id="itemsPerPageSelect" class="form-control">
@@ -687,7 +677,7 @@
 // ============================================================
 // VERSIÓN CON ORDEN + REPETIDOS + BARRA DE PROGRESO + LAYOUTS +
 // localStorage + BLOB + NOTIFICACIONES + DESHACER
-// El sistema de arrastre/recorte NO fue tocado.
+// + ASPECT RATIO EN PDF (con fallback + cacheo para legacy)
 // ============================================================
 
 const MAX_DISPLAY_WIDTH = 900;
@@ -699,7 +689,7 @@ let resizeDirection = null;
 let startX, startY;
 let cropBoxX = 0, cropBoxY = 0, cropBoxWidth = 0, cropBoxHeight = 0;
 let startCropBoxX = 0, startCropBoxY = 0, startCropBoxWidth = 0, startCropBoxHeight = 0;
-// Cada tablero guardado: { blob, url, hash }
+// Cada tablero guardado: { blob, url, hash, w, h }
 let savedChessboards = [];
 let imageQuality = 0.7;
 let resolutionFactor = 0.75;
@@ -797,6 +787,23 @@ function blobToDataURL(blob) {
         reader.onload = (e) => resolve(e.target.result);
         reader.onerror = () => reject(new Error('Error convirtiendo imagen'));
         reader.readAsDataURL(blob);
+    });
+}
+
+// Obtiene dimensiones reales del blob (para preservar aspect ratio en PDF)
+function getBlobDimensions(blob) {
+    return new Promise(function(resolve) {
+        const url = URL.createObjectURL(blob);
+        const img = new Image();
+        img.onload = function() {
+            URL.revokeObjectURL(url);
+            resolve({ w: img.naturalWidth, h: img.naturalHeight });
+        };
+        img.onerror = function() {
+            URL.revokeObjectURL(url);
+            resolve({ w: 0, h: 0 });
+        };
+        img.src = url;
     });
 }
 
@@ -1208,7 +1215,7 @@ function cropImage() {
 // ============================================================
 
 // --------------------------------------------------------------
-// GUARDAR TABLERO (con Blob + dedupe)
+// GUARDAR TABLERO (con Blob + dedupe + dimensiones)
 // --------------------------------------------------------------
 async function addChessboard(dataUrl) {
     const hash = await computeHashFromDataUrl(dataUrl);
@@ -1219,7 +1226,8 @@ async function addChessboard(dataUrl) {
         if (old && old.url) URL.revokeObjectURL(old.url);
         const blob = await dataURLToBlob(dataUrl);
         const url = URL.createObjectURL(blob);
-        savedChessboards[editingIndex] = { blob, url, hash };
+        const dims = await getBlobDimensions(blob);
+        savedChessboards[editingIndex] = { blob, url, hash, w: dims.w, h: dims.h };
         showNotification('Tablero actualizado');
         editingIndex = -1;
         updateChessboardsDisplay();
@@ -1241,7 +1249,8 @@ async function addChessboard(dataUrl) {
 
     const blob = await dataURLToBlob(dataUrl);
     const url = URL.createObjectURL(blob);
-    savedChessboards.push({ blob, url, hash });
+    const dims = await getBlobDimensions(blob);
+    savedChessboards.push({ blob, url, hash, w: dims.w, h: dims.h });
     showNotification('Tablero guardado');
     updateChessboardsDisplay();
     if (currentImageIndex < imageFiles.length - 1) nextImage();
@@ -1366,7 +1375,7 @@ function updatePdfPreview() {
 }
 
 // --------------------------------------------------------------
-// GENERAR PDF (con layout dinámico + blobs)
+// GENERAR PDF (con layout dinámico + blobs + aspect ratio + cacheo)
 // --------------------------------------------------------------
 async function generatePdf() {
     if (savedChessboards.length === 0) return;
@@ -1410,8 +1419,33 @@ async function generatePdf() {
             doc.setFontSize(itemsPerPage === 8 ? 10 : 12);
             doc.text((i+1).toString(), cx, pos.y - 2.5, { align: 'center' });
 
-            const dataUrl = await blobToDataURL(savedChessboards[i].blob);
-            doc.addImage(dataUrl, 'JPEG', pos.x, pos.y, imgW, imgH, undefined, 'FAST');
+            // ---------------------------------------------------------
+            // Preservar proporción dentro de la caja imgW × imgH.
+            // Si el tablero viene de una sesión antigua (sin w/h), se
+            // miden al vuelo y se cachean en el objeto para no re-medir
+            // en próximas generaciones. Solo se escriben w/h — el blob,
+            // url y hash permanecen intactos.
+            // ---------------------------------------------------------
+            const board = savedChessboards[i];
+            const dataUrl = await blobToDataURL(board.blob);
+            let boardW = board.w, boardH = board.h;
+            if (!boardW || !boardH) {
+                const dims = await getBlobDimensions(board.blob);
+                boardW = dims.w;
+                boardH = dims.h;
+                // 🔄 Cachear en el objeto (no toca blob, url ni hash)
+                board.w = boardW;
+                board.h = boardH;
+            }
+            let drawW = imgW, drawH = imgH;
+            if (boardW && boardH) {
+                const aspect = boardW / boardH;
+                if (aspect > 1) drawH = imgW / aspect;   // más ancho que alto
+                else drawW = imgH * aspect;              // más alto que ancho
+            }
+            const offX = pos.x + (imgW - drawW) / 2;
+            const offY = pos.y + (imgH - drawH) / 2;
+            doc.addImage(dataUrl, 'JPEG', offX, offY, drawW, drawH, undefined, 'FAST');
 
             const lineY = pos.y + imgH + (itemsPerPage === 8 ? 4 : 6);
             for (let j = 0; j < lineCount; j++) {
@@ -1504,7 +1538,7 @@ function applyTemplateToAll() {
 }
 
 // --------------------------------------------------------------
-// PROCESAR TODAS (async + progreso + dedupe)
+// PROCESAR TODAS (async + progreso + dedupe + dimensiones)
 // --------------------------------------------------------------
 async function processAllImages() {
     if (imageFiles.length === 0) return;
@@ -1541,7 +1575,8 @@ async function processAllImages() {
 
             const blob = await dataURLToBlob(dataUrl);
             const url = URL.createObjectURL(blob);
-            savedChessboards.push({ blob, url, hash });
+            const dims = await getBlobDimensions(blob);
+            savedChessboards.push({ blob, url, hash, w: dims.w, h: dims.h });
             processed++;
             updateChessboardsDisplay();
             showProgress(i + 1, imageFiles.length);
@@ -1591,7 +1626,6 @@ function clearAllChessboards() {
         }
     });
 
-    // Liberar URLs después de 6s si no se deshizo
     setTimeout(function() {
         if (!undone) {
             backup.forEach(function(b) {
@@ -1682,14 +1716,12 @@ clearAllBtn.addEventListener('click', clearAllChessboards);
 headerInput.addEventListener('input', function() { updatePdfPreview(); saveSettings(); });
 footerInput.addEventListener('input', function() { updatePdfPreview(); saveSettings(); });
 
-// Prevenir scroll accidental en el contenedor al tocar el recuadro (original)
 cropContainer.addEventListener('touchstart', function(e) {
     if (cropBox && cropBox.contains(e.target)) {
         e.preventDefault();
     }
 }, { passive: false });
 
-// Liberar URLs al cerrar
 window.addEventListener('beforeunload', function() {
     savedChessboards.forEach(function(b) {
         if (b.url) URL.revokeObjectURL(b.url);
