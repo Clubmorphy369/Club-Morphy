@@ -2467,8 +2467,8 @@ async importarDesdeLichess() {
 
         _scrollAlSiguienteBloque() {
             const siguiente = this._encontrarSiguienteBloque();
-            if (!siguiente) {
-                this.mostrarToast('🎓 ¡Terminaste todas las lecciones de este tema!', 'elo-up');
+           if (!siguiente) {
+                this.mostrarToast('🎓 ¡Terminaste todas las lecciones de este tema!', 'elo-up', 10000);
                 return false;
             }
             siguiente.scrollIntoView({ behavior: 'smooth', block: 'start' });
