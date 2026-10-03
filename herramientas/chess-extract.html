@@ -1597,8 +1597,8 @@ function addCircleToImage(dataUrl, turno, callback) {
         ctx.arc(x + circleSize/2, y + circleSize/2, circleSize/2, 0, 2 * Math.PI);
         ctx.fillStyle = turno === 'white' ? '#ffffff' : '#000000';
         ctx.fill();
-        ctx.strokeStyle = '#333333';
-        ctx.lineWidth = 2;
+               ctx.strokeStyle = '#000000';
+        ctx.lineWidth = 3;
         ctx.stroke();
         callback(canvas.toDataURL('image/jpeg', 0.95));
     };
