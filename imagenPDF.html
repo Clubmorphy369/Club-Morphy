@@ -1,1982 +1,1168 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<title>ChessExtract Pro — Extractor de Tableros de Ajedrez</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-<style>
-  :root {
-    --primary: #2c3e50;
-    --secondary: #3498db;
-    --accent: #e74c3c;
-    --success: #27ae60;
-    --warning: #f39c12;
-    --light: #ecf0f1;
-    --dark: #34495e;
-    --gray: #95a5a6;
-    --radius: 10px;
-    --shadow: 0 4px 14px rgba(0,0,0,.08);
-    --shadow-hover: 0 8px 24px rgba(0,0,0,.12);
-    --transition: .2s ease;
-  }
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>ChessExtract Pro - Móvil y Escritorio</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --secondary: #3498db;
+            --accent: #e74c3c;
+            --success: #2ecc71;
+            --warning: #f39c12;
+            --light: #ecf0f1;
+            --dark: #34495e;
+            --gray: #95a5a6;
+            --border-radius: 8px;
+            --box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            --transition: all 0.3s ease;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            color: var(--dark);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            padding: 10px;
+            min-height: 100vh;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .app-container {
+            max-width: 1100px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+        }
+        .app-header {
+            text-align: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--light);
+        }
+        .app-header h1 {
+            color: var(--primary);
+            font-size: 2rem;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .app-header p {
+            color: var(--gray);
+            font-size: 1rem;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .card {
+            margin-bottom: 20px;
+            padding: 18px;
+            border-radius: var(--border-radius);
+            background-color: white;
+            box-shadow: var(--box-shadow);
+            border-left: 4px solid var(--secondary);
+            transition: var(--transition);
+        }
+        .card-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            color: var(--primary);
+            flex-wrap: wrap;
+        }
+        .card-header i {
+            margin-right: 10px;
+            font-size: 1.3rem;
+            color: var(--secondary);
+        }
+        .card-header h2 {
+            font-size: 1.3rem;
+            font-weight: 600;
+        }
+        .instructions {
+            background-color: #e7f5ff;
+            padding: 15px;
+            border-radius: var(--border-radius);
+            margin-bottom: 20px;
+            border-left: 4px solid var(--secondary);
+        }
+        .instructions ol {
+            padding-left: 18px;
+            margin-top: 8px;
+        }
+        .instructions li { margin-bottom: 6px; }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background-color: var(--secondary);
+            color: white;
+            border: none;
+            padding: 12px 16px;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: var(--transition);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            gap: 8px;
+            touch-action: manipulation;
+            min-height: 44px;
+            min-width: 44px;
+        }
+        .btn:hover {
+            background-color: var(--primary);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+        .btn:disabled {
+            background-color: var(--gray);
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        .btn-danger { background-color: var(--accent); }
+        .btn-warning { background-color: var(--warning); }
+        .btn-success { background-color: var(--success); }
+        .btn-primary { background-color: #9b59b6; }
+        .btn-primary:hover { background-color: #8e44ad; }
+        .btn-outline {
+            background-color: transparent;
+            border: 2px solid var(--secondary);
+            color: var(--secondary);
+        }
+        .btn-outline:hover {
+            background-color: var(--secondary);
+            color: white;
+        }
+        .btn-sm { padding: 6px 12px; font-size: 0.85rem; min-height: 34px; min-width: 34px; }
+        .form-control {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #ddd;
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            margin-bottom: 12px;
+            transition: var(--transition);
+        }
+        .form-control:focus {
+            outline: none;
+            border-color: var(--secondary);
+            box-shadow: 0 0 0 3px rgba(52,152,219,0.2);
+        }
+        .form-label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 500;
+            color: var(--dark);
+        }
 
-  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+        /* ============================================================
+           NUEVO: Selector de orden de las imágenes
+           ============================================================ */
+        .sort-control {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: var(--border-radius);
+            padding: 12px;
+            margin-bottom: 12px;
+        }
+        .sort-control .form-label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+        .sort-control .form-label i { color: var(--secondary); }
+        .sort-control select { margin-bottom: 8px; }
+        .sort-hint {
+            font-size: 0.82rem;
+            color: var(--gray);
+            line-height: 1.4;
+            display: flex;
+            align-items: flex-start;
+            gap: 6px;
+        }
+        .sort-hint i { margin-top: 3px; flex-shrink: 0; }
+        /* ============================================================ */
 
-  html, body { height: 100%; }
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    background: linear-gradient(135deg, #eef2f7 0%, #d4dde8 100%);
-    color: var(--dark);
-    line-height: 1.55;
-    padding: 12px;
-    min-height: 100vh;
-    overscroll-behavior-y: none;
-  }
-
-  .app-container {
-    max-width: 1100px;
-    margin: 0 auto;
-    background: #fff;
-    border-radius: var(--radius);
-    box-shadow: var(--shadow);
-    padding: 22px;
-  }
-
-  .app-header { text-align: center; margin-bottom: 22px; padding-bottom: 18px; border-bottom: 1px solid var(--light); }
-  .app-header h1 {
-    color: var(--primary);
-    font-size: 1.85rem;
-    font-weight: 700;
-    display: flex; align-items: center; justify-content: center;
-    gap: 12px; flex-wrap: wrap;
-  }
-  .app-header h1 i { color: var(--secondary); }
-  .app-header p { color: var(--gray); font-size: .98rem; margin-top: 6px; }
-
-  .card {
-    background: #fff;
-    border-radius: var(--radius);
-    box-shadow: var(--shadow);
-    padding: 20px;
-    margin-bottom: 20px;
-    border-left: 4px solid var(--secondary);
-    transition: var(--transition);
-  }
-  .card.hidden { display: none; }
-
-  .card-header {
-    display: flex; align-items: center; gap: 10px;
-    color: var(--primary);
-    margin-bottom: 16px;
-    flex-wrap: wrap;
-  }
-  .card-header i { color: var(--secondary); font-size: 1.25rem; }
-  .card-header h2 { font-size: 1.2rem; font-weight: 600; }
-
-  .section-title {
-    display: flex; justify-content: space-between; align-items: center;
-    gap: 12px; flex-wrap: wrap; margin-bottom: 14px;
-  }
-
-  .instructions {
-    background: #e8f4fd;
-    border-radius: var(--radius);
-    border-left: 4px solid var(--secondary);
-    padding: 14px 18px;
-    margin-bottom: 22px;
-    font-size: .95rem;
-  }
-  .instructions ol { padding-left: 22px; margin-top: 6px; }
-  .instructions li { margin-bottom: 4px; }
-
-  .btn {
-    display: inline-flex; align-items: center; justify-content: center;
-    gap: 8px;
-    background: var(--secondary);
-    color: #fff;
-    border: none;
-    padding: 10px 16px;
-    border-radius: var(--radius);
-    font-size: .95rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: var(--transition);
-    box-shadow: 0 2px 6px rgba(52,152,219,.25);
-    min-height: 44px;
-    font-family: inherit;
-    user-select: none;
-    touch-action: manipulation;
-  }
-  .btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 14px rgba(52,152,219,.35); }
-  .btn:active:not(:disabled) { transform: translateY(0); }
-  .btn:disabled { background: var(--gray); cursor: not-allowed; box-shadow: none; opacity: .7; }
-  .btn:focus-visible { outline: 3px solid rgba(52,152,219,.35); outline-offset: 2px; }
-
-  .btn-primary   { background: #8e44ad; box-shadow: 0 2px 6px rgba(142,68,173,.3); }
-  .btn-success   { background: var(--success); box-shadow: 0 2px 6px rgba(39,174,96,.3); }
-  .btn-warning   { background: var(--warning); box-shadow: 0 2px 6px rgba(243,156,18,.3); }
-  .btn-danger    { background: var(--accent); box-shadow: 0 2px 6px rgba(231,76,60,.3); }
-  .btn-outline {
-    background: transparent;
-    border: 2px solid var(--secondary);
-    color: var(--secondary);
-    box-shadow: none;
-  }
-  .btn-outline:hover:not(:disabled) { background: var(--secondary); color: #fff; }
-  .btn-sm { padding: 6px 12px; font-size: .85rem; min-height: 36px; }
-  .btn-lg { padding: 14px 22px; font-size: 1rem; }
-  .btn-block { width: 100%; }
-  .btn.toggle-active {
-    background: var(--secondary);
-    color: #fff;
-    border-color: var(--secondary);
-  }
-
-  .form-control {
-    width: 100%;
-    padding: 10px 12px;
-    border: 1px solid #d6dbe1;
-    border-radius: var(--radius);
-    font-size: .95rem;
-    font-family: inherit;
-    transition: var(--transition);
-    background: #fff;
-    color: var(--dark);
-  }
-  .form-control:focus {
-    outline: none;
-    border-color: var(--secondary);
-    box-shadow: 0 0 0 3px rgba(52,152,219,.15);
-  }
-  .form-label {
-    display: block;
-    font-weight: 600;
-    font-size: .88rem;
-    color: var(--dark);
-    margin-bottom: 6px;
-  }
-
-  .drop-zone {
-    border: 2.5px dashed #b8c7d6;
-    border-radius: var(--radius);
-    background: #f8fafc;
-    padding: 30px 20px;
-    text-align: center;
-    transition: var(--transition);
-    cursor: pointer;
-  }
-  .drop-zone:hover { border-color: var(--secondary); background: #f0f7fd; }
-  .drop-zone.dragover { border-color: var(--secondary); background: #e8f4fd; transform: scale(1.01); }
-  .drop-zone i {
-    font-size: 2.6rem;
-    color: var(--secondary);
-    margin-bottom: 10px;
-    display: block;
-  }
-  .drop-zone p { color: var(--gray); font-size: .95rem; margin-bottom: 14px; }
-  .file-info {
-    margin-top: 12px;
-    padding: 10px 14px;
-    background: #eaf4fd;
-    border-radius: var(--radius);
-    font-size: .9rem;
-    color: var(--primary);
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    justify-content: center;
-    flex-wrap: wrap;
-  }
-  .file-info.hidden { display: none; }
-
-  .crop-toolbar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 12px;
-    flex-wrap: wrap;
-  }
-  .image-counter {
-    font-weight: 600;
-    color: var(--primary);
-    background: var(--light);
-    padding: 6px 14px;
-    border-radius: 20px;
-    font-size: .9rem;
-    flex: 1;
-    text-align: center;
-    min-width: 140px;
-  }
-  .toolbar-actions { display: flex; gap: 6px; }
-
-  /* ✅ EXACTO al del proyecto de referencia */
-  #cropContainer {
-    position: relative;
-    overflow: hidden;
-    margin: 14px 0;
-    max-width: 100%;
-    border: 1px solid #ddd;
-    border-radius: var(--radius);
-    background: #1e293b;
-    padding: 0;
-    text-align: center;
-    line-height: 0;
-  }
-
-  #imageToCrop {
-    max-width: 100%;
-    display: block;
-    margin: 0 auto;
-    user-select: none;
-    -webkit-user-drag: none;
-    -webkit-user-select: none;
-    pointer-events: none;
-  }
-
-  /* ✅ EXACTO al del proyecto de referencia (box-shadow 0.4) */
-  .crop-box {
-    position: absolute;
-    border: 2px solid #fff;
-    background-color: rgba(52, 152, 219, 0.12);
-    cursor: move;
-    box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.4);
-    z-index: 5;
-  }
-  .crop-box.hidden { display: none; }
-
-  .crop-box.no-overlay {
-    box-shadow: 0 0 0 2px rgba(52,152,219,.95);
-    background-color: rgba(52,152,219,.06);
-  }
-
-  .crop-box::before {
-    content: "";
-    position: absolute; inset: 0;
-    background-image:
-      linear-gradient(to right, rgba(255,255,255,.35) 1px, transparent 1px),
-      linear-gradient(to bottom, rgba(255,255,255,.35) 1px, transparent 1px);
-    background-size: 12.5% 12.5%;
-    pointer-events: none;
-    opacity: 0;
-    transition: opacity .2s;
-  }
-  .crop-box.show-grid::before { opacity: 1; }
-
-  /* ✅ EXACTO al del proyecto de referencia */
-  .resize-handle {
-    position: absolute;
-    width: 12px;
-    height: 12px;
-    background-color: var(--secondary);
-    border: 2px solid white;
-    border-radius: 50%;
-    box-shadow: 0 0 3px rgba(0,0,0,.5);
-  }
-
-  .resize-nw { top: -6px; left: -6px; cursor: nw-resize; }
-  .resize-ne { top: -6px; right: -6px; cursor: ne-resize; }
-  .resize-sw { bottom: -6px; left: -6px; cursor: sw-resize; }
-  .resize-se { bottom: -6px; right: -6px; cursor: se-resize; }
-
-  .progress-bar {
-    position: relative;
-    height: 24px;
-    background: #e2e8f0;
-    border-radius: 12px;
-    overflow: hidden;
-    margin-top: 12px;
-  }
-  .progress-bar.hidden { display: none; }
-  .progress-fill {
-    height: 100%;
-    width: 0;
-    background: linear-gradient(90deg, var(--secondary), var(--success));
-    transition: width .25s ease;
-    border-radius: 12px;
-  }
-  .progress-text {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: .8rem;
-    font-weight: 700;
-    color: var(--primary);
-    text-shadow: 0 1px 2px rgba(255,255,255,.6);
-    letter-spacing: .3px;
-  }
-
-  .crop-options {
-    display: flex;
-    gap: 20px;
-    flex-wrap: wrap;
-    margin: 14px 0;
-    padding: 12px 16px;
-    background: #f8fafc;
-    border-radius: var(--radius);
-    font-size: .9rem;
-    align-items: center;
-  }
-  .crop-options label {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    cursor: pointer;
-    user-select: none;
-    font-weight: 500;
-  }
-  .crop-options input[type="checkbox"] {
-    width: 18px; height: 18px;
-    accent-color: var(--secondary);
-    cursor: pointer;
-  }
-  .crop-options select {
-    padding: 4px 8px;
-    min-height: auto;
-    width: auto;
-    font-size: .85rem;
-    border-radius: 6px;
-    border: 1px solid #d6dbe1;
-  }
-
-  .crop-actions {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-    margin-top: 12px;
-  }
-  .crop-actions .btn { flex: 1 1 auto; }
-
-  .crop-nav {
-    display: flex;
-    gap: 10px;
-    margin-top: 14px;
-  }
-  .crop-nav .btn { flex: 1; }
-
-  .settings-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-    margin-bottom: 14px;
-  }
-  .quality-control {
-    background: #f8fafc;
-    padding: 12px 14px;
-    border-radius: var(--radius);
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
-  .quality-control .row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-  .quality-control input[type="range"] {
-    flex: 1;
-    accent-color: var(--secondary);
-    height: 24px;
-  }
-  .quality-value {
-    min-width: 36px;
-    text-align: center;
-    font-weight: 600;
-    font-size: .88rem;
-    color: var(--secondary);
-    background: #fff;
-    padding: 2px 8px;
-    border-radius: 12px;
-  }
-
-  .chessboards-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-    gap: 14px;
-  }
-  .chessboard-item {
-    background: #fff;
-    border: 1px solid #e2e8f0;
-    border-radius: var(--radius);
-    overflow: hidden;
-    transition: var(--transition);
-    box-shadow: 0 2px 6px rgba(0,0,0,.04);
-  }
-  .chessboard-item:hover { box-shadow: var(--shadow-hover); transform: translateY(-2px); }
-  .chessboard-item img {
-    display: block;
-    width: 100%;
-    height: 140px;
-    object-fit: contain;
-    background: #f8fafc;
-    padding: 8px;
-  }
-  .chessboard-info {
-    padding: 8px;
-    text-align: center;
-    font-weight: 600;
-    font-size: .9rem;
-    background: var(--light);
-    color: var(--primary);
-  }
-  .chessboard-actions {
-    display: flex;
-    gap: 6px;
-    padding: 8px;
-    justify-content: center;
-    background: #fff;
-  }
-  .chessboard-actions .btn {
-    flex: 1;
-    min-height: 34px;
-    padding: 4px 8px;
-  }
-
-  .pdf-preview {
-    border: 1px solid #e2e8f0;
-    border-radius: var(--radius);
-    background: #f8fafc;
-    padding: 14px;
-    margin-top: 14px;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-  }
-  .page {
-    width: 100%;
-    max-width: 720px;
-    margin: 0 auto 20px;
-    background: #fff;
-    padding: 16px;
-    border-radius: 6px;
-    box-shadow: 0 2px 8px rgba(0,0,0,.06);
-    display: flex;
-    flex-direction: column;
-    aspect-ratio: 1 / 1.414;
-  }
-  .page:last-child { margin-bottom: 0; }
-  .page-header {
-    text-align: center;
-    font-weight: 700;
-    padding: 6px;
-    background: #f0f4f8;
-    border-radius: 4px;
-    margin-bottom: 10px;
-    font-size: .9rem;
-    color: var(--primary);
-  }
-  .page-content {
-    flex: 1;
-    display: grid;
-    gap: 10px;
-    grid-template-columns: 1fr 1fr;
-    grid-template-rows: repeat(3, 1fr);
-  }
-  .page-content.cols-2.rows-2 { grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(2, 1fr); }
-  .page-content.cols-2.rows-3 { grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(3, 1fr); }
-  .page-content.cols-2.rows-4 { grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(4, 1fr); }
-
-  .page-cell {
-    border: 1px solid #eef1f5;
-    border-radius: 6px;
-    background: #fafbfc;
-    padding: 6px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: flex-start;
-    min-height: 0;
-  }
-  .page-cell .num {
-    font-size: .75rem;
-    font-weight: 700;
-    color: var(--primary);
-    margin-bottom: 3px;
-    align-self: flex-start;
-  }
-  .page-cell img {
-    max-width: 100%;
-    max-height: calc(100% - 30px);
-    object-fit: contain;
-    margin-bottom: 4px;
-  }
-  .answer-lines {
-    width: 100%;
-    margin-top: auto;
-  }
-  .answer-lines .line {
-    height: 0;
-    border-bottom: 1px dashed #cbd5e0;
-    margin-bottom: 6px;
-  }
-  .page-footer {
-    margin-top: 10px;
-    padding: 6px;
-    background: #f0f4f8;
-    border-radius: 4px;
-    display: flex;
-    justify-content: space-between;
-    font-size: .78rem;
-    color: var(--gray);
-  }
-  .page-content.rows-4 .page-cell { padding: 4px; }
-  .page-content.rows-4 .page-cell .num { font-size: .68rem; }
-  .page-content.rows-4 .answer-lines .line { margin-bottom: 4px; }
-  .page-content.rows-2 .page-cell { padding: 10px; }
-  .page-content.rows-2 .answer-lines .line { margin-bottom: 8px; }
-
-  .notification {
-    position: fixed;
-    top: 16px;
-    right: 16px;
-    padding: 12px 18px;
-    background: var(--success);
-    color: #fff;
-    border-radius: var(--radius);
-    box-shadow: var(--shadow-hover);
-    z-index: 1000;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    max-width: calc(100vw - 32px);
-    font-size: .92rem;
-    font-weight: 500;
-    opacity: 0;
-    transform: translateX(120%);
-    transition: opacity .25s, transform .25s;
-    pointer-events: none;
-  }
-  .notification.show { opacity: 1; transform: translateX(0); pointer-events: auto; }
-  .notification.success { background: var(--success); }
-  .notification.error   { background: var(--accent); }
-  .notification.info    { background: var(--secondary); }
-  .notification .undo-btn {
-    background: rgba(255,255,255,.2);
-    border: 1px solid rgba(255,255,255,.5);
-    color: #fff;
-    padding: 3px 10px;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: .82rem;
-    font-weight: 600;
-    margin-left: 6px;
-  }
-
-  .badge {
-    display: inline-block;
-    padding: 2px 10px;
-    border-radius: 20px;
-    font-size: .8rem;
-    font-weight: 600;
-    margin-left: 8px;
-    background: var(--secondary);
-    color: #fff;
-  }
-
-  .kbd-hint {
-    display: inline-block;
-    background: #fff;
-    border: 1px solid #cbd5e0;
-    border-bottom-width: 2px;
-    border-radius: 4px;
-    padding: 0 5px;
-    font-family: ui-monospace, monospace;
-    font-size: .75rem;
-    color: var(--dark);
-    margin: 0 2px;
-  }
-
-  @media (max-width: 700px) {
-    body { padding: 8px; }
-    .app-container { padding: 14px; border-radius: 8px; }
-    .app-header h1 { font-size: 1.4rem; }
-    .app-header p { font-size: .88rem; }
-    .card { padding: 14px; }
-    .card-header h2 { font-size: 1.05rem; }
-    .settings-grid { grid-template-columns: 1fr; }
-    .chessboards-grid { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; }
-    .chessboard-item img { height: 110px; }
-    .crop-options { gap: 12px; font-size: .85rem; }
-    .crop-actions .btn { flex: 1 1 48%; }
-    .progress-text { font-size: .75rem; }
-  }
-  @media (max-width: 380px) {
-    .app-header h1 { font-size: 1.2rem; }
-    .chessboards-grid { grid-template-columns: repeat(2, 1fr); }
-    .crop-actions .btn { flex: 1 1 100%; }
-  }
-</style>
+        #cropContainer {
+            position: relative;
+            border: 1px solid #ddd;
+            border-radius: var(--border-radius);
+            background: #fafafa;
+            margin: 15px 0;
+            width: 100%;
+            height: 460px;
+            overflow: auto;
+            -webkit-overflow-scrolling: touch;
+            touch-action: pan-x pan-y;
+        }
+        #imageToCrop {
+            display: block;
+            width: auto;
+            height: auto;
+            max-width: 100%;
+            max-height: none;
+        }
+        .crop-box {
+            position: absolute;
+            border: 3px solid var(--secondary);
+            background-color: rgba(52,152,219,0.15);
+            cursor: move;
+            box-shadow: 0 0 0 9999px rgba(0,0,0,0.35);
+            touch-action: none;
+            pointer-events: auto;
+            will-change: left, top, width, height;
+        }
+        .resize-handle {
+            position: absolute;
+            width: 22px;
+            height: 22px;
+            background-color: var(--secondary);
+            border: 2px solid white;
+            border-radius: 50%;
+            box-shadow: 0 0 4px rgba(0,0,0,0.5);
+            touch-action: none;
+            z-index: 2;
+        }
+        .resize-nw { top: -11px; left: -11px; cursor: nw-resize; }
+        .resize-ne { top: -11px; right: -11px; cursor: ne-resize; }
+        .resize-sw { bottom: -11px; left: -11px; cursor: sw-resize; }
+        .resize-se { bottom: -11px; right: -11px; cursor: se-resize; }
+        .image-counter {
+            text-align: center;
+            margin: 12px 0;
+            font-weight: 500;
+            padding: 6px;
+            background: var(--light);
+            border-radius: var(--border-radius);
+        }
+        .quality-control {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 12px 0;
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: var(--border-radius);
+            flex-wrap: wrap;
+        }
+        .quality-slider { flex: 1; min-width: 80px; }
+        .quality-value { min-width: 35px; text-align: center; font-weight: 500; }
+        .template-section, .auto-process-section {
+            margin: 15px 0;
+            padding: 15px;
+            border-radius: var(--border-radius);
+        }
+        .template-section { background: #f8f9fa; border-left: 4px solid var(--warning); }
+        .auto-process-section { background: #e8f5e9; border-left: 4px solid var(--success); }
+        .navigation-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 15px;
+        }
+        .navigation-buttons .btn { flex: 1 1 120px; min-width: 100px; }
+        .chessboards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .chessboard-item {
+            border: 1px solid #ddd;
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            background: white;
+            box-shadow: var(--box-shadow);
+        }
+        .chessboard-item img {
+            width: 100%;
+            height: 130px;
+            object-fit: contain;
+            background: #f8f9fa;
+            padding: 6px;
+        }
+        .chessboard-info { text-align: center; font-weight: 500; padding: 6px; background: var(--light); }
+        .chessboard-actions { display: flex; justify-content: center; gap: 5px; padding: 8px; }
+        .pdf-preview {
+            border: 1px solid #ddd;
+            margin-top: 15px;
+            padding: 15px;
+            background: white;
+            border-radius: var(--border-radius);
+            overflow-x: auto;
+        }
+        .page {
+            width: 100%;
+            min-height: 250px;
+            border: 1px solid #ddd;
+            margin-bottom: 20px;
+            padding: 12px;
+            background: white;
+            border-radius: 6px;
+            display: flex;
+            flex-direction: column;
+        }
+        .page-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: repeat(3, 1fr);
+            gap: 12px;
+            flex: 1;
+        }
+        .page-cell {
+            border: 1px solid #eee;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 5px;
+            background: #fafafa;
+            border-radius: 4px;
+            min-height: 120px;
+        }
+        .page-cell img { max-width: 60%; max-height: 60%; margin-bottom: 4px; }
+        .page-header { text-align: center; font-weight: bold; padding: 4px; background: #f0f0f0; border-radius: 4px; margin-bottom: 10px; }
+        .page-footer { display: flex; justify-content: space-between; padding: 4px; font-size: 0.8rem; background: #f0f0f0; border-radius: 4px; margin-top: 10px; }
+        .answer-lines { width: 100%; margin-top: 4px; }
+        .line { border-bottom: 1px solid #ccc; height: 8px; width: 100%; margin: 4px 0; }
+        .hidden { display: none; }
+        .notification {
+            position: fixed;
+            top: 15px;
+            right: 15px;
+            padding: 12px 18px;
+            background: var(--success);
+            color: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            z-index: 1000;
+            opacity: 0;
+            transform: translateX(100px);
+            transition: 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            max-width: 90%;
+            font-size: 0.95rem;
+        }
+        .notification.show { opacity: 1; transform: translateX(0); }
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            margin-left: 8px;
+        }
+        .badge-primary { background: var(--secondary); color: white; }
+        .badge-light { background: var(--light); color: var(--dark); }
+        .section-title { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 12px; }
+        @media (max-width: 768px) {
+            .app-container { padding: 12px; }
+            #cropContainer { height: 360px; }
+            .resize-handle { width: 26px; height: 26px; }
+            .resize-nw, .resize-ne { top: -13px; }
+            .resize-sw, .resize-se { bottom: -13px; }
+            .resize-nw, .resize-sw { left: -13px; }
+            .resize-ne, .resize-se { right: -13px; }
+            .btn { font-size: 0.95rem; padding: 12px 14px; }
+            .navigation-buttons .btn { flex: 1 1 100%; }
+        }
+        @media (max-width: 480px) {
+            .app-header h1 { font-size: 1.5rem; }
+            .card { padding: 12px; }
+            #cropContainer { height: 280px; }
+        }
+    </style>
 </head>
 <body>
-
 <div class="app-container">
-  <header class="app-header">
-    <h1><i class="fas fa-chess-board"></i> ChessExtract Pro</h1>
-    <p>Extrae tableros de ajedrez de capturas y genera ejercicios en PDF</p>
-  </header>
+    <header class="app-header">
+        <h1><i class="fas fa-chess-board"></i> ChessExtract Pro</h1>
+        <p>Extrae tableros de ajedrez – funciona en móvil y escritorio</p>
+    </header>
 
-  <div class="instructions">
-    <strong><i class="fas fa-info-circle"></i> Cómo usarlo:</strong>
-    <ol>
-      <li>Sube o arrastra una o varias imágenes con tableros.</li>
-      <li>Ajusta el recuadro sobre el tablero (arrastra y usa los tiradores).</li>
-      <li>Pulsa <em>Guardar tablero</em> (<span class="kbd-hint">Ctrl</span>+<span class="kbd-hint">Enter</span>). Repite para cada uno.</li>
-      <li>Elige 4, 6 u 8 tableros por página y descarga tu PDF.</li>
-    </ol>
-  </div>
-
-  <section class="card" id="uploadSection">
-    <div class="card-header">
-      <i class="fas fa-upload"></i><h2>Paso 1 — Subir imágenes</h2>
-    </div>
-    <div class="drop-zone" id="dropZone">
-      <i class="fas fa-cloud-upload-alt" aria-hidden="true"></i>
-      <p>Toca aquí o arrastra las imágenes</p>
-      <button type="button" class="btn btn-primary" id="selectFilesBtn">
-        <i class="fas fa-folder-open"></i> Seleccionar imágenes
-      </button>
-      <input type="file" id="imageInput" accept="image/*" multiple hidden />
-      <div class="file-info hidden" id="fileInfo">
-        <i class="fas fa-images"></i>
-        <span id="fileInfoText"></span>
-      </div>
-    </div>
-  </section>
-
-  <section class="card hidden" id="cropSection">
-    <div class="card-header">
-      <i class="fas fa-crop-alt"></i><h2>Paso 2 — Ajustar recuadro</h2>
+    <div class="instructions">
+        <strong><i class="fas fa-info-circle"></i> Instrucciones:</strong>
+        <ol>
+            <li>Sube una o más capturas de pantalla con tableros</li>
+            <li>Elige el orden en que se cargarán las imágenes</li>
+            <li>Ajusta el recuadro arrastrando o usando los tiradores</li>
+            <li>Guarda cada tablero y genera el PDF</li>
+        </ol>
     </div>
 
-    <div class="crop-toolbar">
-      <span class="image-counter" id="imageCounter">Imagen 1 de 1</span>
-      <div class="toolbar-actions">
-        <button id="prevImageBtn" class="btn btn-sm" title="Anterior" disabled>
-          <i class="fas fa-chevron-left"></i>
-        </button>
-        <button id="nextImageBtn" class="btn btn-sm" title="Siguiente" disabled>
-          <i class="fas fa-chevron-right"></i>
-        </button>
-      </div>
-    </div>
+    <section class="card">
+        <div class="card-header"><i class="fas fa-upload"></i> <h2>Paso 1: Subir imágenes</h2></div>
+        <input type="file" id="imageInput" class="form-control" accept="image/*" multiple />
 
-    <div id="cropContainer">
-      <img id="imageToCrop" alt="" />
-      <div class="crop-box hidden" id="cropBox" tabindex="0"
-           role="group" aria-label="Área de recorte del tablero">
-        <div class="resize-handle resize-nw"></div>
-        <div class="resize-handle resize-ne"></div>
-        <div class="resize-handle resize-sw"></div>
-        <div class="resize-handle resize-se"></div>
-      </div>
-    </div>
-
-    <div class="progress-bar hidden" id="progressBar" role="progressbar"
-         aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
-      <div class="progress-fill" id="progressFill"></div>
-      <span class="progress-text" id="progressText">0 %</span>
-    </div>
-
-    <div class="settings-grid">
-      <div class="quality-control">
-        <span class="form-label">Calidad JPG</span>
-        <div class="row">
-          <input type="range" id="qualitySlider" min="0.5" max="1.0" step="0.05" value="0.75" />
-          <span class="quality-value" id="qualityValue">0.75</span>
+        <!-- ============================================================
+             NUEVO: Selector de orden de las imágenes
+             ============================================================ -->
+        <div class="sort-control">
+            <label class="form-label" for="sortModeSelect">
+                <i class="fas fa-sort"></i> Ordenar imágenes por:
+            </label>
+            <select id="sortModeSelect" class="form-control">
+                <option value="name" selected>Nombre de archivo (A→Z, 1→100)</option>
+                <option value="date-asc">Fecha (más antigua primero)</option>
+                <option value="date-desc">Fecha (más reciente primero)</option>
+                <option value="selection">Orden de selección (como las elegiste)</option>
+            </select>
+            <p class="sort-hint">
+                <i class="fas fa-info-circle"></i>
+                <span>El orden se aplica al pulsar "Cargar". Puedes cambiarlo después y las imágenes se reordenarán. También puedes invertir el orden con el botón <em>"Invertir orden de trabajo"</em>.</span>
+            </p>
         </div>
-      </div>
-      <div class="quality-control">
-        <span class="form-label">Resolución PDF</span>
-        <div class="row">
-          <select id="resolutionSelect" class="form-control">
-            <option value="1">Alta</option>
-            <option value="0.85" selected>Media</option>
-            <option value="0.6">Baja</option>
-          </select>
+
+        <button id="loadImageBtn" class="btn" disabled><i class="fas fa-images"></i> Cargar</button>
+    </section>
+
+    <section class="card hidden" id="cropSection">
+        <div class="card-header"><i class="fas fa-crop-alt"></i> <h2>Paso 2: Seleccionar tablero</h2></div>
+        <div class="image-counter" id="imageCounter">Imagen 1 de 1</div>
+
+        <div class="quality-control">
+            <span class="form-label">Calidad PDF:</span>
+            <input type="range" id="qualitySlider" class="quality-slider" min="0.5" max="1.0" step="0.1" value="0.7" />
+            <span id="qualityValue" class="quality-value">0.7</span>
         </div>
-      </div>
-    </div>
+        <div class="quality-control">
+            <span class="form-label">Resolución:</span>
+            <select id="resolutionSelect" class="form-control">
+                <option value="1">Alta</option>
+                <option value="0.75" selected>Media</option>
+                <option value="0.5">Baja</option>
+            </select>
+        </div>
 
-    <div class="crop-options">
-      <label>
-        <input type="checkbox" id="squareLock" /> Bloquear cuadrado (1:1)
-      </label>
-      <label>
-        <input type="checkbox" id="showGrid" checked /> Mostrar cuadrícula
-      </label>
-      <label>
-        <input type="checkbox" id="dedupeCheck" /> Evitar tableros repetidos
-      </label>
-      <label id="dedupeThresholdWrap" style="display:none;">
-        Sensibilidad:
-        <select id="dedupeThreshold">
-          <option value="3">Estricta</option>
-          <option value="6" selected>Normal</option>
-          <option value="10">Permisiva</option>
-        </select>
-      </label>
-    </div>
+        <div id="cropContainer">
+            <img id="imageToCrop" />
+            <div class="crop-box hidden">
+                <div class="resize-handle resize-nw"></div>
+                <div class="resize-handle resize-ne"></div>
+                <div class="resize-handle resize-sw"></div>
+                <div class="resize-handle resize-se"></div>
+            </div>
+        </div>
 
-    <div class="crop-actions">
-      <button id="centerCropBtn" class="btn btn-outline btn-sm" title="Centrar recuadro cuadrado">
-        <i class="fas fa-crosshairs"></i> Centrar
-      </button>
-      <button id="fullCropBtn" class="btn btn-outline btn-sm" title="Recuadro cubre toda la imagen">
-        <i class="fas fa-expand"></i> Todo
-      </button>
-      <button id="toggleOverlayBtn" class="btn btn-outline btn-sm" title="Mostrar la imagen sin oscurecer el fondo">
-        <i class="fas fa-eye"></i> Ver completa
-      </button>
-      <button id="saveTemplateBtn" class="btn btn-outline btn-sm">
-        <i class="fas fa-save"></i> Guardar plantilla
-      </button>
-      <button id="applyTemplateBtn" class="btn btn-outline btn-sm" disabled>
-        <i class="fas fa-paste"></i> Aplicar
-      </button>
-      <button id="applyToAllBtn" class="btn btn-outline btn-sm" disabled>
-        <i class="fas fa-clone"></i> A todas
-      </button>
-      <button id="processAllBtn" class="btn btn-success btn-sm">
-        <i class="fas fa-bolt"></i> Procesar todas
-      </button>
-      <button id="reverseOrderBtn" class="btn btn-warning btn-sm">
-        <i class="fas fa-exchange-alt"></i> Invertir imágenes
-      </button>
-    </div>
+        <div class="template-section">
+            <h3><i class="fas fa-clone"></i> Plantilla</h3>
+            <button id="saveTemplateBtn" class="btn btn-outline btn-sm"><i class="fas fa-save"></i> Guardar plantilla</button>
+            <button id="applyTemplateBtn" class="btn btn-outline btn-sm" disabled><i class="fas fa-paste"></i> Aplicar</button>
+            <button id="applyToAllBtn" class="btn btn-outline btn-sm" disabled><i class="fas fa-clone"></i> Aplicar a todas</button>
+        </div>
 
-    <div class="crop-nav">
-      <button id="cropBtn" class="btn btn-success btn-lg btn-block" disabled>
-        <i class="fas fa-crop-alt"></i> Guardar tablero
-      </button>
-    </div>
-  </section>
+        <div class="auto-process-section">
+            <h3><i class="fas fa-cogs"></i> Procesar todas</h3>
+            <button id="processAllBtn" class="btn btn-success btn-sm"><i class="fas fa-bolt"></i> Procesar todas</button>
+        </div>
 
-  <section class="card hidden" id="previewSection">
-    <div class="section-title">
-      <div class="card-header">
-        <i class="fas fa-check-circle"></i>
-        <h2>Tableros guardados <span class="badge" id="chessboardsCount">0</span></h2>
-      </div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;">
-        <button id="reverseSavedBtn" class="btn btn-warning btn-sm">
-          <i class="fas fa-exchange-alt"></i> Invertir orden
-        </button>
-        <button id="clearAllBtn" class="btn btn-danger btn-sm">
-          <i class="fas fa-trash"></i> Eliminar todos
-        </button>
-      </div>
-    </div>
-    <div id="chessboards" class="chessboards-grid"></div>
-  </section>
+        <div class="navigation-buttons">
+            <button id="prevImageBtn" class="btn" disabled><i class="fas fa-chevron-left"></i> Anterior</button>
+            <button id="cropBtn" class="btn btn-success" disabled><i class="fas fa-crop-alt"></i> Recortar</button>
+            <button id="nextImageBtn" class="btn" disabled>Siguiente <i class="fas fa-chevron-right"></i></button>
+        </div>
+    </section>
 
-  <section class="card hidden" id="pdfSection">
-    <div class="card-header">
-      <i class="fas fa-file-pdf"></i><h2>Paso 3 — Vista previa y PDF</h2>
-    </div>
+    <section class="card hidden" id="previewSection">
+        <div class="section-title">
+            <div class="card-header"><i class="fas fa-check-circle"></i> <h2>Tableros <span class="badge badge-primary" id="chessboardsCount">0</span></h2></div>
+            <button id="clearAllBtn" class="btn btn-danger btn-sm"><i class="fas fa-trash"></i> Eliminar todos</button>
+        </div>
+        <div id="chessboards" class="chessboards-grid"></div>
+    </section>
 
-    <input type="text" id="headerInput" class="form-control" placeholder="Encabezado (opcional)" style="margin-bottom:10px" />
-    <input type="text" id="footerInput" class="form-control" placeholder="Pie de página (opcional)" style="margin-bottom:14px" />
-
-    <div class="quality-control" style="margin-bottom:14px">
-      <span class="form-label">Tableros por página</span>
-      <div class="row">
-        <select id="itemsPerPageSelect" class="form-control">
-          <option value="4">4 por página</option>
-          <option value="6" selected>6 por página</option>
-          <option value="8">8 por página</option>
-        </select>
-      </div>
-    </div>
-
-    <div id="pdfPreview" class="pdf-preview"></div>
-
-    <button id="generatePdfBtn" class="btn btn-success btn-lg btn-block" style="margin-top:16px">
-      <i class="fas fa-download"></i> Generar y descargar PDF
-    </button>
-  </section>
+    <section class="card hidden" id="pdfSection">
+        <div class="card-header"><i class="fas fa-file-pdf"></i> <h2>Vista previa PDF</h2></div>
+        <input type="text" id="headerInput" class="form-control" placeholder="Encabezado (opcional)" />
+        <input type="text" id="footerInput" class="form-control" placeholder="Pie de página (opcional)" />
+        <div id="pdfPreview" class="pdf-preview"></div>
+        <button id="generatePdfBtn" class="btn btn-success"><i class="fas fa-download"></i> Generar PDF</button>
+    </section>
 </div>
 
-<div class="notification" id="notification" role="status" aria-live="polite">
-  <i class="fas fa-check-circle"></i>
-  <span id="notificationText">Listo</span>
-</div>
+<div class="notification" id="notification"><i class="fas fa-check-circle"></i> <span id="notificationText">Guardado</span></div>
 
 <script>
-"use strict";
+// ============================================================
+// VERSIÓN CON ESCALADO CORREGIDO + ORDEN DE IMÁGENES
+// ============================================================
 
-// =========================================================
-// ESTADO
-// =========================================================
+const MAX_DISPLAY_WIDTH = 900;
+
 let originalImage = null;
 let cropBox = null;
-let isDragging = false;
-let isResizing = false;
+let isDragging = false, isResizing = false;
 let resizeDirection = null;
 let startX, startY;
 let cropBoxX = 0, cropBoxY = 0, cropBoxWidth = 0, cropBoxHeight = 0;
-let cropBoxInitialized = false;
-
-let savedChessboards = [];   // { blob, url, hash, w, h }
-let imageQuality = 0.75;
-let resolutionFactor = 0.85;
+let startCropBoxX = 0, startCropBoxY = 0, startCropBoxWidth = 0, startCropBoxHeight = 0;
+let savedChessboards = [];
+let imageQuality = 0.7;
+let resolutionFactor = 0.75;
 let editingIndex = -1;
-
 let imageFiles = [];
 let currentImageIndex = 0;
 let cropTemplate = null;
-let overlayHidden = false;
-let dedupeEnabled = false;
-let dedupeThresholdVal = 6;
-let _memoryWarned = false;
-const MEMORY_WARN_THRESHOLD = 30;
+let templateAppliedToAll = false;
 
-// =========================================================
+// NUEVO: archivos tal cual llegan del selector (sin ordenar)
+let rawImageFiles = [];
+
 // DOM
-// =========================================================
-const $ = (id) => document.getElementById(id);
-const imageInput       = $('imageInput');
-const selectFilesBtn   = $('selectFilesBtn');
-const dropZone         = $('dropZone');
-const fileInfo         = $('fileInfo');
-const fileInfoText     = $('fileInfoText');
-const cropSection      = $('cropSection');
-const previewSection   = $('previewSection');
-const pdfSection       = $('pdfSection');
-const imageCounter     = $('imageCounter');
-const imageToCrop      = $('imageToCrop');
-const cropContainer    = $('cropContainer');
-const cropBtn          = $('cropBtn');
-const prevImageBtn     = $('prevImageBtn');
-const nextImageBtn     = $('nextImageBtn');
-const qualitySlider    = $('qualitySlider');
-const qualityValue     = $('qualityValue');
-const resolutionSelect = $('resolutionSelect');
-const squareLock       = $('squareLock');
-const showGrid         = $('showGrid');
-const dedupeCheck      = $('dedupeCheck');
-const dedupeThreshold  = $('dedupeThreshold');
-const dedupeThresholdWrap = $('dedupeThresholdWrap');
-const centerCropBtn    = $('centerCropBtn');
-const fullCropBtn      = $('fullCropBtn');
-const toggleOverlayBtn = $('toggleOverlayBtn');
-const saveTemplateBtn  = $('saveTemplateBtn');
-const applyTemplateBtn = $('applyTemplateBtn');
-const applyToAllBtn    = $('applyToAllBtn');
-const processAllBtn    = $('processAllBtn');
-const reverseOrderBtn  = $('reverseOrderBtn');
-const reverseSavedBtn  = $('reverseSavedBtn');
-const clearAllBtn      = $('clearAllBtn');
-const chessboards      = $('chessboards');
-const chessboardsCount = $('chessboardsCount');
-const headerInput      = $('headerInput');
-const footerInput      = $('footerInput');
-const itemsPerPageSelect = $('itemsPerPageSelect');
-const pdfPreview       = $('pdfPreview');
-const generatePdfBtn   = $('generatePdfBtn');
-const notification     = $('notification');
-const notificationText = $('notificationText');
-const progressBar      = $('progressBar');
-const progressFill     = $('progressFill');
-const progressText     = $('progressText');
+const imageInput = document.getElementById('imageInput');
+const loadImageBtn = document.getElementById('loadImageBtn');
+const cropSection = document.getElementById('cropSection');
+const imageToCrop = document.getElementById('imageToCrop');
+const cropContainer = document.getElementById('cropContainer');
+const cropBtn = document.getElementById('cropBtn');
+const prevImageBtn = document.getElementById('prevImageBtn');
+const nextImageBtn = document.getElementById('nextImageBtn');
+const imageCounter = document.getElementById('imageCounter');
+const previewSection = document.getElementById('previewSection');
+const chessboardsContainer = document.getElementById('chessboards');
+const chessboardsCount = document.getElementById('chessboardsCount');
+const pdfSection = document.getElementById('pdfSection');
+const pdfPreview = document.getElementById('pdfPreview');
+const generatePdfBtn = document.getElementById('generatePdfBtn');
+const qualitySlider = document.getElementById('qualitySlider');
+const qualityValue = document.getElementById('qualityValue');
+const resolutionSelect = document.getElementById('resolutionSelect');
+const notification = document.getElementById('notification');
+const notificationText = document.getElementById('notificationText');
+const saveTemplateBtn = document.getElementById('saveTemplateBtn');
+const applyTemplateBtn = document.getElementById('applyTemplateBtn');
+const applyToAllBtn = document.getElementById('applyToAllBtn');
+const headerInput = document.getElementById('headerInput');
+const footerInput = document.getElementById('footerInput');
+const processAllBtn = document.getElementById('processAllBtn');
+const clearAllBtn = document.getElementById('clearAllBtn');
+// NUEVO
+const sortModeSelect = document.getElementById('sortModeSelect');
 
-// =========================================================
-// UTILIDADES
-// =========================================================
-function notify(msg, type = 'success', opts = {}) {
-  notification.classList.remove('success', 'error', 'info');
-  notification.classList.add(type);
-  const icon = notification.querySelector('i');
-  icon.className = type === 'error' ? 'fas fa-exclamation-circle'
-                 : type === 'info'  ? 'fas fa-info-circle'
-                 : 'fas fa-check-circle';
-  notificationText.textContent = msg;
-  let undoBtn = notification.querySelector('.undo-btn');
-  if (undoBtn) undoBtn.remove();
-  if (opts.onUndo) {
-    undoBtn = document.createElement('button');
-    undoBtn.className = 'undo-btn';
-    undoBtn.textContent = 'Deshacer';
-    undoBtn.addEventListener('click', () => {
-      opts.onUndo();
-      notification.classList.remove('show');
-    });
-    notification.appendChild(undoBtn);
-  }
-  notification.classList.add('show');
-  clearTimeout(notify._t);
-  notify._t = setTimeout(() => notification.classList.remove('show'), opts.duration || 3000);
-}
+// --------------------------------------------------------------
+// NUEVO: APLICAR ORDEN SEGÚN EL MODO SELECCIONADO
+// --------------------------------------------------------------
+function applySortOrder() {
+    if (rawImageFiles.length === 0) return;
 
-function escapeHtml(str) {
-  return String(str).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-}
+    const mode = sortModeSelect.value;
+    let arr = rawImageFiles.slice();
 
-function fileToDataURL(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = (e) => resolve(e.target.result);
-    reader.onerror = () => reject(new Error('Error leyendo archivo: ' + file.name));
-    reader.readAsDataURL(file);
-  });
-}
+    switch (mode) {
+        case 'name':
+            arr.sort((a, b) =>
+                a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' })
+            );
+            break;
 
-function blobToDataURL(blob) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = (e) => resolve(e.target.result);
-    reader.onerror = () => reject(new Error('Error convirtiendo imagen'));
-    reader.readAsDataURL(blob);
-  });
-}
+        case 'date-asc':
+            arr.sort((a, b) => (a.lastModified || 0) - (b.lastModified || 0));
+            break;
 
-function canvasToBlob(canvas, quality) {
-  return new Promise((resolve, reject) => {
-    canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('No se pudo generar la imagen')),
-      'image/jpeg', quality);
-  });
-}
+        case 'date-desc':
+            arr.sort((a, b) => (b.lastModified || 0) - (a.lastModified || 0));
+            break;
 
-function loadImageFromSrc(src) {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.onload = () => resolve(img);
-    img.onerror = () => reject(new Error('No se pudo decodificar la imagen'));
-    img.src = src;
-  });
-}
-
-function setImageSrc(el, src) {
-  return new Promise((resolve, reject) => {
-    const onLoad = () => { cleanup(); resolve(); };
-    const onErr  = () => { cleanup(); reject(new Error('Error al mostrar la imagen')); };
-    const cleanup = () => {
-      el.removeEventListener('load', onLoad);
-      el.removeEventListener('error', onErr);
-    };
-    el.addEventListener('load', onLoad, { once: true });
-    el.addEventListener('error', onErr,  { once: true });
-    el.src = src;
-  });
-}
-
-function nextFrame() { return new Promise(r => requestAnimationFrame(r)); }
-
-function isHeicFile(file) {
-  const name = (file.name || '').toLowerCase();
-  const type = (file.type || '').toLowerCase();
-  return /\.(heic|heif)$/.test(name) || type === 'image/heic' || type === 'image/heif';
-}
-
-function isMobileViewport() { return window.matchMedia('(max-width: 700px)').matches; }
-
-// =========================================================
-// PERSISTENCIA
-// =========================================================
-function saveSettings() {
-  try {
-    localStorage.setItem('chessExtract.settings', JSON.stringify({
-      quality: imageQuality,
-      resolution: resolutionFactor,
-      squareLock: squareLock.checked,
-      showGrid: showGrid.checked,
-      dedupe: dedupeEnabled,
-      dedupeThreshold: dedupeThresholdVal,
-      overlayHidden,
-      headerText: headerInput.value,
-      footerText: footerInput.value,
-      itemsPerPage: parseInt(itemsPerPageSelect.value, 10),
-      cropTemplate
-    }));
-  } catch (e) {}
-}
-
-let _saveTimer = null;
-function saveSettingsDebounced() { clearTimeout(_saveTimer); _saveTimer = setTimeout(saveSettings, 250); }
-
-function loadSettings() {
-  try {
-    const raw = localStorage.getItem('chessExtract.settings');
-    if (!raw) return;
-    const s = JSON.parse(raw);
-    if (typeof s.quality === 'number') imageQuality = s.quality;
-    if (typeof s.resolution === 'number') resolutionFactor = s.resolution;
-    if (typeof s.squareLock === 'boolean') squareLock.checked = s.squareLock;
-    if (typeof s.showGrid === 'boolean') showGrid.checked = s.showGrid;
-    if (typeof s.dedupe === 'boolean') dedupeEnabled = s.dedupe;
-    if (typeof s.dedupeThreshold === 'number') dedupeThresholdVal = s.dedupeThreshold;
-    if (typeof s.overlayHidden === 'boolean') overlayHidden = s.overlayHidden;
-    if (typeof s.headerText === 'string') headerInput.value = s.headerText;
-    if (typeof s.footerText === 'string') footerInput.value = s.footerText;
-    if (typeof s.itemsPerPage === 'number' && [4, 6, 8].includes(s.itemsPerPage))
-      itemsPerPageSelect.value = String(s.itemsPerPage);
-    if (s.cropTemplate) cropTemplate = s.cropTemplate;
-  } catch (e) {}
-}
-
-// =========================================================
-// CARGA DE ARCHIVOS
-// =========================================================
-function handleFiles(files) {
-  const all = Array.from(files);
-  const valid = all.filter(f => f.type.startsWith('image/') || isHeicFile(f));
-
-  if (valid.length === 0) {
-    notify('No se detectaron imágenes válidas', 'error');
-    return;
-  }
-
-  const heicCount = valid.filter(isHeicFile).length;
-  if (heicCount > 0) {
-    notify(`${heicCount} imagen(es) HEIC. Si no se muestran, conviértelas a JPG.`, 'info', { duration: 6000 });
-  }
-
-  valid.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }));
-
-  imageFiles = valid;
-  currentImageIndex = 0;
-
-  fileInfo.classList.remove('hidden');
-  fileInfoText.textContent = `${valid.length} imagen${valid.length === 1 ? '' : 'es'} cargada${valid.length === 1 ? '' : 's'}`;
-
-  cropSection.classList.remove('hidden');
-  loadCurrentImage();
-  cropSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-}
-
-selectFilesBtn.addEventListener('click', (e) => { e.stopPropagation(); imageInput.click(); });
-dropZone.addEventListener('click', () => imageInput.click());
-imageInput.addEventListener('change', function () {
-  if (this.files && this.files.length) handleFiles(this.files);
-  this.value = '';
-});
-
-['dragenter', 'dragover'].forEach(ev => {
-  dropZone.addEventListener(ev, (e) => { e.preventDefault(); e.stopPropagation(); dropZone.classList.add('dragover'); });
-});
-['dragleave', 'drop'].forEach(ev => {
-  dropZone.addEventListener(ev, (e) => { e.preventDefault(); e.stopPropagation(); dropZone.classList.remove('dragover'); });
-});
-dropZone.addEventListener('drop', (e) => {
-  const files = e.dataTransfer && e.dataTransfer.files;
-  if (files && files.length) handleFiles(files);
-});
-
-// =========================================================
-// CARGA DE IMAGEN
-// =========================================================
-async function loadCurrentImage() {
-  if (imageFiles.length === 0) return;
-  editingIndex = -1;
-
-  const file = imageFiles[currentImageIndex];
-
-  try {
-    const dataUrl = await fileToDataURL(file);
-    let img;
-    try {
-      img = await loadImageFromSrc(dataUrl);
-    } catch (err) {
-      if (isHeicFile(file)) throw new Error('HEIC no soportado en este navegador. Convierte a JPG.');
-      throw err;
+        case 'selection':
+        default:
+            // Sin ordenar: mantener el orden original del selector
+            break;
     }
-    originalImage = img;
 
-    const displayUrl = rescaleForDisplay(img);
-    await setImageSrc(imageToCrop, displayUrl);
-    await nextFrame();
-    await nextFrame();
-    initCropBox();
-  } catch (err) {
-    console.error(err);
-    notify(err.message || 'No se pudo cargar la imagen', 'error', { duration: 5000 });
-  }
-
-  imageCounter.textContent = `Imagen ${currentImageIndex + 1} de ${imageFiles.length}`;
-  prevImageBtn.disabled = currentImageIndex === 0;
-  nextImageBtn.disabled = currentImageIndex === imageFiles.length - 1;
+    imageFiles = arr;
 }
 
-function rescaleForDisplay(img) {
-  const maxDim = Math.min(1600, Math.max(img.width, img.height));
-  const scale = maxDim / Math.max(img.width, img.height);
-  if (scale >= 1) return img.src;
-  const w = Math.round(img.width * scale);
-  const h = Math.round(img.height * scale);
-  const canvas = document.createElement('canvas');
-  canvas.width = w; canvas.height = h;
-  const ctx = canvas.getContext('2d');
-  ctx.imageSmoothingEnabled = true;
-  ctx.imageSmoothingQuality = 'high';
-  ctx.drawImage(img, 0, 0, w, h);
-  return canvas.toDataURL('image/jpeg', 0.92);
+// --------------------------------------------------------------
+// FUNCIÓN PARA OBTENER COORDENADAS (ratón o táctil)
+// --------------------------------------------------------------
+function getPointerPosition(e) {
+    if (e.touches) {
+        return { clientX: e.touches[0].clientX, clientY: e.touches[0].clientY };
+    } else {
+        return { clientX: e.clientX, clientY: e.clientY };
+    }
 }
 
-// =========================================================
-// INIT CROP BOX — exacto al del proyecto de referencia
-// =========================================================
+// --------------------------------------------------------------
+// FACTOR DE ESCALA MEJORADO
+// --------------------------------------------------------------
+function getScaleFactors() {
+    if (!imageToCrop || !originalImage) return { scaleX: 1, scaleY: 1 };
+    const rect = imageToCrop.getBoundingClientRect();
+    const displayW = rect.width;
+    const displayH = rect.height;
+    const origW = originalImage.width;
+    const origH = originalImage.height;
+    if (displayW === 0 || displayH === 0) return { scaleX: 1, scaleY: 1 };
+    return {
+        scaleX: origW / displayW,
+        scaleY: origH / displayH
+    };
+}
+
+// --------------------------------------------------------------
+// ACTUALIZAR RECUADRO
+// --------------------------------------------------------------
+function updateCropBox() {
+    if (!cropBox) return;
+    cropBox.style.left = cropBoxX + 'px';
+    cropBox.style.top = cropBoxY + 'px';
+    cropBox.style.width = cropBoxWidth + 'px';
+    cropBox.style.height = cropBoxHeight + 'px';
+}
+
+// --------------------------------------------------------------
+// INICIALIZAR RECUADRO
+// --------------------------------------------------------------
 function initCropBox() {
-  cropBox = document.querySelector('.crop-box');
-  if (!cropBox) return;
+    cropBox = document.querySelector('.crop-box');
+    if (!cropBox) return;
 
-  // Registrar listeners UNA SOLA VEZ
-  if (!cropBoxInitialized) {
+    const displayW = imageToCrop.naturalWidth || imageToCrop.width;
+    const displayH = imageToCrop.naturalHeight || imageToCrop.height;
+    if (displayW === 0 || displayH === 0) {
+        setTimeout(initCropBox, 100);
+        return;
+    }
+
+    if (cropTemplate && templateAppliedToAll) {
+        applyCropTemplate();
+    } else {
+        const size = 0.25;
+        cropBoxX = (displayW - displayW * size) / 2;
+        cropBoxY = (displayH - displayH * size) / 2;
+        cropBoxWidth = displayW * size;
+        cropBoxHeight = displayH * size;
+        updateCropBox();
+    }
+
     const handles = cropBox.querySelectorAll('.resize-handle');
     handles.forEach(handle => {
-      handle.addEventListener('mousedown', startResize);
+        handle.removeEventListener('mousedown', startResize);
+        handle.removeEventListener('touchstart', startResizeTouch);
+        handle.addEventListener('mousedown', startResize);
+        handle.addEventListener('touchstart', startResizeTouch, { passive: false });
     });
+    cropBox.removeEventListener('mousedown', startDrag);
+    cropBox.removeEventListener('touchstart', startDragTouch);
     cropBox.addEventListener('mousedown', startDrag);
+    cropBox.addEventListener('touchstart', startDragTouch, { passive: false });
+
+    document.removeEventListener('mousemove', handleMove);
+    document.removeEventListener('touchmove', handleMoveTouch);
+    document.removeEventListener('mouseup', stopInteraction);
+    document.removeEventListener('touchend', stopInteractionTouch);
     document.addEventListener('mousemove', handleMove);
+    document.addEventListener('touchmove', handleMoveTouch, { passive: false });
     document.addEventListener('mouseup', stopInteraction);
-    cropBoxInitialized = true;
-  }
+    document.addEventListener('touchend', stopInteractionTouch, { passive: false });
 
-  const imgWidth = imageToCrop.width;
-  const imgHeight = imageToCrop.height;
-
-  if (imgWidth === 0 || imgHeight === 0) return;
-
-  // Auto "Ver completa" primera vez en móvil
-  if (isMobileViewport() && !window._mobileOverlayInited) {
-    window._mobileOverlayInited = true;
-    if (!overlayHidden) overlayHidden = true;
-  }
-
-  if (cropTemplate) {
-    cropBoxX = cropTemplate.x * imgWidth;
-    cropBoxY = cropTemplate.y * imgHeight;
-    cropBoxWidth = cropTemplate.w * imgWidth;
-    cropBoxHeight = cropTemplate.h * imgHeight;
-  } else {
-    cropBoxX = imgWidth * 0.25;
-    cropBoxY = imgHeight * 0.25;
-    cropBoxWidth = imgWidth * 0.5;
-    cropBoxHeight = imgHeight * 0.5;
-  }
-
-  updateCropBox();
-  cropBox.classList.remove('hidden');
-  cropBox.classList.toggle('no-overlay', overlayHidden);
-  cropBox.classList.toggle('show-grid', showGrid.checked);
-  updateOverlayBtn();
-  cropBtn.disabled = false;
-  updateTemplateButtons();
+    cropBox.classList.remove('hidden');
+    cropBtn.disabled = false;
+    updateTemplateButtons();
 }
 
-function updateCropBox() {
-  if (!cropBox) return;
-  cropBox.style.left = `${cropBoxX}px`;
-  cropBox.style.top = `${cropBoxY}px`;
-  cropBox.style.width = `${cropBoxWidth}px`;
-  cropBox.style.height = `${cropBoxHeight}px`;
-}
-
-// =========================================================
-// DRAG & RESIZE — idéntico al del proyecto de referencia
-// =========================================================
+// --------------------------------------------------------------
+// MANEJADORES
+// --------------------------------------------------------------
 function startDrag(e) {
-  if (e.target.classList.contains('resize-handle')) return;
-  isDragging = true;
-  startX = e.clientX;
-  startY = e.clientY;
-  cropBoxX = parseInt(cropBox.style.left) || 0;
-  cropBoxY = parseInt(cropBox.style.top) || 0;
-  cropBoxWidth = parseInt(cropBox.style.width) || 0;
-  cropBoxHeight = parseInt(cropBox.style.height) || 0;
+    if (e.target.classList.contains('resize-handle')) return;
+    e.preventDefault();
+    const pos = getPointerPosition(e);
+    isDragging = true;
+    startX = pos.clientX;
+    startY = pos.clientY;
+    startCropBoxX = cropBoxX;
+    startCropBoxY = cropBoxY;
+}
+
+function startDragTouch(e) {
+    if (e.target.classList.contains('resize-handle')) return;
+    e.preventDefault();
+    const pos = getPointerPosition(e);
+    isDragging = true;
+    startX = pos.clientX;
+    startY = pos.clientY;
+    startCropBoxX = cropBoxX;
+    startCropBoxY = cropBoxY;
 }
 
 function startResize(e) {
-  isResizing = true;
-  startX = e.clientX;
-  startY = e.clientY;
-  cropBoxX = parseInt(cropBox.style.left) || 0;
-  cropBoxY = parseInt(cropBox.style.top) || 0;
-  cropBoxWidth = parseInt(cropBox.style.width) || 0;
-  cropBoxHeight = parseInt(cropBox.style.height) || 0;
+    if (!e.target.classList.contains('resize-handle')) return;
+    e.preventDefault();
+    const pos = getPointerPosition(e);
+    isResizing = true;
+    startX = pos.clientX;
+    startY = pos.clientY;
+    startCropBoxX = cropBoxX;
+    startCropBoxY = cropBoxY;
+    startCropBoxWidth = cropBoxWidth;
+    startCropBoxHeight = cropBoxHeight;
+    resizeDirection = e.target.classList[1];
+}
 
-  // Detectar dirección por nombre de clase
-  if (e.target.classList.contains('resize-nw')) resizeDirection = 'resize-nw';
-  else if (e.target.classList.contains('resize-ne')) resizeDirection = 'resize-ne';
-  else if (e.target.classList.contains('resize-sw')) resizeDirection = 'resize-sw';
-  else if (e.target.classList.contains('resize-se')) resizeDirection = 'resize-se';
+function startResizeTouch(e) {
+    if (!e.target.classList.contains('resize-handle')) return;
+    e.preventDefault();
+    const pos = getPointerPosition(e);
+    isResizing = true;
+    startX = pos.clientX;
+    startY = pos.clientY;
+    startCropBoxX = cropBoxX;
+    startCropBoxY = cropBoxY;
+    startCropBoxWidth = cropBoxWidth;
+    startCropBoxHeight = cropBoxHeight;
+    resizeDirection = e.target.classList[1];
 }
 
 function handleMove(e) {
-  if (!isDragging && !isResizing) return;
+    if (!isDragging && !isResizing) return;
+    e.preventDefault();
+    const pos = getPointerPosition(e);
+    processMove(pos.clientX, pos.clientY);
+}
 
-  const dx = e.clientX - startX;
-  const dy = e.clientY - startY;
+function handleMoveTouch(e) {
+    if (!isDragging && !isResizing) return;
+    e.preventDefault();
+    const pos = getPointerPosition(e);
+    processMove(pos.clientX, pos.clientY);
+}
 
-  if (isDragging) {
-    const newX = cropBoxX + dx;
-    const newY = cropBoxY + dy;
-    if (newX >= 0 && newX + cropBoxWidth <= imageToCrop.width) cropBoxX = newX;
-    if (newY >= 0 && newY + cropBoxHeight <= imageToCrop.height) cropBoxY = newY;
-  } else if (isResizing) {
-    switch (resizeDirection) {
-      case 'resize-nw':
-        if (cropBoxX + dx >= 0 && cropBoxWidth - dx >= 50) {
-          cropBoxX += dx; cropBoxWidth -= dx;
+function processMove(clientX, clientY) {
+    const dx = clientX - startX;
+    const dy = clientY - startY;
+    const displayW = imageToCrop.naturalWidth || imageToCrop.width;
+    const displayH = imageToCrop.naturalHeight || imageToCrop.height;
+
+    if (isDragging) {
+        let newX = startCropBoxX + dx;
+        let newY = startCropBoxY + dy;
+        newX = Math.max(0, Math.min(newX, displayW - cropBoxWidth));
+        newY = Math.max(0, Math.min(newY, displayH - cropBoxHeight));
+        cropBoxX = newX;
+        cropBoxY = newY;
+    } else if (isResizing) {
+        let newW = startCropBoxWidth, newH = startCropBoxHeight;
+        let newX = startCropBoxX, newY = startCropBoxY;
+        switch (resizeDirection) {
+            case 'resize-nw':
+                newW = startCropBoxWidth - dx;
+                newH = startCropBoxHeight - dy;
+                newX = startCropBoxX + dx;
+                newY = startCropBoxY + dy;
+                break;
+            case 'resize-ne':
+                newW = startCropBoxWidth + dx;
+                newH = startCropBoxHeight - dy;
+                newY = startCropBoxY + dy;
+                break;
+            case 'resize-sw':
+                newW = startCropBoxWidth - dx;
+                newH = startCropBoxHeight + dy;
+                newX = startCropBoxX + dx;
+                break;
+            case 'resize-se':
+                newW = startCropBoxWidth + dx;
+                newH = startCropBoxHeight + dy;
+                break;
         }
-        if (cropBoxY + dy >= 0 && cropBoxHeight - dy >= 50) {
-          cropBoxY += dy; cropBoxHeight -= dy;
+        if (newW >= 30 && newX >= 0 && newX + newW <= displayW) {
+            cropBoxWidth = newW;
+            cropBoxX = newX;
         }
-        break;
-      case 'resize-ne':
-        if (cropBoxWidth + dx >= 50) cropBoxWidth += dx;
-        if (cropBoxY + dy >= 0 && cropBoxHeight - dy >= 50) {
-          cropBoxY += dy; cropBoxHeight -= dy;
+        if (newH >= 30 && newY >= 0 && newY + newH <= displayH) {
+            cropBoxHeight = newH;
+            cropBoxY = newY;
         }
-        break;
-      case 'resize-sw':
-        if (cropBoxX + dx >= 0 && cropBoxWidth - dx >= 50) {
-          cropBoxX += dx; cropBoxWidth -= dx;
-        }
-        if (cropBoxHeight + dy >= 50) cropBoxHeight += dy;
-        break;
-      case 'resize-se':
-        if (cropBoxWidth + dx >= 50) cropBoxWidth += dx;
-        if (cropBoxHeight + dy >= 50) cropBoxHeight += dy;
-        break;
     }
-
-    // Bloquear cuadrado
-    if (squareLock.checked) {
-      const side = Math.min(cropBoxWidth, cropBoxHeight);
-      if (resizeDirection === 'resize-nw') {
-        cropBoxX = cropBoxX + cropBoxWidth - side;
-        cropBoxY = cropBoxY + cropBoxHeight - side;
-      } else if (resizeDirection === 'resize-ne') {
-        cropBoxY = cropBoxY + cropBoxHeight - side;
-      } else if (resizeDirection === 'resize-sw') {
-        cropBoxX = cropBoxX + cropBoxWidth - side;
-      }
-      cropBoxWidth = side;
-      cropBoxHeight = side;
-    }
-  }
-
-  updateCropBox();
-  startX = e.clientX;
-  startY = e.clientY;
-}
-
-function stopInteraction() {
-  isDragging = false;
-  isResizing = false;
-  resizeDirection = null;
-}
-
-// =========================================================
-// HASH + DEDUPE
-// =========================================================
-function computeHashFromCanvas(srcCanvas) {
-  const w = 9, h = 8;
-  const c = document.createElement('canvas');
-  c.width = w; c.height = h;
-  const cx = c.getContext('2d', { willReadFrequently: true });
-  cx.drawImage(srcCanvas, 0, 0, w, h);
-  const data = cx.getImageData(0, 0, w, h).data;
-  let bits = '';
-  for (let y = 0; y < h; y++) {
-    for (let x = 0; x < w - 1; x++) {
-      const i = (y * w + x) * 4;
-      const j = (y * w + x + 1) * 4;
-      const l1 = 0.299 * data[i] + 0.587 * data[i+1] + 0.114 * data[i+2];
-      const l2 = 0.299 * data[j] + 0.587 * data[j+1] + 0.114 * data[j+2];
-      bits += l1 > l2 ? '1' : '0';
-    }
-  }
-  let hex = '';
-  for (let i = 0; i < 64; i += 4) hex += parseInt(bits.substr(i, 4), 2).toString(16);
-  return hex;
-}
-
-function hammingDistance(a, b) {
-  if (!a || !b || a.length !== b.length) return Infinity;
-  let d = 0;
-  for (let i = 0; i < a.length; i++) {
-    let x = parseInt(a[i], 16) ^ parseInt(b[i], 16);
-    while (x) { d += x & 1; x >>= 1; }
-  }
-  return d;
-}
-
-function findDuplicateIndex(hash, exclude = -1) {
-  if (!hash) return -1;
-  for (let i = 0; i < savedChessboards.length; i++) {
-    if (i === exclude) continue;
-    const h = savedChessboards[i].hash;
-    if (!h) continue;
-    if (hammingDistance(hash, h) <= dedupeThresholdVal) return i;
-  }
-  return -1;
-}
-
-// =========================================================
-// RECORTAR
-// =========================================================
-async function cropImage() {
-  if (!originalImage || !cropBox) return null;
-
-  const canvasWidth = Math.max(1, Math.round(cropBoxWidth * resolutionFactor));
-  const canvasHeight = Math.max(1, Math.round(cropBoxHeight * resolutionFactor));
-
-  const canvas = document.createElement('canvas');
-  canvas.width = canvasWidth;
-  canvas.height = canvasHeight;
-  const ctx = canvas.getContext('2d');
-
-  const scaleX = originalImage.naturalWidth / imageToCrop.width;
-  const scaleY = originalImage.naturalHeight / imageToCrop.height;
-
-  ctx.imageSmoothingEnabled = true;
-  ctx.imageSmoothingQuality = 'high';
-  ctx.drawImage(
-    originalImage,
-    cropBoxX * scaleX, cropBoxY * scaleY,
-    cropBoxWidth * scaleX, cropBoxHeight * scaleY,
-    0, 0, canvasWidth, canvasHeight
-  );
-
-  const hash = computeHashFromCanvas(canvas);
-  const blob = await canvasToBlob(canvas, imageQuality);
-  const url = URL.createObjectURL(blob);
-  return { blob, url, hash, w: canvasWidth, h: canvasHeight };
-}
-
-// =========================================================
-// GUARDAR / EDITAR / ELIMINAR
-// =========================================================
-function addBoard(board) {
-  if (editingIndex >= 0) {
-    const old = savedChessboards[editingIndex];
-    if (old && old.url) URL.revokeObjectURL(old.url);
-    savedChessboards[editingIndex] = board;
-    editingIndex = -1;
-    notify('Tablero actualizado');
-    updateChessboardsDisplay();
-    return true;
-  }
-
-  if (dedupeEnabled && board.hash) {
-    const dup = findDuplicateIndex(board.hash);
-    if (dup >= 0) {
-      URL.revokeObjectURL(board.url);
-      notify(`Tablero repetido (similar al #${dup + 1}) — omitido`, 'info');
-      return false;
-    }
-  }
-
-  savedChessboards.push(board);
-  notify('Tablero guardado');
-
-  if (!_memoryWarned && savedChessboards.length === MEMORY_WARN_THRESHOLD) {
-    _memoryWarned = true;
-    notify(`Tienes ${savedChessboards.length} tableros. Si va lenta, genera por partes o baja la resolución.`, 'info', { duration: 7000 });
-  }
-
-  updateChessboardsDisplay();
-  return true;
-}
-
-async function startEdit(index) {
-  editingIndex = index;
-  const board = savedChessboards[index];
-  if (!board) return;
-
-  try {
-    const img = await loadImageFromSrc(board.url);
-    originalImage = img;
-    const displayUrl = rescaleForDisplay(img);
-    await setImageSrc(imageToCrop, displayUrl);
-    await nextFrame();
-    await nextFrame();
-
-    // Cubrir toda la imagen al editar
-    cropBoxX = 0;
-    cropBoxY = 0;
-    cropBoxWidth = imageToCrop.width;
-    cropBoxHeight = imageToCrop.height;
     updateCropBox();
-    cropBox.classList.remove('hidden');
-    cropBtn.disabled = false;
-
-    cropSection.classList.remove('hidden');
-    cropSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    notify('Editando tablero ' + (index + 1), 'info');
-  } catch (err) {
-    console.error(err);
-    notify('No se pudo iniciar la edición', 'error');
-    editingIndex = -1;
-  }
+    startX = clientX;
+    startY = clientY;
+    startCropBoxX = cropBoxX;
+    startCropBoxY = cropBoxY;
+    startCropBoxWidth = cropBoxWidth;
+    startCropBoxHeight = cropBoxHeight;
 }
 
-function removeBoardAt(idx) {
-  const b = savedChessboards[idx];
-  if (b && b.url) URL.revokeObjectURL(b.url);
-  savedChessboards.splice(idx, 1);
-  if (editingIndex === idx) editingIndex = -1;
-  else if (editingIndex > idx) editingIndex--;
+function stopInteraction() { isDragging = false; isResizing = false; }
+function stopInteractionTouch() { isDragging = false; isResizing = false; }
+
+// --------------------------------------------------------------
+// RECORTAR
+// --------------------------------------------------------------
+function cropImage() {
+    if (!originalImage || !cropBox) return null;
+    const { scaleX, scaleY } = getScaleFactors();
+    const origX = cropBoxX * scaleX;
+    const origY = cropBoxY * scaleY;
+    const origW = cropBoxWidth * scaleX;
+    const origH = cropBoxHeight * scaleY;
+
+    const canvas = document.createElement('canvas');
+    const outW = Math.round(origW * resolutionFactor);
+    const outH = Math.round(origH * resolutionFactor);
+    canvas.width = outW;
+    canvas.height = outH;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(originalImage, origX, origY, origW, origH, 0, 0, outW, outH);
+    return canvas.toDataURL('image/jpeg', imageQuality);
+}
+
+// --------------------------------------------------------------
+// RESTO DE FUNCIONES
+// --------------------------------------------------------------
+function showNotification(msg) {
+    notificationText.textContent = msg;
+    notification.classList.add('show');
+    setTimeout(() => notification.classList.remove('show'), 3000);
+}
+
+function addChessboard(dataUrl) {
+    if (editingIndex >= 0) {
+        savedChessboards[editingIndex] = dataUrl;
+        showNotification('Tablero actualizado');
+        editingIndex = -1;
+    } else {
+        savedChessboards.push(dataUrl);
+        showNotification('Tablero guardado');
+    }
+    updateChessboardsDisplay();
+    if (currentImageIndex < imageFiles.length - 1) {
+        nextImage();
+    } else {
+        resetCropSection();
+    }
+}
+
+function resetCropSection() {
+    cropSection.classList.add('hidden');
+    imageInput.value = '';
+    loadImageBtn.disabled = true;
+    imageFiles = [];
+    rawImageFiles = [];
+    currentImageIndex = 0;
+    templateAppliedToAll = false;
+}
+
+function startEdit(index) {
+    editingIndex = index;
+    originalImage = new Image();
+    originalImage.onload = function() {
+        const canvas = scaleImageToMaxWidth(originalImage, MAX_DISPLAY_WIDTH);
+        imageToCrop.src = canvas.toDataURL('image/jpeg');
+        imageToCrop.onload = function() { setTimeout(initCropBox, 50); };
+        if (imageToCrop.complete) setTimeout(initCropBox, 50);
+    };
+    originalImage.src = savedChessboards[index];
+    cropSection.classList.remove('hidden');
 }
 
 function updateChessboardsDisplay() {
-  chessboards.innerHTML = '';
-  chessboardsCount.textContent = savedChessboards.length;
-
-  savedChessboards.forEach((board, index) => {
-    const item = document.createElement('div');
-    item.className = 'chessboard-item';
-    item.innerHTML = `
-      <img src="${board.url}" alt="Tablero ${index + 1}" />
-      <div class="chessboard-info">Tablero ${index + 1}</div>
-      <div class="chessboard-actions">
-        <button class="btn btn-warning btn-sm edit-btn" data-index="${index}" title="Editar">
-          <i class="fas fa-edit"></i>
-        </button>
-        <button class="btn btn-danger btn-sm remove-btn" data-index="${index}" title="Eliminar">
-          <i class="fas fa-trash"></i>
-        </button>
-      </div>`;
-    chessboards.appendChild(item);
-  });
-
-  chessboards.querySelectorAll('.edit-btn').forEach(btn => {
-    btn.addEventListener('click', () => startEdit(+btn.dataset.index));
-  });
-  chessboards.querySelectorAll('.remove-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      removeBoardAt(+btn.dataset.index);
-      updateChessboardsDisplay();
-      notify('Tablero eliminado');
+    chessboardsContainer.innerHTML = '';
+    chessboardsCount.textContent = savedChessboards.length;
+    savedChessboards.forEach((dataUrl, index) => {
+        const item = document.createElement('div');
+        item.className = 'chessboard-item';
+        item.innerHTML = `
+            <img src="${dataUrl}" alt="Tablero ${index+1}" />
+            <div class="chessboard-info">Tablero ${index+1}</div>
+            <div class="chessboard-actions">
+                <button class="btn btn-warning btn-sm replace-btn" data-index="${index}"><i class="fas fa-edit"></i></button>
+                <button class="btn btn-danger btn-sm remove-btn" data-index="${index}"><i class="fas fa-trash"></i></button>
+            </div>
+        `;
+        chessboardsContainer.appendChild(item);
+        item.querySelector('.remove-btn').addEventListener('click', function() {
+            const idx = parseInt(this.dataset.index);
+            savedChessboards.splice(idx, 1);
+            updateChessboardsDisplay();
+            showNotification('Tablero eliminado');
+        });
+        item.querySelector('.replace-btn').addEventListener('click', function() {
+            const idx = parseInt(this.dataset.index);
+            startEdit(idx);
+        });
     });
-  });
-
-  updatePdfPreview();
-
-  if (savedChessboards.length > 0) {
-    previewSection.classList.remove('hidden');
-    pdfSection.classList.remove('hidden');
-  } else {
-    previewSection.classList.add('hidden');
-    pdfSection.classList.add('hidden');
-  }
-}
-
-// =========================================================
-// NAVEGACIÓN
-// =========================================================
-prevImageBtn.addEventListener('click', () => {
-  if (currentImageIndex > 0) { currentImageIndex--; loadCurrentImage(); }
-});
-nextImageBtn.addEventListener('click', () => {
-  if (currentImageIndex < imageFiles.length - 1) { currentImageIndex++; loadCurrentImage(); }
-});
-reverseOrderBtn.addEventListener('click', () => {
-  if (imageFiles.length < 2) { notify('No hay suficientes imágenes', 'info'); return; }
-  imageFiles.reverse();
-  currentImageIndex = imageFiles.length - 1 - currentImageIndex;
-  loadCurrentImage();
-  notify('Orden de imágenes invertido');
-});
-reverseSavedBtn.addEventListener('click', () => {
-  if (savedChessboards.length < 2) { notify('No hay suficientes tableros', 'info'); return; }
-  savedChessboards.reverse();
-  editingIndex = -1;
-  updateChessboardsDisplay();
-  notify('Orden de tableros invertido');
-});
-
-// =========================================================
-// PLANTILLAS
-// =========================================================
-function updateTemplateButtons() {
-  const has = !!cropTemplate;
-  applyTemplateBtn.disabled = !has;
-  applyToAllBtn.disabled = !has;
-}
-
-saveTemplateBtn.addEventListener('click', () => {
-  const imgWidth = imageToCrop.width;
-  const imgHeight = imageToCrop.height;
-  if (!imgWidth || !imgHeight) return;
-  cropTemplate = {
-    x: cropBoxX / imgWidth,
-    y: cropBoxY / imgHeight,
-    w: cropBoxWidth / imgWidth,
-    h: cropBoxHeight / imgHeight
-  };
-  saveSettings();
-  updateTemplateButtons();
-  notify('Plantilla guardada');
-});
-
-applyTemplateBtn.addEventListener('click', () => {
-  if (!cropTemplate) return;
-  const imgWidth = imageToCrop.width;
-  const imgHeight = imageToCrop.height;
-  cropBoxX = cropTemplate.x * imgWidth;
-  cropBoxY = cropTemplate.y * imgHeight;
-  cropBoxWidth = cropTemplate.w * imgWidth;
-  cropBoxHeight = cropTemplate.h * imgHeight;
-  updateCropBox();
-  notify('Plantilla aplicada');
-});
-
-applyToAllBtn.addEventListener('click', () => {
-  if (!cropTemplate) return;
-  notify('Aplicando plantilla y procesando todas…', 'info');
-  processAllImages(true);
-});
-
-// =========================================================
-// BOTONES CENTRAR / TODO / OVERLAY
-// =========================================================
-centerCropBtn.addEventListener('click', () => {
-  const imgWidth = imageToCrop.width;
-  const imgHeight = imageToCrop.height;
-  if (!imgWidth || !imgHeight) return;
-  const side = Math.min(cropBoxWidth || Infinity, cropBoxHeight || Infinity, Math.min(imgWidth, imgHeight) * 0.8);
-  const finalSide = Number.isFinite(side) && side > 30 ? side : Math.min(imgWidth, imgHeight) * 0.8;
-  cropBoxWidth = finalSide;
-  cropBoxHeight = finalSide;
-  cropBoxX = (imgWidth - finalSide) / 2;
-  cropBoxY = (imgHeight - finalSide) / 2;
-  updateCropBox();
-  notify('Recuadro centrado', 'info');
-});
-
-fullCropBtn.addEventListener('click', () => {
-  const imgWidth = imageToCrop.width;
-  const imgHeight = imageToCrop.height;
-  if (!imgWidth || !imgHeight) return;
-  cropBoxX = 0; cropBoxY = 0;
-  cropBoxWidth = imgWidth;
-  cropBoxHeight = imgHeight;
-  updateCropBox();
-  notify('Recuadro = imagen completa', 'info');
-});
-
-function updateOverlayBtn() {
-  toggleOverlayBtn.classList.toggle('toggle-active', overlayHidden);
-  toggleOverlayBtn.innerHTML = overlayHidden
-    ? '<i class="fas fa-eye-slash"></i> Oscurecer'
-    : '<i class="fas fa-eye"></i> Ver completa';
-}
-
-toggleOverlayBtn.addEventListener('click', () => {
-  overlayHidden = !overlayHidden;
-  cropBox.classList.toggle('no-overlay', overlayHidden);
-  updateOverlayBtn();
-  saveSettings();
-  notify(overlayHidden ? 'Fondo visible' : 'Fondo oscurecido', 'info', { duration: 1500 });
-});
-
-// =========================================================
-// BARRA DE PROGRESO
-// =========================================================
-function showProgress(current, total) {
-  progressBar.classList.remove('hidden');
-  const pct = total > 0 ? Math.round((current / total) * 100) : 0;
-  progressFill.style.width = pct + '%';
-  progressText.textContent = `${pct}% · ${current}/${total}`;
-  progressBar.setAttribute('aria-valuenow', String(pct));
-}
-
-function hideProgress() {
-  progressBar.classList.add('hidden');
-  progressFill.style.width = '0%';
-  progressText.textContent = '0 %';
-  progressBar.setAttribute('aria-valuenow', '0');
-}
-
-// =========================================================
-// PROCESAMIENTO AUTOMÁTICO
-// =========================================================
-async function processAllImages(useTemplate) {
-  if (imageFiles.length === 0) { notify('No hay imágenes', 'info'); return; }
-
-  const prevHtml = processAllBtn.innerHTML;
-  processAllBtn.disabled = true;
-  processAllBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando…';
-  showProgress(0, imageFiles.length);
-
-  const previousIndex = currentImageIndex;
-
-  let activeTemplate = cropTemplate;
-  if (!useTemplate) {
-    const iW = imageToCrop.width, iH = imageToCrop.height;
-    if (iW > 0 && iH > 0 && cropBoxWidth > 30) {
-      activeTemplate = {
-        x: cropBoxX / iW,
-        y: cropBoxY / iH,
-        w: cropBoxWidth / iW,
-        h: cropBoxHeight / iH
-      };
+    updatePdfPreview();
+    if (savedChessboards.length > 0) {
+        previewSection.classList.remove('hidden');
+        pdfSection.classList.remove('hidden');
+    } else {
+        previewSection.classList.add('hidden');
+        pdfSection.classList.add('hidden');
     }
-  }
-
-  let skipped = 0, processed = 0;
-
-  try {
-    for (let i = 0; i < imageFiles.length; i++) {
-      currentImageIndex = i;
-      imageCounter.textContent = `Procesando ${i + 1} de ${imageFiles.length}…`;
-      showProgress(i, imageFiles.length);
-      await nextFrame();
-
-      try {
-        const file = imageFiles[i];
-        const dataUrl = await fileToDataURL(file);
-        let img;
-        try {
-          img = await loadImageFromSrc(dataUrl);
-        } catch (err) {
-          if (isHeicFile(file)) continue;
-          throw err;
-        }
-        originalImage = img;
-
-        const displayUrl = rescaleForDisplay(img);
-        await setImageSrc(imageToCrop, displayUrl);
-        await nextFrame();
-        await nextFrame();
-
-        const iW = imageToCrop.width, iH = imageToCrop.height;
-        if (iW <= 0 || iH <= 0) continue;
-
-        if (activeTemplate) {
-          cropBoxX = activeTemplate.x * iW;
-          cropBoxY = activeTemplate.y * iH;
-          cropBoxWidth = activeTemplate.w * iW;
-          cropBoxHeight = activeTemplate.h * iH;
-        } else {
-          cropBoxX = iW * 0.25;
-          cropBoxY = iH * 0.25;
-          cropBoxWidth = iW * 0.5;
-          cropBoxHeight = iH * 0.5;
-        }
-        updateCropBox();
-
-        const res = await cropImage();
-        if (!res) continue;
-
-        if (dedupeEnabled && res.hash) {
-          const dup = findDuplicateIndex(res.hash);
-          if (dup >= 0) { URL.revokeObjectURL(res.url); skipped++; continue; }
-        }
-        savedChessboards.push(res);
-        processed++;
-      } catch (innerErr) {
-        console.error('Error procesando', imageFiles[i].name, innerErr);
-      }
-    }
-
-    showProgress(imageFiles.length, imageFiles.length);
-    updateChessboardsDisplay();
-    notify(
-      skipped > 0 ? `${processed} procesadas · ${skipped} repetidas omitidas` : `Se procesaron ${processed} imágenes`,
-      'success'
-    );
-  } catch (err) {
-    console.error(err);
-    notify(err.message || 'Error al procesar', 'error');
-  } finally {
-    currentImageIndex = previousIndex;
-    loadCurrentImage();
-    processAllBtn.disabled = false;
-    processAllBtn.innerHTML = prevHtml;
-    setTimeout(hideProgress, 800);
-  }
 }
-
-processAllBtn.addEventListener('click', () => processAllImages(false));
-
-// =========================================================
-// GUARDAR TABLERO
-// =========================================================
-let savingCrop = false;
-cropBtn.addEventListener('click', async () => {
-  if (savingCrop) return;
-  savingCrop = true;
-  cropBtn.disabled = true;
-  try {
-    const res = await cropImage();
-    if (res) addBoard(res);
-  } catch (err) {
-    console.error(err);
-    notify('Error al guardar el tablero', 'error');
-  } finally {
-    setTimeout(() => { savingCrop = false; cropBtn.disabled = false; }, 350);
-  }
-});
-
-// =========================================================
-// LIMPIAR
-// =========================================================
-clearAllBtn.addEventListener('click', () => {
-  if (savedChessboards.length === 0) return;
-  if (!confirm('¿Eliminar todos los tableros guardados?')) return;
-
-  const backup = savedChessboards.map(b => ({ blob: b.blob, hash: b.hash, w: b.w, h: b.h }));
-  savedChessboards.forEach(b => b.url && URL.revokeObjectURL(b.url));
-  savedChessboards = [];
-  editingIndex = -1;
-  _memoryWarned = false;
-
-  updateChessboardsDisplay();
-  notify('Todos los tableros eliminados', 'info', {
-    duration: 6000,
-    onUndo: () => {
-      savedChessboards = backup.map(b => ({
-        blob: b.blob, url: URL.createObjectURL(b.blob), hash: b.hash, w: b.w, h: b.h
-      }));
-      updateChessboardsDisplay();
-      notify('Restaurados');
-    }
-  });
-});
-
-// =========================================================
-// PDF PREVIEW
-// =========================================================
-const LAYOUTS = {
-  4: { cols: 2, rows: 2, imgW: 75, imgH: 75, lineCount: 3, lineGap: 4, positions: [
-    { x: 27, y: 55 }, { x: 108, y: 55 }, { x: 27, y: 170 }, { x: 108, y: 170 }
-  ]},
-  6: { cols: 2, rows: 3, imgW: 58.5, imgH: 58.5, lineCount: 3, lineGap: 4, positions: [
-    { x: 27, y: 40 }, { x: 122, y: 40 }, { x: 27, y: 120 }, { x: 122, y: 120 },
-    { x: 27, y: 200 }, { x: 122, y: 200 }
-  ]},
-  8: { cols: 2, rows: 4, imgW: 46, imgH: 46, lineCount: 3, lineGap: 3.5, positions: [
-    { x: 25, y: 32 }, { x: 139, y: 32 }, { x: 25, y: 93 }, { x: 139, y: 93 },
-    { x: 25, y: 154 }, { x: 139, y: 154 }, { x: 25, y: 215 }, { x: 139, y: 215 }
-  ]}
-};
-
-function getItemsPerPage() { return parseInt(itemsPerPageSelect.value, 10) || 6; }
 
 function updatePdfPreview() {
-  pdfPreview.innerHTML = '';
-  const ipp = getItemsPerPage();
-  const layout = LAYOUTS[ipp];
-  const pageCount = Math.max(1, Math.ceil(savedChessboards.length / ipp));
-  const headerText = headerInput.value;
-  const footerText = footerInput.value;
-
-  for (let p = 0; p < pageCount; p++) {
-    const page = document.createElement('div');
-    page.className = 'page';
-    if (headerText) {
-      const h = document.createElement('div');
-      h.className = 'page-header';
-      h.textContent = headerText;
-      page.appendChild(h);
-    }
-    const content = document.createElement('div');
-    content.className = `page-content cols-${layout.cols} rows-${layout.rows}`;
-
-    for (let i = 0; i < ipp; i++) {
-      const idx = p * ipp + i;
-      const cell = document.createElement('div');
-      cell.className = 'page-cell';
-      const num = document.createElement('div');
-      num.className = 'num';
-      num.textContent = idx + 1;
-      cell.appendChild(num);
-      if (idx < savedChessboards.length) {
-        const img = document.createElement('img');
-        img.src = savedChessboards[idx].url;
-        cell.appendChild(img);
-        const lines = document.createElement('div');
-        lines.className = 'answer-lines';
-        for (let j = 0; j < layout.lineCount; j++) {
-          const line = document.createElement('div');
-          line.className = 'line';
-          lines.appendChild(line);
+    pdfPreview.innerHTML = '';
+    const itemsPerPage = 6;
+    const pageCount = Math.ceil(savedChessboards.length / itemsPerPage);
+    const headerText = headerInput.value;
+    const footerText = footerInput.value;
+    for (let p = 0; p < pageCount; p++) {
+        const page = document.createElement('div');
+        page.className = 'page';
+        if (headerText) {
+            const h = document.createElement('div');
+            h.className = 'page-header';
+            h.textContent = headerText;
+            page.appendChild(h);
         }
-        cell.appendChild(lines);
-      }
-      content.appendChild(cell);
+        const content = document.createElement('div');
+        content.className = 'page-content';
+        for (let i = 0; i < itemsPerPage; i++) {
+            const idx = p * itemsPerPage + i;
+            const cell = document.createElement('div');
+            cell.className = 'page-cell';
+            const num = document.createElement('div');
+            num.textContent = (idx+1);
+            num.style.cssText = 'font-weight:bold;margin-bottom:4px;';
+            cell.appendChild(num);
+            if (idx < savedChessboards.length) {
+                const img = document.createElement('img');
+                img.src = savedChessboards[idx];
+                cell.appendChild(img);
+                const lines = document.createElement('div');
+                lines.className = 'answer-lines';
+                for (let j=0; j<3; j++) {
+                    const line = document.createElement('div');
+                    line.className = 'line';
+                    lines.appendChild(line);
+                }
+                cell.appendChild(lines);
+            }
+            content.appendChild(cell);
+        }
+        page.appendChild(content);
+        const footer = document.createElement('div');
+        footer.className = 'page-footer';
+        footer.innerHTML = `<span>Página ${p+1}</span><span>${footerText || ''}</span>`;
+        page.appendChild(footer);
+        pdfPreview.appendChild(page);
     }
-    page.appendChild(content);
-    const footer = document.createElement('div');
-    footer.className = 'page-footer';
-    footer.innerHTML = `<span>Página ${p + 1} / ${pageCount}</span><span>${escapeHtml(footerText || '')}</span>`;
-    page.appendChild(footer);
-    pdfPreview.appendChild(page);
-  }
 }
 
-// =========================================================
-// GENERAR PDF
-// =========================================================
-async function generatePdf() {
-  if (savedChessboards.length === 0) { notify('No hay tableros', 'info'); return; }
-
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF('p', 'mm', 'a4');
-  const ipp = getItemsPerPage();
-  const layout = LAYOUTS[ipp];
-  const { positions, imgW, imgH, lineCount, lineGap } = layout;
-
-  const headerText = headerInput.value.trim();
-  const footerText = footerInput.value.trim();
-
-  const prevHtml = generatePdfBtn.innerHTML;
-  generatePdfBtn.disabled = true;
-  generatePdfBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generando…';
-
-  try {
-    let currentPage = -1;
-    for (let i = 0; i < savedChessboards.length; i++) {
-      const board = savedChessboards[i];
-      const pageIndex = Math.floor(i / ipp);
-      const posIndex = i % ipp;
-
-      if (pageIndex !== currentPage) {
-        if (currentPage !== -1) doc.addPage();
-        currentPage = pageIndex;
-        if (headerText) { doc.setFontSize(ipp === 8 ? 11 : 12); doc.text(headerText, 105, 18, { align: 'center' }); }
-        if (footerText) { doc.setFontSize(10); doc.text(footerText, 105, 290, { align: 'center' }); }
-      }
-
-      const pos = positions[posIndex];
-      doc.setFontSize(ipp === 8 ? 10 : 12);
-      doc.text(String(i + 1), pos.x + imgW / 2, pos.y - 2, { align: 'center' });
-
-      let drawW = imgW, drawH = imgH;
-      if (board.w && board.h) {
-        const ratio = board.w / board.h;
-        const cellRatio = imgW / imgH;
-        if (ratio > cellRatio) { drawW = imgW; drawH = imgW / ratio; }
-        else { drawH = imgH; drawW = imgH * ratio; }
-      }
-      const drawX = pos.x + (imgW - drawW) / 2;
-      const drawY = pos.y + (imgH - drawH) / 2;
-
-      const dataUrl = await blobToDataURL(board.blob);
-      doc.addImage(dataUrl, 'JPEG', drawX, drawY, drawW, drawH, undefined, 'FAST');
-
-      const lineY = pos.y + imgH + (ipp === 8 ? 4 : 6);
-      for (let j = 0; j < lineCount; j++) {
-        doc.line(pos.x, lineY + j * lineGap, pos.x + imgW, lineY + j * lineGap);
-      }
+function generatePdf() {
+    if (savedChessboards.length === 0) return;
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF('p', 'mm', 'a4');
+    const positions = [
+        {x:27, y:40}, {x:122, y:40},
+        {x:27, y:120}, {x:122, y:120},
+        {x:27, y:200}, {x:122, y:200}
+    ];
+    const imgW = 58.5, imgH = 58.5;
+    const headerText = headerInput.value, footerText = footerInput.value;
+    for (let i=0; i<savedChessboards.length; i++) {
+        const pageIdx = Math.floor(i/6);
+        const posIdx = i%6;
+        if (posIdx===0 && i>0) doc.addPage();
+        if (headerText) {
+            doc.setFontSize(12);
+            doc.text(headerText, 105, 20, {align:'center'});
+        }
+        const cx = positions[posIdx].x + imgW/2;
+        doc.setFontSize(12);
+        doc.text((i+1).toString(), cx, positions[posIdx].y - 2.5, {align:'center'});
+        doc.addImage(savedChessboards[i], 'JPEG', positions[posIdx].x, positions[posIdx].y, imgW, imgH);
+        const lineY = positions[posIdx].y + imgH + 6;
+        for (let j=0; j<3; j++) {
+            doc.line(positions[posIdx].x, lineY + j*4, positions[posIdx].x+imgW, lineY + j*4);
+        }
+        if (footerText) {
+            doc.setFontSize(10);
+            doc.text(footerText, 105, 287, {align:'center'});
+        }
     }
     doc.save('ejercicios_ajedrez.pdf');
-    notify('PDF generado');
-  } catch (err) {
-    console.error(err);
-    notify('Error al generar el PDF', 'error');
-  } finally {
-    generatePdfBtn.disabled = false;
-    generatePdfBtn.innerHTML = prevHtml;
-  }
+    showNotification('PDF generado');
 }
 
-generatePdfBtn.addEventListener('click', generatePdf);
+function scaleImageToMaxWidth(img, maxWidth) {
+    const canvas = document.createElement('canvas');
+    const ratio = maxWidth / img.width;
+    const w = Math.min(maxWidth, img.width);
+    const h = img.height * ratio;
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(img, 0, 0, w, h);
+    return canvas;
+}
 
-// =========================================================
-// AJUSTES
-// =========================================================
-qualitySlider.addEventListener('input', function () {
-  imageQuality = parseFloat(this.value);
-  qualityValue.textContent = this.value;
-  saveSettingsDebounced();
-});
-resolutionSelect.addEventListener('change', function () {
-  resolutionFactor = parseFloat(this.value);
-  saveSettings();
-});
-squareLock.addEventListener('change', function () {
-  if (this.checked) {
-    const side = Math.min(cropBoxWidth, cropBoxHeight);
-    cropBoxWidth = cropBoxHeight = side;
+function loadCurrentImage() {
+    if (imageFiles.length === 0) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        originalImage = new Image();
+        originalImage.onload = function() {
+            const canvas = scaleImageToMaxWidth(originalImage, MAX_DISPLAY_WIDTH);
+            imageToCrop.src = canvas.toDataURL('image/jpeg');
+            imageToCrop.onload = function() { setTimeout(initCropBox, 50); };
+            if (imageToCrop.complete) setTimeout(initCropBox, 50);
+        };
+        originalImage.src = e.target.result;
+    };
+    reader.readAsDataURL(imageFiles[currentImageIndex]);
+    imageCounter.textContent = `Imagen ${currentImageIndex+1} de ${imageFiles.length}`;
+    prevImageBtn.disabled = (currentImageIndex === 0);
+    nextImageBtn.disabled = (currentImageIndex === imageFiles.length-1);
+}
+
+function prevImage() {
+    if (currentImageIndex > 0) { currentImageIndex--; loadCurrentImage(); }
+}
+function nextImage() {
+    if (currentImageIndex < imageFiles.length-1) { currentImageIndex++; loadCurrentImage(); }
+}
+
+function saveCropTemplate() {
+    if (!cropBox) return;
+    const displayW = imageToCrop.naturalWidth || imageToCrop.width;
+    const displayH = imageToCrop.naturalHeight || imageToCrop.height;
+    cropTemplate = {
+        x: cropBoxX / displayW,
+        y: cropBoxY / displayH,
+        width: cropBoxWidth / displayW,
+        height: cropBoxHeight / displayH
+    };
+    showNotification('Plantilla guardada');
+    updateTemplateButtons();
+}
+
+function applyCropTemplate() {
+    if (!cropTemplate) return;
+    const displayW = imageToCrop.naturalWidth || imageToCrop.width;
+    const displayH = imageToCrop.naturalHeight || imageToCrop.height;
+    cropBoxX = cropTemplate.x * displayW;
+    cropBoxY = cropTemplate.y * displayH;
+    cropBoxWidth = cropTemplate.width * displayW;
+    cropBoxHeight = cropTemplate.height * displayH;
     updateCropBox();
-  }
-  saveSettings();
-});
-showGrid.addEventListener('change', function () {
-  cropBox.classList.toggle('show-grid', this.checked);
-  saveSettings();
-});
-dedupeCheck.addEventListener('change', function () {
-  dedupeEnabled = this.checked;
-  dedupeThresholdWrap.style.display = this.checked ? '' : 'none';
-  saveSettings();
-});
-dedupeThreshold.addEventListener('change', function () {
-  dedupeThresholdVal = parseInt(this.value, 10);
-  saveSettings();
-});
-headerInput.addEventListener('input', () => { updatePdfPreview(); saveSettingsDebounced(); });
-footerInput.addEventListener('input', () => { updatePdfPreview(); saveSettingsDebounced(); });
-itemsPerPageSelect.addEventListener('change', function () {
-  updatePdfPreview();
-  saveSettings();
-});
+    showNotification('Plantilla aplicada');
+}
 
-// =========================================================
-// ATAJOS
-// =========================================================
-document.addEventListener('keydown', (e) => {
-  const tag = (e.target.tagName || '').toLowerCase();
-  if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+function applyTemplateToAll() {
+    if (!cropTemplate) return;
+    templateAppliedToAll = true;
+    applyCropTemplate();
+    showNotification('Plantilla aplicada a todas');
+}
 
-  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-    if (!cropBtn.disabled && !cropSection.classList.contains('hidden')) {
-      e.preventDefault();
-      cropBtn.click();
+function processAllImages() {
+    if (imageFiles.length === 0) return;
+    if (cropTemplate) templateAppliedToAll = true;
+    const processNext = (index) => {
+        if (index >= imageFiles.length) {
+            showNotification('Todas las imágenes procesadas');
+            return;
+        }
+        currentImageIndex = index;
+        loadCurrentImage();
+        setTimeout(() => {
+            const data = cropImage();
+            if (data) {
+                savedChessboards.push(data);
+                updateChessboardsDisplay();
+                processNext(index + 1);
+            }
+        }, 400);
+    };
+    processNext(0);
+}
+
+function updateTemplateButtons() {
+    applyTemplateBtn.disabled = !cropTemplate;
+    applyToAllBtn.disabled = !cropTemplate;
+}
+
+function clearAllChessboards() {
+    if (savedChessboards.length === 0) return;
+    if (confirm('¿Eliminar todos los tableros?')) {
+        savedChessboards = [];
+        updateChessboardsDisplay();
+        showNotification('Todos eliminados');
     }
-  }
-});
+}
 
-// =========================================================
-// RESIZE
-// =========================================================
-let _resizeTimer = null;
-window.addEventListener('resize', () => {
-  clearTimeout(_resizeTimer);
-  _resizeTimer = setTimeout(() => {
-    if (imageToCrop.naturalWidth > 0 && cropBox && !cropBox.classList.contains('hidden')) {
-      // Reescalar proporcionalmente
-      const oldW = cropBoxWidth, oldH = cropBoxHeight;
-      const newW = imageToCrop.width, newH = imageToCrop.height;
-      const scaleX = newW / (imageToCrop.dataset.prevW || newW);
-      const scaleY = newH / (imageToCrop.dataset.prevH || newH);
-      if (scaleX !== 1 || scaleY !== 1) {
-        cropBoxX *= scaleX; cropBoxY *= scaleY;
-        cropBoxWidth *= scaleX; cropBoxHeight *= scaleY;
-      }
-      imageToCrop.dataset.prevW = newW;
-      imageToCrop.dataset.prevH = newH;
-      updateCropBox();
+// --------------------------------------------------------------
+// EVENT LISTENERS
+// --------------------------------------------------------------
+imageInput.addEventListener('change', function() {
+    loadImageBtn.disabled = !this.files || this.files.length === 0;
+    if (this.files && this.files.length > 0) {
+        // NUEVO: guardar crudo y aplicar orden
+        rawImageFiles = Array.from(this.files);
+        applySortOrder();
     }
-  }, 120);
 });
 
-// =========================================================
-// CLEANUP
-// =========================================================
-window.addEventListener('beforeunload', () => {
-  savedChessboards.forEach(b => b.url && URL.revokeObjectURL(b.url));
+// NUEVO: al cambiar el modo de orden, reordenar
+sortModeSelect.addEventListener('change', function() {
+    if (rawImageFiles.length === 0) return;
+
+    applySortOrder();
+
+    // Si ya estábamos trabajando, recargar con el nuevo orden
+    if (!cropSection.classList.contains('hidden') && imageFiles.length > 0) {
+        currentImageIndex = 0;
+        loadCurrentImage();
+        showNotification(`Orden actualizado: ${this.options[this.selectedIndex].text}`);
+    } else {
+        showNotification(`Orden seleccionado: ${this.options[this.selectedIndex].text}`);
+    }
 });
 
-// =========================================================
-// INIT
-// =========================================================
-(function init() {
-  loadSettings();
-  qualitySlider.value = imageQuality;
-  qualityValue.textContent = imageQuality;
-  resolutionSelect.value = String(resolutionFactor);
-  dedupeCheck.checked = dedupeEnabled;
-  dedupeThreshold.value = String(dedupeThresholdVal);
-  dedupeThresholdWrap.style.display = dedupeEnabled ? '' : 'none';
-  updateTemplateButtons();
-})();
+loadImageBtn.addEventListener('click', function() {
+    if (imageFiles.length === 0) return;
+    cropSection.classList.remove('hidden');
+    loadCurrentImage();
+});
+cropBtn.addEventListener('click', function() {
+    const data = cropImage();
+    if (data) {
+        addChessboard(data);
+        previewSection.classList.remove('hidden');
+    }
+});
+prevImageBtn.addEventListener('click', prevImage);
+nextImageBtn.addEventListener('click', nextImage);
+generatePdfBtn.addEventListener('click', generatePdf);
+qualitySlider.addEventListener('input', function() {
+    imageQuality = parseFloat(this.value);
+    qualityValue.textContent = this.value;
+});
+resolutionSelect.addEventListener('change', function() {
+    resolutionFactor = parseFloat(this.value);
+});
+saveTemplateBtn.addEventListener('click', saveCropTemplate);
+applyTemplateBtn.addEventListener('click', applyCropTemplate);
+applyToAllBtn.addEventListener('click', applyTemplateToAll);
+processAllBtn.addEventListener('click', processAllImages);
+clearAllBtn.addEventListener('click', clearAllChessboards);
+headerInput.addEventListener('input', updatePdfPreview);
+footerInput.addEventListener('input', updatePdfPreview);
+
+// Prevenir scroll accidental en el contenedor al tocar el recuadro
+cropContainer.addEventListener('touchstart', function(e) {
+    if (cropBox && cropBox.contains(e.target)) {
+        e.preventDefault();
+    }
+}, { passive: false });
 </script>
 </body>
 </html>
