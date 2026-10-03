@@ -262,9 +262,10 @@
   .crop-box {
     position: absolute;
     border: 2px solid #fff;
+    /* ✅ Overlay más claro: antes .55, ahora .40 */
     box-shadow:
       0 0 0 1px rgba(52,152,219,.9),
-      0 0 0 9999px rgba(0,0,0,.55);
+      0 0 0 9999px rgba(0,0,0,.40);
     background: rgba(52,152,219,.12);
     cursor: move;
     touch-action: none;
@@ -274,13 +275,26 @@
     outline: none;
   }
   .crop-box.hidden { display: none; }
+
+  /* ✅ Sin overlay: solo borde, la imagen se ve completa */
+  .crop-box.no-overlay {
+    box-shadow: 0 0 0 2px rgba(52,152,219,.95);
+    background: rgba(52,152,219,.06);
+  }
+
   /* ✅ Modo desplazar: el box deja pasar los toques al contenedor */
   .crop-box.pan-mode { pointer-events: none; }
   .crop-box.pan-mode .resize-handle { pointer-events: none; }
+
   .crop-box:focus-visible {
     box-shadow:
       0 0 0 1px rgba(52,152,219,.9),
-      0 0 0 9999px rgba(0,0,0,.55),
+      0 0 0 9999px rgba(0,0,0,.40),
+      0 0 0 4px rgba(52,152,219,.5);
+  }
+  .crop-box.no-overlay:focus-visible {
+    box-shadow:
+      0 0 0 2px rgba(52,152,219,.95),
       0 0 0 4px rgba(52,152,219,.5);
   }
 
@@ -722,7 +736,7 @@
       </div>
     </div>
 
-    <!-- ✅ Barra de progreso (oculta hasta "Procesar todas") -->
+    <!-- Barra de progreso -->
     <div class="progress-bar hidden" id="progressBar" role="progressbar"
          aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
       <div class="progress-fill" id="progressFill"></div>
@@ -767,19 +781,21 @@
           <option value="10">Permisiva</option>
         </select>
       </label>
-      <!-- ✅ Nuevo: modo desplazar (pan) -->
       <label title="Permite desplazar la imagen arrastrando, sin mover el recuadro">
         <input type="checkbox" id="panMode" /> Modo desplazar
       </label>
     </div>
 
     <div class="crop-actions">
-      <!-- ✅ Nuevos botones: Centrar y Todo -->
       <button id="centerCropBtn" class="btn btn-outline btn-sm" title="Centrar recuadro cuadrado">
         <i class="fas fa-crosshairs"></i> Centrar
       </button>
       <button id="fullCropBtn" class="btn btn-outline btn-sm" title="Recuadro cubre toda la imagen">
         <i class="fas fa-expand"></i> Todo
+      </button>
+      <!-- ✅ Nuevo: alterna el oscurecido -->
+      <button id="toggleOverlayBtn" class="btn btn-outline btn-sm" title="Mostrar la imagen sin oscurecer el fondo">
+        <i class="fas fa-eye"></i> Ver completa
       </button>
       <button id="saveTemplateBtn" class="btn btn-outline btn-sm">
         <i class="fas fa-save"></i> Guardar plantilla
@@ -856,6 +872,7 @@
   <i class="fas fa-check-circle"></i>
   <span id="notificationText">Listo</span>
 </div>
+
 <script>
 "use strict";
 
@@ -876,6 +893,7 @@ const state = {
   dedupe: false,
   dedupeThreshold: 6,
   panMode: false,
+  overlayHidden: false,
   cropTemplate: null,
   headerText: '',
   footerText: '',
@@ -888,7 +906,7 @@ const state = {
 };
 
 const MAX_DISPLAY_LONG_SIDE = 1600;
-const MEMORY_WARN_THRESHOLD = 30;   // avisar a partir de N tableros
+const MEMORY_WARN_THRESHOLD = 30;
 let _memoryWarned = false;
 
 // =========================================================
@@ -956,6 +974,7 @@ const dedupeThresholdWrap = $('dedupeThresholdWrap');
 const panModeChk       = $('panMode');
 const centerCropBtn    = $('centerCropBtn');
 const fullCropBtn      = $('fullCropBtn');
+const toggleOverlayBtn = $('toggleOverlayBtn');
 const saveTemplateBtn  = $('saveTemplateBtn');
 const applyTemplateBtn = $('applyTemplateBtn');
 const applyToAllBtn    = $('applyToAllBtn');
@@ -1011,7 +1030,6 @@ function escapeHtml(str) {
   return String(str).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 
-// ---------- Promesas utilitarias ----------
 function fileToDataURL(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -1067,11 +1085,14 @@ function nextFrame() {
   return new Promise(r => requestAnimationFrame(r));
 }
 
-// ---------- Detección HEIC ----------
 function isHeicFile(file) {
   const name = (file.name || '').toLowerCase();
   const type = (file.type || '').toLowerCase();
   return /\.(heic|heif)$/.test(name) || type === 'image/heic' || type === 'image/heif';
+}
+
+function isMobileViewport() {
+  return window.matchMedia('(max-width: 700px)').matches;
 }
 
 // =========================================================
@@ -1087,6 +1108,7 @@ function saveSettings() {
       dedupe: state.dedupe,
       dedupeThreshold: state.dedupeThreshold,
       panMode: state.panMode,
+      overlayHidden: state.overlayHidden,
       headerText: state.headerText,
       footerText: state.footerText,
       itemsPerPage: state.itemsPerPage,
@@ -1113,6 +1135,7 @@ function loadSettings() {
     if (typeof s.dedupe === 'boolean')          state.dedupe = s.dedupe;
     if (typeof s.dedupeThreshold === 'number')  state.dedupeThreshold = s.dedupeThreshold;
     if (typeof s.panMode === 'boolean')         state.panMode = s.panMode;
+    if (typeof s.overlayHidden === 'boolean')   state.overlayHidden = s.overlayHidden;
     if (typeof s.headerText === 'string')       state.headerText = s.headerText;
     if (typeof s.footerText === 'string')       state.footerText = s.footerText;
     if (typeof s.itemsPerPage === 'number' && [4, 6, 8].includes(s.itemsPerPage))
@@ -1256,20 +1279,39 @@ function applyPanMode() {
   cropBox.style.cursor = state.panMode ? 'grab' : 'move';
 }
 
+function applyOverlayMode() {
+  cropBox.classList.toggle('no-overlay', state.overlayHidden);
+  toggleOverlayBtn.classList.toggle('toggle-active', state.overlayHidden);
+  toggleOverlayBtn.innerHTML = state.overlayHidden
+    ? '<i class="fas fa-eye-slash"></i> Oscurecer'
+    : '<i class="fas fa-eye"></i> Ver completa';
+}
+
 function initCropBox() {
   const { w: dW, h: dH } = getDisplaySize();
   if (dW <= 0 || dH <= 0) return;
+
+  // ✅ Auto "Ver completa" la primera vez en móvil
+  if (isMobileViewport() && !state._mobileOverlayInited) {
+    state._mobileOverlayInited = true;
+    if (!state.overlayHidden) {
+      state.overlayHidden = true;
+      saveSettingsDebounced();
+    }
+  }
 
   if (state.cropTemplate) {
     const t = state.cropTemplate;
     state.crop = { x: t.x * dW, y: t.y * dH, w: t.w * dW, h: t.h * dH };
   } else {
-    const side = Math.min(dW, dH) * 0.6;
+    // ✅ Antes 0.6 → ahora 0.8 (más generoso en pantallas chicas)
+    const side = Math.min(dW, dH) * 0.8;
     state.crop = { x: (dW - side) / 2, y: (dH - side) / 2, w: side, h: side };
   }
   applyCropStyles();
   cropBox.classList.remove('hidden');
   cropBox.classList.toggle('show-grid', state.showGrid);
+  applyOverlayMode();
   applyPanMode();
   cropBtn.disabled = false;
   updateTemplateButtons();
@@ -1481,7 +1523,7 @@ function findDuplicateIndex(hash, excludeIdx = -1) {
 }
 
 // =========================================================
-// RECORTAR (ahora async, devuelve blob + url)
+// RECORTAR (async, devuelve blob + url)
 // =========================================================
 async function cropImage() {
   if (!state.originalImage) return null;
@@ -1532,7 +1574,7 @@ function addBoard(board) {
   if (state.dedupe && board.hash) {
     const dup = findDuplicateIndex(board.hash);
     if (dup >= 0) {
-      URL.revokeObjectURL(board.url);   // liberar el que no usamos
+      URL.revokeObjectURL(board.url);
       notify(`Tablero repetido (similar al #${dup + 1}) — omitido`, 'info');
       return false;
     }
@@ -1541,7 +1583,6 @@ function addBoard(board) {
   state.savedBoards.push(board);
   notify('Tablero guardado');
 
-  // Aviso de memoria (una sola vez)
   if (!_memoryWarned && state.savedBoards.length === MEMORY_WARN_THRESHOLD) {
     _memoryWarned = true;
     notify(
@@ -1572,6 +1613,7 @@ async function startEdit(index) {
     applyCropStyles();
     cropBox.classList.remove('hidden');
     cropBox.classList.toggle('show-grid', state.showGrid);
+    applyOverlayMode();
     applyPanMode();
     cropBtn.disabled = false;
 
@@ -1699,14 +1741,13 @@ applyToAllBtn.addEventListener('click', () => {
 });
 
 // =========================================================
-// BOTONES CENTRAR / TODO
+// BOTONES CENTRAR / TODO / VER COMPLETA
 // =========================================================
 centerCropBtn.addEventListener('click', () => {
   const { w: dW, h: dH } = getDisplaySize();
   if (dW <= 0 || dH <= 0) return;
-  // Conserva el tamaño actual si cabe; si no, usa 60% del lado menor
-  const side = Math.min(state.crop.w || Infinity, state.crop.h || Infinity, Math.min(dW, dH) * 0.6);
-  const finalSide = Number.isFinite(side) && side > 30 ? side : Math.min(dW, dH) * 0.6;
+  const side = Math.min(state.crop.w || Infinity, state.crop.h || Infinity, Math.min(dW, dH) * 0.8);
+  const finalSide = Number.isFinite(side) && side > 30 ? side : Math.min(dW, dH) * 0.8;
   state.crop = {
     x: (dW - finalSide) / 2,
     y: (dH - finalSide) / 2,
@@ -1727,6 +1768,18 @@ fullCropBtn.addEventListener('click', () => {
   state.crop = { x: 0, y: 0, w: dW, h: dH };
   applyCropStyles();
   notify('Recuadro = imagen completa', 'info');
+});
+
+// ✅ Toggle overlay
+toggleOverlayBtn.addEventListener('click', () => {
+  state.overlayHidden = !state.overlayHidden;
+  applyOverlayMode();
+  saveSettings();
+  notify(
+    state.overlayHidden ? 'Fondo visible: ya ves toda la imagen' : 'Fondo oscurecido',
+    'info',
+    { duration: 1800 }
+  );
 });
 
 // =========================================================
@@ -1779,7 +1832,6 @@ async function processAllImages(useTemplate) {
       imageCounter.textContent = `Procesando ${i + 1} de ${state.imageFiles.length}…`;
       showProgress(i, state.imageFiles.length);
 
-      // Ceder al navegador para no congelar la UI en móvil
       await nextFrame();
 
       try {
@@ -1812,7 +1864,8 @@ async function processAllImages(useTemplate) {
             h: originalTemplate.h * dH
           };
         } else {
-          const side = Math.min(dW, dH) * 0.6;
+          // ✅ Mismo 0.8 que initCropBox
+          const side = Math.min(dW, dH) * 0.8;
           state.crop = { x: (dW - side) / 2, y: (dH - side) / 2, w: side, h: side };
         }
         applyCropStyles();
@@ -1887,7 +1940,6 @@ clearAllBtn.addEventListener('click', () => {
   if (state.savedBoards.length === 0) return;
   if (!confirm('¿Eliminar todos los tableros guardados?')) return;
 
-  // ✅ Backup: guardamos blobs (los URLs hay que recrearlos al restaurar)
   const backupBlobs = state.savedBoards.map(b => ({
     blob: b.blob, hash: b.hash, w: b.w, h: b.h
   }));
@@ -1974,7 +2026,7 @@ function updatePdfPreview() {
 }
 
 // =========================================================
-// GENERAR PDF (async por conversión blob→dataURL)
+// GENERAR PDF (async por blob→dataURL)
 // =========================================================
 async function generatePdf() {
   if (state.savedBoards.length === 0) { notify('No hay tableros', 'info'); return; }
@@ -2020,7 +2072,6 @@ async function generatePdf() {
       doc.setFontSize(state.itemsPerPage === 8 ? 10 : 12);
       doc.text(String(i + 1), cellCx, pos.y - 2, { align: 'center' });
 
-      // Aspect ratio
       let drawW = imgW, drawH = imgH;
       if (board.w && board.h) {
         const ratio = board.w / board.h;
@@ -2036,7 +2087,6 @@ async function generatePdf() {
       const drawX = pos.x + (imgW - drawW) / 2;
       const drawY = pos.y + (imgH - drawH) / 2;
 
-      // ✅ Convertir blob a dataURL solo para el PDF
       const dataUrl = await blobToDataURL(board.blob);
 
       doc.addImage(
@@ -2119,7 +2169,7 @@ itemsPerPageSelect.addEventListener('change', function () {
 });
 
 // =========================================================
-// RESIZE (rotación de móvil)
+// RESIZE
 // =========================================================
 let _resizeTimer = null;
 window.addEventListener('resize', () => {
@@ -2139,7 +2189,7 @@ window.addEventListener('resize', () => {
 });
 
 // =========================================================
-// LIMPIEZA AL SALIR (libera objectURLs)
+// LIMPIEZA AL SALIR
 // =========================================================
 window.addEventListener('beforeunload', () => {
   state.savedBoards.forEach(b => b.url && URL.revokeObjectURL(b.url));
@@ -2162,6 +2212,7 @@ window.addEventListener('beforeunload', () => {
   headerInput.value = state.headerText;
   footerInput.value = state.footerText;
   itemsPerPageSelect.value = String(state.itemsPerPage);
+  applyOverlayMode();
   updateTemplateButtons();
 })();
 </script>
