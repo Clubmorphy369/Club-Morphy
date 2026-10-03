@@ -2,7 +2,6 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8" />
-<!-- ✅ Zoom permitido: mejor accesibilidad en móvil -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <title>ChessExtract Pro — Extractor de Tableros de Ajedrez</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -46,7 +45,7 @@
     padding: 22px;
   }
 
-  /* ============ HEADER ============ */
+  /* HEADER */
   .app-header { text-align: center; margin-bottom: 22px; padding-bottom: 18px; border-bottom: 1px solid var(--light); }
   .app-header h1 {
     color: var(--primary);
@@ -58,7 +57,7 @@
   .app-header h1 i { color: var(--secondary); }
   .app-header p { color: var(--gray); font-size: .98rem; margin-top: 6px; }
 
-  /* ============ CARDS ============ */
+  /* CARDS */
   .card {
     background: #fff;
     border-radius: var(--radius);
@@ -84,7 +83,7 @@
     gap: 12px; flex-wrap: wrap; margin-bottom: 14px;
   }
 
-  /* ============ INSTRUCCIONES ============ */
+  /* INSTRUCCIONES */
   .instructions {
     background: #e8f4fd;
     border-radius: var(--radius);
@@ -96,7 +95,7 @@
   .instructions ol { padding-left: 22px; margin-top: 6px; }
   .instructions li { margin-bottom: 4px; }
 
-  /* ============ BOTONES ============ */
+  /* BOTONES */
   .btn {
     display: inline-flex; align-items: center; justify-content: center;
     gap: 8px;
@@ -144,7 +143,7 @@
     border-color: var(--secondary);
   }
 
-  /* ============ FORM CONTROLS ============ */
+  /* FORM CONTROLS */
   .form-control {
     width: 100%;
     padding: 10px 12px;
@@ -169,7 +168,7 @@
     margin-bottom: 6px;
   }
 
-  /* ============ DROP ZONE ============ */
+  /* DROP ZONE */
   .drop-zone {
     border: 2.5px dashed #b8c7d6;
     border-radius: var(--radius);
@@ -203,7 +202,7 @@
   }
   .file-info.hidden { display: none; }
 
-  /* ============ CROP AREA ============ */
+  /* CROP AREA */
   .crop-toolbar {
     display: flex;
     justify-content: space-between;
@@ -262,7 +261,6 @@
   .crop-box {
     position: absolute;
     border: 2px solid #fff;
-    /* ✅ Overlay más claro: antes .55, ahora .40 */
     box-shadow:
       0 0 0 1px rgba(52,152,219,.9),
       0 0 0 9999px rgba(0,0,0,.40);
@@ -276,13 +274,11 @@
   }
   .crop-box.hidden { display: none; }
 
-  /* ✅ Sin overlay: solo borde, la imagen se ve completa */
   .crop-box.no-overlay {
     box-shadow: 0 0 0 2px rgba(52,152,219,.95);
     background: rgba(52,152,219,.06);
   }
 
-  /* ✅ Modo desplazar: el box deja pasar los toques al contenedor */
   .crop-box.pan-mode { pointer-events: none; }
   .crop-box.pan-mode .resize-handle { pointer-events: none; }
 
@@ -313,8 +309,8 @@
 
   .resize-handle {
     position: absolute;
-    width: 22px;
-    height: 22px;
+    width: 32px;
+    height: 32px;
     background: #fff;
     border: 3px solid var(--secondary);
     border-radius: 50%;
@@ -322,12 +318,20 @@
     touch-action: none;
     z-index: 6;
   }
-  .resize-nw { top: -11px; left: -11px; cursor: nwse-resize; }
-  .resize-ne { top: -11px; right: -11px; cursor: nesw-resize; }
-  .resize-sw { bottom: -11px; left: -11px; cursor: nesw-resize; }
-  .resize-se { bottom: -11px; right: -11px; cursor: nwse-resize; }
+  /* Zona de toque invisible ~70x70 px alrededor del círculo */
+  .resize-handle::before {
+    content: '';
+    position: absolute;
+    inset: -19px;
+    border-radius: 50%;
+    background: transparent;
+  }
+  .resize-nw { top: -16px; left: -16px; cursor: nwse-resize; }
+  .resize-ne { top: -16px; right: -16px; cursor: nesw-resize; }
+  .resize-sw { bottom: -16px; left: -16px; cursor: nesw-resize; }
+  .resize-se { bottom: -16px; right: -16px; cursor: nwse-resize; }
 
-  /* ============ BARRA DE PROGRESO ============ */
+  /* BARRA DE PROGRESO */
   .progress-bar {
     position: relative;
     height: 24px;
@@ -405,7 +409,7 @@
   }
   .crop-nav .btn { flex: 1; }
 
-  /* ============ QUALITY ============ */
+  /* QUALITY */
   .settings-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -441,7 +445,7 @@
     border-radius: 12px;
   }
 
-  /* ============ GRID TABLEROS ============ */
+  /* GRID TABLEROS */
   .chessboards-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
@@ -485,7 +489,7 @@
     padding: 4px 8px;
   }
 
-  /* ============ PDF PREVIEW ============ */
+  /* PDF PREVIEW */
   .pdf-preview {
     border: 1px solid #e2e8f0;
     border-radius: var(--radius);
@@ -578,7 +582,7 @@
   .page-content.rows-2 .page-cell { padding: 10px; }
   .page-content.rows-2 .answer-lines .line { margin-bottom: 8px; }
 
-  /* ============ NOTIFICACIÓN ============ */
+  /* NOTIFICACIÓN */
   .notification {
     position: fixed;
     top: 16px;
@@ -640,7 +644,7 @@
     margin: 0 2px;
   }
 
-  /* ============ RESPONSIVE ============ */
+  /* RESPONSIVE */
   @media (max-width: 700px) {
     body { padding: 8px; }
     .app-container { padding: 14px; border-radius: 8px; }
@@ -653,12 +657,35 @@
     .chessboard-item img { height: 110px; }
     .crop-options { gap: 12px; font-size: .85rem; }
     .crop-actions .btn { flex: 1 1 48%; }
-    #cropContainer { max-height: 62vh; padding: 8px; }
-    .resize-handle { width: 28px; height: 28px; }
-    .resize-nw { top: -14px; left: -14px; }
-    .resize-ne { top: -14px; right: -14px; }
-    .resize-sw { bottom: -14px; left: -14px; }
-    .resize-se { bottom: -14px; right: -14px; }
+
+    /* La imagen SIEMPRE cabe en el contenedor */
+    #cropContainer {
+      max-height: 54vh;
+      min-height: 0;
+      overflow: hidden;
+      padding: 4px;
+      align-items: center;
+      justify-content: center;
+    }
+    #imageToCrop {
+      max-height: 52vh;
+      max-width: 100%;
+    }
+
+    /* Tiradores más grandes en móvil */
+    .resize-handle {
+      width: 38px;
+      height: 38px;
+      border-width: 4px;
+    }
+    .resize-handle::before {
+      inset: -22px;
+    }
+    .resize-nw { top: -19px; left: -19px; }
+    .resize-ne { top: -19px; right: -19px; }
+    .resize-sw { bottom: -19px; left: -19px; }
+    .resize-se { bottom: -19px; right: -19px; }
+
     .progress-text { font-size: .75rem; }
   }
   @media (max-width: 380px) {
@@ -681,6 +708,7 @@
     <ol>
       <li>Sube o arrastra una o varias imágenes con tableros.</li>
       <li>Ajusta el recuadro sobre el tablero (arrastra y usa los tiradores).</li>
+      <li>En móvil: <strong>un dedo</strong> mueve el recuadro, <strong>dos dedos</strong> desplazan la imagen.</li>
       <li>Pulsa <em>Guardar tablero</em> (<span class="kbd-hint">Ctrl</span>+<span class="kbd-hint">Enter</span>). Repite para cada uno.</li>
       <li>Elige 4, 6 u 8 tableros por página y descarga tu PDF.</li>
     </ol>
@@ -736,7 +764,6 @@
       </div>
     </div>
 
-    <!-- Barra de progreso -->
     <div class="progress-bar hidden" id="progressBar" role="progressbar"
          aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
       <div class="progress-fill" id="progressFill"></div>
@@ -793,7 +820,6 @@
       <button id="fullCropBtn" class="btn btn-outline btn-sm" title="Recuadro cubre toda la imagen">
         <i class="fas fa-expand"></i> Todo
       </button>
-      <!-- ✅ Nuevo: alterna el oscurecido -->
       <button id="toggleOverlayBtn" class="btn btn-outline btn-sm" title="Mostrar la imagen sin oscurecer el fondo">
         <i class="fas fa-eye"></i> Ver completa
       </button>
@@ -883,8 +909,7 @@ const state = {
   imageFiles: [],
   currentIndex: 0,
   originalImage: null,
-  // Cada entrada: { blob, url, hash, w, h }
-  savedBoards: [],
+  savedBoards: [],              // { blob, url, hash, w, h }
   editingIndex: -1,
   quality: 0.75,
   resolution: 0.85,
@@ -959,6 +984,7 @@ const previewSection   = $('previewSection');
 const pdfSection       = $('pdfSection');
 const imageCounter     = $('imageCounter');
 const imageToCrop      = $('imageToCrop');
+const cropContainer    = $('cropContainer');
 const cropBox          = $('cropBox');
 const cropBtn          = $('cropBtn');
 const prevImageBtn     = $('prevImageBtn');
@@ -1287,11 +1313,22 @@ function applyOverlayMode() {
     : '<i class="fas fa-eye"></i> Ver completa';
 }
 
+function showPanHint() {
+  if (!isMobileViewport()) return;
+  if (localStorage.getItem('chessExtract.panHintShown')) return;
+  localStorage.setItem('chessExtract.panHintShown', '1');
+  notify(
+    'Consejo: usa dos dedos para mover la imagen · un dedo mueve el recuadro',
+    'info',
+    { duration: 6500 }
+  );
+}
+
 function initCropBox() {
   const { w: dW, h: dH } = getDisplaySize();
   if (dW <= 0 || dH <= 0) return;
 
-  // ✅ Auto "Ver completa" la primera vez en móvil
+  // Auto "Ver completa" la primera vez en móvil
   if (isMobileViewport() && !state._mobileOverlayInited) {
     state._mobileOverlayInited = true;
     if (!state.overlayHidden) {
@@ -1304,8 +1341,9 @@ function initCropBox() {
     const t = state.cropTemplate;
     state.crop = { x: t.x * dW, y: t.y * dH, w: t.w * dW, h: t.h * dH };
   } else {
-    // ✅ Antes 0.6 → ahora 0.8 (más generoso en pantallas chicas)
-    const side = Math.min(dW, dH) * 0.8;
+    // En móvil 60 %, en escritorio 70 %
+    const factor = isMobileViewport() ? 0.6 : 0.7;
+    const side = Math.min(dW, dH) * factor;
     state.crop = { x: (dW - side) / 2, y: (dH - side) / 2, w: side, h: side };
   }
   applyCropStyles();
@@ -1315,6 +1353,36 @@ function initCropBox() {
   applyPanMode();
   cropBtn.disabled = false;
   updateTemplateButtons();
+  showPanHint();
+}
+
+// =========================================================
+// DETECCIÓN POR PROXIMIDAD DE ESQUINA
+// =========================================================
+function getHandleFromPoint(clientX, clientY) {
+  const rect = cropBox.getBoundingClientRect();
+  const threshold = isMobileViewport() ? 60 : 48;
+
+  const corners = [
+    { name: 'nw', x: rect.left,   y: rect.top    },
+    { name: 'ne', x: rect.right,  y: rect.top    },
+    { name: 'sw', x: rect.left,   y: rect.bottom },
+    { name: 'se', x: rect.right,  y: rect.bottom }
+  ];
+
+  let best = null;
+  let bestDist = threshold;
+
+  for (const c of corners) {
+    const dx = clientX - c.x;
+    const dy = clientY - c.y;
+    const d = Math.sqrt(dx * dx + dy * dy);
+    if (d < bestDist) {
+      bestDist = d;
+      best = c.name;
+    }
+  }
+  return best;
 }
 
 // =========================================================
@@ -1327,9 +1395,19 @@ function onPointerDown(e) {
   if (e.button !== undefined && e.button !== 0) return;
   if (state.pointerId !== null) return;
 
-  const handle = e.target.closest('.resize-handle');
+  // 1) Tocar directamente el círculo (o su zona invisible)
+  let handle = e.target.closest('.resize-handle');
+  let mode;
+
+  if (handle) {
+    mode = handle.dataset.dir;
+  } else {
+    // 2) Si no tocó el handle, ver si está cerca de una esquina
+    mode = getHandleFromPoint(e.clientX, e.clientY) || 'drag';
+  }
+
   state.pointerId = e.pointerId;
-  state.mode = handle ? handle.dataset.dir : 'drag';
+  state.mode = mode;
   state.startX = e.clientX;
   state.startY = e.clientY;
   state.startCrop = { ...state.crop };
@@ -1411,6 +1489,38 @@ function onPointerUp(e) {
   state.pointerId = null;
   state.mode = null;
 }
+
+// =========================================================
+// PAN CON DOS DEDOS
+// =========================================================
+let _twoFingerActive = false;
+
+cropContainer.addEventListener('touchstart', (e) => {
+  if (e.touches.length >= 2) {
+    _twoFingerActive = true;
+    cropBox.classList.add('pan-mode');
+    if (state.pointerId !== null) {
+      try { cropBox.releasePointerCapture(state.pointerId); } catch (_) {}
+      cropBox.removeEventListener('pointermove', onPointerMove);
+      cropBox.removeEventListener('pointerup', onPointerUp);
+      cropBox.removeEventListener('pointercancel', onPointerUp);
+      state.pointerId = null;
+      state.mode = null;
+    }
+  }
+}, { passive: true });
+
+cropContainer.addEventListener('touchend', (e) => {
+  if (_twoFingerActive && e.touches.length < 2) {
+    _twoFingerActive = false;
+    cropBox.classList.toggle('pan-mode', state.panMode);
+  }
+}, { passive: true });
+
+cropContainer.addEventListener('touchcancel', () => {
+  _twoFingerActive = false;
+  cropBox.classList.toggle('pan-mode', state.panMode);
+}, { passive: true });
 
 // =========================================================
 // TECLADO — cropBox
@@ -1523,7 +1633,7 @@ function findDuplicateIndex(hash, excludeIdx = -1) {
 }
 
 // =========================================================
-// RECORTAR (async, devuelve blob + url)
+// RECORTAR
 // =========================================================
 async function cropImage() {
   if (!state.originalImage) return null;
@@ -1770,7 +1880,6 @@ fullCropBtn.addEventListener('click', () => {
   notify('Recuadro = imagen completa', 'info');
 });
 
-// ✅ Toggle overlay
 toggleOverlayBtn.addEventListener('click', () => {
   state.overlayHidden = !state.overlayHidden;
   applyOverlayMode();
@@ -1822,7 +1931,21 @@ async function processAllImages(useTemplate) {
   showProgress(0, state.imageFiles.length);
 
   const previousIndex = state.currentIndex;
-  const originalTemplate = state.cropTemplate;
+
+  // Usar el recorte actual (o la plantilla) como referencia
+  let activeTemplate = state.cropTemplate;
+  if (!useTemplate) {
+    const { w: cW, h: cH } = getDisplaySize();
+    if (cW > 0 && cH > 0 && state.crop.w > 30) {
+      activeTemplate = {
+        x: state.crop.x / cW,
+        y: state.crop.y / cH,
+        w: state.crop.w / cW,
+        h: state.crop.h / cH
+      };
+    }
+  }
+
   let skipped = 0;
   let processed = 0;
 
@@ -1856,16 +1979,16 @@ async function processAllImages(useTemplate) {
         const { w: dW, h: dH } = getDisplaySize();
         if (dW <= 0 || dH <= 0) continue;
 
-        if (useTemplate && originalTemplate) {
+        if (activeTemplate) {
           state.crop = {
-            x: originalTemplate.x * dW,
-            y: originalTemplate.y * dH,
-            w: originalTemplate.w * dW,
-            h: originalTemplate.h * dH
+            x: activeTemplate.x * dW,
+            y: activeTemplate.y * dH,
+            w: activeTemplate.w * dW,
+            h: activeTemplate.h * dH
           };
         } else {
-          // ✅ Mismo 0.8 que initCropBox
-          const side = Math.min(dW, dH) * 0.8;
+          const factor = isMobileViewport() ? 0.6 : 0.7;
+          const side = Math.min(dW, dH) * factor;
           state.crop = { x: (dW - side) / 2, y: (dH - side) / 2, w: side, h: side };
         }
         applyCropStyles();
@@ -2026,7 +2149,7 @@ function updatePdfPreview() {
 }
 
 // =========================================================
-// GENERAR PDF (async por blob→dataURL)
+// GENERAR PDF
 // =========================================================
 async function generatePdf() {
   if (state.savedBoards.length === 0) { notify('No hay tableros', 'info'); return; }
