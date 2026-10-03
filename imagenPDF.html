@@ -165,7 +165,7 @@
         }
 
         /* ============================================================
-           SELECTOR DE ORDEN — destacado y visible en móvil
+           SELECTOR DE ORDEN
            ============================================================ */
         .sort-control {
             background: linear-gradient(135deg, #e8f4fd 0%, #d6ebff 100%);
@@ -183,10 +183,7 @@
             font-size: 1rem;
             margin-bottom: 10px;
         }
-        .sort-control .sort-title i {
-            color: var(--secondary);
-            font-size: 1.1rem;
-        }
+        .sort-control .sort-title i { color: var(--secondary); font-size: 1.1rem; }
         .sort-control select {
             width: 100%;
             padding: 12px;
@@ -273,6 +270,9 @@
             margin-top: 8px;
         }
 
+        /* ============================================================
+           CROP AREA — SIN CAMBIOS
+           ============================================================ */
         #cropContainer {
             position: relative;
             border: 1px solid #ddd;
@@ -317,6 +317,41 @@
         .resize-ne { top: -11px; right: -11px; cursor: ne-resize; }
         .resize-sw { bottom: -11px; left: -11px; cursor: sw-resize; }
         .resize-se { bottom: -11px; right: -11px; cursor: se-resize; }
+        /* ============================================================ */
+
+        /* ============================================================
+           BARRA DE PROGRESO — NUEVA
+           ============================================================ */
+        .progress-bar {
+            position: relative;
+            height: 26px;
+            background: #e2e8f0;
+            border-radius: 13px;
+            overflow: hidden;
+            margin: 12px 0;
+        }
+        .progress-bar.hidden { display: none; }
+        .progress-fill {
+            height: 100%;
+            width: 0;
+            background: linear-gradient(90deg, var(--secondary), var(--success));
+            transition: width 0.25s ease;
+            border-radius: 13px;
+        }
+        .progress-text {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--primary);
+            text-shadow: 0 1px 2px rgba(255,255,255,0.7);
+            letter-spacing: 0.3px;
+        }
+        /* ============================================================ */
+
         .image-counter {
             text-align: center;
             margin: 12px 0;
@@ -400,6 +435,11 @@
             gap: 12px;
             flex: 1;
         }
+        /* Layouts dinámicos según tableros por página */
+        .page-content.cols-2.rows-2 { grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(2, 1fr); }
+        .page-content.cols-2.rows-3 { grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(3, 1fr); }
+        .page-content.cols-2.rows-4 { grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(4, 1fr); }
+
         .page-cell {
             border: 1px solid #eee;
             display: flex;
@@ -412,6 +452,11 @@
             min-height: 120px;
         }
         .page-cell img { max-width: 60%; max-height: 60%; margin-bottom: 4px; }
+        .page-content.rows-2 .page-cell { min-height: 180px; }
+        .page-content.rows-2 .page-cell img { max-width: 75%; max-height: 75%; }
+        .page-content.rows-4 .page-cell { min-height: 85px; }
+        .page-content.rows-4 .page-cell img { max-width: 55%; max-height: 55%; }
+        .page-content.rows-4 .line { margin: 2px 0; }
         .page-header { text-align: center; font-weight: bold; padding: 4px; background: #f0f0f0; border-radius: 4px; margin-bottom: 10px; }
         .page-footer { display: flex; justify-content: space-between; padding: 4px; font-size: 0.8rem; background: #f0f0f0; border-radius: 4px; margin-top: 10px; }
         .answer-lines { width: 100%; margin-top: 4px; }
@@ -437,8 +482,26 @@
             font-size: 0.95rem;
         }
         .notification.show { opacity: 1; transform: translateX(0); }
+        /* Colores por tipo */
+        .notification.success { background: var(--success); }
         .notification.warning { background: var(--warning); }
-        .notification.info { background: var(--secondary); }
+        .notification.error   { background: var(--accent); }
+        .notification.info    { background: var(--secondary); }
+        .notification .undo-btn {
+            background: rgba(255,255,255,0.25);
+            border: 1px solid rgba(255,255,255,0.55);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 700;
+            margin-left: 8px;
+            font-family: inherit;
+        }
+        .notification .undo-btn:hover {
+            background: rgba(255,255,255,0.4);
+        }
         .badge {
             display: inline-block;
             padding: 2px 8px;
@@ -465,6 +528,7 @@
             .card { padding: 12px; }
             #cropContainer { height: 280px; }
             .sort-control, .dedupe-control { padding: 12px; }
+            .progress-text { font-size: 0.75rem; }
         }
     </style>
 </head>
@@ -489,9 +553,6 @@
         <div class="card-header"><i class="fas fa-upload"></i> <h2>Paso 1: Subir imágenes</h2></div>
         <input type="file" id="imageInput" class="form-control" accept="image/*" multiple />
 
-        <!-- ============================================================
-             SELECTOR DE ORDEN DE LAS IMÁGENES
-             ============================================================ -->
         <div class="sort-control">
             <div class="sort-title">
                 <i class="fas fa-sort"></i>
@@ -509,9 +570,6 @@
             </p>
         </div>
 
-        <!-- ============================================================
-             DETECCIÓN DE TABLEROS REPETIDOS
-             ============================================================ -->
         <div class="dedupe-control">
             <div class="dedupe-title">
                 <i class="fas fa-clone"></i>
@@ -566,6 +624,14 @@
             </div>
         </div>
 
+        <!-- ============================================================
+             BARRA DE PROGRESO
+             ============================================================ -->
+        <div class="progress-bar hidden" id="progressBar">
+            <div class="progress-fill" id="progressFill"></div>
+            <span class="progress-text" id="progressText">0 %</span>
+        </div>
+
         <div class="template-section">
             <h3><i class="fas fa-clone"></i> Plantilla</h3>
             <button id="saveTemplateBtn" class="btn btn-outline btn-sm"><i class="fas fa-save"></i> Guardar plantilla</button>
@@ -597,6 +663,19 @@
         <div class="card-header"><i class="fas fa-file-pdf"></i> <h2>Vista previa PDF</h2></div>
         <input type="text" id="headerInput" class="form-control" placeholder="Encabezado (opcional)" />
         <input type="text" id="footerInput" class="form-control" placeholder="Pie de página (opcional)" />
+
+        <!-- ============================================================
+             SELECTOR 4 / 6 / 8 POR PÁGINA
+             ============================================================ -->
+        <div class="quality-control">
+            <span class="form-label">Tableros por página:</span>
+            <select id="itemsPerPageSelect" class="form-control">
+                <option value="4">4 por página (más grandes)</option>
+                <option value="6" selected>6 por página (recomendado)</option>
+                <option value="8">8 por página (más denso)</option>
+            </select>
+        </div>
+
         <div id="pdfPreview" class="pdf-preview"></div>
         <button id="generatePdfBtn" class="btn btn-success"><i class="fas fa-download"></i> Generar PDF</button>
     </section>
@@ -606,7 +685,9 @@
 
 <script>
 // ============================================================
-// VERSIÓN CON ORDEN DE IMÁGENES + DETECCIÓN DE REPETIDOS
+// VERSIÓN CON ORDEN + REPETIDOS + BARRA DE PROGRESO + LAYOUTS +
+// localStorage + BLOB + NOTIFICACIONES + DESHACER
+// El sistema de arrastre/recorte NO fue tocado.
 // ============================================================
 
 const MAX_DISPLAY_WIDTH = 900;
@@ -618,7 +699,7 @@ let resizeDirection = null;
 let startX, startY;
 let cropBoxX = 0, cropBoxY = 0, cropBoxWidth = 0, cropBoxHeight = 0;
 let startCropBoxX = 0, startCropBoxY = 0, startCropBoxWidth = 0, startCropBoxHeight = 0;
-// Cada tablero guardado es: { dataUrl, hash }
+// Cada tablero guardado: { blob, url, hash }
 let savedChessboards = [];
 let imageQuality = 0.7;
 let resolutionFactor = 0.75;
@@ -627,9 +708,36 @@ let imageFiles = [];
 let currentImageIndex = 0;
 let cropTemplate = null;
 let templateAppliedToAll = false;
-
-// Archivos tal cual llegan del selector (sin ordenar)
 let rawImageFiles = [];
+let _notifTimer = null;
+
+// Layouts dinámicos del PDF (mm, A4 = 210x297)
+const LAYOUTS = {
+    4: {
+        cols: 2, rows: 2, imgW: 75, imgH: 75, lineCount: 3, lineGap: 4.5,
+        positions: [
+            { x: 27,  y: 55  }, { x: 108, y: 55  },
+            { x: 27,  y: 170 }, { x: 108, y: 170 }
+        ]
+    },
+    6: {
+        cols: 2, rows: 3, imgW: 58.5, imgH: 58.5, lineCount: 3, lineGap: 4,
+        positions: [
+            { x: 27,  y: 40  }, { x: 122, y: 40  },
+            { x: 27,  y: 120 }, { x: 122, y: 120 },
+            { x: 27,  y: 200 }, { x: 122, y: 200 }
+        ]
+    },
+    8: {
+        cols: 2, rows: 4, imgW: 46, imgH: 46, lineCount: 3, lineGap: 3.5,
+        positions: [
+            { x: 25, y: 32  }, { x: 139, y: 32  },
+            { x: 25, y: 93  }, { x: 139, y: 93  },
+            { x: 25, y: 154 }, { x: 139, y: 154 },
+            { x: 25, y: 215 }, { x: 139, y: 215 }
+        ]
+    }
+};
 
 // DOM
 const imageInput = document.getElementById('imageInput');
@@ -659,76 +767,139 @@ const headerInput = document.getElementById('headerInput');
 const footerInput = document.getElementById('footerInput');
 const processAllBtn = document.getElementById('processAllBtn');
 const clearAllBtn = document.getElementById('clearAllBtn');
-// Orden y dedupe
 const sortModeSelect = document.getElementById('sortModeSelect');
 const dedupeCheck = document.getElementById('dedupeCheck');
 const dedupeThreshold = document.getElementById('dedupeThreshold');
 const dedupeSensitivityWrap = document.getElementById('dedupeSensitivityWrap');
+const itemsPerPageSelect = document.getElementById('itemsPerPageSelect');
+const progressBar = document.getElementById('progressBar');
+const progressFill = document.getElementById('progressFill');
+const progressText = document.getElementById('progressText');
 
 // --------------------------------------------------------------
-// APLICAR ORDEN SEGÚN EL MODO SELECCIONADO
+// HELPERS: BLOB <-> DATAURL
+// --------------------------------------------------------------
+function dataURLToBlob(dataURL) {
+    return new Promise((resolve) => {
+        const parts = dataURL.split(',');
+        const mime = parts[0].match(/:(.*?);/)[1];
+        const bstr = atob(parts[1]);
+        const n = bstr.length;
+        const u8arr = new Uint8Array(n);
+        for (let i = 0; i < n; i++) u8arr[i] = bstr.charCodeAt(i);
+        resolve(new Blob([u8arr], { type: mime }));
+    });
+}
+
+function blobToDataURL(blob) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e) => resolve(e.target.result);
+        reader.onerror = () => reject(new Error('Error convirtiendo imagen'));
+        reader.readAsDataURL(blob);
+    });
+}
+
+// --------------------------------------------------------------
+// NOTIFICACIONES (con tipo + undo)
+// --------------------------------------------------------------
+function showNotification(msg, type, opts) {
+    type = type || 'success';
+    opts = opts || {};
+
+    notification.classList.remove('success', 'warning', 'error', 'info');
+    notification.classList.add(type);
+
+    const icon = notification.querySelector('i');
+    icon.className = type === 'error' ? 'fas fa-exclamation-circle'
+                   : type === 'warning' ? 'fas fa-exclamation-triangle'
+                   : type === 'info' ? 'fas fa-info-circle'
+                   : 'fas fa-check-circle';
+
+    notificationText.textContent = msg;
+
+    let undoBtn = notification.querySelector('.undo-btn');
+    if (undoBtn) undoBtn.remove();
+    if (opts.onUndo) {
+        undoBtn = document.createElement('button');
+        undoBtn.type = 'button';
+        undoBtn.className = 'undo-btn';
+        undoBtn.textContent = 'Deshacer';
+        undoBtn.addEventListener('click', function() {
+            opts.onUndo();
+            notification.classList.remove('show');
+        });
+        notification.appendChild(undoBtn);
+    }
+
+    notification.classList.add('show');
+    clearTimeout(_notifTimer);
+    _notifTimer = setTimeout(() => notification.classList.remove('show'), opts.duration || 3200);
+}
+
+// --------------------------------------------------------------
+// BARRA DE PROGRESO
+// --------------------------------------------------------------
+function showProgress(current, total) {
+    progressBar.classList.remove('hidden');
+    const pct = total > 0 ? Math.round((current / total) * 100) : 0;
+    progressFill.style.width = pct + '%';
+    progressText.textContent = pct + '% · ' + current + '/' + total;
+}
+
+function hideProgress() {
+    progressBar.classList.add('hidden');
+    progressFill.style.width = '0%';
+    progressText.textContent = '0 %';
+}
+
+// --------------------------------------------------------------
+// ORDEN DE IMÁGENES
 // --------------------------------------------------------------
 function applySortOrder() {
     if (rawImageFiles.length === 0) return;
-
     const mode = sortModeSelect.value;
     let arr = rawImageFiles.slice();
-
     switch (mode) {
         case 'name':
-            arr.sort((a, b) =>
-                a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' })
-            );
+            arr.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }));
             break;
-
         case 'date-asc':
             arr.sort((a, b) => (a.lastModified || 0) - (b.lastModified || 0));
             break;
-
         case 'date-desc':
             arr.sort((a, b) => (b.lastModified || 0) - (a.lastModified || 0));
             break;
-
         case 'selection':
         default:
             break;
     }
-
     imageFiles = arr;
 }
 
 // --------------------------------------------------------------
-// HASH PERCEPTUAL (dHash de 64 bits) PARA DETECCIÓN DE REPETIDOS
+// HASH PERCEPTUAL (dHash 64 bits)
 // --------------------------------------------------------------
 function computeHashFromImage(img) {
-    // Reducir a 9x8 en escala de grises y comparar píxeles adyacentes
     const w = 9, h = 8;
     const c = document.createElement('canvas');
     c.width = w; c.height = h;
     const cx = c.getContext('2d', { willReadFrequently: true });
     cx.drawImage(img, 0, 0, w, h);
-
     let data;
-    try {
-        data = cx.getImageData(0, 0, w, h).data;
-    } catch (e) {
-        return null; // Canvas contaminado (no debería pasar con blob/data)
-    }
-
+    try { data = cx.getImageData(0, 0, w, h).data; } catch (e) { return null; }
     let bits = '';
     for (let y = 0; y < h; y++) {
         for (let x = 0; x < w - 1; x++) {
             const i = (y * w + x) * 4;
             const j = (y * w + x + 1) * 4;
-            const l1 = 0.299 * data[i]   + 0.587 * data[i+1]   + 0.114 * data[i+2];
-            const l2 = 0.299 * data[j]   + 0.587 * data[j+1]   + 0.114 * data[j+2];
+            const l1 = 0.299 * data[i] + 0.587 * data[i+1] + 0.114 * data[i+2];
+            const l2 = 0.299 * data[j] + 0.587 * data[j+1] + 0.114 * data[j+2];
             bits += l1 > l2 ? '1' : '0';
         }
     }
     let hex = '';
-    for (let i = 0; i < 64; i += 4) {
-        hex += parseInt(bits.substr(i, 4), 2).toString(16);
-    }
+    for (let i = 0; i < 64; i += 4) hex += parseInt(bits.substr(i, 4), 2).toString(16);
     return hex;
 }
 
@@ -751,7 +922,8 @@ function hammingDistance(a, b) {
     return d;
 }
 
-function findDuplicateIndex(hash, excludeIdx = -1) {
+function findDuplicateIndex(hash, excludeIdx) {
+    if (excludeIdx === undefined) excludeIdx = -1;
     if (!hash) return -1;
     const threshold = parseInt(dedupeThreshold.value, 10) || 6;
     for (let i = 0; i < savedChessboards.length; i++) {
@@ -764,8 +936,54 @@ function findDuplicateIndex(hash, excludeIdx = -1) {
 }
 
 // --------------------------------------------------------------
-// FUNCIÓN PARA OBTENER COORDENADAS (ratón o táctil)
+// localStorage
 // --------------------------------------------------------------
+function saveSettings() {
+    try {
+        localStorage.setItem('chessExtract.settings', JSON.stringify({
+            imageQuality: imageQuality,
+            resolutionFactor: resolutionFactor,
+            headerText: headerInput.value,
+            footerText: footerInput.value,
+            itemsPerPage: itemsPerPageSelect.value,
+            dedupeEnabled: dedupeCheck.checked,
+            dedupeThreshold: dedupeThreshold.value,
+            sortMode: sortModeSelect.value
+        }));
+    } catch (e) {}
+}
+
+function loadSettings() {
+    try {
+        const raw = localStorage.getItem('chessExtract.settings');
+        if (!raw) return;
+        const s = JSON.parse(raw);
+        if (typeof s.imageQuality === 'number') {
+            imageQuality = s.imageQuality;
+            qualitySlider.value = imageQuality;
+            qualityValue.textContent = imageQuality;
+        }
+        if (typeof s.resolutionFactor === 'number') {
+            resolutionFactor = s.resolutionFactor;
+            resolutionSelect.value = String(resolutionFactor);
+        }
+        if (typeof s.headerText === 'string') headerInput.value = s.headerText;
+        if (typeof s.footerText === 'string') footerInput.value = s.footerText;
+        if (typeof s.itemsPerPage === 'string' && ['4','6','8'].indexOf(s.itemsPerPage) !== -1) {
+            itemsPerPageSelect.value = s.itemsPerPage;
+        }
+        if (typeof s.dedupeEnabled === 'boolean') {
+            dedupeCheck.checked = s.dedupeEnabled;
+            if (s.dedupeEnabled) dedupeSensitivityWrap.classList.add('show');
+        }
+        if (typeof s.dedupeThreshold === 'string') dedupeThreshold.value = s.dedupeThreshold;
+        if (typeof s.sortMode === 'string') sortModeSelect.value = s.sortMode;
+    } catch (e) {}
+}
+
+// ============================================================
+// ZONA INTOCABLE: TODO EL SISTEMA DE ARRASTRE Y RECORTE
+// ============================================================
 function getPointerPosition(e) {
     if (e.touches) {
         return { clientX: e.touches[0].clientX, clientY: e.touches[0].clientY };
@@ -774,9 +992,6 @@ function getPointerPosition(e) {
     }
 }
 
-// --------------------------------------------------------------
-// FACTOR DE ESCALA
-// --------------------------------------------------------------
 function getScaleFactors() {
     if (!imageToCrop || !originalImage) return { scaleX: 1, scaleY: 1 };
     const rect = imageToCrop.getBoundingClientRect();
@@ -791,9 +1006,6 @@ function getScaleFactors() {
     };
 }
 
-// --------------------------------------------------------------
-// ACTUALIZAR RECUADRO
-// --------------------------------------------------------------
 function updateCropBox() {
     if (!cropBox) return;
     cropBox.style.left = cropBoxX + 'px';
@@ -802,9 +1014,6 @@ function updateCropBox() {
     cropBox.style.height = cropBoxHeight + 'px';
 }
 
-// --------------------------------------------------------------
-// INICIALIZAR RECUADRO
-// --------------------------------------------------------------
 function initCropBox() {
     cropBox = document.querySelector('.crop-box');
     if (!cropBox) return;
@@ -853,9 +1062,6 @@ function initCropBox() {
     updateTemplateButtons();
 }
 
-// --------------------------------------------------------------
-// MANEJADORES
-// --------------------------------------------------------------
 function startDrag(e) {
     if (e.target.classList.contains('resize-handle')) return;
     e.preventDefault();
@@ -979,9 +1185,7 @@ function processMove(clientX, clientY) {
 function stopInteraction() { isDragging = false; isResizing = false; }
 function stopInteractionTouch() { isDragging = false; isResizing = false; }
 
-// --------------------------------------------------------------
-// RECORTAR
-// --------------------------------------------------------------
+// Recortar (sigue devolviendo dataURL, la conversión a blob ocurre en addChessboard)
 function cropImage() {
     if (!originalImage || !cropBox) return null;
     const { scaleX, scaleY } = getScaleFactors();
@@ -999,62 +1203,49 @@ function cropImage() {
     ctx.drawImage(originalImage, origX, origY, origW, origH, 0, 0, outW, outH);
     return canvas.toDataURL('image/jpeg', imageQuality);
 }
+// ============================================================
+// FIN ZONA INTOCABLE
+// ============================================================
 
 // --------------------------------------------------------------
-// NOTIFICACIONES
-// --------------------------------------------------------------
-function showNotification(msg, type) {
-    notificationText.textContent = msg;
-    notification.classList.remove('warning', 'info');
-    if (type === 'warning') notification.classList.add('warning');
-    if (type === 'info') notification.classList.add('info');
-    notification.classList.add('show');
-    clearTimeout(showNotification._t);
-    showNotification._t = setTimeout(() => notification.classList.remove('show'), 3200);
-}
-
-// --------------------------------------------------------------
-// GUARDAR TABLERO (con detección de repetidos)
+// GUARDAR TABLERO (con Blob + dedupe)
 // --------------------------------------------------------------
 async function addChessboard(dataUrl) {
     const hash = await computeHashFromDataUrl(dataUrl);
 
-    // Edición de un tablero existente
+    // Edición
     if (editingIndex >= 0) {
-        savedChessboards[editingIndex] = { dataUrl, hash };
+        const old = savedChessboards[editingIndex];
+        if (old && old.url) URL.revokeObjectURL(old.url);
+        const blob = await dataURLToBlob(dataUrl);
+        const url = URL.createObjectURL(blob);
+        savedChessboards[editingIndex] = { blob, url, hash };
         showNotification('Tablero actualizado');
         editingIndex = -1;
         updateChessboardsDisplay();
-        if (currentImageIndex < imageFiles.length - 1) {
-            nextImage();
-        } else {
-            resetCropSection();
-        }
+        if (currentImageIndex < imageFiles.length - 1) nextImage();
+        else resetCropSection();
         return;
     }
 
-    // Detección de repetidos
+    // Dedupe
     if (dedupeCheck.checked && hash) {
         const dup = findDuplicateIndex(hash);
         if (dup >= 0) {
-            showNotification(`Tablero repetido (similar al #${dup + 1}) — omitido`, 'warning');
-            if (currentImageIndex < imageFiles.length - 1) {
-                nextImage();
-            } else {
-                resetCropSection();
-            }
+            showNotification('Tablero repetido (similar al #' + (dup + 1) + ') — omitido', 'warning');
+            if (currentImageIndex < imageFiles.length - 1) nextImage();
+            else resetCropSection();
             return;
         }
     }
 
-    savedChessboards.push({ dataUrl, hash });
+    const blob = await dataURLToBlob(dataUrl);
+    const url = URL.createObjectURL(blob);
+    savedChessboards.push({ blob, url, hash });
     showNotification('Tablero guardado');
     updateChessboardsDisplay();
-    if (currentImageIndex < imageFiles.length - 1) {
-        nextImage();
-    } else {
-        resetCropSection();
-    }
+    if (currentImageIndex < imageFiles.length - 1) nextImage();
+    else resetCropSection();
 }
 
 function resetCropSection() {
@@ -1076,7 +1267,7 @@ function startEdit(index) {
         imageToCrop.onload = function() { setTimeout(initCropBox, 50); };
         if (imageToCrop.complete) setTimeout(initCropBox, 50);
     };
-    originalImage.src = savedChessboards[index].dataUrl;
+    originalImage.src = savedChessboards[index].url;
     cropSection.classList.remove('hidden');
 }
 
@@ -1086,22 +1277,23 @@ function updateChessboardsDisplay() {
     savedChessboards.forEach((board, index) => {
         const item = document.createElement('div');
         item.className = 'chessboard-item';
-        item.innerHTML = `
-            <img src="${board.dataUrl}" alt="Tablero ${index+1}" />
-            <div class="chessboard-info">Tablero ${index+1}</div>
-            <div class="chessboard-actions">
-                <button class="btn btn-warning btn-sm replace-btn" data-index="${index}"><i class="fas fa-edit"></i></button>
-                <button class="btn btn-danger btn-sm remove-btn" data-index="${index}"><i class="fas fa-trash"></i></button>
-            </div>
-        `;
+        item.innerHTML =
+            '<img src="' + board.url + '" alt="Tablero ' + (index+1) + '" />' +
+            '<div class="chessboard-info">Tablero ' + (index+1) + '</div>' +
+            '<div class="chessboard-actions">' +
+                '<button class="btn btn-warning btn-sm replace-btn" data-index="' + index + '"><i class="fas fa-edit"></i></button>' +
+                '<button class="btn btn-danger btn-sm remove-btn" data-index="' + index + '"><i class="fas fa-trash"></i></button>' +
+            '</div>';
         chessboardsContainer.appendChild(item);
         item.querySelector('.remove-btn').addEventListener('click', function() {
             const idx = parseInt(this.dataset.index);
+            const removed = savedChessboards[idx];
+            if (removed && removed.url) URL.revokeObjectURL(removed.url);
             savedChessboards.splice(idx, 1);
             if (editingIndex === idx) editingIndex = -1;
             else if (editingIndex > idx) editingIndex--;
             updateChessboardsDisplay();
-            showNotification('Tablero eliminado');
+            showNotification('Tablero eliminado', 'info');
         });
         item.querySelector('.replace-btn').addEventListener('click', function() {
             const idx = parseInt(this.dataset.index);
@@ -1118,12 +1310,17 @@ function updateChessboardsDisplay() {
     }
 }
 
+// --------------------------------------------------------------
+// VISTA PREVIA PDF (con layout dinámico)
+// --------------------------------------------------------------
 function updatePdfPreview() {
     pdfPreview.innerHTML = '';
-    const itemsPerPage = 6;
-    const pageCount = Math.ceil(savedChessboards.length / itemsPerPage);
+    const itemsPerPage = parseInt(itemsPerPageSelect.value, 10) || 6;
+    const layout = LAYOUTS[itemsPerPage];
+    const pageCount = Math.max(1, Math.ceil(savedChessboards.length / itemsPerPage));
     const headerText = headerInput.value;
     const footerText = footerInput.value;
+
     for (let p = 0; p < pageCount; p++) {
         const page = document.createElement('div');
         page.className = 'page';
@@ -1134,7 +1331,8 @@ function updatePdfPreview() {
             page.appendChild(h);
         }
         const content = document.createElement('div');
-        content.className = 'page-content';
+        content.className = 'page-content cols-' + layout.cols + ' rows-' + layout.rows;
+
         for (let i = 0; i < itemsPerPage; i++) {
             const idx = p * itemsPerPage + i;
             const cell = document.createElement('div');
@@ -1145,11 +1343,11 @@ function updatePdfPreview() {
             cell.appendChild(num);
             if (idx < savedChessboards.length) {
                 const img = document.createElement('img');
-                img.src = savedChessboards[idx].dataUrl;
+                img.src = savedChessboards[idx].url;
                 cell.appendChild(img);
                 const lines = document.createElement('div');
                 lines.className = 'answer-lines';
-                for (let j=0; j<3; j++) {
+                for (let j = 0; j < layout.lineCount; j++) {
                     const line = document.createElement('div');
                     line.className = 'line';
                     lines.appendChild(line);
@@ -1161,46 +1359,74 @@ function updatePdfPreview() {
         page.appendChild(content);
         const footer = document.createElement('div');
         footer.className = 'page-footer';
-        footer.innerHTML = `<span>Página ${p+1}</span><span>${footerText || ''}</span>`;
+        footer.innerHTML = '<span>Página ' + (p+1) + ' / ' + pageCount + '</span><span>' + (footerText || '') + '</span>';
         page.appendChild(footer);
         pdfPreview.appendChild(page);
     }
 }
 
-function generatePdf() {
+// --------------------------------------------------------------
+// GENERAR PDF (con layout dinámico + blobs)
+// --------------------------------------------------------------
+async function generatePdf() {
     if (savedChessboards.length === 0) return;
+
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF('p', 'mm', 'a4');
-    const positions = [
-        {x:27, y:40}, {x:122, y:40},
-        {x:27, y:120}, {x:122, y:120},
-        {x:27, y:200}, {x:122, y:200}
-    ];
-    const imgW = 58.5, imgH = 58.5;
+
+    const itemsPerPage = parseInt(itemsPerPageSelect.value, 10) || 6;
+    const layout = LAYOUTS[itemsPerPage];
+    const positions = layout.positions;
+    const imgW = layout.imgW, imgH = layout.imgH;
+    const lineCount = layout.lineCount, lineGap = layout.lineGap;
+
     const headerText = headerInput.value, footerText = footerInput.value;
-    for (let i=0; i<savedChessboards.length; i++) {
-        const pageIdx = Math.floor(i/6);
-        const posIdx = i%6;
-        if (posIdx===0 && i>0) doc.addPage();
-        if (headerText) {
-            doc.setFontSize(12);
-            doc.text(headerText, 105, 20, {align:'center'});
+
+    const prevHtml = generatePdfBtn.innerHTML;
+    generatePdfBtn.disabled = true;
+    generatePdfBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generando...';
+
+    try {
+        let currentPage = -1;
+        for (let i = 0; i < savedChessboards.length; i++) {
+            const pageIdx = Math.floor(i / itemsPerPage);
+            const posIdx = i % itemsPerPage;
+
+            if (pageIdx !== currentPage) {
+                if (currentPage !== -1) doc.addPage();
+                currentPage = pageIdx;
+                if (headerText) {
+                    doc.setFontSize(itemsPerPage === 8 ? 11 : 12);
+                    doc.text(headerText, 105, 18, { align: 'center' });
+                }
+                if (footerText) {
+                    doc.setFontSize(10);
+                    doc.text(footerText, 105, 290, { align: 'center' });
+                }
+            }
+
+            const pos = positions[posIdx];
+            const cx = pos.x + imgW / 2;
+            doc.setFontSize(itemsPerPage === 8 ? 10 : 12);
+            doc.text((i+1).toString(), cx, pos.y - 2.5, { align: 'center' });
+
+            const dataUrl = await blobToDataURL(savedChessboards[i].blob);
+            doc.addImage(dataUrl, 'JPEG', pos.x, pos.y, imgW, imgH, undefined, 'FAST');
+
+            const lineY = pos.y + imgH + (itemsPerPage === 8 ? 4 : 6);
+            for (let j = 0; j < lineCount; j++) {
+                doc.line(pos.x, lineY + j * lineGap, pos.x + imgW, lineY + j * lineGap);
+            }
         }
-        const cx = positions[posIdx].x + imgW/2;
-        doc.setFontSize(12);
-        doc.text((i+1).toString(), cx, positions[posIdx].y - 2.5, {align:'center'});
-        doc.addImage(savedChessboards[i].dataUrl, 'JPEG', positions[posIdx].x, positions[posIdx].y, imgW, imgH);
-        const lineY = positions[posIdx].y + imgH + 6;
-        for (let j=0; j<3; j++) {
-            doc.line(positions[posIdx].x, lineY + j*4, positions[posIdx].x+imgW, lineY + j*4);
-        }
-        if (footerText) {
-            doc.setFontSize(10);
-            doc.text(footerText, 105, 287, {align:'center'});
-        }
+        doc.save('ejercicios_ajedrez.pdf');
+        showNotification('PDF generado');
+    } catch (err) {
+        console.error(err);
+        showNotification('Error al generar el PDF', 'error');
+    } finally {
+        generatePdfBtn.disabled = false;
+        generatePdfBtn.innerHTML = prevHtml;
     }
-    doc.save('ejercicios_ajedrez.pdf');
-    showNotification('PDF generado');
 }
 
 function scaleImageToMaxWidth(img, maxWidth) {
@@ -1229,18 +1455,21 @@ function loadCurrentImage() {
         originalImage.src = e.target.result;
     };
     reader.readAsDataURL(imageFiles[currentImageIndex]);
-    imageCounter.textContent = `Imagen ${currentImageIndex+1} de ${imageFiles.length}`;
+    imageCounter.textContent = 'Imagen ' + (currentImageIndex+1) + ' de ' + imageFiles.length;
     prevImageBtn.disabled = (currentImageIndex === 0);
-    nextImageBtn.disabled = (currentImageIndex === imageFiles.length-1);
+    nextImageBtn.disabled = (currentImageIndex === imageFiles.length - 1);
 }
 
 function prevImage() {
     if (currentImageIndex > 0) { currentImageIndex--; loadCurrentImage(); }
 }
 function nextImage() {
-    if (currentImageIndex < imageFiles.length-1) { currentImageIndex++; loadCurrentImage(); }
+    if (currentImageIndex < imageFiles.length - 1) { currentImageIndex++; loadCurrentImage(); }
 }
 
+// --------------------------------------------------------------
+// PLANTILLAS
+// --------------------------------------------------------------
 function saveCropTemplate() {
     if (!cropBox) return;
     const displayW = imageToCrop.naturalWidth || imageToCrop.width;
@@ -1264,53 +1493,74 @@ function applyCropTemplate() {
     cropBoxWidth = cropTemplate.width * displayW;
     cropBoxHeight = cropTemplate.height * displayH;
     updateCropBox();
-    showNotification('Plantilla aplicada');
+    showNotification('Plantilla aplicada', 'info');
 }
 
 function applyTemplateToAll() {
     if (!cropTemplate) return;
     templateAppliedToAll = true;
     applyCropTemplate();
-    showNotification('Plantilla aplicada a todas');
+    showNotification('Plantilla aplicada a todas', 'info');
 }
 
-function processAllImages() {
+// --------------------------------------------------------------
+// PROCESAR TODAS (async + progreso + dedupe)
+// --------------------------------------------------------------
+async function processAllImages() {
     if (imageFiles.length === 0) return;
     if (cropTemplate) templateAppliedToAll = true;
-    const processNext = (index) => {
-        if (index >= imageFiles.length) {
-            showNotification('Todas las imágenes procesadas');
-            return;
-        }
-        currentImageIndex = index;
-        loadCurrentImage();
-        setTimeout(async () => {
-            const data = cropImage();
-            if (data) {
-                // Detección de repetidos también en "procesar todas"
-                if (dedupeCheck.checked) {
-                    const hash = await computeHashFromDataUrl(data);
-                    if (hash) {
-                        const dup = findDuplicateIndex(hash);
-                        if (dup >= 0) {
-                            showNotification(`Repetido (similar al #${dup+1}) — omitido`, 'warning');
-                            processNext(index + 1);
-                            return;
-                        }
-                    }
-                    savedChessboards.push({ dataUrl: data, hash });
-                } else {
-                    const hash = await computeHashFromDataUrl(data);
-                    savedChessboards.push({ dataUrl: data, hash });
+
+    const prevHtml = processAllBtn.innerHTML;
+    processAllBtn.disabled = true;
+    processAllBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...';
+    showProgress(0, imageFiles.length);
+
+    let skipped = 0, processed = 0;
+
+    try {
+        for (let i = 0; i < imageFiles.length; i++) {
+            currentImageIndex = i;
+            loadCurrentImage();
+            showProgress(i, imageFiles.length);
+
+            await new Promise(r => setTimeout(r, 400));
+
+            const dataUrl = cropImage();
+            if (!dataUrl) { showProgress(i + 1, imageFiles.length); continue; }
+
+            const hash = await computeHashFromDataUrl(dataUrl);
+
+            if (dedupeCheck.checked && hash) {
+                const dup = findDuplicateIndex(hash);
+                if (dup >= 0) {
+                    skipped++;
+                    showProgress(i + 1, imageFiles.length);
+                    continue;
                 }
-                updateChessboardsDisplay();
-                processNext(index + 1);
-            } else {
-                processNext(index + 1);
             }
-        }, 400);
-    };
-    processNext(0);
+
+            const blob = await dataURLToBlob(dataUrl);
+            const url = URL.createObjectURL(blob);
+            savedChessboards.push({ blob, url, hash });
+            processed++;
+            updateChessboardsDisplay();
+            showProgress(i + 1, imageFiles.length);
+        }
+
+        showProgress(imageFiles.length, imageFiles.length);
+        if (skipped > 0) {
+            showNotification(processed + ' procesadas · ' + skipped + ' repetidas omitidas', 'warning');
+        } else {
+            showNotification('Se procesaron ' + processed + ' imágenes');
+        }
+    } catch (err) {
+        console.error(err);
+        showNotification('Error al procesar: ' + err.message, 'error');
+    } finally {
+        processAllBtn.disabled = false;
+        processAllBtn.innerHTML = prevHtml;
+        setTimeout(hideProgress, 1000);
+    }
 }
 
 function updateTemplateButtons() {
@@ -1318,14 +1568,37 @@ function updateTemplateButtons() {
     applyToAllBtn.disabled = !cropTemplate;
 }
 
+// --------------------------------------------------------------
+// LIMPIAR (con deshacer)
+// --------------------------------------------------------------
 function clearAllChessboards() {
     if (savedChessboards.length === 0) return;
-    if (confirm('¿Eliminar todos los tableros?')) {
-        savedChessboards = [];
-        editingIndex = -1;
-        updateChessboardsDisplay();
-        showNotification('Todos eliminados');
-    }
+    if (!confirm('¿Eliminar todos los tableros?')) return;
+
+    const backup = savedChessboards.slice();
+    savedChessboards = [];
+    editingIndex = -1;
+    updateChessboardsDisplay();
+
+    let undone = false;
+    showNotification('Todos los tableros eliminados', 'info', {
+        duration: 6000,
+        onUndo: function() {
+            undone = true;
+            savedChessboards = backup;
+            updateChessboardsDisplay();
+            showNotification('Tableros restaurados');
+        }
+    });
+
+    // Liberar URLs después de 6s si no se deshizo
+    setTimeout(function() {
+        if (!undone) {
+            backup.forEach(function(b) {
+                if (b.url) URL.revokeObjectURL(b.url);
+            });
+        }
+    }, 6200);
 }
 
 // --------------------------------------------------------------
@@ -1339,20 +1612,19 @@ imageInput.addEventListener('change', function() {
     }
 });
 
-// Cambio de modo de orden
 sortModeSelect.addEventListener('change', function() {
     if (rawImageFiles.length === 0) return;
     applySortOrder();
+    saveSettings();
     if (!cropSection.classList.contains('hidden') && imageFiles.length > 0) {
         currentImageIndex = 0;
         loadCurrentImage();
-        showNotification(`Orden actualizado`, 'info');
+        showNotification('Orden actualizado', 'info');
     } else {
-        showNotification(`Orden seleccionado`, 'info');
+        showNotification('Orden seleccionado', 'info');
     }
 });
 
-// Toggle sensibilidad dedupe
 dedupeCheck.addEventListener('change', function() {
     if (this.checked) {
         dedupeSensitivityWrap.classList.add('show');
@@ -1360,6 +1632,17 @@ dedupeCheck.addEventListener('change', function() {
     } else {
         dedupeSensitivityWrap.classList.remove('show');
     }
+    saveSettings();
+});
+
+dedupeThreshold.addEventListener('change', function() {
+    saveSettings();
+});
+
+itemsPerPageSelect.addEventListener('change', function() {
+    updatePdfPreview();
+    saveSettings();
+    showNotification('Layout: ' + this.value + ' por página', 'info');
 });
 
 loadImageBtn.addEventListener('click', function() {
@@ -1379,27 +1662,47 @@ cropBtn.addEventListener('click', function() {
 prevImageBtn.addEventListener('click', prevImage);
 nextImageBtn.addEventListener('click', nextImage);
 generatePdfBtn.addEventListener('click', generatePdf);
+
 qualitySlider.addEventListener('input', function() {
     imageQuality = parseFloat(this.value);
     qualityValue.textContent = this.value;
+    saveSettings();
 });
 resolutionSelect.addEventListener('change', function() {
     resolutionFactor = parseFloat(this.value);
+    saveSettings();
 });
+
 saveTemplateBtn.addEventListener('click', saveCropTemplate);
 applyTemplateBtn.addEventListener('click', applyCropTemplate);
 applyToAllBtn.addEventListener('click', applyTemplateToAll);
 processAllBtn.addEventListener('click', processAllImages);
 clearAllBtn.addEventListener('click', clearAllChessboards);
-headerInput.addEventListener('input', updatePdfPreview);
-footerInput.addEventListener('input', updatePdfPreview);
 
-// Prevenir scroll accidental en el contenedor al tocar el recuadro
+headerInput.addEventListener('input', function() { updatePdfPreview(); saveSettings(); });
+footerInput.addEventListener('input', function() { updatePdfPreview(); saveSettings(); });
+
+// Prevenir scroll accidental en el contenedor al tocar el recuadro (original)
 cropContainer.addEventListener('touchstart', function(e) {
     if (cropBox && cropBox.contains(e.target)) {
         e.preventDefault();
     }
 }, { passive: false });
+
+// Liberar URLs al cerrar
+window.addEventListener('beforeunload', function() {
+    savedChessboards.forEach(function(b) {
+        if (b.url) URL.revokeObjectURL(b.url);
+    });
+});
+
+// --------------------------------------------------------------
+// INICIALIZACIÓN
+// --------------------------------------------------------------
+(function init() {
+    loadSettings();
+    updateTemplateButtons();
+})();
 </script>
 </body>
 </html>
