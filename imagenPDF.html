@@ -1499,10 +1499,9 @@ function onPointerDown(e) {
 
 function onPointerUp(e) {
   if (state.pointerId !== e.pointerId) return;
-  try { cropBox.releasePointerCapture(e.pointerId); } catch (_) {}
-  cropBox.removeEventListener('pointermove', onPointerMove);
-  cropBox.removeEventListener('pointerup', onPointerUp);
-  cropBox.removeEventListener('pointercancel', onPointerUp);
+  window.removeEventListener('pointermove', onPointerMove);
+  window.removeEventListener('pointerup', onPointerUp);
+  window.removeEventListener('pointercancel', onPointerUp);
   state.pointerId = null;
   state.mode = null;
 }
