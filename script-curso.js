@@ -1869,10 +1869,112 @@
     Curso.guardarCurso().then(() => window.actualizarUI());
 };
 
+      // ============================================================
+    // ⭐ v79: RESET DE PROGRESO POR TEMA/SUBTEMA
+    // ============================================================
+    Curso.reiniciarProgresoTema = async function (claseId, temaId) {
+        if (!Core.state.currentUser) return;
+        if (Core.state.currentUser.esAdmin) return; // no aplica a admin
+
+        const clase = Core.state.curso.clases.find(c => c.id === claseId);
+        if (!clase) return;
+        const tema = Curso.buscarTemaRecursivo(clase.temas, temaId);
+        if (!tema) return;
+
+        // Confirmar
+        const confirmar = window.confirm(
+            `🔄 ¿Reiniciar "${tema.titulo}"?\n\n` +
+            `Se borrará tu progreso en este tema (y sus subtemas).\n` +
+            `El resto del curso se conserva intacto.`
+        );
+        if (!confirmar) return;
+
+        // Recoger todos los IDs de temas afectados (tema + subtemas recursivamente)
+        const idsAfectados = [temaId];
+        const recolectarSubtemas = (t) => {
+            if (t.subtemas && t.subtemas.length > 0) {
+                t.subtemas.forEach(st => {
+                    idsAfectados.push(st.id);
+                    recolectarSubtemas(st);
+                });
+            }
+        };
+        recolectarSubtemas(tema);
+
+        // ─── 1. Reset local (state + localStorage) ─────────────────
+        const uid = Core.state.currentUser.uid;
+        const keyStorage = `progreso_${uid}`;
+        const progresoLocal = JSON.parse(localStorage.getItem(keyStorage) || '{}');
+
+        // Borrar marcas de "tema completado"
+        idsAfectados.forEach(id => {
+            delete progresoLocal[`${claseId}_${id}`];
+        });
+
+        // Borrar marcas de progreso dentro de tableros de este tema
+        // Las keys de tableros tienen este formato:
+        //   tablero_{claseId}_{temaId}_{bloqueId}_...
+        //   tablero_cap_{claseId}_{temaId}_{bloqueId}_...
+        const prefijos = idsAfectados.map(id => `tablero_${claseId}_${id}_`);
+        const prefijosCap = idsAfectados.map(id => `tablero_cap_${claseId}_${id}_`);
+
+        Object.keys(progresoLocal).forEach(k => {
+            if (prefijos.some(p => k.startsWith(p)) || prefijosCap.some(p => k.startsWith(p))) {
+                delete progresoLocal[k];
+            }
+        });
+
+        localStorage.setItem(keyStorage, JSON.stringify(progresoLocal));
+
+        // ─── 2. Reset en state global ─────────────────────────────
+        Object.keys(Core.state.progresoTableros || {}).forEach(k => {
+            if (prefijos.some(p => k.startsWith(p)) || prefijosCap.some(p => k.startsWith(p))) {
+                delete Core.state.progresoTableros[k];
+            }
+            idsAfectados.forEach(id => {
+                if (k === `${claseId}_${id}`) delete Core.state.progresoTableros[k];
+            });
+        });
+
+        // ─── 3. Reset en Firestore ─────────────────────────────────
+        try {
+            const docRef = db.collection('progreso').doc(uid);
+            const doc = await docRef.get();
+            if (doc.exists) {
+                const data = doc.data();
+                const updates = {};
+
+                Object.keys(data).forEach(k => {
+                    // Marca de tema completado
+                    if (idsAfectados.some(id => k === `${claseId}_${id}`)) {
+                        updates[k] = firebase.firestore.FieldValue.delete();
+                        return;
+                    }
+                    // Keys de tableros del tema
+                    if (prefijos.some(p => k.startsWith(p)) || prefijosCap.some(p => k.startsWith(p))) {
+                        updates[k] = firebase.firestore.FieldValue.delete();
+                    }
+                });
+
+                if (Object.keys(updates).length > 0) {
+                    await docRef.update(updates);
+                }
+            }
+        } catch (err) {
+            console.warn('[v79] Error al resetear progreso en Firestore:', err);
+            mostrarToast('⚠️ Progreso reseteado localmente, pero no se pudo sincronizar', 'error');
+        }
+
+        // ─── 4. Re-renderizar ──────────────────────────────────────
+        mostrarToast(`🔄 "${tema.titulo}" reiniciado. ¡A practicar de nuevo!`, 'success');
+        setTimeout(() => window.actualizarUI(), 300);
+    };
+
     // ============================================================
     // EXPOSICIÓN GLOBAL (compatibilidad con HTML onclick)
     // ============================================================
     window.suscribirAccesosEspeciales = Curso.suscribirAccesosEspeciales;
+    window.reiniciarProgresoTema = Curso.reiniciarProgresoTema;   // ⭐ v79
     window.suscribirAccesosTema = Curso.suscribirAccesosTema;
     window.suscribirNotificaciones = Curso.suscribirNotificaciones;
     window.suscribirSolicitudesAdmin = Curso.suscribirSolicitudesAdmin;
