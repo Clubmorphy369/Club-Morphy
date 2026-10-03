@@ -1,0 +1,2169 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<!-- ✅ Zoom permitido: mejor accesibilidad en móvil -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>ChessExtract Pro — Extractor de Tableros de Ajedrez</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+<style>
+  :root {
+    --primary: #2c3e50;
+    --secondary: #3498db;
+    --accent: #e74c3c;
+    --success: #27ae60;
+    --warning: #f39c12;
+    --light: #ecf0f1;
+    --dark: #34495e;
+    --gray: #95a5a6;
+    --bg: #eef2f7;
+    --radius: 10px;
+    --shadow: 0 4px 14px rgba(0,0,0,.08);
+    --shadow-hover: 0 8px 24px rgba(0,0,0,.12);
+    --transition: .2s ease;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  html, body { height: 100%; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: linear-gradient(135deg, #eef2f7 0%, #d4dde8 100%);
+    color: var(--dark);
+    line-height: 1.55;
+    padding: 12px;
+    min-height: 100vh;
+    overscroll-behavior-y: none;
+  }
+
+  .app-container {
+    max-width: 1100px;
+    margin: 0 auto;
+    background: #fff;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 22px;
+  }
+
+  /* ============ HEADER ============ */
+  .app-header { text-align: center; margin-bottom: 22px; padding-bottom: 18px; border-bottom: 1px solid var(--light); }
+  .app-header h1 {
+    color: var(--primary);
+    font-size: 1.85rem;
+    font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    gap: 12px; flex-wrap: wrap;
+  }
+  .app-header h1 i { color: var(--secondary); }
+  .app-header p { color: var(--gray); font-size: .98rem; margin-top: 6px; }
+
+  /* ============ CARDS ============ */
+  .card {
+    background: #fff;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 20px;
+    margin-bottom: 20px;
+    border-left: 4px solid var(--secondary);
+    transition: var(--transition);
+  }
+  .card.hidden { display: none; }
+
+  .card-header {
+    display: flex; align-items: center; gap: 10px;
+    color: var(--primary);
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+  .card-header i { color: var(--secondary); font-size: 1.25rem; }
+  .card-header h2 { font-size: 1.2rem; font-weight: 600; }
+
+  .section-title {
+    display: flex; justify-content: space-between; align-items: center;
+    gap: 12px; flex-wrap: wrap; margin-bottom: 14px;
+  }
+
+  /* ============ INSTRUCCIONES ============ */
+  .instructions {
+    background: #e8f4fd;
+    border-radius: var(--radius);
+    border-left: 4px solid var(--secondary);
+    padding: 14px 18px;
+    margin-bottom: 22px;
+    font-size: .95rem;
+  }
+  .instructions ol { padding-left: 22px; margin-top: 6px; }
+  .instructions li { margin-bottom: 4px; }
+
+  /* ============ BOTONES ============ */
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    gap: 8px;
+    background: var(--secondary);
+    color: #fff;
+    border: none;
+    padding: 10px 16px;
+    border-radius: var(--radius);
+    font-size: .95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+    box-shadow: 0 2px 6px rgba(52,152,219,.25);
+    min-height: 44px;
+    font-family: inherit;
+    user-select: none;
+    touch-action: manipulation;
+  }
+  .btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 14px rgba(52,152,219,.35); }
+  .btn:active:not(:disabled) { transform: translateY(0); }
+  .btn:disabled { background: var(--gray); cursor: not-allowed; box-shadow: none; opacity: .7; }
+  .btn:focus-visible { outline: 3px solid rgba(52,152,219,.35); outline-offset: 2px; }
+
+  .btn-primary   { background: #8e44ad; box-shadow: 0 2px 6px rgba(142,68,173,.3); }
+  .btn-primary:hover:not(:disabled) { box-shadow: 0 6px 14px rgba(142,68,173,.4); }
+  .btn-success   { background: var(--success); box-shadow: 0 2px 6px rgba(39,174,96,.3); }
+  .btn-success:hover:not(:disabled) { box-shadow: 0 6px 14px rgba(39,174,96,.4); }
+  .btn-warning   { background: var(--warning); box-shadow: 0 2px 6px rgba(243,156,18,.3); }
+  .btn-warning:hover:not(:disabled) { box-shadow: 0 6px 14px rgba(243,156,18,.4); }
+  .btn-danger    { background: var(--accent); box-shadow: 0 2px 6px rgba(231,76,60,.3); }
+  .btn-danger:hover:not(:disabled) { box-shadow: 0 6px 14px rgba(231,76,60,.4); }
+  .btn-outline {
+    background: transparent;
+    border: 2px solid var(--secondary);
+    color: var(--secondary);
+    box-shadow: none;
+  }
+  .btn-outline:hover:not(:disabled) { background: var(--secondary); color: #fff; }
+  .btn-sm { padding: 6px 12px; font-size: .85rem; min-height: 36px; }
+  .btn-lg { padding: 14px 22px; font-size: 1rem; }
+  .btn-block { width: 100%; }
+  .btn.toggle-active {
+    background: var(--secondary);
+    color: #fff;
+    border-color: var(--secondary);
+  }
+
+  /* ============ FORM CONTROLS ============ */
+  .form-control {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #d6dbe1;
+    border-radius: var(--radius);
+    font-size: .95rem;
+    font-family: inherit;
+    transition: var(--transition);
+    background: #fff;
+    color: var(--dark);
+  }
+  .form-control:focus {
+    outline: none;
+    border-color: var(--secondary);
+    box-shadow: 0 0 0 3px rgba(52,152,219,.15);
+  }
+  .form-label {
+    display: block;
+    font-weight: 600;
+    font-size: .88rem;
+    color: var(--dark);
+    margin-bottom: 6px;
+  }
+
+  /* ============ DROP ZONE ============ */
+  .drop-zone {
+    border: 2.5px dashed #b8c7d6;
+    border-radius: var(--radius);
+    background: #f8fafc;
+    padding: 30px 20px;
+    text-align: center;
+    transition: var(--transition);
+    cursor: pointer;
+  }
+  .drop-zone:hover { border-color: var(--secondary); background: #f0f7fd; }
+  .drop-zone.dragover { border-color: var(--secondary); background: #e8f4fd; transform: scale(1.01); }
+  .drop-zone i {
+    font-size: 2.6rem;
+    color: var(--secondary);
+    margin-bottom: 10px;
+    display: block;
+  }
+  .drop-zone p { color: var(--gray); font-size: .95rem; margin-bottom: 14px; }
+  .file-info {
+    margin-top: 12px;
+    padding: 10px 14px;
+    background: #eaf4fd;
+    border-radius: var(--radius);
+    font-size: .9rem;
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .file-info.hidden { display: none; }
+
+  /* ============ CROP AREA ============ */
+  .crop-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+  }
+  .image-counter {
+    font-weight: 600;
+    color: var(--primary);
+    background: var(--light);
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: .9rem;
+    flex: 1;
+    text-align: center;
+    min-width: 140px;
+  }
+  .toolbar-actions { display: flex; gap: 6px; }
+
+  #cropContainer {
+    position: relative;
+    background: #1e293b;
+    border-radius: var(--radius);
+    overflow: auto;
+    max-height: 68vh;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 14px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  #cropStage {
+    position: relative;
+    display: block;
+    line-height: 0;
+    font-size: 0;
+    flex: 0 0 auto;
+    margin: auto;
+  }
+
+  #imageToCrop {
+    display: block;
+    max-width: 100%;
+    max-height: 65vh;
+    width: auto;
+    height: auto;
+    user-select: none;
+    -webkit-user-drag: none;
+    pointer-events: none;
+    -webkit-user-select: none;
+  }
+
+  .crop-box {
+    position: absolute;
+    border: 2px solid #fff;
+    box-shadow:
+      0 0 0 1px rgba(52,152,219,.9),
+      0 0 0 9999px rgba(0,0,0,.55);
+    background: rgba(52,152,219,.12);
+    cursor: move;
+    touch-action: none;
+    pointer-events: auto;
+    will-change: left, top, width, height;
+    z-index: 5;
+    outline: none;
+  }
+  .crop-box.hidden { display: none; }
+  /* ✅ Modo desplazar: el box deja pasar los toques al contenedor */
+  .crop-box.pan-mode { pointer-events: none; }
+  .crop-box.pan-mode .resize-handle { pointer-events: none; }
+  .crop-box:focus-visible {
+    box-shadow:
+      0 0 0 1px rgba(52,152,219,.9),
+      0 0 0 9999px rgba(0,0,0,.55),
+      0 0 0 4px rgba(52,152,219,.5);
+  }
+
+  .crop-box::before {
+    content: "";
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(to right, rgba(255,255,255,.35) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(255,255,255,.35) 1px, transparent 1px);
+    background-size: 12.5% 12.5%;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity .2s;
+  }
+  .crop-box.show-grid::before { opacity: 1; }
+
+  .resize-handle {
+    position: absolute;
+    width: 22px;
+    height: 22px;
+    background: #fff;
+    border: 3px solid var(--secondary);
+    border-radius: 50%;
+    box-shadow: 0 2px 6px rgba(0,0,0,.4);
+    touch-action: none;
+    z-index: 6;
+  }
+  .resize-nw { top: -11px; left: -11px; cursor: nwse-resize; }
+  .resize-ne { top: -11px; right: -11px; cursor: nesw-resize; }
+  .resize-sw { bottom: -11px; left: -11px; cursor: nesw-resize; }
+  .resize-se { bottom: -11px; right: -11px; cursor: nwse-resize; }
+
+  /* ============ BARRA DE PROGRESO ============ */
+  .progress-bar {
+    position: relative;
+    height: 24px;
+    background: #e2e8f0;
+    border-radius: 12px;
+    overflow: hidden;
+    margin-top: 12px;
+  }
+  .progress-bar.hidden { display: none; }
+  .progress-fill {
+    height: 100%;
+    width: 0;
+    background: linear-gradient(90deg, var(--secondary), var(--success));
+    transition: width .25s ease;
+    border-radius: 12px;
+  }
+  .progress-text {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: .8rem;
+    font-weight: 700;
+    color: var(--primary);
+    text-shadow: 0 1px 2px rgba(255,255,255,.6);
+    letter-spacing: .3px;
+  }
+
+  .crop-options {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin: 14px 0;
+    padding: 12px 16px;
+    background: #f8fafc;
+    border-radius: var(--radius);
+    font-size: .9rem;
+    align-items: center;
+  }
+  .crop-options label {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    user-select: none;
+    font-weight: 500;
+  }
+  .crop-options input[type="checkbox"] {
+    width: 18px; height: 18px;
+    accent-color: var(--secondary);
+    cursor: pointer;
+  }
+  .crop-options select {
+    padding: 4px 8px;
+    min-height: auto;
+    width: auto;
+    font-size: .85rem;
+    border-radius: 6px;
+    border: 1px solid #d6dbe1;
+  }
+
+  .crop-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 12px;
+  }
+  .crop-actions .btn { flex: 1 1 auto; }
+
+  .crop-nav {
+    display: flex;
+    gap: 10px;
+    margin-top: 14px;
+  }
+  .crop-nav .btn { flex: 1; }
+
+  /* ============ QUALITY ============ */
+  .settings-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+  .quality-control {
+    background: #f8fafc;
+    padding: 12px 14px;
+    border-radius: var(--radius);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .quality-control .row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .quality-control input[type="range"] {
+    flex: 1;
+    accent-color: var(--secondary);
+    height: 24px;
+  }
+  .quality-value {
+    min-width: 36px;
+    text-align: center;
+    font-weight: 600;
+    font-size: .88rem;
+    color: var(--secondary);
+    background: #fff;
+    padding: 2px 8px;
+    border-radius: 12px;
+  }
+
+  /* ============ GRID TABLEROS ============ */
+  .chessboards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 14px;
+  }
+  .chessboard-item {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: var(--radius);
+    overflow: hidden;
+    transition: var(--transition);
+    box-shadow: 0 2px 6px rgba(0,0,0,.04);
+  }
+  .chessboard-item:hover { box-shadow: var(--shadow-hover); transform: translateY(-2px); }
+  .chessboard-item img {
+    display: block;
+    width: 100%;
+    height: 140px;
+    object-fit: contain;
+    background: #f8fafc;
+    padding: 8px;
+  }
+  .chessboard-info {
+    padding: 8px;
+    text-align: center;
+    font-weight: 600;
+    font-size: .9rem;
+    background: var(--light);
+    color: var(--primary);
+  }
+  .chessboard-actions {
+    display: flex;
+    gap: 6px;
+    padding: 8px;
+    justify-content: center;
+    background: #fff;
+  }
+  .chessboard-actions .btn {
+    flex: 1;
+    min-height: 34px;
+    padding: 4px 8px;
+  }
+
+  /* ============ PDF PREVIEW ============ */
+  .pdf-preview {
+    border: 1px solid #e2e8f0;
+    border-radius: var(--radius);
+    background: #f8fafc;
+    padding: 14px;
+    margin-top: 14px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .page {
+    width: 100%;
+    max-width: 720px;
+    margin: 0 auto 20px;
+    background: #fff;
+    padding: 16px;
+    border-radius: 6px;
+    box-shadow: 0 2px 8px rgba(0,0,0,.06);
+    display: flex;
+    flex-direction: column;
+    aspect-ratio: 1 / 1.414;
+  }
+  .page:last-child { margin-bottom: 0; }
+  .page-header {
+    text-align: center;
+    font-weight: 700;
+    padding: 6px;
+    background: #f0f4f8;
+    border-radius: 4px;
+    margin-bottom: 10px;
+    font-size: .9rem;
+    color: var(--primary);
+  }
+  .page-content {
+    flex: 1;
+    display: grid;
+    gap: 10px;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: repeat(3, 1fr);
+  }
+  .page-content.cols-2.rows-2 { grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(2, 1fr); }
+  .page-content.cols-2.rows-3 { grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(3, 1fr); }
+  .page-content.cols-2.rows-4 { grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(4, 1fr); }
+
+  .page-cell {
+    border: 1px solid #eef1f5;
+    border-radius: 6px;
+    background: #fafbfc;
+    padding: 6px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    min-height: 0;
+  }
+  .page-cell .num {
+    font-size: .75rem;
+    font-weight: 700;
+    color: var(--primary);
+    margin-bottom: 3px;
+    align-self: flex-start;
+  }
+  .page-cell img {
+    max-width: 100%;
+    max-height: calc(100% - 30px);
+    object-fit: contain;
+    margin-bottom: 4px;
+  }
+  .answer-lines {
+    width: 100%;
+    margin-top: auto;
+  }
+  .answer-lines .line {
+    height: 0;
+    border-bottom: 1px dashed #cbd5e0;
+    margin-bottom: 6px;
+  }
+  .page-footer {
+    margin-top: 10px;
+    padding: 6px;
+    background: #f0f4f8;
+    border-radius: 4px;
+    display: flex;
+    justify-content: space-between;
+    font-size: .78rem;
+    color: var(--gray);
+  }
+  .page-content.rows-4 .page-cell { padding: 4px; }
+  .page-content.rows-4 .page-cell .num { font-size: .68rem; }
+  .page-content.rows-4 .answer-lines .line { margin-bottom: 4px; }
+  .page-content.rows-2 .page-cell { padding: 10px; }
+  .page-content.rows-2 .answer-lines .line { margin-bottom: 8px; }
+
+  /* ============ NOTIFICACIÓN ============ */
+  .notification {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    padding: 12px 18px;
+    background: var(--success);
+    color: #fff;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-hover);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    max-width: calc(100vw - 32px);
+    font-size: .92rem;
+    font-weight: 500;
+    opacity: 0;
+    transform: translateX(120%);
+    transition: opacity .25s, transform .25s;
+    pointer-events: none;
+  }
+  .notification.show { opacity: 1; transform: translateX(0); pointer-events: auto; }
+  .notification.success { background: var(--success); }
+  .notification.error   { background: var(--accent); }
+  .notification.info    { background: var(--secondary); }
+  .notification .undo-btn {
+    background: rgba(255,255,255,.2);
+    border: 1px solid rgba(255,255,255,.5);
+    color: #fff;
+    padding: 3px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: .82rem;
+    font-weight: 600;
+    margin-left: 6px;
+  }
+
+  .badge {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 20px;
+    font-size: .8rem;
+    font-weight: 600;
+    margin-left: 8px;
+    background: var(--secondary);
+    color: #fff;
+  }
+
+  .kbd-hint {
+    display: inline-block;
+    background: #fff;
+    border: 1px solid #cbd5e0;
+    border-bottom-width: 2px;
+    border-radius: 4px;
+    padding: 0 5px;
+    font-family: ui-monospace, monospace;
+    font-size: .75rem;
+    color: var(--dark);
+    margin: 0 2px;
+  }
+
+  /* ============ RESPONSIVE ============ */
+  @media (max-width: 700px) {
+    body { padding: 8px; }
+    .app-container { padding: 14px; border-radius: 8px; }
+    .app-header h1 { font-size: 1.4rem; }
+    .app-header p { font-size: .88rem; }
+    .card { padding: 14px; }
+    .card-header h2 { font-size: 1.05rem; }
+    .settings-grid { grid-template-columns: 1fr; }
+    .chessboards-grid { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; }
+    .chessboard-item img { height: 110px; }
+    .crop-options { gap: 12px; font-size: .85rem; }
+    .crop-actions .btn { flex: 1 1 48%; }
+    #cropContainer { max-height: 62vh; padding: 8px; }
+    .resize-handle { width: 28px; height: 28px; }
+    .resize-nw { top: -14px; left: -14px; }
+    .resize-ne { top: -14px; right: -14px; }
+    .resize-sw { bottom: -14px; left: -14px; }
+    .resize-se { bottom: -14px; right: -14px; }
+    .progress-text { font-size: .75rem; }
+  }
+  @media (max-width: 380px) {
+    .app-header h1 { font-size: 1.2rem; }
+    .chessboards-grid { grid-template-columns: repeat(2, 1fr); }
+    .crop-actions .btn { flex: 1 1 100%; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app-container">
+  <header class="app-header">
+    <h1><i class="fas fa-chess-board"></i> ChessExtract Pro</h1>
+    <p>Extrae tableros de ajedrez de capturas y genera ejercicios en PDF</p>
+  </header>
+
+  <div class="instructions">
+    <strong><i class="fas fa-info-circle"></i> Cómo usarlo:</strong>
+    <ol>
+      <li>Sube o arrastra una o varias imágenes con tableros.</li>
+      <li>Ajusta el recuadro sobre el tablero (arrastra y usa los tiradores).</li>
+      <li>Pulsa <em>Guardar tablero</em> (<span class="kbd-hint">Ctrl</span>+<span class="kbd-hint">Enter</span>). Repite para cada uno.</li>
+      <li>Elige 4, 6 u 8 tableros por página y descarga tu PDF.</li>
+    </ol>
+  </div>
+
+  <!-- PASO 1 -->
+  <section class="card" id="uploadSection">
+    <div class="card-header">
+      <i class="fas fa-upload"></i><h2>Paso 1 — Subir imágenes</h2>
+    </div>
+    <div class="drop-zone" id="dropZone">
+      <i class="fas fa-cloud-upload-alt" aria-hidden="true"></i>
+      <p>Toca aquí o arrastra las imágenes</p>
+      <button type="button" class="btn btn-primary" id="selectFilesBtn">
+        <i class="fas fa-folder-open"></i> Seleccionar imágenes
+      </button>
+      <input type="file" id="imageInput" accept="image/*" multiple hidden />
+      <div class="file-info hidden" id="fileInfo">
+        <i class="fas fa-images"></i>
+        <span id="fileInfoText"></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- PASO 2 -->
+  <section class="card hidden" id="cropSection">
+    <div class="card-header">
+      <i class="fas fa-crop-alt"></i><h2>Paso 2 — Ajustar recuadro</h2>
+    </div>
+
+    <div class="crop-toolbar">
+      <span class="image-counter" id="imageCounter">Imagen 1 de 1</span>
+      <div class="toolbar-actions">
+        <button id="prevImageBtn" class="btn btn-sm" title="Anterior" disabled>
+          <i class="fas fa-chevron-left"></i>
+        </button>
+        <button id="nextImageBtn" class="btn btn-sm" title="Siguiente" disabled>
+          <i class="fas fa-chevron-right"></i>
+        </button>
+      </div>
+    </div>
+
+    <div id="cropContainer">
+      <div id="cropStage">
+        <img id="imageToCrop" alt="" />
+        <div class="crop-box hidden" id="cropBox" tabindex="0"
+             role="group" aria-label="Área de recorte del tablero">
+          <div class="resize-handle resize-nw" data-dir="nw"></div>
+          <div class="resize-handle resize-ne" data-dir="ne"></div>
+          <div class="resize-handle resize-sw" data-dir="sw"></div>
+          <div class="resize-handle resize-se" data-dir="se"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ✅ Barra de progreso (oculta hasta "Procesar todas") -->
+    <div class="progress-bar hidden" id="progressBar" role="progressbar"
+         aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+      <div class="progress-fill" id="progressFill"></div>
+      <span class="progress-text" id="progressText">0 %</span>
+    </div>
+
+    <div class="settings-grid">
+      <div class="quality-control">
+        <span class="form-label">Calidad JPG</span>
+        <div class="row">
+          <input type="range" id="qualitySlider" min="0.5" max="1.0" step="0.05" value="0.75" />
+          <span class="quality-value" id="qualityValue">0.75</span>
+        </div>
+      </div>
+      <div class="quality-control">
+        <span class="form-label">Resolución PDF</span>
+        <div class="row">
+          <select id="resolutionSelect" class="form-control">
+            <option value="1">Alta</option>
+            <option value="0.85" selected>Media</option>
+            <option value="0.6">Baja</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="crop-options">
+      <label>
+        <input type="checkbox" id="squareLock" /> Bloquear cuadrado (1:1)
+      </label>
+      <label>
+        <input type="checkbox" id="showGrid" checked /> Mostrar cuadrícula
+      </label>
+      <label>
+        <input type="checkbox" id="dedupeCheck" /> Evitar tableros repetidos
+      </label>
+      <label id="dedupeThresholdWrap" style="display:none;">
+        Sensibilidad:
+        <select id="dedupeThreshold">
+          <option value="3">Estricta</option>
+          <option value="6" selected>Normal</option>
+          <option value="10">Permisiva</option>
+        </select>
+      </label>
+      <!-- ✅ Nuevo: modo desplazar (pan) -->
+      <label title="Permite desplazar la imagen arrastrando, sin mover el recuadro">
+        <input type="checkbox" id="panMode" /> Modo desplazar
+      </label>
+    </div>
+
+    <div class="crop-actions">
+      <!-- ✅ Nuevos botones: Centrar y Todo -->
+      <button id="centerCropBtn" class="btn btn-outline btn-sm" title="Centrar recuadro cuadrado">
+        <i class="fas fa-crosshairs"></i> Centrar
+      </button>
+      <button id="fullCropBtn" class="btn btn-outline btn-sm" title="Recuadro cubre toda la imagen">
+        <i class="fas fa-expand"></i> Todo
+      </button>
+      <button id="saveTemplateBtn" class="btn btn-outline btn-sm">
+        <i class="fas fa-save"></i> Guardar plantilla
+      </button>
+      <button id="applyTemplateBtn" class="btn btn-outline btn-sm" disabled>
+        <i class="fas fa-paste"></i> Aplicar
+      </button>
+      <button id="applyToAllBtn" class="btn btn-outline btn-sm" disabled>
+        <i class="fas fa-clone"></i> A todas
+      </button>
+      <button id="processAllBtn" class="btn btn-success btn-sm">
+        <i class="fas fa-bolt"></i> Procesar todas
+      </button>
+      <button id="reverseOrderBtn" class="btn btn-warning btn-sm">
+        <i class="fas fa-exchange-alt"></i> Invertir imágenes
+      </button>
+    </div>
+
+    <div class="crop-nav">
+      <button id="cropBtn" class="btn btn-success btn-lg btn-block" disabled>
+        <i class="fas fa-crop-alt"></i> Guardar tablero
+      </button>
+    </div>
+  </section>
+
+  <!-- PASO 3 -->
+  <section class="card hidden" id="previewSection">
+    <div class="section-title">
+      <div class="card-header">
+        <i class="fas fa-check-circle"></i>
+        <h2>Tableros guardados <span class="badge" id="chessboardsCount">0</span></h2>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button id="reverseSavedBtn" class="btn btn-warning btn-sm">
+          <i class="fas fa-exchange-alt"></i> Invertir orden
+        </button>
+        <button id="clearAllBtn" class="btn btn-danger btn-sm">
+          <i class="fas fa-trash"></i> Eliminar todos
+        </button>
+      </div>
+    </div>
+    <div id="chessboards" class="chessboards-grid"></div>
+  </section>
+
+  <!-- PASO 4 -->
+  <section class="card hidden" id="pdfSection">
+    <div class="card-header">
+      <i class="fas fa-file-pdf"></i><h2>Paso 3 — Vista previa y PDF</h2>
+    </div>
+
+    <input type="text" id="headerInput" class="form-control" placeholder="Encabezado (opcional)" style="margin-bottom:10px" />
+    <input type="text" id="footerInput" class="form-control" placeholder="Pie de página (opcional)" style="margin-bottom:14px" />
+
+    <div class="quality-control" style="margin-bottom:14px">
+      <span class="form-label">Tableros por página</span>
+      <div class="row">
+        <select id="itemsPerPageSelect" class="form-control">
+          <option value="4">4 por página</option>
+          <option value="6" selected>6 por página</option>
+          <option value="8">8 por página</option>
+        </select>
+      </div>
+    </div>
+
+    <div id="pdfPreview" class="pdf-preview"></div>
+
+    <button id="generatePdfBtn" class="btn btn-success btn-lg btn-block" style="margin-top:16px">
+      <i class="fas fa-download"></i> Generar y descargar PDF
+    </button>
+  </section>
+</div>
+
+<div class="notification" id="notification" role="status" aria-live="polite">
+  <i class="fas fa-check-circle"></i>
+  <span id="notificationText">Listo</span>
+</div>
+<script>
+"use strict";
+
+// =========================================================
+// ESTADO
+// =========================================================
+const state = {
+  imageFiles: [],
+  currentIndex: 0,
+  originalImage: null,
+  // Cada entrada: { blob, url, hash, w, h }
+  savedBoards: [],
+  editingIndex: -1,
+  quality: 0.75,
+  resolution: 0.85,
+  squareLock: false,
+  showGrid: true,
+  dedupe: false,
+  dedupeThreshold: 6,
+  panMode: false,
+  cropTemplate: null,
+  headerText: '',
+  footerText: '',
+  itemsPerPage: 6,
+  crop: { x: 0, y: 0, w: 0, h: 0 },
+  pointerId: null,
+  mode: null,
+  startX: 0, startY: 0,
+  startCrop: { x: 0, y: 0, w: 0, h: 0 }
+};
+
+const MAX_DISPLAY_LONG_SIDE = 1600;
+const MEMORY_WARN_THRESHOLD = 30;   // avisar a partir de N tableros
+let _memoryWarned = false;
+
+// =========================================================
+// LAYOUTS PDF (mm, A4 = 210 x 297)
+// =========================================================
+const LAYOUTS = {
+  4: {
+    cols: 2, rows: 2,
+    imgW: 75, imgH: 75,
+    lineCount: 3, lineGap: 4,
+    positions: [
+      { x: 27,  y: 55  }, { x: 108, y: 55  },
+      { x: 27,  y: 170 }, { x: 108, y: 170 }
+    ]
+  },
+  6: {
+    cols: 2, rows: 3,
+    imgW: 58.5, imgH: 58.5,
+    lineCount: 3, lineGap: 4,
+    positions: [
+      { x: 27,  y: 40  }, { x: 122, y: 40  },
+      { x: 27,  y: 120 }, { x: 122, y: 120 },
+      { x: 27,  y: 200 }, { x: 122, y: 200 }
+    ]
+  },
+  8: {
+    cols: 2, rows: 4,
+    imgW: 46, imgH: 46,
+    lineCount: 3, lineGap: 3.5,
+    positions: [
+      { x: 25, y: 32  }, { x: 139, y: 32  },
+      { x: 25, y: 93  }, { x: 139, y: 93  },
+      { x: 25, y: 154 }, { x: 139, y: 154 },
+      { x: 25, y: 215 }, { x: 139, y: 215 }
+    ]
+  }
+};
+
+// =========================================================
+// DOM
+// =========================================================
+const $ = (id) => document.getElementById(id);
+const imageInput       = $('imageInput');
+const selectFilesBtn   = $('selectFilesBtn');
+const dropZone         = $('dropZone');
+const fileInfo         = $('fileInfo');
+const fileInfoText     = $('fileInfoText');
+const cropSection      = $('cropSection');
+const previewSection   = $('previewSection');
+const pdfSection       = $('pdfSection');
+const imageCounter     = $('imageCounter');
+const imageToCrop      = $('imageToCrop');
+const cropBox          = $('cropBox');
+const cropBtn          = $('cropBtn');
+const prevImageBtn     = $('prevImageBtn');
+const nextImageBtn     = $('nextImageBtn');
+const qualitySlider    = $('qualitySlider');
+const qualityValue     = $('qualityValue');
+const resolutionSelect = $('resolutionSelect');
+const squareLock       = $('squareLock');
+const showGrid         = $('showGrid');
+const dedupeCheck      = $('dedupeCheck');
+const dedupeThreshold  = $('dedupeThreshold');
+const dedupeThresholdWrap = $('dedupeThresholdWrap');
+const panModeChk       = $('panMode');
+const centerCropBtn    = $('centerCropBtn');
+const fullCropBtn      = $('fullCropBtn');
+const saveTemplateBtn  = $('saveTemplateBtn');
+const applyTemplateBtn = $('applyTemplateBtn');
+const applyToAllBtn    = $('applyToAllBtn');
+const processAllBtn    = $('processAllBtn');
+const reverseOrderBtn  = $('reverseOrderBtn');
+const reverseSavedBtn  = $('reverseSavedBtn');
+const clearAllBtn      = $('clearAllBtn');
+const chessboards      = $('chessboards');
+const chessboardsCount = $('chessboardsCount');
+const headerInput      = $('headerInput');
+const footerInput      = $('footerInput');
+const itemsPerPageSelect = $('itemsPerPageSelect');
+const pdfPreview       = $('pdfPreview');
+const generatePdfBtn   = $('generatePdfBtn');
+const notification     = $('notification');
+const notificationText = $('notificationText');
+const progressBar      = $('progressBar');
+const progressFill     = $('progressFill');
+const progressText     = $('progressText');
+
+// =========================================================
+// UTILIDADES
+// =========================================================
+function notify(msg, type = 'success', opts = {}) {
+  notification.classList.remove('success', 'error', 'info');
+  notification.classList.add(type);
+  const icon = notification.querySelector('i');
+  icon.className = type === 'error' ? 'fas fa-exclamation-circle'
+                 : type === 'info'  ? 'fas fa-info-circle'
+                 : 'fas fa-check-circle';
+
+  notificationText.textContent = msg;
+
+  let undoBtn = notification.querySelector('.undo-btn');
+  if (undoBtn) undoBtn.remove();
+  if (opts.onUndo) {
+    undoBtn = document.createElement('button');
+    undoBtn.className = 'undo-btn';
+    undoBtn.textContent = 'Deshacer';
+    undoBtn.addEventListener('click', () => {
+      opts.onUndo();
+      notification.classList.remove('show');
+    });
+    notification.appendChild(undoBtn);
+  }
+
+  notification.classList.add('show');
+  clearTimeout(notify._t);
+  notify._t = setTimeout(() => notification.classList.remove('show'), opts.duration || 3000);
+}
+
+function escapeHtml(str) {
+  return String(str).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+// ---------- Promesas utilitarias ----------
+function fileToDataURL(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => resolve(e.target.result);
+    reader.onerror = () => reject(new Error('Error leyendo archivo: ' + file.name));
+    reader.readAsDataURL(file);
+  });
+}
+
+function blobToDataURL(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => resolve(e.target.result);
+    reader.onerror = () => reject(new Error('Error convirtiendo imagen'));
+    reader.readAsDataURL(blob);
+  });
+}
+
+function canvasToBlob(canvas, quality) {
+  return new Promise((resolve, reject) => {
+    canvas.toBlob(
+      blob => blob ? resolve(blob) : reject(new Error('No se pudo generar la imagen')),
+      'image/jpeg',
+      quality
+    );
+  });
+}
+
+function loadImageFromSrc(src) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = () => reject(new Error('No se pudo decodificar la imagen'));
+    img.src = src;
+  });
+}
+
+function setImageSrc(el, src) {
+  return new Promise((resolve, reject) => {
+    const onLoad = () => { cleanup(); resolve(); };
+    const onErr  = () => { cleanup(); reject(new Error('Error al mostrar la imagen')); };
+    const cleanup = () => {
+      el.removeEventListener('load', onLoad);
+      el.removeEventListener('error', onErr);
+    };
+    el.addEventListener('load', onLoad, { once: true });
+    el.addEventListener('error', onErr,  { once: true });
+    el.src = src;
+  });
+}
+
+function nextFrame() {
+  return new Promise(r => requestAnimationFrame(r));
+}
+
+// ---------- Detección HEIC ----------
+function isHeicFile(file) {
+  const name = (file.name || '').toLowerCase();
+  const type = (file.type || '').toLowerCase();
+  return /\.(heic|heif)$/.test(name) || type === 'image/heic' || type === 'image/heif';
+}
+
+// =========================================================
+// PERSISTENCIA
+// =========================================================
+function saveSettings() {
+  try {
+    localStorage.setItem('chessExtract.settings', JSON.stringify({
+      quality: state.quality,
+      resolution: state.resolution,
+      squareLock: state.squareLock,
+      showGrid: state.showGrid,
+      dedupe: state.dedupe,
+      dedupeThreshold: state.dedupeThreshold,
+      panMode: state.panMode,
+      headerText: state.headerText,
+      footerText: state.footerText,
+      itemsPerPage: state.itemsPerPage,
+      cropTemplate: state.cropTemplate
+    }));
+  } catch (e) {}
+}
+
+let _saveTimer = null;
+function saveSettingsDebounced() {
+  clearTimeout(_saveTimer);
+  _saveTimer = setTimeout(saveSettings, 250);
+}
+
+function loadSettings() {
+  try {
+    const raw = localStorage.getItem('chessExtract.settings');
+    if (!raw) return;
+    const s = JSON.parse(raw);
+    if (typeof s.quality === 'number')          state.quality = s.quality;
+    if (typeof s.resolution === 'number')       state.resolution = s.resolution;
+    if (typeof s.squareLock === 'boolean')      state.squareLock = s.squareLock;
+    if (typeof s.showGrid === 'boolean')        state.showGrid = s.showGrid;
+    if (typeof s.dedupe === 'boolean')          state.dedupe = s.dedupe;
+    if (typeof s.dedupeThreshold === 'number')  state.dedupeThreshold = s.dedupeThreshold;
+    if (typeof s.panMode === 'boolean')         state.panMode = s.panMode;
+    if (typeof s.headerText === 'string')       state.headerText = s.headerText;
+    if (typeof s.footerText === 'string')       state.footerText = s.footerText;
+    if (typeof s.itemsPerPage === 'number' && [4, 6, 8].includes(s.itemsPerPage))
+      state.itemsPerPage = s.itemsPerPage;
+    if (s.cropTemplate) state.cropTemplate = s.cropTemplate;
+  } catch (e) {}
+}
+
+// =========================================================
+// CARGA DE ARCHIVOS
+// =========================================================
+function handleFiles(files) {
+  const all = Array.from(files);
+  const valid = all.filter(f => f.type.startsWith('image/') || isHeicFile(f));
+
+  if (valid.length === 0) {
+    notify('No se detectaron imágenes válidas', 'error');
+    return;
+  }
+
+  const heicCount = valid.filter(isHeicFile).length;
+  if (heicCount > 0) {
+    notify(
+      `${heicCount} imagen(es) HEIC. Si no se muestran, conviértelas a JPG.`,
+      'info',
+      { duration: 6000 }
+    );
+  }
+
+  valid.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }));
+
+  state.imageFiles = valid;
+  state.currentIndex = 0;
+
+  fileInfo.classList.remove('hidden');
+  fileInfoText.textContent = `${valid.length} imagen${valid.length === 1 ? '' : 'es'} cargada${valid.length === 1 ? '' : 's'}`;
+
+  cropSection.classList.remove('hidden');
+  loadCurrentImage();
+  cropSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+selectFilesBtn.addEventListener('click', (e) => {
+  e.stopPropagation();
+  imageInput.click();
+});
+dropZone.addEventListener('click', () => imageInput.click());
+imageInput.addEventListener('change', function () {
+  if (this.files && this.files.length) handleFiles(this.files);
+  this.value = '';
+});
+
+['dragenter', 'dragover'].forEach(ev => {
+  dropZone.addEventListener(ev, (e) => {
+    e.preventDefault(); e.stopPropagation();
+    dropZone.classList.add('dragover');
+  });
+});
+['dragleave', 'drop'].forEach(ev => {
+  dropZone.addEventListener(ev, (e) => {
+    e.preventDefault(); e.stopPropagation();
+    dropZone.classList.remove('dragover');
+  });
+});
+dropZone.addEventListener('drop', (e) => {
+  const files = e.dataTransfer && e.dataTransfer.files;
+  if (files && files.length) handleFiles(files);
+});
+
+// =========================================================
+// CARGA DE IMAGEN ACTUAL
+// =========================================================
+async function loadCurrentImage() {
+  if (state.imageFiles.length === 0) return;
+
+  state.editingIndex = -1;
+
+  const file = state.imageFiles[state.currentIndex];
+
+  try {
+    const dataUrl = await fileToDataURL(file);
+    let img;
+    try {
+      img = await loadImageFromSrc(dataUrl);
+    } catch (err) {
+      if (isHeicFile(file)) {
+        throw new Error('HEIC no soportado en este navegador. Convierte a JPG.');
+      }
+      throw err;
+    }
+    state.originalImage = img;
+
+    const displayUrl = rescaleForDisplay(img);
+    await setImageSrc(imageToCrop, displayUrl);
+    await nextFrame();
+    initCropBox();
+  } catch (err) {
+    console.error(err);
+    notify(err.message || 'No se pudo cargar la imagen', 'error', { duration: 5000 });
+  }
+
+  imageCounter.textContent = `Imagen ${state.currentIndex + 1} de ${state.imageFiles.length}`;
+  prevImageBtn.disabled = state.currentIndex === 0;
+  nextImageBtn.disabled = state.currentIndex === state.imageFiles.length - 1;
+}
+
+function rescaleForDisplay(img) {
+  const maxDim = Math.min(MAX_DISPLAY_LONG_SIDE, Math.max(img.width, img.height));
+  const scale = maxDim / Math.max(img.width, img.height);
+  if (scale >= 1) return img.src;
+  const w = Math.round(img.width * scale);
+  const h = Math.round(img.height * scale);
+  const canvas = document.createElement('canvas');
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext('2d');
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
+  ctx.drawImage(img, 0, 0, w, h);
+  return canvas.toDataURL('image/jpeg', 0.92);
+}
+
+// =========================================================
+// CROP BOX
+// =========================================================
+function getDisplaySize() {
+  const rect = imageToCrop.getBoundingClientRect();
+  return { w: rect.width, h: rect.height };
+}
+
+function applyCropStyles() {
+  const { x, y, w, h } = state.crop;
+  cropBox.style.left = x + 'px';
+  cropBox.style.top = y + 'px';
+  cropBox.style.width = w + 'px';
+  cropBox.style.height = h + 'px';
+}
+
+function applyPanMode() {
+  cropBox.classList.toggle('pan-mode', state.panMode);
+  cropBox.style.cursor = state.panMode ? 'grab' : 'move';
+}
+
+function initCropBox() {
+  const { w: dW, h: dH } = getDisplaySize();
+  if (dW <= 0 || dH <= 0) return;
+
+  if (state.cropTemplate) {
+    const t = state.cropTemplate;
+    state.crop = { x: t.x * dW, y: t.y * dH, w: t.w * dW, h: t.h * dH };
+  } else {
+    const side = Math.min(dW, dH) * 0.6;
+    state.crop = { x: (dW - side) / 2, y: (dH - side) / 2, w: side, h: side };
+  }
+  applyCropStyles();
+  cropBox.classList.remove('hidden');
+  cropBox.classList.toggle('show-grid', state.showGrid);
+  applyPanMode();
+  cropBtn.disabled = false;
+  updateTemplateButtons();
+}
+
+// =========================================================
+// POINTER EVENTS
+// =========================================================
+cropBox.addEventListener('pointerdown', onPointerDown);
+
+function onPointerDown(e) {
+  if (state.panMode) return;
+  if (e.button !== undefined && e.button !== 0) return;
+  if (state.pointerId !== null) return;
+
+  const handle = e.target.closest('.resize-handle');
+  state.pointerId = e.pointerId;
+  state.mode = handle ? handle.dataset.dir : 'drag';
+  state.startX = e.clientX;
+  state.startY = e.clientY;
+  state.startCrop = { ...state.crop };
+
+  try { cropBox.setPointerCapture(e.pointerId); } catch (_) {}
+  cropBox.addEventListener('pointermove', onPointerMove);
+  cropBox.addEventListener('pointerup', onPointerUp);
+  cropBox.addEventListener('pointercancel', onPointerUp);
+
+  e.preventDefault();
+  e.stopPropagation();
+}
+
+function onPointerMove(e) {
+  if (state.pointerId !== e.pointerId) return;
+
+  const dx = e.clientX - state.startX;
+  const dy = e.clientY - state.startY;
+  const { w: dW, h: dH } = getDisplaySize();
+  const sc = state.startCrop;
+
+  if (state.mode === 'drag') {
+    let nx = sc.x + dx;
+    let ny = sc.y + dy;
+    nx = Math.max(0, Math.min(nx, dW - sc.w));
+    ny = Math.max(0, Math.min(ny, dH - sc.h));
+    state.crop.x = nx;
+    state.crop.y = ny;
+  } else {
+    let nx = sc.x, ny = sc.y, nw = sc.w, nh = sc.h;
+    const min = 30;
+
+    switch (state.mode) {
+      case 'nw': nw = sc.w - dx; nh = sc.h - dy; nx = sc.x + dx; ny = sc.y + dy; break;
+      case 'ne': nw = sc.w + dx; nh = sc.h - dy; ny = sc.y + dy; break;
+      case 'sw': nw = sc.w - dx; nh = sc.h + dy; nx = sc.x + dx; break;
+      case 'se': nw = sc.w + dx; nh = sc.h + dy; break;
+    }
+
+    if (state.squareLock) {
+      const side = Math.min(nw, nh);
+      switch (state.mode) {
+        case 'nw': nx = sc.x + sc.w - side; ny = sc.y + sc.h - side; break;
+        case 'ne': ny = sc.y + sc.h - side; break;
+        case 'sw': nx = sc.x + sc.w - side; break;
+      }
+      nw = side; nh = side;
+    }
+
+    if (nw < min) {
+      if (state.mode === 'nw' || state.mode === 'sw') nx = sc.x + sc.w - min;
+      nw = min;
+    }
+    if (nh < min) {
+      if (state.mode === 'nw' || state.mode === 'ne') ny = sc.y + sc.h - min;
+      nh = min;
+    }
+    if (nx < 0) { nw += nx; nx = 0; }
+    if (ny < 0) { nh += ny; ny = 0; }
+    if (nx + nw > dW) nw = dW - nx;
+    if (ny + nh > dH) nh = dH - ny;
+
+    state.crop.x = nx;
+    state.crop.y = ny;
+    state.crop.w = nw;
+    state.crop.h = nh;
+  }
+
+  applyCropStyles();
+  e.preventDefault();
+}
+
+function onPointerUp(e) {
+  if (state.pointerId !== e.pointerId) return;
+  try { cropBox.releasePointerCapture(e.pointerId); } catch (_) {}
+  cropBox.removeEventListener('pointermove', onPointerMove);
+  cropBox.removeEventListener('pointerup', onPointerUp);
+  cropBox.removeEventListener('pointercancel', onPointerUp);
+  state.pointerId = null;
+  state.mode = null;
+}
+
+// =========================================================
+// TECLADO — cropBox
+// =========================================================
+cropBox.addEventListener('keydown', (e) => {
+  const step = e.shiftKey ? 5 : 1;
+  const { w: dW, h: dH } = getDisplaySize();
+  let { x, y, w, h } = state.crop;
+  let changed = true;
+
+  switch (e.key) {
+    case 'ArrowLeft':
+      if (e.shiftKey) { w = Math.max(30, w - step); if (x + w > dW) w = dW - x; }
+      else x = Math.max(0, x - step);
+      break;
+    case 'ArrowRight':
+      if (e.shiftKey) { w = Math.max(30, Math.min(w + step, dW - x)); }
+      else x = Math.min(dW - w, x + step);
+      break;
+    case 'ArrowUp':
+      if (e.shiftKey) { h = Math.max(30, h - step); if (y + h > dH) h = dH - y; }
+      else y = Math.max(0, y - step);
+      break;
+    case 'ArrowDown':
+      if (e.shiftKey) { h = Math.max(30, Math.min(h + step, dH - y)); }
+      else y = Math.min(dH - h, y + step);
+      break;
+    default:
+      changed = false;
+  }
+  if (changed) {
+    e.preventDefault();
+    state.crop = { x, y, w, h };
+    if (state.squareLock) {
+      const side = Math.min(state.crop.w, state.crop.h);
+      state.crop.w = state.crop.h = side;
+    }
+    applyCropStyles();
+  }
+});
+
+// =========================================================
+// ATAJOS GLOBALES
+// =========================================================
+document.addEventListener('keydown', (e) => {
+  const tag = (e.target.tagName || '').toLowerCase();
+  if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+
+  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+    if (!cropBtn.disabled && !cropSection.classList.contains('hidden')) {
+      e.preventDefault();
+      cropBtn.click();
+    }
+    return;
+  }
+
+  if (e.key === 'Escape' && state.editingIndex >= 0) {
+    state.editingIndex = -1;
+    notify('Edición cancelada', 'info');
+  }
+});
+
+// =========================================================
+// HASH PERCEPTUAL + DEDUPE
+// =========================================================
+function computeHashFromCanvas(srcCanvas) {
+  const w = 9, h = 8;
+  const c = document.createElement('canvas');
+  c.width = w; c.height = h;
+  const cx = c.getContext('2d', { willReadFrequently: true });
+  cx.drawImage(srcCanvas, 0, 0, w, h);
+
+  const data = cx.getImageData(0, 0, w, h).data;
+  let bits = '';
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w - 1; x++) {
+      const i = (y * w + x) * 4;
+      const j = (y * w + x + 1) * 4;
+      const l1 = 0.299 * data[i]   + 0.587 * data[i+1]   + 0.114 * data[i+2];
+      const l2 = 0.299 * data[j]   + 0.587 * data[j+1]   + 0.114 * data[j+2];
+      bits += l1 > l2 ? '1' : '0';
+    }
+  }
+  let hex = '';
+  for (let i = 0; i < 64; i += 4) {
+    hex += parseInt(bits.substr(i, 4), 2).toString(16);
+  }
+  return hex;
+}
+
+function hammingDistance(hexA, hexB) {
+  if (!hexA || !hexB || hexA.length !== hexB.length) return Infinity;
+  let dist = 0;
+  for (let i = 0; i < hexA.length; i++) {
+    let xor = parseInt(hexA[i], 16) ^ parseInt(hexB[i], 16);
+    while (xor) { dist += xor & 1; xor >>= 1; }
+  }
+  return dist;
+}
+
+function findDuplicateIndex(hash, excludeIdx = -1) {
+  if (!hash) return -1;
+  for (let i = 0; i < state.savedBoards.length; i++) {
+    if (i === excludeIdx) continue;
+    const h = state.savedBoards[i].hash;
+    if (!h) continue;
+    if (hammingDistance(hash, h) <= state.dedupeThreshold) return i;
+  }
+  return -1;
+}
+
+// =========================================================
+// RECORTAR (ahora async, devuelve blob + url)
+// =========================================================
+async function cropImage() {
+  if (!state.originalImage) return null;
+  const { w: dW, h: dH } = getDisplaySize();
+  if (dW <= 0 || dH <= 0) return null;
+
+  const scaleX = state.originalImage.naturalWidth  / dW;
+  const scaleY = state.originalImage.naturalHeight / dH;
+
+  const srcX = state.crop.x * scaleX;
+  const srcY = state.crop.y * scaleY;
+  const srcW = state.crop.w * scaleX;
+  const srcH = state.crop.h * scaleY;
+
+  const outW = Math.max(1, Math.round(srcW * state.resolution));
+  const outH = Math.max(1, Math.round(srcH * state.resolution));
+
+  const canvas = document.createElement('canvas');
+  canvas.width = outW;
+  canvas.height = outH;
+  const ctx = canvas.getContext('2d');
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
+  ctx.drawImage(state.originalImage, srcX, srcY, srcW, srcH, 0, 0, outW, outH);
+
+  const hash = computeHashFromCanvas(canvas);
+  const blob = await canvasToBlob(canvas, state.quality);
+  const url = URL.createObjectURL(blob);
+
+  return { blob, url, hash, w: outW, h: outH };
+}
+
+// =========================================================
+// GUARDAR / EDITAR / ELIMINAR
+// =========================================================
+function addBoard(board) {
+  if (state.editingIndex >= 0) {
+    const idx = state.editingIndex;
+    const old = state.savedBoards[idx];
+    if (old && old.url) URL.revokeObjectURL(old.url);
+    state.savedBoards[idx] = board;
+    state.editingIndex = -1;
+    notify('Tablero actualizado');
+    updateBoardsDisplay();
+    return true;
+  }
+
+  if (state.dedupe && board.hash) {
+    const dup = findDuplicateIndex(board.hash);
+    if (dup >= 0) {
+      URL.revokeObjectURL(board.url);   // liberar el que no usamos
+      notify(`Tablero repetido (similar al #${dup + 1}) — omitido`, 'info');
+      return false;
+    }
+  }
+
+  state.savedBoards.push(board);
+  notify('Tablero guardado');
+
+  // Aviso de memoria (una sola vez)
+  if (!_memoryWarned && state.savedBoards.length === MEMORY_WARN_THRESHOLD) {
+    _memoryWarned = true;
+    notify(
+      `Tienes ${state.savedBoards.length} tableros. Si la app va lenta, genera el PDF por partes o baja la resolución.`,
+      'info',
+      { duration: 7000 }
+    );
+  }
+
+  updateBoardsDisplay();
+  return true;
+}
+
+async function startEdit(index) {
+  state.editingIndex = index;
+  const board = state.savedBoards[index];
+  if (!board) return;
+
+  try {
+    const img = await loadImageFromSrc(board.url);
+    state.originalImage = img;
+    const displayUrl = rescaleForDisplay(img);
+    await setImageSrc(imageToCrop, displayUrl);
+    await nextFrame();
+
+    const { w: dW, h: dH } = getDisplaySize();
+    state.crop = { x: 0, y: 0, w: dW, h: dH };
+    applyCropStyles();
+    cropBox.classList.remove('hidden');
+    cropBox.classList.toggle('show-grid', state.showGrid);
+    applyPanMode();
+    cropBtn.disabled = false;
+
+    cropSection.classList.remove('hidden');
+    cropSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    notify('Editando tablero ' + (index + 1), 'info');
+  } catch (err) {
+    console.error(err);
+    notify('No se pudo iniciar la edición', 'error');
+    state.editingIndex = -1;
+  }
+}
+
+function removeBoardAt(idx) {
+  const b = state.savedBoards[idx];
+  if (b && b.url) URL.revokeObjectURL(b.url);
+  state.savedBoards.splice(idx, 1);
+  if (state.editingIndex === idx) state.editingIndex = -1;
+  else if (state.editingIndex > idx) state.editingIndex--;
+}
+
+function updateBoardsDisplay() {
+  chessboards.innerHTML = '';
+  chessboardsCount.textContent = state.savedBoards.length;
+
+  state.savedBoards.forEach((board, index) => {
+    const item = document.createElement('div');
+    item.className = 'chessboard-item';
+    item.innerHTML = `
+      <img src="${board.url}" alt="Tablero ${index + 1}" />
+      <div class="chessboard-info">Tablero ${index + 1}</div>
+      <div class="chessboard-actions">
+        <button class="btn btn-warning btn-sm edit-btn" data-index="${index}" title="Editar">
+          <i class="fas fa-edit"></i>
+        </button>
+        <button class="btn btn-danger btn-sm remove-btn" data-index="${index}" title="Eliminar">
+          <i class="fas fa-trash"></i>
+        </button>
+      </div>`;
+    chessboards.appendChild(item);
+  });
+
+  chessboards.querySelectorAll('.edit-btn').forEach(btn => {
+    btn.addEventListener('click', () => startEdit(+btn.dataset.index));
+  });
+  chessboards.querySelectorAll('.remove-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      removeBoardAt(+btn.dataset.index);
+      updateBoardsDisplay();
+      notify('Tablero eliminado');
+    });
+  });
+
+  updatePdfPreview();
+
+  if (state.savedBoards.length > 0) {
+    previewSection.classList.remove('hidden');
+    pdfSection.classList.remove('hidden');
+  } else {
+    previewSection.classList.add('hidden');
+    pdfSection.classList.add('hidden');
+  }
+}
+
+// =========================================================
+// NAVEGACIÓN
+// =========================================================
+prevImageBtn.addEventListener('click', () => {
+  if (state.currentIndex > 0) { state.currentIndex--; loadCurrentImage(); }
+});
+nextImageBtn.addEventListener('click', () => {
+  if (state.currentIndex < state.imageFiles.length - 1) { state.currentIndex++; loadCurrentImage(); }
+});
+reverseOrderBtn.addEventListener('click', () => {
+  if (state.imageFiles.length < 2) { notify('No hay suficientes imágenes', 'info'); return; }
+  state.imageFiles.reverse();
+  state.currentIndex = state.imageFiles.length - 1 - state.currentIndex;
+  loadCurrentImage();
+  notify('Orden de imágenes invertido');
+});
+reverseSavedBtn.addEventListener('click', () => {
+  if (state.savedBoards.length < 2) { notify('No hay suficientes tableros', 'info'); return; }
+  state.savedBoards.reverse();
+  state.editingIndex = -1;
+  updateBoardsDisplay();
+  notify('Orden de tableros invertido');
+});
+
+// =========================================================
+// PLANTILLAS
+// =========================================================
+function updateTemplateButtons() {
+  const has = !!state.cropTemplate;
+  applyTemplateBtn.disabled = !has;
+  applyToAllBtn.disabled = !has;
+}
+
+saveTemplateBtn.addEventListener('click', () => {
+  const { w: dW, h: dH } = getDisplaySize();
+  if (dW <= 0 || dH <= 0) return;
+  state.cropTemplate = {
+    x: state.crop.x / dW,
+    y: state.crop.y / dH,
+    w: state.crop.w / dW,
+    h: state.crop.h / dH
+  };
+  saveSettings();
+  updateTemplateButtons();
+  notify('Plantilla guardada');
+});
+
+applyTemplateBtn.addEventListener('click', () => {
+  if (!state.cropTemplate) return;
+  const { w: dW, h: dH } = getDisplaySize();
+  const t = state.cropTemplate;
+  state.crop = { x: t.x * dW, y: t.y * dH, w: t.w * dW, h: t.h * dH };
+  applyCropStyles();
+  notify('Plantilla aplicada');
+});
+
+applyToAllBtn.addEventListener('click', () => {
+  if (!state.cropTemplate) return;
+  notify('Aplicando plantilla y procesando todas…', 'info');
+  processAllImages(true);
+});
+
+// =========================================================
+// BOTONES CENTRAR / TODO
+// =========================================================
+centerCropBtn.addEventListener('click', () => {
+  const { w: dW, h: dH } = getDisplaySize();
+  if (dW <= 0 || dH <= 0) return;
+  // Conserva el tamaño actual si cabe; si no, usa 60% del lado menor
+  const side = Math.min(state.crop.w || Infinity, state.crop.h || Infinity, Math.min(dW, dH) * 0.6);
+  const finalSide = Number.isFinite(side) && side > 30 ? side : Math.min(dW, dH) * 0.6;
+  state.crop = {
+    x: (dW - finalSide) / 2,
+    y: (dH - finalSide) / 2,
+    w: finalSide,
+    h: finalSide
+  };
+  if (state.squareLock) {
+    const s = Math.min(state.crop.w, state.crop.h);
+    state.crop.w = state.crop.h = s;
+  }
+  applyCropStyles();
+  notify('Recuadro centrado', 'info');
+});
+
+fullCropBtn.addEventListener('click', () => {
+  const { w: dW, h: dH } = getDisplaySize();
+  if (dW <= 0 || dH <= 0) return;
+  state.crop = { x: 0, y: 0, w: dW, h: dH };
+  applyCropStyles();
+  notify('Recuadro = imagen completa', 'info');
+});
+
+// =========================================================
+// MODO DESPLAZAR
+// =========================================================
+panModeChk.addEventListener('change', function () {
+  state.panMode = this.checked;
+  applyPanMode();
+  saveSettings();
+  notify(this.checked ? 'Modo desplazar activado' : 'Modo ajuste activado', 'info');
+});
+
+// =========================================================
+// BARRA DE PROGRESO
+// =========================================================
+function showProgress(current, total) {
+  progressBar.classList.remove('hidden');
+  const pct = total > 0 ? Math.round((current / total) * 100) : 0;
+  progressFill.style.width = pct + '%';
+  progressText.textContent = `${pct}% · ${current}/${total}`;
+  progressBar.setAttribute('aria-valuenow', String(pct));
+}
+
+function hideProgress() {
+  progressBar.classList.add('hidden');
+  progressFill.style.width = '0%';
+  progressText.textContent = '0 %';
+  progressBar.setAttribute('aria-valuenow', '0');
+}
+
+// =========================================================
+// PROCESAMIENTO AUTOMÁTICO
+// =========================================================
+async function processAllImages(useTemplate) {
+  if (state.imageFiles.length === 0) { notify('No hay imágenes', 'info'); return; }
+
+  const prevHtml = processAllBtn.innerHTML;
+  processAllBtn.disabled = true;
+  processAllBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando…';
+  showProgress(0, state.imageFiles.length);
+
+  const previousIndex = state.currentIndex;
+  const originalTemplate = state.cropTemplate;
+  let skipped = 0;
+  let processed = 0;
+
+  try {
+    for (let i = 0; i < state.imageFiles.length; i++) {
+      state.currentIndex = i;
+      imageCounter.textContent = `Procesando ${i + 1} de ${state.imageFiles.length}…`;
+      showProgress(i, state.imageFiles.length);
+
+      // Ceder al navegador para no congelar la UI en móvil
+      await nextFrame();
+
+      try {
+        const file = state.imageFiles[i];
+        const dataUrl = await fileToDataURL(file);
+        let img;
+        try {
+          img = await loadImageFromSrc(dataUrl);
+        } catch (err) {
+          if (isHeicFile(file)) {
+            console.warn('Saltando HEIC no soportado:', file.name);
+            continue;
+          }
+          throw err;
+        }
+        state.originalImage = img;
+
+        const displayUrl = rescaleForDisplay(img);
+        await setImageSrc(imageToCrop, displayUrl);
+        await nextFrame();
+
+        const { w: dW, h: dH } = getDisplaySize();
+        if (dW <= 0 || dH <= 0) continue;
+
+        if (useTemplate && originalTemplate) {
+          state.crop = {
+            x: originalTemplate.x * dW,
+            y: originalTemplate.y * dH,
+            w: originalTemplate.w * dW,
+            h: originalTemplate.h * dH
+          };
+        } else {
+          const side = Math.min(dW, dH) * 0.6;
+          state.crop = { x: (dW - side) / 2, y: (dH - side) / 2, w: side, h: side };
+        }
+        applyCropStyles();
+
+        const res = await cropImage();
+        if (!res) continue;
+
+        if (state.dedupe && res.hash) {
+          const dup = findDuplicateIndex(res.hash);
+          if (dup >= 0) {
+            URL.revokeObjectURL(res.url);
+            skipped++;
+            continue;
+          }
+        }
+        state.savedBoards.push(res);
+        processed++;
+      } catch (innerErr) {
+        console.error('Error procesando', state.imageFiles[i].name, innerErr);
+      }
+    }
+
+    showProgress(state.imageFiles.length, state.imageFiles.length);
+    updateBoardsDisplay();
+    notify(
+      skipped > 0
+        ? `${processed} procesadas · ${skipped} repetidas omitidas`
+        : `Se procesaron ${processed} imágenes`,
+      'success'
+    );
+  } catch (err) {
+    console.error(err);
+    notify(err.message || 'Error al procesar', 'error');
+  } finally {
+    state.currentIndex = previousIndex;
+    loadCurrentImage();
+    processAllBtn.disabled = false;
+    processAllBtn.innerHTML = prevHtml;
+    setTimeout(hideProgress, 800);
+  }
+}
+
+processAllBtn.addEventListener('click', () => processAllImages(false));
+
+// =========================================================
+// GUARDAR TABLERO
+// =========================================================
+let savingCrop = false;
+cropBtn.addEventListener('click', async () => {
+  if (savingCrop) return;
+  savingCrop = true;
+  cropBtn.disabled = true;
+
+  try {
+    const res = await cropImage();
+    if (res) addBoard(res);
+  } catch (err) {
+    console.error(err);
+    notify('Error al guardar el tablero', 'error');
+  } finally {
+    setTimeout(() => {
+      savingCrop = false;
+      cropBtn.disabled = false;
+    }, 350);
+  }
+});
+
+// =========================================================
+// LIMPIAR TODO
+// =========================================================
+clearAllBtn.addEventListener('click', () => {
+  if (state.savedBoards.length === 0) return;
+  if (!confirm('¿Eliminar todos los tableros guardados?')) return;
+
+  // ✅ Backup: guardamos blobs (los URLs hay que recrearlos al restaurar)
+  const backupBlobs = state.savedBoards.map(b => ({
+    blob: b.blob, hash: b.hash, w: b.w, h: b.h
+  }));
+  state.savedBoards.forEach(b => b.url && URL.revokeObjectURL(b.url));
+  state.savedBoards = [];
+  state.editingIndex = -1;
+  _memoryWarned = false;
+
+  updateBoardsDisplay();
+  notify('Todos los tableros eliminados', 'info', {
+    duration: 6000,
+    onUndo: () => {
+      state.savedBoards = backupBlobs.map(b => ({
+        blob: b.blob,
+        url: URL.createObjectURL(b.blob),
+        hash: b.hash,
+        w: b.w,
+        h: b.h
+      }));
+      updateBoardsDisplay();
+      notify('Restaurados');
+    }
+  });
+});
+
+// =========================================================
+// VISTA PREVIA PDF
+// =========================================================
+function updatePdfPreview() {
+  pdfPreview.innerHTML = '';
+  const layout = LAYOUTS[state.itemsPerPage] || LAYOUTS[6];
+  const itemsPerPage = state.itemsPerPage;
+  const pageCount = Math.max(1, Math.ceil(state.savedBoards.length / itemsPerPage));
+
+  for (let p = 0; p < pageCount; p++) {
+    const page = document.createElement('div');
+    page.className = 'page';
+
+    if (state.headerText) {
+      const h = document.createElement('div');
+      h.className = 'page-header';
+      h.textContent = state.headerText;
+      page.appendChild(h);
+    }
+
+    const content = document.createElement('div');
+    content.className = `page-content cols-${layout.cols} rows-${layout.rows}`;
+
+    for (let i = 0; i < itemsPerPage; i++) {
+      const idx = p * itemsPerPage + i;
+      const cell = document.createElement('div');
+      cell.className = 'page-cell';
+
+      const num = document.createElement('div');
+      num.className = 'num';
+      num.textContent = idx + 1;
+      cell.appendChild(num);
+
+      if (idx < state.savedBoards.length) {
+        const img = document.createElement('img');
+        img.src = state.savedBoards[idx].url;
+        cell.appendChild(img);
+
+        const lines = document.createElement('div');
+        lines.className = 'answer-lines';
+        for (let j = 0; j < layout.lineCount; j++) {
+          const line = document.createElement('div');
+          line.className = 'line';
+          lines.appendChild(line);
+        }
+        cell.appendChild(lines);
+      }
+      content.appendChild(cell);
+    }
+    page.appendChild(content);
+
+    const footer = document.createElement('div');
+    footer.className = 'page-footer';
+    footer.innerHTML = `<span>Página ${p + 1} / ${pageCount}</span><span>${escapeHtml(state.footerText || '')}</span>`;
+    page.appendChild(footer);
+
+    pdfPreview.appendChild(page);
+  }
+}
+
+// =========================================================
+// GENERAR PDF (async por conversión blob→dataURL)
+// =========================================================
+async function generatePdf() {
+  if (state.savedBoards.length === 0) { notify('No hay tableros', 'info'); return; }
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF('p', 'mm', 'a4');
+
+  const layout = LAYOUTS[state.itemsPerPage] || LAYOUTS[6];
+  const itemsPerPage = state.itemsPerPage;
+  const { positions, imgW, imgH, lineCount, lineGap } = layout;
+
+  const headerText = state.headerText.trim();
+  const footerText = state.footerText.trim();
+
+  const prevHtml = generatePdfBtn.innerHTML;
+  generatePdfBtn.disabled = true;
+  generatePdfBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generando…';
+
+  try {
+    let currentPage = -1;
+
+    for (let i = 0; i < state.savedBoards.length; i++) {
+      const board = state.savedBoards[i];
+      const pageIndex = Math.floor(i / itemsPerPage);
+      const posIndex  = i % itemsPerPage;
+
+      if (pageIndex !== currentPage) {
+        if (currentPage !== -1) doc.addPage();
+        currentPage = pageIndex;
+
+        if (headerText) {
+          doc.setFontSize(state.itemsPerPage === 8 ? 11 : 12);
+          doc.text(headerText, 105, 18, { align: 'center' });
+        }
+        if (footerText) {
+          doc.setFontSize(10);
+          doc.text(footerText, 105, 290, { align: 'center' });
+        }
+      }
+
+      const pos = positions[posIndex];
+      const cellCx = pos.x + imgW / 2;
+      doc.setFontSize(state.itemsPerPage === 8 ? 10 : 12);
+      doc.text(String(i + 1), cellCx, pos.y - 2, { align: 'center' });
+
+      // Aspect ratio
+      let drawW = imgW, drawH = imgH;
+      if (board.w && board.h) {
+        const ratio = board.w / board.h;
+        const cellRatio = imgW / imgH;
+        if (ratio > cellRatio) {
+          drawW = imgW;
+          drawH = imgW / ratio;
+        } else {
+          drawH = imgH;
+          drawW = imgH * ratio;
+        }
+      }
+      const drawX = pos.x + (imgW - drawW) / 2;
+      const drawY = pos.y + (imgH - drawH) / 2;
+
+      // ✅ Convertir blob a dataURL solo para el PDF
+      const dataUrl = await blobToDataURL(board.blob);
+
+      doc.addImage(
+        dataUrl, 'JPEG',
+        drawX, drawY, drawW, drawH,
+        undefined, 'FAST'
+      );
+
+      const lineY = pos.y + imgH + (state.itemsPerPage === 8 ? 4 : 6);
+      for (let j = 0; j < lineCount; j++) {
+        const y = lineY + j * lineGap;
+        doc.line(pos.x, y, pos.x + imgW, y);
+      }
+    }
+
+    doc.save('ejercicios_ajedrez.pdf');
+    notify('PDF generado');
+  } catch (err) {
+    console.error(err);
+    notify('Error al generar el PDF', 'error');
+  } finally {
+    generatePdfBtn.disabled = false;
+    generatePdfBtn.innerHTML = prevHtml;
+  }
+}
+
+generatePdfBtn.addEventListener('click', generatePdf);
+
+// =========================================================
+// EVENTOS DE AJUSTES
+// =========================================================
+qualitySlider.addEventListener('input', function () {
+  state.quality = parseFloat(this.value);
+  qualityValue.textContent = this.value;
+  saveSettingsDebounced();
+});
+resolutionSelect.addEventListener('change', function () {
+  state.resolution = parseFloat(this.value);
+  saveSettings();
+});
+squareLock.addEventListener('change', function () {
+  state.squareLock = this.checked;
+  if (this.checked) {
+    const side = Math.min(state.crop.w, state.crop.h);
+    state.crop.w = state.crop.h = side;
+    applyCropStyles();
+  }
+  saveSettings();
+});
+showGrid.addEventListener('change', function () {
+  state.showGrid = this.checked;
+  cropBox.classList.toggle('show-grid', this.checked);
+  saveSettings();
+});
+dedupeCheck.addEventListener('change', function () {
+  state.dedupe = this.checked;
+  dedupeThresholdWrap.style.display = this.checked ? '' : 'none';
+  saveSettings();
+  notify(state.dedupe ? 'Detección de repetidos activada' : 'Detección desactivada', 'info');
+});
+dedupeThreshold.addEventListener('change', function () {
+  state.dedupeThreshold = parseInt(this.value, 10);
+  saveSettings();
+});
+headerInput.addEventListener('input', function () {
+  state.headerText = this.value;
+  updatePdfPreview();
+  saveSettingsDebounced();
+});
+footerInput.addEventListener('input', function () {
+  state.footerText = this.value;
+  updatePdfPreview();
+  saveSettingsDebounced();
+});
+itemsPerPageSelect.addEventListener('change', function () {
+  state.itemsPerPage = parseInt(this.value, 10);
+  updatePdfPreview();
+  saveSettings();
+  notify(`Layout: ${state.itemsPerPage} tableros por página`, 'info');
+});
+
+// =========================================================
+// RESIZE (rotación de móvil)
+// =========================================================
+let _resizeTimer = null;
+window.addEventListener('resize', () => {
+  clearTimeout(_resizeTimer);
+  _resizeTimer = setTimeout(() => {
+    if (imageToCrop.naturalWidth > 0 && !cropBox.classList.contains('hidden')) {
+      const { w: dW, h: dH } = getDisplaySize();
+      if (dW > 0 && dH > 0) {
+        state.crop.x = Math.min(state.crop.x, Math.max(0, dW - state.crop.w));
+        state.crop.y = Math.min(state.crop.y, Math.max(0, dH - state.crop.h));
+        state.crop.w = Math.min(state.crop.w, dW);
+        state.crop.h = Math.min(state.crop.h, dH);
+        applyCropStyles();
+      }
+    }
+  }, 120);
+});
+
+// =========================================================
+// LIMPIEZA AL SALIR (libera objectURLs)
+// =========================================================
+window.addEventListener('beforeunload', () => {
+  state.savedBoards.forEach(b => b.url && URL.revokeObjectURL(b.url));
+});
+
+// =========================================================
+// INICIALIZACIÓN
+// =========================================================
+(function init() {
+  loadSettings();
+  qualitySlider.value = state.quality;
+  qualityValue.textContent = state.quality;
+  resolutionSelect.value = String(state.resolution);
+  squareLock.checked = state.squareLock;
+  showGrid.checked = state.showGrid;
+  dedupeCheck.checked = state.dedupe;
+  dedupeThreshold.value = String(state.dedupeThreshold);
+  dedupeThresholdWrap.style.display = state.dedupe ? '' : 'none';
+  panModeChk.checked = state.panMode;
+  headerInput.value = state.headerText;
+  footerInput.value = state.footerText;
+  itemsPerPageSelect.value = String(state.itemsPerPage);
+  updateTemplateButtons();
+})();
+</script>
+</body>
+</html>
