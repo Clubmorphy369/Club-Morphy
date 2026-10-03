@@ -16,7 +16,6 @@
     --light: #ecf0f1;
     --dark: #34495e;
     --gray: #95a5a6;
-    --bg: #eef2f7;
     --radius: 10px;
     --shadow: 0 4px 14px rgba(0,0,0,.08);
     --shadow-hover: 0 8px 24px rgba(0,0,0,.12);
@@ -224,56 +223,43 @@
   }
   .toolbar-actions { display: flex; gap: 6px; }
 
+  /* ✅ Contenedor sin scroll interno: la imagen se ajusta al ancho,
+     la página entera hace scroll si es necesario */
   #cropContainer {
     position: relative;
-    background: #1e293b;
+    overflow: hidden;
+    margin: 14px 0;
+    max-width: 100%;
+    border: 1px solid #ddd;
     border-radius: var(--radius);
-    overflow: auto;
-    max-height: 68vh;
-    display: flex;
-    justify-content: center;
-    align-items: flex-start;
-    padding: 14px;
-    -webkit-overflow-scrolling: touch;
-  }
-
-   .resize-handle {
-    position: absolute;
-    width: 32px;
-    height: 32px;
-    background: #fff;
-    border: 3px solid var(--secondary);
-    border-radius: 50%;
-    box-shadow: 0 2px 6px rgba(0,0,0,.4);
-    touch-action: none;
-    pointer-events: auto;             /* ✅ explícito */
-    -webkit-user-select: none;        /* ✅ */
-    user-select: none;                /* ✅ */
-    -webkit-touch-callout: none;      /* ✅ evita menú contextual */
-    z-index: 6;
+    background: #1e293b;
+    padding: 0;
+    text-align: center;
+    line-height: 0;
   }
 
   #imageToCrop {
     display: block;
     max-width: 100%;
-    max-height: 65vh;
     width: auto;
     height: auto;
+    margin: 0 auto;
     user-select: none;
     -webkit-user-drag: none;
-    pointer-events: none;
     -webkit-user-select: none;
+    pointer-events: none;
   }
 
   .crop-box {
     position: absolute;
     border: 2px solid #fff;
+    background-color: rgba(52, 152, 219, 0.12);
+    cursor: move;
     box-shadow:
       0 0 0 1px rgba(52,152,219,.9),
       0 0 0 9999px rgba(0,0,0,.40);
-    background: rgba(52,152,219,.12);
-    cursor: move;
-    touch-action: none;
+    /* ✅ CLAVE: permite que el navegador sintetice eventos mouse desde toques */
+    touch-action: auto;
     pointer-events: auto;
     will-change: left, top, width, height;
     z-index: 5;
@@ -283,7 +269,7 @@
 
   .crop-box.no-overlay {
     box-shadow: 0 0 0 2px rgba(52,152,219,.95);
-    background: rgba(52,152,219,.06);
+    background-color: rgba(52,152,219,.06);
   }
 
   .crop-box.pan-mode { pointer-events: none; }
@@ -314,29 +300,33 @@
   }
   .crop-box.show-grid::before { opacity: 1; }
 
+  /* ✅ Handles grandes y con zona de toque ampliada, touch-action: auto */
   .resize-handle {
     position: absolute;
-    width: 32px;
-    height: 32px;
-    background: #fff;
-    border: 3px solid var(--secondary);
+    width: 22px;
+    height: 22px;
+    background-color: var(--secondary);
+    border: 2px solid #fff;
     border-radius: 50%;
-    box-shadow: 0 2px 6px rgba(0,0,0,.4);
-    touch-action: none;
+    box-shadow: 0 0 4px rgba(0,0,0,.5);
+    touch-action: auto;
+    pointer-events: auto;
     z-index: 6;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
   }
-  /* Zona de toque invisible ~70x70 px alrededor del círculo */
   .resize-handle::before {
     content: '';
     position: absolute;
-    inset: -19px;
+    inset: -18px;
     border-radius: 50%;
     background: transparent;
   }
-  .resize-nw { top: -16px; left: -16px; cursor: nwse-resize; }
-  .resize-ne { top: -16px; right: -16px; cursor: nesw-resize; }
-  .resize-sw { bottom: -16px; left: -16px; cursor: nesw-resize; }
-  .resize-se { bottom: -16px; right: -16px; cursor: nwse-resize; }
+  .resize-nw { top: -12px; left: -12px; cursor: nw-resize; }
+  .resize-ne { top: -12px; right: -12px; cursor: ne-resize; }
+  .resize-sw { bottom: -12px; left: -12px; cursor: sw-resize; }
+  .resize-se { bottom: -12px; right: -12px; cursor: se-resize; }
 
   /* BARRA DE PROGRESO */
   .progress-bar {
@@ -664,38 +654,15 @@
     .chessboard-item img { height: 110px; }
     .crop-options { gap: 12px; font-size: .85rem; }
     .crop-actions .btn { flex: 1 1 48%; }
-
-          /* ✅ Arregla scroll hacia ambos lados */
-    #cropContainer {
-      max-height: 60vh;
-      min-height: 40vh;
-      overflow: auto;
-      padding: 4px;
-      align-items: flex-start;
-      justify-content: flex-start;    /* ← NO usar center */
-      -webkit-overflow-scrolling: touch;
-    }
-    #imageToCrop {
-      max-height: none;
-      max-width: 100%;
-      height: auto;
-      width: auto;
-    }
-    /* Tiradores más grandes en móvil */
-    .resize-handle {
-      width: 38px;
-      height: 38px;
-      border-width: 4px;
-    }
-    .resize-handle::before {
-      inset: -22px;
-    }
-    .resize-nw { top: -19px; left: -19px; }
-    .resize-ne { top: -19px; right: -19px; }
-    .resize-sw { bottom: -19px; left: -19px; }
-    .resize-se { bottom: -19px; right: -19px; }
-
     .progress-text { font-size: .75rem; }
+
+    /* Handles más grandes en móvil (más fáciles de tocar) */
+    .resize-handle { width: 26px; height: 26px; }
+    .resize-handle::before { inset: -22px; }
+    .resize-nw { top: -14px; left: -14px; }
+    .resize-ne { top: -14px; right: -14px; }
+    .resize-sw { bottom: -14px; left: -14px; }
+    .resize-se { bottom: -14px; right: -14px; }
   }
   @media (max-width: 380px) {
     .app-header h1 { font-size: 1.2rem; }
@@ -717,7 +684,6 @@
     <ol>
       <li>Sube o arrastra una o varias imágenes con tableros.</li>
       <li>Ajusta el recuadro sobre el tablero (arrastra y usa los tiradores).</li>
-      <li>En móvil: <strong>un dedo</strong> mueve el recuadro, <strong>dos dedos</strong> desplazan la imagen.</li>
       <li>Pulsa <em>Guardar tablero</em> (<span class="kbd-hint">Ctrl</span>+<span class="kbd-hint">Enter</span>). Repite para cada uno.</li>
       <li>Elige 4, 6 u 8 tableros por página y descarga tu PDF.</li>
     </ol>
@@ -761,15 +727,13 @@
     </div>
 
     <div id="cropContainer">
-      <div id="cropStage">
-        <img id="imageToCrop" alt="" />
-        <div class="crop-box hidden" id="cropBox" tabindex="0"
-             role="group" aria-label="Área de recorte del tablero">
-          <div class="resize-handle resize-nw" data-dir="nw"></div>
-          <div class="resize-handle resize-ne" data-dir="ne"></div>
-          <div class="resize-handle resize-sw" data-dir="sw"></div>
-          <div class="resize-handle resize-se" data-dir="se"></div>
-        </div>
+      <img id="imageToCrop" alt="" />
+      <div class="crop-box hidden" id="cropBox" tabindex="0"
+           role="group" aria-label="Área de recorte del tablero">
+        <div class="resize-handle resize-nw" data-dir="nw"></div>
+        <div class="resize-handle resize-ne" data-dir="ne"></div>
+        <div class="resize-handle resize-sw" data-dir="sw"></div>
+        <div class="resize-handle resize-se" data-dir="se"></div>
       </div>
     </div>
 
@@ -817,7 +781,7 @@
           <option value="10">Permisiva</option>
         </select>
       </label>
-      <label title="Permite desplazar la imagen arrastrando, sin mover el recuadro">
+      <label title="Bloquea el recuadro para poder desplazar la imagen con un dedo">
         <input type="checkbox" id="panMode" /> Modo desplazar
       </label>
     </div>
@@ -933,7 +897,6 @@ const state = {
   footerText: '',
   itemsPerPage: 6,
   crop: { x: 0, y: 0, w: 0, h: 0 },
-  pointerId: null,
   mode: null,
   startX: 0, startY: 0,
   startCrop: { x: 0, y: 0, w: 0, h: 0 }
@@ -1327,7 +1290,7 @@ function showPanHint() {
   if (localStorage.getItem('chessExtract.panHintShown')) return;
   localStorage.setItem('chessExtract.panHintShown', '1');
   notify(
-    'Consejo: usa dos dedos para mover la imagen · un dedo mueve el recuadro',
+    'Consejo: usa el "Modo desplazar" si necesitas mover la imagen sin tocar el recuadro',
     'info',
     { duration: 6500 }
   );
@@ -1350,8 +1313,7 @@ function initCropBox() {
     const t = state.cropTemplate;
     state.crop = { x: t.x * dW, y: t.y * dH, w: t.w * dW, h: t.h * dH };
   } else {
-    // En móvil 60 %, en escritorio 70 %
-    const factor = isMobileViewport() ? 0.6 : 0.7;
+    const factor = isMobileViewport() ? 0.7 : 0.7;
     const side = Math.min(dW, dH) * factor;
     state.crop = { x: (dW - side) / 2, y: (dH - side) / 2, w: side, h: side };
   }
@@ -1370,7 +1332,7 @@ function initCropBox() {
 // =========================================================
 function getHandleFromPoint(clientX, clientY) {
   const rect = cropBox.getBoundingClientRect();
-  const threshold = isMobileViewport() ? 60 : 48;
+  const threshold = isMobileViewport() ? 60 : 44;
 
   const corners = [
     { name: 'nw', x: rect.left,   y: rect.top    },
@@ -1395,30 +1357,32 @@ function getHandleFromPoint(clientX, clientY) {
 }
 
 // =========================================================
-// INTERACCIÓN: MOUSE (escritorio) + TOUCH (móvil)
+// INTERACCIÓN UNIFICADA (mouse + touch)
+// - El navegador sintetiza eventos mouse desde toques porque touch-action: auto
+// - Listeners de move y end en document → nunca se pierden
 // =========================================================
-
-// --- Utilidad: convierte un evento en coordenadas cliente ---
-function getClientXY(ev) {
-  if (ev.touches && ev.touches.length) {
-    return { x: ev.touches[0].clientX, y: ev.touches[0].clientY };
+function detectMode(target, clientX, clientY) {
+  const handle = target.closest && target.closest('.resize-handle');
+  if (handle) {
+    for (const dir of ['nw', 'ne', 'sw', 'se']) {
+      if (handle.classList.contains('resize-' + dir)) return dir;
+    }
   }
-  if (ev.changedTouches && ev.changedTouches.length) {
-    return { x: ev.changedTouches[0].clientX, y: ev.changedTouches[0].clientY };
-  }
-  return { x: ev.clientX, y: ev.clientY };
+  return getHandleFromPoint(clientX, clientY) || 'drag';
 }
 
-// --- Inicia el gesto (drag o resize) ---
-function startGesture(mode, clientX, clientY) {
+function onGestureStart(clientX, clientY, target) {
+  if (state.panMode) return;
+  if (state.mode) return;
+
+  const mode = detectMode(target, clientX, clientY);
   state.mode = mode;
   state.startX = clientX;
   state.startY = clientY;
   state.startCrop = { ...state.crop };
 }
 
-// --- Aplica el movimiento según el modo ---
-function applyGestureMove(clientX, clientY) {
+function onGestureMove(clientX, clientY) {
   if (!state.mode) return;
 
   const dx = clientX - state.startX;
@@ -1476,126 +1440,52 @@ function applyGestureMove(clientX, clientY) {
   applyCropStyles();
 }
 
-// --- Termina el gesto ---
-function endGesture() {
+function onGestureEnd() {
   state.mode = null;
-  state.startX = 0;
-  state.startY = 0;
 }
 
-// --- Detectar modo al iniciar (handle directo o proximidad) ---
-function detectMode(target, clientX, clientY) {
-  const handle = target.closest && target.closest('.resize-handle');
-  if (handle) return handle.dataset.dir;
-  return getHandleFromPoint(clientX, clientY) || 'drag';
-}
+// --- MOUSE (funciona en escritorio y móvil vía síntesis) ---
+cropBox.addEventListener('mousedown', (e) => {
+  if (e.button !== 0) return;
+  onGestureStart(e.clientX, e.clientY, e.target);
+  if (state.mode) e.preventDefault();
+});
 
-// =========================================================
-// TOUCH (móvil)
-// =========================================================
-function onTouchStart(e) {
-  if (state.panMode) return;
-  if (e.touches.length !== 1) return;  // solo un dedo
-  if (state.mode) return;              // ya hay un gesto activo
-
-  const t = e.touches[0];
-  const mode = detectMode(e.target, t.clientX, t.clientY);
-
-  startGesture(mode, t.clientX, t.clientY);
+document.addEventListener('mousemove', (e) => {
+  if (!state.mode) return;
+  onGestureMove(e.clientX, e.clientY);
   e.preventDefault();
-  e.stopPropagation();
-}
+});
 
-function onTouchMove(e) {
+document.addEventListener('mouseup', () => {
+  if (state.mode) onGestureEnd();
+});
+
+// --- TOUCH (para navegadores que no sintetizan bien los eventos mouse) ---
+cropBox.addEventListener('touchstart', (e) => {
+  if (e.touches.length !== 1) return;
+  const t = e.touches[0];
+  onGestureStart(t.clientX, t.clientY, e.target);
+  if (state.mode) e.preventDefault();
+}, { passive: false });
+
+document.addEventListener('touchmove', (e) => {
   if (!state.mode) return;
   if (e.touches.length !== 1) return;
-
   const t = e.touches[0];
-  applyGestureMove(t.clientX, t.clientY);
+  onGestureMove(t.clientX, t.clientY);
   e.preventDefault();
-}
+}, { passive: false });
 
-function onTouchEnd(e) {
-  if (!state.mode) return;
-  // Si aún hay dedos en pantalla, no terminamos (el usuario está por hacer pan)
-  if (e.touches.length > 0) return;
-  endGesture();
-}
-
-cropBox.addEventListener('touchstart', onTouchStart, { passive: false });
-cropBox.addEventListener('touchmove',  onTouchMove,  { passive: false });
-cropBox.addEventListener('touchend',   onTouchEnd);
-cropBox.addEventListener('touchcancel', endGesture);
-
-// =========================================================
-// MOUSE (escritorio)
-// =========================================================
-let _mouseDown = false;
-
-cropBox.addEventListener('mousedown', (e) => {
-  if (state.panMode) return;
-  if (e.button !== 0) return;
-  const mode = detectMode(e.target, e.clientX, e.clientY);
-  startGesture(mode, e.clientX, e.clientY);
-  _mouseDown = true;
-  e.preventDefault();
+document.addEventListener('touchend', () => {
+  if (state.mode) onGestureEnd();
 });
 
-window.addEventListener('mousemove', (e) => {
-  if (!_mouseDown) return;
-  applyGestureMove(e.clientX, e.clientY);
+document.addEventListener('touchcancel', () => {
+  if (state.mode) onGestureEnd();
 });
 
-window.addEventListener('mouseup', () => {
-  if (!_mouseDown) return;
-  _mouseDown = false;
-  endGesture();
-});
-  // =========================================================
-// PAN CON DOS DEDOS
 // =========================================================
-let _twoFingerActive = false;
-
-// ✅ Detecta si un punto (clientX, clientY) está cerca de un handle
-function isNearHandle(clientX, clientY) {
-  return getHandleFromPoint(clientX, clientY) !== null;
-}
-
-cropContainer.addEventListener('touchstart', (e) => {
-  if (e.touches.length < 2) return;
-
-  // ✅ Si alguno de los dos dedos está sobre un handle, NO activar pan
-  const t1 = e.touches[0];
-  const t2 = e.touches[1];
-  if (isNearHandle(t1.clientX, t1.clientY) || isNearHandle(t2.clientX, t2.clientY)) {
-    return;
-  }
-
-  _twoFingerActive = true;
-  cropBox.classList.add('pan-mode');
-
-  if (state.pointerId !== null) {
-    try { cropBox.releasePointerCapture(state.pointerId); } catch (_) {}
-    cropBox.removeEventListener('pointermove', onPointerMove);
-    cropBox.removeEventListener('pointerup', onPointerUp);
-    cropBox.removeEventListener('pointercancel', onPointerUp);
-    state.pointerId = null;
-    state.mode = null;
-  }
-}, { passive: true });
-
-cropContainer.addEventListener('touchend', (e) => {
-  if (_twoFingerActive && e.touches.length < 2) {
-    _twoFingerActive = false;
-    cropBox.classList.toggle('pan-mode', state.panMode);
-  }
-}, { passive: true });
-
-cropContainer.addEventListener('touchcancel', () => {
-  _twoFingerActive = false;
-  cropBox.classList.toggle('pan-mode', state.panMode);
-}, { passive: true });
-  // =========================================================
 // TECLADO — cropBox
 // =========================================================
 cropBox.addEventListener('keydown', (e) => {
@@ -2060,7 +1950,7 @@ async function processAllImages(useTemplate) {
             h: activeTemplate.h * dH
           };
         } else {
-          const factor = isMobileViewport() ? 0.6 : 0.7;
+          const factor = 0.7;
           const side = Math.min(dW, dH) * factor;
           state.crop = { x: (dW - side) / 2, y: (dH - side) / 2, w: side, h: side };
         }
