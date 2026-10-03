@@ -2925,6 +2925,96 @@
     justify-content: center;
     gap: 10px;
 }
+/* ⭐ v75: Modo Zen — botón toggle */
+.cm-tablero-wrap {
+    position: relative;
+}
+
+.cm-btn-zen-toggle {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    z-index: 100;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 1px solid var(--cm-borde);
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(6px);
+    cursor: pointer;
+    font-size: 1.15rem;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    color: var(--cm-texto);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    padding: 0;
+}
+
+.cm-btn-zen-toggle:hover {
+    background: var(--cm-acento);
+    color: white;
+    border-color: var(--cm-acento);
+    transform: scale(1.08);
+    box-shadow: 0 4px 14px rgba(14, 165, 233, 0.35);
+}
+
+/* Modo Zen activo: tablero fullscreen */
+.cm-tablero-wrap--zen {
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    max-width: none !important;
+    max-height: none !important;
+    z-index: 9999 !important;
+    background: #f8fafc !important;
+    padding: 16px !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
+    overflow: auto !important;
+    box-sizing: border-box !important;
+}
+
+.cm-tablero-wrap--zen .cm-tablero-game {
+    max-width: 100% !important;
+    height: 100% !important;
+    grid-template-columns: 1fr 340px !important;
+    gap: 16px !important;
+}
+
+.cm-tablero-wrap--zen .cm-btn-zen-toggle {
+    top: 16px;
+    right: 16px;
+    width: 42px;
+    height: 42px;
+    font-size: 1.3rem;
+    background: var(--cm-acento);
+    color: white;
+    border-color: var(--cm-acento);
+}
+
+.cm-tablero-wrap--zen .cm-btn-zen-toggle:hover {
+    background: #dc2626;
+    border-color: #dc2626;
+}
+
+body.cm-zen-activo {
+    overflow: hidden !important;
+}
+
+@media (max-width: 768px) {
+    .cm-tablero-wrap--zen {
+        padding: 8px !important;
+    }
+    .cm-tablero-wrap--zen .cm-tablero-game {
+        grid-template-columns: 1fr !important;
+        grid-template-rows: auto auto !important;
+    }
+}
+
 /* ⭐ v71: Barra de capítulos plegable */
 .cm-tablero-capitulos-titulo {
     transition: background 0.15s;
