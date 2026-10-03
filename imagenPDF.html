@@ -44,7 +44,6 @@
     padding: 22px;
   }
 
-  /* HEADER */
   .app-header { text-align: center; margin-bottom: 22px; padding-bottom: 18px; border-bottom: 1px solid var(--light); }
   .app-header h1 {
     color: var(--primary);
@@ -56,7 +55,6 @@
   .app-header h1 i { color: var(--secondary); }
   .app-header p { color: var(--gray); font-size: .98rem; margin-top: 6px; }
 
-  /* CARDS */
   .card {
     background: #fff;
     border-radius: var(--radius);
@@ -82,7 +80,6 @@
     gap: 12px; flex-wrap: wrap; margin-bottom: 14px;
   }
 
-  /* INSTRUCCIONES */
   .instructions {
     background: #e8f4fd;
     border-radius: var(--radius);
@@ -94,7 +91,6 @@
   .instructions ol { padding-left: 22px; margin-top: 6px; }
   .instructions li { margin-bottom: 4px; }
 
-  /* BOTONES */
   .btn {
     display: inline-flex; align-items: center; justify-content: center;
     gap: 8px;
@@ -138,7 +134,6 @@
     border-color: var(--secondary);
   }
 
-  /* FORM CONTROLS */
   .form-control {
     width: 100%;
     padding: 10px 12px;
@@ -163,7 +158,6 @@
     margin-bottom: 6px;
   }
 
-  /* DROP ZONE */
   .drop-zone {
     border: 2.5px dashed #b8c7d6;
     border-radius: var(--radius);
@@ -197,7 +191,6 @@
   }
   .file-info.hidden { display: none; }
 
-  /* CROP AREA — imagen ajustada al ancho, sin scroll interno */
   .crop-toolbar {
     display: flex;
     justify-content: space-between;
@@ -268,9 +261,6 @@
     background-color: rgba(52,152,219,.06);
   }
 
-  .crop-box.pan-mode { pointer-events: none; }
-  .crop-box.pan-mode .resize-handle { pointer-events: none; }
-
   .crop-box::before {
     content: "";
     position: absolute; inset: 0;
@@ -284,7 +274,6 @@
   }
   .crop-box.show-grid::before { opacity: 1; }
 
-  /* ✅ Handles con área de toque ampliada (::before transparente) */
   .resize-handle {
     position: absolute;
     width: 22px;
@@ -296,21 +285,116 @@
     z-index: 6;
     -webkit-user-select: none;
     user-select: none;
-    -webkit-touch-callout: none;
-  }
-  .resize-handle::before {
-    content: '';
-    position: absolute;
-    inset: -18px;
-    border-radius: 50%;
-    background: transparent;
   }
   .resize-nw { top: -12px; left: -12px; cursor: nw-resize; }
   .resize-ne { top: -12px; right: -12px; cursor: ne-resize; }
   .resize-sw { bottom: -12px; left: -12px; cursor: sw-resize; }
   .resize-se { bottom: -12px; right: -12px; cursor: se-resize; }
 
-  /* BARRA DE PROGRESO */
+  /* ============================================================
+     CONTROLES TÁCTILES (botones de ajuste fino)
+     ============================================================ */
+  .touch-controls {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: var(--radius);
+    padding: 12px;
+    margin: 12px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .tc-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+    cursor: pointer;
+    user-select: none;
+  }
+  .tc-title {
+    font-size: .85rem;
+    font-weight: 700;
+    color: var(--primary);
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .tc-title i { color: var(--secondary); }
+  .tc-toggle {
+    font-size: .75rem;
+    color: var(--gray);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .tc-body {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .tc-body.collapsed { display: none; }
+  .tc-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+  .tc-label {
+    font-size: .72rem;
+    font-weight: 600;
+    color: var(--gray);
+    text-transform: uppercase;
+    letter-spacing: .5px;
+  }
+  .tc-row {
+    display: flex;
+    gap: 5px;
+  }
+  .tc-btn {
+    flex: 1;
+    min-width: 0;
+    min-height: 48px;
+    border: 2px solid #cbd5e0;
+    background: #fff;
+    color: var(--dark);
+    border-radius: 8px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px;
+    user-select: none;
+    touch-action: manipulation;
+    transition: .1s;
+    font-family: inherit;
+    line-height: 1;
+  }
+  .tc-btn:hover { border-color: var(--secondary); }
+  .tc-btn:active {
+    background: var(--secondary);
+    color: #fff;
+    border-color: var(--secondary);
+    transform: scale(.94);
+  }
+  .tc-btn.tc-wide {
+    font-size: .8rem;
+    gap: 4px;
+  }
+  .tc-btn.tc-primary {
+    background: var(--secondary);
+    color: #fff;
+    border-color: var(--secondary);
+  }
+  .tc-btn.tc-primary:active {
+    background: var(--primary);
+    border-color: var(--primary);
+  }
+
   .progress-bar {
     position: relative;
     height: 24px;
@@ -388,7 +472,6 @@
   }
   .crop-nav .btn { flex: 1; }
 
-  /* QUALITY */
   .settings-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -424,7 +507,6 @@
     border-radius: 12px;
   }
 
-  /* GRID TABLEROS */
   .chessboards-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
@@ -468,7 +550,6 @@
     padding: 4px 8px;
   }
 
-  /* PDF PREVIEW */
   .pdf-preview {
     border: 1px solid #e2e8f0;
     border-radius: var(--radius);
@@ -561,7 +642,6 @@
   .page-content.rows-2 .page-cell { padding: 10px; }
   .page-content.rows-2 .answer-lines .line { margin-bottom: 8px; }
 
-  /* NOTIFICACIÓN */
   .notification {
     position: fixed;
     top: 16px;
@@ -623,7 +703,6 @@
     margin: 0 2px;
   }
 
-  /* RESPONSIVE */
   @media (max-width: 700px) {
     body { padding: 8px; }
     .app-container { padding: 14px; border-radius: 8px; }
@@ -637,14 +716,7 @@
     .crop-options { gap: 12px; font-size: .85rem; }
     .crop-actions .btn { flex: 1 1 48%; }
     .progress-text { font-size: .75rem; }
-
-    /* Handles un poco más grandes para dedos */
-    .resize-handle { width: 26px; height: 26px; }
-    .resize-handle::before { inset: -22px; }
-    .resize-nw { top: -14px; left: -14px; }
-    .resize-ne { top: -14px; right: -14px; }
-    .resize-sw { bottom: -14px; left: -14px; }
-    .resize-se { bottom: -14px; right: -14px; }
+    .tc-btn { min-height: 52px; font-size: 1.2rem; }
   }
   @media (max-width: 380px) {
     .app-header h1 { font-size: 1.2rem; }
@@ -665,7 +737,7 @@
     <strong><i class="fas fa-info-circle"></i> Cómo usarlo:</strong>
     <ol>
       <li>Sube o arrastra una o varias imágenes con tableros.</li>
-      <li>Ajusta el recuadro sobre el tablero (arrastra y usa los tiradores).</li>
+      <li>Ajusta el recuadro con el <strong>panel de botones</strong> (funciona en cualquier dispositivo).</li>
       <li>Pulsa <em>Guardar tablero</em> (<span class="kbd-hint">Ctrl</span>+<span class="kbd-hint">Enter</span>). Repite para cada uno.</li>
       <li>Elige 4, 6 u 8 tableros por página y descarga tu PDF.</li>
     </ol>
@@ -716,6 +788,67 @@
           <div class="resize-handle resize-sw" data-dir="sw"></div>
           <div class="resize-handle resize-se" data-dir="se"></div>
         </div>
+      </div>
+    </div>
+
+    <!-- ✅ PANEL DE CONTROLES TÁCTILES -->
+    <div class="touch-controls" id="touchControls">
+      <div class="tc-header" id="tcHeader">
+        <span class="tc-title"><i class="fas fa-gamepad"></i> Ajuste fino del recuadro</span>
+        <button type="button" class="tc-toggle" id="tcToggleBtn">Ocultar ▲</button>
+      </div>
+      <div class="tc-body" id="tcBody">
+
+        <div class="tc-group">
+          <span class="tc-label">Mover recuadro</span>
+          <div class="tc-row">
+            <button type="button" class="tc-btn" data-action="move-left" title="Mover izquierda">←</button>
+            <button type="button" class="tc-btn" data-action="move-up" title="Mover arriba">↑</button>
+            <button type="button" class="tc-btn" data-action="move-down" title="Mover abajo">↓</button>
+            <button type="button" class="tc-btn" data-action="move-right" title="Mover derecha">→</button>
+          </div>
+        </div>
+
+        <div class="tc-group">
+          <span class="tc-label">Esquina superior izquierda (↖)</span>
+          <div class="tc-row">
+            <button type="button" class="tc-btn tc-wide" data-action="nw-out">↖ − (más)</button>
+            <button type="button" class="tc-btn tc-wide" data-action="nw-in">↖ + (menos)</button>
+          </div>
+        </div>
+
+        <div class="tc-group">
+          <span class="tc-label">Esquina superior derecha (↗)</span>
+          <div class="tc-row">
+            <button type="button" class="tc-btn tc-wide" data-action="ne-out">↗ − (más)</button>
+            <button type="button" class="tc-btn tc-wide" data-action="ne-in">↗ + (menos)</button>
+          </div>
+        </div>
+
+        <div class="tc-group">
+          <span class="tc-label">Esquina inferior izquierda (↙)</span>
+          <div class="tc-row">
+            <button type="button" class="tc-btn tc-wide" data-action="sw-out">↙ − (más)</button>
+            <button type="button" class="tc-btn tc-wide" data-action="sw-in">↙ + (menos)</button>
+          </div>
+        </div>
+
+        <div class="tc-group">
+          <span class="tc-label">Esquina inferior derecha (↘)</span>
+          <div class="tc-row">
+            <button type="button" class="tc-btn tc-wide" data-action="se-out">↘ − (más)</button>
+            <button type="button" class="tc-btn tc-wide" data-action="se-in">↘ + (menos)</button>
+          </div>
+        </div>
+
+        <div class="tc-group">
+          <span class="tc-label">Tamaño general</span>
+          <div class="tc-row">
+            <button type="button" class="tc-btn tc-wide tc-primary" data-action="size-down">− Más chico</button>
+            <button type="button" class="tc-btn tc-wide tc-primary" data-action="size-up">+ Más grande</button>
+          </div>
+        </div>
+
       </div>
     </div>
 
@@ -852,14 +985,11 @@
 <script>
 "use strict";
 
-// =========================================================
-// ESTADO
-// =========================================================
 const state = {
   imageFiles: [],
   currentIndex: 0,
   originalImage: null,
-  savedBoards: [],              // { blob, url, hash, w, h }
+  savedBoards: [],
   editingIndex: -1,
   quality: 0.75,
   resolution: 0.85,
@@ -873,7 +1003,6 @@ const state = {
   footerText: '',
   itemsPerPage: 6,
   crop: { x: 0, y: 0, w: 0, h: 0 },
-  // Estado de arrastre
   isDragging: false,
   isResizing: false,
   resizeDir: null,
@@ -885,45 +1014,24 @@ const MAX_DISPLAY_LONG_SIDE = 1600;
 const MEMORY_WARN_THRESHOLD = 30;
 let _memoryWarned = false;
 
-// =========================================================
-// LAYOUTS PDF
-// =========================================================
 const LAYOUTS = {
-  4: {
-    cols: 2, rows: 2,
-    imgW: 75, imgH: 75,
-    lineCount: 3, lineGap: 4,
-    positions: [
-      { x: 27,  y: 55  }, { x: 108, y: 55  },
-      { x: 27,  y: 170 }, { x: 108, y: 170 }
-    ]
-  },
-  6: {
-    cols: 2, rows: 3,
-    imgW: 58.5, imgH: 58.5,
-    lineCount: 3, lineGap: 4,
-    positions: [
-      { x: 27,  y: 40  }, { x: 122, y: 40  },
-      { x: 27,  y: 120 }, { x: 122, y: 120 },
-      { x: 27,  y: 200 }, { x: 122, y: 200 }
-    ]
-  },
-  8: {
-    cols: 2, rows: 4,
-    imgW: 46, imgH: 46,
-    lineCount: 3, lineGap: 3.5,
-    positions: [
-      { x: 25, y: 32  }, { x: 139, y: 32  },
-      { x: 25, y: 93  }, { x: 139, y: 93  },
-      { x: 25, y: 154 }, { x: 139, y: 154 },
-      { x: 25, y: 215 }, { x: 139, y: 215 }
-    ]
-  }
+  4: { cols: 2, rows: 2, imgW: 75, imgH: 75, lineCount: 3, lineGap: 4, positions: [
+    { x: 27,  y: 55  }, { x: 108, y: 55  },
+    { x: 27,  y: 170 }, { x: 108, y: 170 }
+  ]},
+  6: { cols: 2, rows: 3, imgW: 58.5, imgH: 58.5, lineCount: 3, lineGap: 4, positions: [
+    { x: 27,  y: 40  }, { x: 122, y: 40  },
+    { x: 27,  y: 120 }, { x: 122, y: 120 },
+    { x: 27,  y: 200 }, { x: 122, y: 200 }
+  ]},
+  8: { cols: 2, rows: 4, imgW: 46, imgH: 46, lineCount: 3, lineGap: 3.5, positions: [
+    { x: 25, y: 32  }, { x: 139, y: 32  },
+    { x: 25, y: 93  }, { x: 139, y: 93  },
+    { x: 25, y: 154 }, { x: 139, y: 154 },
+    { x: 25, y: 215 }, { x: 139, y: 215 }
+  ]}
 };
 
-// =========================================================
-// DOM
-// =========================================================
 const $ = (id) => document.getElementById(id);
 const imageInput       = $('imageInput');
 const selectFilesBtn   = $('selectFilesBtn');
@@ -969,10 +1077,11 @@ const notificationText = $('notificationText');
 const progressBar      = $('progressBar');
 const progressFill     = $('progressFill');
 const progressText     = $('progressText');
+const touchControls    = $('touchControls');
+const tcHeader         = $('tcHeader');
+const tcBody           = $('tcBody');
+const tcToggleBtn      = $('tcToggleBtn');
 
-// =========================================================
-// UTILIDADES
-// =========================================================
 function notify(msg, type = 'success', opts = {}) {
   notification.classList.remove('success', 'error', 'info');
   notification.classList.add(type);
@@ -980,9 +1089,7 @@ function notify(msg, type = 'success', opts = {}) {
   icon.className = type === 'error' ? 'fas fa-exclamation-circle'
                  : type === 'info'  ? 'fas fa-info-circle'
                  : 'fas fa-check-circle';
-
   notificationText.textContent = msg;
-
   let undoBtn = notification.querySelector('.undo-btn');
   if (undoBtn) undoBtn.remove();
   if (opts.onUndo) {
@@ -995,7 +1102,6 @@ function notify(msg, type = 'success', opts = {}) {
     });
     notification.appendChild(undoBtn);
   }
-
   notification.classList.add('show');
   clearTimeout(notify._t);
   notify._t = setTimeout(() => notification.classList.remove('show'), opts.duration || 3000);
@@ -1070,9 +1176,6 @@ function isMobileViewport() {
   return window.matchMedia('(max-width: 700px)').matches;
 }
 
-// =========================================================
-// PERSISTENCIA
-// =========================================================
 function saveSettings() {
   try {
     localStorage.setItem('chessExtract.settings', JSON.stringify({
@@ -1117,9 +1220,6 @@ function loadSettings() {
   } catch (e) {}
 }
 
-// =========================================================
-// CARGA DE ARCHIVOS
-// =========================================================
 function handleFiles(files) {
   const all = Array.from(files);
   const valid = all.filter(f => f.type.startsWith('image/') || isHeicFile(f));
@@ -1131,11 +1231,7 @@ function handleFiles(files) {
 
   const heicCount = valid.filter(isHeicFile).length;
   if (heicCount > 0) {
-    notify(
-      `${heicCount} imagen(es) HEIC. Si no se muestran, conviértelas a JPG.`,
-      'info',
-      { duration: 6000 }
-    );
+    notify(`${heicCount} imagen(es) HEIC. Si no se muestran, conviértelas a JPG.`, 'info', { duration: 6000 });
   }
 
   valid.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }));
@@ -1151,10 +1247,7 @@ function handleFiles(files) {
   cropSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
-selectFilesBtn.addEventListener('click', (e) => {
-  e.stopPropagation();
-  imageInput.click();
-});
+selectFilesBtn.addEventListener('click', (e) => { e.stopPropagation(); imageInput.click(); });
 dropZone.addEventListener('click', () => imageInput.click());
 imageInput.addEventListener('change', function () {
   if (this.files && this.files.length) handleFiles(this.files);
@@ -1162,30 +1255,20 @@ imageInput.addEventListener('change', function () {
 });
 
 ['dragenter', 'dragover'].forEach(ev => {
-  dropZone.addEventListener(ev, (e) => {
-    e.preventDefault(); e.stopPropagation();
-    dropZone.classList.add('dragover');
-  });
+  dropZone.addEventListener(ev, (e) => { e.preventDefault(); e.stopPropagation(); dropZone.classList.add('dragover'); });
 });
 ['dragleave', 'drop'].forEach(ev => {
-  dropZone.addEventListener(ev, (e) => {
-    e.preventDefault(); e.stopPropagation();
-    dropZone.classList.remove('dragover');
-  });
+  dropZone.addEventListener(ev, (e) => { e.preventDefault(); e.stopPropagation(); dropZone.classList.remove('dragover'); });
 });
 dropZone.addEventListener('drop', (e) => {
   const files = e.dataTransfer && e.dataTransfer.files;
   if (files && files.length) handleFiles(files);
 });
 
-// =========================================================
-// CARGA DE IMAGEN ACTUAL
-// =========================================================
 async function loadCurrentImage() {
   if (state.imageFiles.length === 0) return;
 
   state.editingIndex = -1;
-
   const file = state.imageFiles[state.currentIndex];
 
   try {
@@ -1194,9 +1277,7 @@ async function loadCurrentImage() {
     try {
       img = await loadImageFromSrc(dataUrl);
     } catch (err) {
-      if (isHeicFile(file)) {
-        throw new Error('HEIC no soportado en este navegador. Convierte a JPG.');
-      }
+      if (isHeicFile(file)) throw new Error('HEIC no soportado en este navegador. Convierte a JPG.');
       throw err;
     }
     state.originalImage = img;
@@ -1231,9 +1312,6 @@ function rescaleForDisplay(img) {
   return canvas.toDataURL('image/jpeg', 0.92);
 }
 
-// =========================================================
-// CROP BOX
-// =========================================================
 function getDisplaySize() {
   const rect = imageToCrop.getBoundingClientRect();
   return { w: rect.width, h: rect.height };
@@ -1259,7 +1337,6 @@ function initCropBox() {
   const { w: dW, h: dH } = getDisplaySize();
   if (dW <= 0 || dH <= 0) return;
 
-  // Auto "Ver completa" la primera vez en móvil
   if (isMobileViewport() && !state._mobileOverlayInited) {
     state._mobileOverlayInited = true;
     if (!state.overlayHidden) {
@@ -1272,8 +1349,7 @@ function initCropBox() {
     const t = state.cropTemplate;
     state.crop = { x: t.x * dW, y: t.y * dH, w: t.w * dW, h: t.h * dH };
   } else {
-    const factor = 0.7;
-    const side = Math.min(dW, dH) * factor;
+    const side = Math.min(dW, dH) * 0.7;
     state.crop = { x: (dW - side) / 2, y: (dH - side) / 2, w: side, h: side };
   }
   applyCropStyles();
@@ -1284,9 +1360,6 @@ function initCropBox() {
   updateTemplateButtons();
 }
 
-// =========================================================
-// DETECCIÓN POR PROXIMIDAD DE ESQUINA
-// =========================================================
 function getHandleFromPoint(clientX, clientY) {
   const rect = cropBox.getBoundingClientRect();
   const threshold = isMobileViewport() ? 60 : 44;
@@ -1305,21 +1378,16 @@ function getHandleFromPoint(clientX, clientY) {
     const dx = clientX - c.x;
     const dy = clientY - c.y;
     const d = Math.sqrt(dx * dx + dy * dy);
-    if (d < bestDist) {
-      bestDist = d;
-      best = c.name;
-    }
+    if (d < bestDist) { bestDist = d; best = c.name; }
   }
   return best;
 }
 
 // =========================================================
-// INTERACCIÓN: SOLO MOUSE (mousedown en cropBox, move/up en document)
-// El navegador sintetiza eventos mouse desde toques en móvil.
+// INTERACCIÓN CON MOUSE (escritorio)
 // =========================================================
 function startGesture(clientX, clientY, target) {
   if (state.isDragging || state.isResizing) return;
-
   const handle = target.closest && target.closest('.resize-handle');
   let mode = null;
 
@@ -1328,16 +1396,10 @@ function startGesture(clientX, clientY, target) {
       if (handle.classList.contains('resize-' + dir)) { mode = dir; break; }
     }
   }
-  if (!mode) {
-    mode = getHandleFromPoint(clientX, clientY);
-  }
+  if (!mode) mode = getHandleFromPoint(clientX, clientY);
 
-  if (mode) {
-    state.isResizing = true;
-    state.resizeDir = mode;
-  } else {
-    state.isDragging = true;
-  }
+  if (mode) { state.isResizing = true; state.resizeDir = mode; }
+  else { state.isDragging = true; }
 
   state.startX = clientX;
   state.startY = clientY;
@@ -1380,23 +1442,14 @@ function moveGesture(clientX, clientY) {
       nw = side; nh = side;
     }
 
-    if (nw < min) {
-      if (state.resizeDir === 'nw' || state.resizeDir === 'sw') nx = sc.x + sc.w - min;
-      nw = min;
-    }
-    if (nh < min) {
-      if (state.resizeDir === 'nw' || state.resizeDir === 'ne') ny = sc.y + sc.h - min;
-      nh = min;
-    }
+    if (nw < min) { if (state.resizeDir === 'nw' || state.resizeDir === 'sw') nx = sc.x + sc.w - min; nw = min; }
+    if (nh < min) { if (state.resizeDir === 'nw' || state.resizeDir === 'ne') ny = sc.y + sc.h - min; nh = min; }
     if (nx < 0) { nw += nx; nx = 0; }
     if (ny < 0) { nh += ny; ny = 0; }
     if (nx + nw > dW) nw = dW - nx;
     if (ny + nh > dH) nh = dH - ny;
 
-    state.crop.x = nx;
-    state.crop.y = ny;
-    state.crop.w = nw;
-    state.crop.h = nh;
+    state.crop.x = nx; state.crop.y = ny; state.crop.w = nw; state.crop.h = nh;
   }
 
   applyCropStyles();
@@ -1423,6 +1476,171 @@ document.addEventListener('mousemove', (e) => {
 document.addEventListener('mouseup', () => {
   if (!state.isDragging && !state.isResizing) return;
   endGesture();
+});
+
+// =========================================================
+// ✅ CONTROLES TÁCTILES — ajuste fino con botones
+// =========================================================
+const TC_STEP = 8;
+const TC_MIN = 30;
+
+function tcApply(updater) {
+  const { w: dW, h: dH } = getDisplaySize();
+  if (dW <= 0 || dH <= 0) return;
+  const current = { ...state.crop };
+  const next = updater(current, dW, dH);
+  if (!next) return;
+
+  let x = Math.max(0, Math.min(next.x, dW - TC_MIN));
+  let y = Math.max(0, Math.min(next.y, dH - TC_MIN));
+  let w = Math.max(TC_MIN, Math.min(next.w, dW - x));
+  let h = Math.max(TC_MIN, Math.min(next.h, dH - y));
+
+  if (state.squareLock) {
+    const side = Math.min(w, h);
+    if (updater === tcApply._lastSquareLockFn) { /* no-op */ }
+    w = side; h = side;
+    if (x + w > dW) x = dW - w;
+    if (y + h > dH) y = dH - h;
+  }
+
+  state.crop = { x, y, w, h };
+  applyCropStyles();
+}
+
+touchControls.addEventListener('click', (e) => {
+  const btn = e.target.closest('[data-action]');
+  if (!btn) return;
+  const action = btn.dataset.action;
+  const S = TC_STEP;
+
+  switch (action) {
+    case 'move-left':   tcApply(c => ({ ...c, x: c.x - S })); break;
+    case 'move-right':  tcApply(c => ({ ...c, x: c.x + S })); break;
+    case 'move-up':     tcApply(c => ({ ...c, y: c.y - S })); break;
+    case 'move-down':   tcApply(c => ({ ...c, y: c.y + S })); break;
+
+    case 'nw-out': tcApply(c => {
+      const canX = c.x - S >= 0;
+      const canY = c.y - S >= 0;
+      return {
+        x: canX ? c.x - S : c.x,
+        y: canY ? c.y - S : c.y,
+        w: (canX ? c.w + S : c.w),
+        h: (canY ? c.h + S : c.h)
+      };
+    }); break;
+
+    case 'nw-in': tcApply(c => {
+      const canX = c.w - S >= TC_MIN;
+      const canY = c.h - S >= TC_MIN;
+      return {
+        x: canX ? c.x + S : c.x,
+        y: canY ? c.y + S : c.y,
+        w: canX ? c.w - S : c.w,
+        h: canY ? c.h - S : c.h
+      };
+    }); break;
+
+    case 'ne-out': tcApply(c => {
+      const canY = c.y - S >= 0;
+      const canW = c.x + c.w + S <= getDisplaySize().w;
+      return {
+        x: c.x,
+        y: canY ? c.y - S : c.y,
+        w: canW ? c.w + S : c.w,
+        h: (canY ? c.h + S : c.h)
+      };
+    }); break;
+
+    case 'ne-in': tcApply(c => {
+      const canW = c.w - S >= TC_MIN;
+      const canH = c.h - S >= TC_MIN;
+      return {
+        x: c.x,
+        y: c.h - S >= TC_MIN ? c.y + S : c.y,
+        w: canW ? c.w - S : c.w,
+        h: canH ? c.h - S : c.h
+      };
+    }); break;
+
+    case 'sw-out': tcApply(c => {
+      const canX = c.x - S >= 0;
+      const canH = c.y + c.h + S <= getDisplaySize().h;
+      return {
+        x: canX ? c.x - S : c.x,
+        y: c.y,
+        w: canX ? c.w + S : c.w,
+        h: canH ? c.h + S : c.h
+      };
+    }); break;
+
+    case 'sw-in': tcApply(c => {
+      const canW = c.w - S >= TC_MIN;
+      const canH = c.h - S >= TC_MIN;
+      return {
+        x: canW ? c.x + S : c.x,
+        y: c.y,
+        w: canW ? c.w - S : c.w,
+        h: canH ? c.h - S : c.h
+      };
+    }); break;
+
+    case 'se-out': tcApply(c => {
+      const { w: dW, h: dH } = getDisplaySize();
+      const canW = c.x + c.w + S <= dW;
+      const canH = c.y + c.h + S <= dH;
+      return {
+        x: c.x, y: c.y,
+        w: canW ? c.w + S : c.w,
+        h: canH ? c.h + S : c.h
+      };
+    }); break;
+
+    case 'se-in': tcApply(c => ({
+      x: c.x, y: c.y,
+      w: c.w - S >= TC_MIN ? c.w - S : c.w,
+      h: c.h - S >= TC_MIN ? c.h - S : c.h
+    })); break;
+
+    case 'size-up': tcApply(c => {
+      const { w: dW, h: dH } = getDisplaySize();
+      const newW = Math.min(dW, c.w + S * 2);
+      const newH = Math.min(dH, c.h + S * 2);
+      const cx = c.x + c.w / 2;
+      const cy = c.y + c.h / 2;
+      return {
+        x: Math.max(0, cx - newW / 2),
+        y: Math.max(0, cy - newH / 2),
+        w: newW, h: newH
+      };
+    }); break;
+
+    case 'size-down': tcApply(c => {
+      const newW = Math.max(TC_MIN, c.w - S * 2);
+      const newH = Math.max(TC_MIN, c.h - S * 2);
+      const cx = c.x + c.w / 2;
+      const cy = c.y + c.h / 2;
+      return {
+        x: Math.max(0, cx - newW / 2),
+        y: Math.max(0, cy - newH / 2),
+        w: newW, h: newH
+      };
+    }); break;
+  }
+});
+
+// Toggle plegar/desplegar el panel
+tcToggleBtn.addEventListener('click', (e) => {
+  e.stopPropagation();
+  const collapsed = tcBody.classList.toggle('collapsed');
+  tcToggleBtn.textContent = collapsed ? 'Mostrar ▼' : 'Ocultar ▲';
+});
+
+tcHeader.addEventListener('click', (e) => {
+  if (e.target === tcToggleBtn) return;
+  const collapsed = tcBody.classList.toggle('collapsed');
+  tcToggleBtn.textContent = collapsed ? 'Mostrar ▼' : 'Ocultar ▲';
 });
 
 // =========================================================
@@ -1465,9 +1683,6 @@ cropBox.addEventListener('keydown', (e) => {
   }
 });
 
-// =========================================================
-// ATAJOS GLOBALES
-// =========================================================
 document.addEventListener('keydown', (e) => {
   const tag = (e.target.tagName || '').toLowerCase();
   if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
@@ -1487,7 +1702,7 @@ document.addEventListener('keydown', (e) => {
 });
 
 // =========================================================
-// HASH PERCEPTUAL + DEDUPE
+// HASH + DEDUPE
 // =========================================================
 function computeHashFromCanvas(srcCanvas) {
   const w = 9, h = 8;
@@ -1495,7 +1710,6 @@ function computeHashFromCanvas(srcCanvas) {
   c.width = w; c.height = h;
   const cx = c.getContext('2d', { willReadFrequently: true });
   cx.drawImage(srcCanvas, 0, 0, w, h);
-
   const data = cx.getImageData(0, 0, w, h).data;
   let bits = '';
   for (let y = 0; y < h; y++) {
@@ -1535,9 +1749,6 @@ function findDuplicateIndex(hash, excludeIdx = -1) {
   return -1;
 }
 
-// =========================================================
-// RECORTAR
-// =========================================================
 async function cropImage() {
   if (!state.originalImage) return null;
   const { w: dW, h: dH } = getDisplaySize();
@@ -1569,9 +1780,6 @@ async function cropImage() {
   return { blob, url, hash, w: outW, h: outH };
 }
 
-// =========================================================
-// GUARDAR / EDITAR / ELIMINAR
-// =========================================================
 function addBoard(board) {
   if (state.editingIndex >= 0) {
     const idx = state.editingIndex;
@@ -1598,11 +1806,7 @@ function addBoard(board) {
 
   if (!_memoryWarned && state.savedBoards.length === MEMORY_WARN_THRESHOLD) {
     _memoryWarned = true;
-    notify(
-      `Tienes ${state.savedBoards.length} tableros. Si la app va lenta, genera el PDF por partes o baja la resolución.`,
-      'info',
-      { duration: 7000 }
-    );
+    notify(`Tienes ${state.savedBoards.length} tableros. Si la app va lenta, genera el PDF por partes o baja la resolución.`, 'info', { duration: 7000 });
   }
 
   updateBoardsDisplay();
@@ -1690,9 +1894,6 @@ function updateBoardsDisplay() {
   }
 }
 
-// =========================================================
-// NAVEGACIÓN
-// =========================================================
 prevImageBtn.addEventListener('click', () => {
   if (state.currentIndex > 0) { state.currentIndex--; loadCurrentImage(); }
 });
@@ -1714,9 +1915,6 @@ reverseSavedBtn.addEventListener('click', () => {
   notify('Orden de tableros invertido');
 });
 
-// =========================================================
-// PLANTILLAS
-// =========================================================
 function updateTemplateButtons() {
   const has = !!state.cropTemplate;
   applyTemplateBtn.disabled = !has;
@@ -1752,9 +1950,6 @@ applyToAllBtn.addEventListener('click', () => {
   processAllImages(true);
 });
 
-// =========================================================
-// BOTONES CENTRAR / TODO / VER COMPLETA
-// =========================================================
 centerCropBtn.addEventListener('click', () => {
   const { w: dW, h: dH } = getDisplaySize();
   if (dW <= 0 || dH <= 0) return;
@@ -1766,10 +1961,6 @@ centerCropBtn.addEventListener('click', () => {
     w: finalSide,
     h: finalSide
   };
-  if (state.squareLock) {
-    const s = Math.min(state.crop.w, state.crop.h);
-    state.crop.w = state.crop.h = s;
-  }
   applyCropStyles();
   notify('Recuadro centrado', 'info');
 });
@@ -1786,16 +1977,9 @@ toggleOverlayBtn.addEventListener('click', () => {
   state.overlayHidden = !state.overlayHidden;
   applyOverlayMode();
   saveSettings();
-  notify(
-    state.overlayHidden ? 'Fondo visible: ya ves toda la imagen' : 'Fondo oscurecido',
-    'info',
-    { duration: 1800 }
-  );
+  notify(state.overlayHidden ? 'Fondo visible: ya ves toda la imagen' : 'Fondo oscurecido', 'info', { duration: 1800 });
 });
 
-// =========================================================
-// BARRA DE PROGRESO
-// =========================================================
 function showProgress(current, total) {
   progressBar.classList.remove('hidden');
   const pct = total > 0 ? Math.round((current / total) * 100) : 0;
@@ -1811,9 +1995,6 @@ function hideProgress() {
   progressBar.setAttribute('aria-valuenow', '0');
 }
 
-// =========================================================
-// PROCESAMIENTO AUTOMÁTICO
-// =========================================================
 async function processAllImages(useTemplate) {
   if (state.imageFiles.length === 0) { notify('No hay imágenes', 'info'); return; }
 
@@ -1845,7 +2026,6 @@ async function processAllImages(useTemplate) {
       state.currentIndex = i;
       imageCounter.textContent = `Procesando ${i + 1} de ${state.imageFiles.length}…`;
       showProgress(i, state.imageFiles.length);
-
       await nextFrame();
 
       try {
@@ -1855,10 +2035,7 @@ async function processAllImages(useTemplate) {
         try {
           img = await loadImageFromSrc(dataUrl);
         } catch (err) {
-          if (isHeicFile(file)) {
-            console.warn('Saltando HEIC no soportado:', file.name);
-            continue;
-          }
+          if (isHeicFile(file)) { console.warn('Saltando HEIC:', file.name); continue; }
           throw err;
         }
         state.originalImage = img;
@@ -1888,11 +2065,7 @@ async function processAllImages(useTemplate) {
 
         if (state.dedupe && res.hash) {
           const dup = findDuplicateIndex(res.hash);
-          if (dup >= 0) {
-            URL.revokeObjectURL(res.url);
-            skipped++;
-            continue;
-          }
+          if (dup >= 0) { URL.revokeObjectURL(res.url); skipped++; continue; }
         }
         state.savedBoards.push(res);
         processed++;
@@ -1904,9 +2077,7 @@ async function processAllImages(useTemplate) {
     showProgress(state.imageFiles.length, state.imageFiles.length);
     updateBoardsDisplay();
     notify(
-      skipped > 0
-        ? `${processed} procesadas · ${skipped} repetidas omitidas`
-        : `Se procesaron ${processed} imágenes`,
+      skipped > 0 ? `${processed} procesadas · ${skipped} repetidas omitidas` : `Se procesaron ${processed} imágenes`,
       'success'
     );
   } catch (err) {
@@ -1923,15 +2094,11 @@ async function processAllImages(useTemplate) {
 
 processAllBtn.addEventListener('click', () => processAllImages(false));
 
-// =========================================================
-// GUARDAR TABLERO
-// =========================================================
 let savingCrop = false;
 cropBtn.addEventListener('click', async () => {
   if (savingCrop) return;
   savingCrop = true;
   cropBtn.disabled = true;
-
   try {
     const res = await cropImage();
     if (res) addBoard(res);
@@ -1939,23 +2106,15 @@ cropBtn.addEventListener('click', async () => {
     console.error(err);
     notify('Error al guardar el tablero', 'error');
   } finally {
-    setTimeout(() => {
-      savingCrop = false;
-      cropBtn.disabled = false;
-    }, 350);
+    setTimeout(() => { savingCrop = false; cropBtn.disabled = false; }, 350);
   }
 });
 
-// =========================================================
-// LIMPIAR TODO
-// =========================================================
 clearAllBtn.addEventListener('click', () => {
   if (state.savedBoards.length === 0) return;
   if (!confirm('¿Eliminar todos los tableros guardados?')) return;
 
-  const backupBlobs = state.savedBoards.map(b => ({
-    blob: b.blob, hash: b.hash, w: b.w, h: b.h
-  }));
+  const backupBlobs = state.savedBoards.map(b => ({ blob: b.blob, hash: b.hash, w: b.w, h: b.h }));
   state.savedBoards.forEach(b => b.url && URL.revokeObjectURL(b.url));
   state.savedBoards = [];
   state.editingIndex = -1;
@@ -1966,11 +2125,7 @@ clearAllBtn.addEventListener('click', () => {
     duration: 6000,
     onUndo: () => {
       state.savedBoards = backupBlobs.map(b => ({
-        blob: b.blob,
-        url: URL.createObjectURL(b.blob),
-        hash: b.hash,
-        w: b.w,
-        h: b.h
+        blob: b.blob, url: URL.createObjectURL(b.blob), hash: b.hash, w: b.w, h: b.h
       }));
       updateBoardsDisplay();
       notify('Restaurados');
@@ -1978,9 +2133,6 @@ clearAllBtn.addEventListener('click', () => {
   });
 });
 
-// =========================================================
-// VISTA PREVIA PDF
-// =========================================================
 function updatePdfPreview() {
   pdfPreview.innerHTML = '';
   const layout = LAYOUTS[state.itemsPerPage] || LAYOUTS[6];
@@ -1990,14 +2142,12 @@ function updatePdfPreview() {
   for (let p = 0; p < pageCount; p++) {
     const page = document.createElement('div');
     page.className = 'page';
-
     if (state.headerText) {
       const h = document.createElement('div');
       h.className = 'page-header';
       h.textContent = state.headerText;
       page.appendChild(h);
     }
-
     const content = document.createElement('div');
     content.className = `page-content cols-${layout.cols} rows-${layout.rows}`;
 
@@ -2005,17 +2155,14 @@ function updatePdfPreview() {
       const idx = p * itemsPerPage + i;
       const cell = document.createElement('div');
       cell.className = 'page-cell';
-
       const num = document.createElement('div');
       num.className = 'num';
       num.textContent = idx + 1;
       cell.appendChild(num);
-
       if (idx < state.savedBoards.length) {
         const img = document.createElement('img');
         img.src = state.savedBoards[idx].url;
         cell.appendChild(img);
-
         const lines = document.createElement('div');
         lines.className = 'answer-lines';
         for (let j = 0; j < layout.lineCount; j++) {
@@ -2033,14 +2180,10 @@ function updatePdfPreview() {
     footer.className = 'page-footer';
     footer.innerHTML = `<span>Página ${p + 1} / ${pageCount}</span><span>${escapeHtml(state.footerText || '')}</span>`;
     page.appendChild(footer);
-
     pdfPreview.appendChild(page);
   }
 }
 
-// =========================================================
-// GENERAR PDF
-// =========================================================
 async function generatePdf() {
   if (state.savedBoards.length === 0) { notify('No hay tableros', 'info'); return; }
 
@@ -2060,7 +2203,6 @@ async function generatePdf() {
 
   try {
     let currentPage = -1;
-
     for (let i = 0; i < state.savedBoards.length; i++) {
       const board = state.savedBoards[i];
       const pageIndex = Math.floor(i / itemsPerPage);
@@ -2069,15 +2211,8 @@ async function generatePdf() {
       if (pageIndex !== currentPage) {
         if (currentPage !== -1) doc.addPage();
         currentPage = pageIndex;
-
-        if (headerText) {
-          doc.setFontSize(state.itemsPerPage === 8 ? 11 : 12);
-          doc.text(headerText, 105, 18, { align: 'center' });
-        }
-        if (footerText) {
-          doc.setFontSize(10);
-          doc.text(footerText, 105, 290, { align: 'center' });
-        }
+        if (headerText) { doc.setFontSize(state.itemsPerPage === 8 ? 11 : 12); doc.text(headerText, 105, 18, { align: 'center' }); }
+        if (footerText) { doc.setFontSize(10); doc.text(footerText, 105, 290, { align: 'center' }); }
       }
 
       const pos = positions[posIndex];
@@ -2089,24 +2224,14 @@ async function generatePdf() {
       if (board.w && board.h) {
         const ratio = board.w / board.h;
         const cellRatio = imgW / imgH;
-        if (ratio > cellRatio) {
-          drawW = imgW;
-          drawH = imgW / ratio;
-        } else {
-          drawH = imgH;
-          drawW = imgH * ratio;
-        }
+        if (ratio > cellRatio) { drawW = imgW; drawH = imgW / ratio; }
+        else { drawH = imgH; drawW = imgH * ratio; }
       }
       const drawX = pos.x + (imgW - drawW) / 2;
       const drawY = pos.y + (imgH - drawH) / 2;
 
       const dataUrl = await blobToDataURL(board.blob);
-
-      doc.addImage(
-        dataUrl, 'JPEG',
-        drawX, drawY, drawW, drawH,
-        undefined, 'FAST'
-      );
+      doc.addImage(dataUrl, 'JPEG', drawX, drawY, drawW, drawH, undefined, 'FAST');
 
       const lineY = pos.y + imgH + (state.itemsPerPage === 8 ? 4 : 6);
       for (let j = 0; j < lineCount; j++) {
@@ -2114,7 +2239,6 @@ async function generatePdf() {
         doc.line(pos.x, y, pos.x + imgW, y);
       }
     }
-
     doc.save('ejercicios_ajedrez.pdf');
     notify('PDF generado');
   } catch (err) {
@@ -2128,9 +2252,6 @@ async function generatePdf() {
 
 generatePdfBtn.addEventListener('click', generatePdf);
 
-// =========================================================
-// EVENTOS DE AJUSTES
-// =========================================================
 qualitySlider.addEventListener('input', function () {
   state.quality = parseFloat(this.value);
   qualityValue.textContent = this.value;
@@ -2181,9 +2302,6 @@ itemsPerPageSelect.addEventListener('change', function () {
   notify(`Layout: ${state.itemsPerPage} tableros por página`, 'info');
 });
 
-// =========================================================
-// RESIZE
-// =========================================================
 let _resizeTimer = null;
 window.addEventListener('resize', () => {
   clearTimeout(_resizeTimer);
@@ -2201,16 +2319,10 @@ window.addEventListener('resize', () => {
   }, 120);
 });
 
-// =========================================================
-// LIMPIEZA AL SALIR
-// =========================================================
 window.addEventListener('beforeunload', () => {
   state.savedBoards.forEach(b => b.url && URL.revokeObjectURL(b.url));
 });
 
-// =========================================================
-// INICIALIZACIÓN
-// =========================================================
 (function init() {
   loadSettings();
   qualitySlider.value = state.quality;
