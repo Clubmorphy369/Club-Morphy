@@ -225,9 +225,14 @@
                 return;
             }
 
-            this.construirEstructuraHTML();
+                        this.construirEstructuraHTML();
             this.cargarCapitulo(0);
             if (cfg.modo === 'ordenador') SF.init();
+
+            // ⭐ v75: Aplicar estado zen guardado + registrar tecla Escape
+            this._aplicarModoZenTablero();
+            this._zenKeydownHandler = (e) => this._documentKeydownZen(e);
+            document.addEventListener('keydown', this._zenKeydownHandler);
 
             if (this.esModoAdmin && this.modoEdicionPersistente) {
                 setTimeout(() => {
