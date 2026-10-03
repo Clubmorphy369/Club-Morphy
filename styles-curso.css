@@ -94,6 +94,197 @@
     box-shadow: 0 3px 10px rgba(14, 165, 233, 0.35);
 }
 
+/* ⭐ v81: Modal ancho + tabla de alumnos */
+.modal-content-ancho {
+    max-width: 1100px !important;
+    width: 95vw;
+}
+
+.cm-pa-toolbar {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+}
+
+.cm-pa-buscar {
+    flex: 1;
+    min-width: 200px;
+    padding: 8px 12px;
+    border: 1px solid var(--borde);
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-family: inherit;
+}
+
+.cm-pa-buscar:focus {
+    outline: none;
+    border-color: var(--acento);
+    box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.15);
+}
+
+.cm-pa-orden {
+    padding: 8px 12px;
+    border: 1px solid var(--borde);
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-family: inherit;
+    background: white;
+    cursor: pointer;
+}
+
+.cm-pa-tabla-wrap {
+    max-height: 60vh;
+    overflow: auto;
+    border-radius: 10px;
+    border: 1px solid var(--borde);
+}
+
+.cm-pa-tabla {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+}
+
+.cm-pa-tabla thead {
+    position: sticky;
+    top: 0;
+    background: var(--surface2);
+    z-index: 2;
+}
+
+.cm-pa-tabla th {
+    padding: 10px 12px;
+    text-align: left;
+    font-weight: 700;
+    font-size: 0.78rem;
+    color: var(--texto-suave);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    border-bottom: 2px solid var(--borde);
+    white-space: nowrap;
+}
+
+.cm-pa-th-nombre { min-width: 180px; }
+.cm-pa-th-total { min-width: 90px; text-align: right; }
+.cm-pa-th-clase {
+    text-align: center;
+    min-width: 100px;
+}
+
+.cm-pa-th-num {
+    display: inline-block;
+    background: var(--acento);
+    color: white;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    line-height: 20px;
+    text-align: center;
+    font-size: 0.7rem;
+    margin-right: 4px;
+}
+
+.cm-pa-th-titulo {
+    font-size: 0.75rem;
+    text-transform: none;
+    font-weight: 600;
+    color: var(--texto);
+}
+
+.cm-pa-fila {
+    border-bottom: 1px solid var(--borde);
+    transition: background 0.15s;
+}
+
+.cm-pa-fila:hover {
+    background: var(--surface2);
+}
+
+.cm-pa-fila:last-child {
+    border-bottom: none;
+}
+
+.cm-pa-td-nombre {
+    padding: 10px 12px;
+}
+
+.cm-pa-nombre-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.cm-pa-nombre {
+    font-weight: 600;
+    color: var(--texto);
+}
+
+.cm-pa-email {
+    font-size: 0.75rem;
+    color: var(--texto-suave);
+}
+
+.cm-pa-td-clase {
+    padding: 8px 10px;
+}
+
+.cm-pa-celda {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    justify-content: center;
+}
+
+.cm-pa-mini-barra {
+    width: 50px;
+    height: 6px;
+    background: #e2e8f0;
+    border-radius: 20px;
+    overflow: hidden;
+}
+
+.cm-pa-mini-fill {
+    height: 100%;
+    border-radius: 20px;
+    transition: width 0.3s;
+}
+
+.cm-pa-mini-pct {
+    font-size: 0.75rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    min-width: 34px;
+    text-align: right;
+}
+
+.cm-pa-td-total {
+    padding: 10px 12px;
+    text-align: right;
+    white-space: nowrap;
+}
+
+.cm-pa-total-pct {
+    font-weight: 800;
+    font-size: 0.95rem;
+    font-variant-numeric: tabular-nums;
+    display: block;
+    line-height: 1.2;
+}
+
+.cm-pa-total-count {
+    font-size: 0.72rem;
+    color: var(--texto-suave);
+    font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 600px) {
+    .cm-pa-th-titulo { display: none; }
+    .cm-pa-th-clase { min-width: 60px; }
+    .cm-pa-mini-barra { width: 30px; }
+    .cm-pa-mini-pct { font-size: 0.68rem; min-width: 28px; }
+}
+
 /* ⭐ v80: Panel de progreso */
 .cm-progreso-panel {
     max-height: 65vh;
