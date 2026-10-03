@@ -1395,54 +1395,34 @@ function getHandleFromPoint(clientX, clientY) {
 }
 
 // =========================================================
-// POINTER EVENTS
+// INTERACCIÓN: MOUSE (escritorio) + TOUCH (móvil)
 // =========================================================
-cropBox.addEventListener('pointerdown', onPointerDown);
 
-function onPointerDown(e) {
-  if (state.panMode) return;
-  if (e.button !== undefined && e.button !== 0) return;
-
-  // Si ya hay un pointer activo distinto, resetear
-  if (state.pointerId !== null && state.pointerId !== e.pointerId) {
-    state.pointerId = null;
-    state.mode = null;
-    window.removeEventListener('pointermove', onPointerMove);
-    window.removeEventListener('pointerup', onPointerUp);
-    window.removeEventListener('pointercancel', onPointerUp);
+// --- Utilidad: convierte un evento en coordenadas cliente ---
+function getClientXY(ev) {
+  if (ev.touches && ev.touches.length) {
+    return { x: ev.touches[0].clientX, y: ev.touches[0].clientY };
   }
-  if (state.pointerId !== null) return;
-
-  if (e.pointerType === 'touch' && e.isPrimary === false) return;
-
-  const handle = e.target.closest('.resize-handle');
-  let mode;
-
-  if (handle) {
-    mode = handle.dataset.dir;
-  } else {
-    mode = getHandleFromPoint(e.clientX, e.clientY) || 'drag';
+  if (ev.changedTouches && ev.changedTouches.length) {
+    return { x: ev.changedTouches[0].clientX, y: ev.changedTouches[0].clientY };
   }
-
-  state.pointerId = e.pointerId;
-  state.mode = mode;
-  state.startX = e.clientX;
-  state.startY = e.clientY;
-  state.startCrop = { ...state.crop };
-
-  // ✅ Escuchar en window: el dedo puede salir del cropBox sin perder el gesto
-  window.addEventListener('pointermove', onPointerMove);
-  window.addEventListener('pointerup', onPointerUp);
-  window.addEventListener('pointercancel', onPointerUp);
-
-  e.preventDefault();
-  e.stopPropagation();
+  return { x: ev.clientX, y: ev.clientY };
 }
-  function onPointerMove(e) {
-  if (state.pointerId !== e.pointerId) return;
 
-  const dx = e.clientX - state.startX;
-  const dy = e.clientY - state.startY;
+// --- Inicia el gesto (drag o resize) ---
+function startGesture(mode, clientX, clientY) {
+  state.mode = mode;
+  state.startX = clientX;
+  state.startY = clientY;
+  state.startCrop = { ...state.crop };
+}
+
+// --- Aplica el movimiento según el modo ---
+function applyGestureMove(clientX, clientY) {
+  if (!state.mode) return;
+
+  const dx = clientX - state.startX;
+  const dy = clientY - state.startY;
   const { w: dW, h: dH } = getDisplaySize();
   const sc = state.startCrop;
 
@@ -1494,19 +1474,84 @@ function onPointerDown(e) {
   }
 
   applyCropStyles();
-  e.preventDefault();
 }
 
-function onPointerUp(e) {
-  if (state.pointerId !== e.pointerId) return;
-  window.removeEventListener('pointermove', onPointerMove);
-  window.removeEventListener('pointerup', onPointerUp);
-  window.removeEventListener('pointercancel', onPointerUp);
-  state.pointerId = null;
+// --- Termina el gesto ---
+function endGesture() {
   state.mode = null;
+  state.startX = 0;
+  state.startY = 0;
+}
+
+// --- Detectar modo al iniciar (handle directo o proximidad) ---
+function detectMode(target, clientX, clientY) {
+  const handle = target.closest && target.closest('.resize-handle');
+  if (handle) return handle.dataset.dir;
+  return getHandleFromPoint(clientX, clientY) || 'drag';
 }
 
 // =========================================================
+// TOUCH (móvil)
+// =========================================================
+function onTouchStart(e) {
+  if (state.panMode) return;
+  if (e.touches.length !== 1) return;  // solo un dedo
+  if (state.mode) return;              // ya hay un gesto activo
+
+  const t = e.touches[0];
+  const mode = detectMode(e.target, t.clientX, t.clientY);
+
+  startGesture(mode, t.clientX, t.clientY);
+  e.preventDefault();
+  e.stopPropagation();
+}
+
+function onTouchMove(e) {
+  if (!state.mode) return;
+  if (e.touches.length !== 1) return;
+
+  const t = e.touches[0];
+  applyGestureMove(t.clientX, t.clientY);
+  e.preventDefault();
+}
+
+function onTouchEnd(e) {
+  if (!state.mode) return;
+  // Si aún hay dedos en pantalla, no terminamos (el usuario está por hacer pan)
+  if (e.touches.length > 0) return;
+  endGesture();
+}
+
+cropBox.addEventListener('touchstart', onTouchStart, { passive: false });
+cropBox.addEventListener('touchmove',  onTouchMove,  { passive: false });
+cropBox.addEventListener('touchend',   onTouchEnd);
+cropBox.addEventListener('touchcancel', endGesture);
+
+// =========================================================
+// MOUSE (escritorio)
+// =========================================================
+let _mouseDown = false;
+
+cropBox.addEventListener('mousedown', (e) => {
+  if (state.panMode) return;
+  if (e.button !== 0) return;
+  const mode = detectMode(e.target, e.clientX, e.clientY);
+  startGesture(mode, e.clientX, e.clientY);
+  _mouseDown = true;
+  e.preventDefault();
+});
+
+window.addEventListener('mousemove', (e) => {
+  if (!_mouseDown) return;
+  applyGestureMove(e.clientX, e.clientY);
+});
+
+window.addEventListener('mouseup', () => {
+  if (!_mouseDown) return;
+  _mouseDown = false;
+  endGesture();
+});
+  // =========================================================
 // PAN CON DOS DEDOS
 // =========================================================
 let _twoFingerActive = false;
