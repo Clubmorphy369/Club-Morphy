@@ -67,6 +67,33 @@
     background: var(--surface);
 }
 
+/* ⭐ v79: Botón de reiniciar tema */
+.btn-reiniciar-tema {
+    background: rgba(14, 165, 233, 0.08);
+    border: 1px solid rgba(14, 165, 233, 0.3);
+    color: var(--acento-oscuro);
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 0.85rem;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+    flex-shrink: 0;
+}
+
+.btn-reiniciar-tema:hover {
+    background: var(--acento);
+    color: white;
+    border-color: var(--acento);
+    transform: rotate(-45deg);
+    box-shadow: 0 3px 10px rgba(14, 165, 233, 0.35);
+}
+
 .subtemas-container {
     border-left: 2px dashed var(--borde);
     padding-left: 15px;
