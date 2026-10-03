@@ -302,10 +302,13 @@
 
             const headerExtra = esSalaLibre ? this._htmlHeaderSalaLibre() : '';
 
-            this.contenedor.innerHTML = `
+                       this.contenedor.innerHTML = `
                 <div class="cm-tablero-wrap ${esSalaLibre ? 'cm-sala-libre' : ''}">
-                    <div class="cm-tablero-game">
-                                              <div>
+                    <button class="cm-btn-zen-toggle" data-rol="btnZenToggle" type="button" title="Modo zen (tablero a pantalla completa)">
+                        <span class="cm-btn-zen-icon">⛶</span>
+                    </button>
+                    <div class="cm-tablero-game"> 
+           <div>
                             ${headerExtra}
                                                         <div class="cm-turno-indicador" data-rol="turnoIndicador">
                                 <span class="cm-turno-texto">Cargando…</span>
