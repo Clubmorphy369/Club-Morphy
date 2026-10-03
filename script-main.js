@@ -711,10 +711,14 @@
         }
     };
 
-    // Exposición global
+       // Exposición global
     window.toggleModoOscuro = Main.toggleModoOscuro;
     window.aplicarModoOscuro = Main.aplicarModoOscuro;
 
+    // ⭐ v83: Abrir reloj de ajedrez en pestaña nueva
+    window.abrirRelojAjedrez = function () {
+        window.open('reloj.html', '_blank', 'noopener');
+    };
     // ============================================================
     // INICIALIZACIÓN GLOBAL
     // ============================================================
