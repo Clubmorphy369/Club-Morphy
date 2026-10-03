@@ -2,8 +2,8 @@
 // SERVICE WORKER — Club Morphy
 // =============================================================
 
-// ⭐ v75: Fix crítico de Lozza (MultiPV + selección ponderada)
-const CACHE_NAME = 'club-morphy-v75';
+// ⭐ v76: Fix crítico de Lozza (MultiPV + selección ponderada)
+const CACHE_NAME = 'club-morphy-v76';
 
 // Scope dinámico: funciona tanto en "/" (Firebase) como en "/Club-Morphy/" (GitHub Pages)
 const ROOT = self.registration.scope;
