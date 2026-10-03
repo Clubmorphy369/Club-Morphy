@@ -332,8 +332,15 @@
                             <div class="cm-tablero-board-wrap">
                                 <div class="cm-tablero-board" data-rol="board"></div>
                             </div>
-                            <div class="cm-tablero-progress-info" data-rol="progressInfo"></div>
-
+                                                       <div class="cm-tablero-progress-bar-wrap" data-rol="progressInfo">
+                                <div class="cm-tablero-progress-label">
+                                    <span class="cm-progress-cap-actual" data-rol="progressCapActual">Cap. 1 de 1</span>
+                                    <span class="cm-progress-pct" data-rol="progressPct">0%</span>
+                                </div>
+                                <div class="cm-tablero-progress-track">
+                                    <div class="cm-tablero-progress-fill" data-rol="progressFill" style="width: 0%;"></div>
+                                </div>
+                            </div>
 ${!esSalaLibre ? `
 <div class="cm-tablero-capitulos-bar" data-rol="capitulosBar">
     <div class="cm-tablero-capitulos-titulo" data-rol="capsToggle" style="cursor:pointer; user-select:none;">
