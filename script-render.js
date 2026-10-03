@@ -693,6 +693,7 @@
                 ${nivelBadgeHTML}
                 ${!accesible ? '<span>🔒</span>' : ''}
                 ${completado ? '<span class="badge">✓</span>' : ''}
+                ${completado && !esAdmin ? `<button class="btn btn-reiniciar-tema" onclick="event.stopPropagation(); reiniciarProgresoTema('${claseId}','${tema.id}')" title="Reiniciar este tema para volver a practicar">🔄</button>` : ''}
                 <span style="flex:1;"></span>
                 ${accesible && tieneTableros && completado ? '<span class="badge">✓ Completado</span>' : ''}
                 ${esAdmin ? `
