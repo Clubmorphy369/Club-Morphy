@@ -1402,19 +1402,25 @@ cropBox.addEventListener('pointerdown', onPointerDown);
 function onPointerDown(e) {
   if (state.panMode) return;
   if (e.button !== undefined && e.button !== 0) return;
+
+  // Si ya hay un pointer activo distinto, resetear
+  if (state.pointerId !== null && state.pointerId !== e.pointerId) {
+    state.pointerId = null;
+    state.mode = null;
+    window.removeEventListener('pointermove', onPointerMove);
+    window.removeEventListener('pointerup', onPointerUp);
+    window.removeEventListener('pointercancel', onPointerUp);
+  }
   if (state.pointerId !== null) return;
 
-  // Ignorar si este pointerdown viene de un toque multitáctil (2+ dedos)
   if (e.pointerType === 'touch' && e.isPrimary === false) return;
 
-  // 1) Tocar directamente el círculo (o su zona invisible)
   const handle = e.target.closest('.resize-handle');
   let mode;
 
   if (handle) {
     mode = handle.dataset.dir;
   } else {
-    // 2) Detección por proximidad de esquina
     mode = getHandleFromPoint(e.clientX, e.clientY) || 'drag';
   }
 
@@ -1424,15 +1430,15 @@ function onPointerDown(e) {
   state.startY = e.clientY;
   state.startCrop = { ...state.crop };
 
-  try { cropBox.setPointerCapture(e.pointerId); } catch (_) {}
-  cropBox.addEventListener('pointermove', onPointerMove);
-  cropBox.addEventListener('pointerup', onPointerUp);
-  cropBox.addEventListener('pointercancel', onPointerUp);
+  // ✅ Escuchar en window: el dedo puede salir del cropBox sin perder el gesto
+  window.addEventListener('pointermove', onPointerMove);
+  window.addEventListener('pointerup', onPointerUp);
+  window.addEventListener('pointercancel', onPointerUp);
 
   e.preventDefault();
   e.stopPropagation();
 }
-function onPointerMove(e) {
+  function onPointerMove(e) {
   if (state.pointerId !== e.pointerId) return;
 
   const dx = e.clientX - state.startX;
