@@ -387,8 +387,10 @@
                 Core.state.terminoBusqueda = '';
                 const btnProg = document.getElementById('btn-progreso');
                 if (btnProg) btnProg.style.display = 'none';
-                const btnAlumnos = document.getElementById('btn-progreso-alumnos');
+                                const btnAlumnos = document.getElementById('btn-progreso-alumnos');
                 if (btnAlumnos) btnAlumnos.style.display = 'none';
+                const btnHerramientas = document.getElementById('btn-herramientas');
+                if (btnHerramientas) btnHerramientas.style.display = 'none';
                 const badge = document.getElementById('header-elo-badge');
                 if (badge) badge.style.display = 'none';
 
