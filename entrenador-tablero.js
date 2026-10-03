@@ -1135,13 +1135,16 @@ ${esAdmin ? `
                 });
             }
 
-                    if (this.$capsProgreso) {
+                  if (this.$capsProgreso) {
             const completados = this.capitulos.filter(c => c.completado).length;
             this.$capsProgreso.textContent = `${completados}/${this.capitulos.length}`;
         }
 
         // ⭐ v71: Vincular el toggle plegable (solo una vez por instancia)
         this._vincularToggleCaps();
+
+        // ⭐ v76: Actualizar también la barra de progreso del tablero
+        this.actualizarProgreso();
     }
 
     // ⭐ v71: Aplicar estado plegable guardado
