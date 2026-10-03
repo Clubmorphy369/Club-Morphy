@@ -658,19 +658,19 @@
     .crop-options { gap: 12px; font-size: .85rem; }
     .crop-actions .btn { flex: 1 1 48%; }
 
-       /* La imagen se ajusta al ANCHO y permite scroll vertical */
+          /* ✅ Arregla scroll hacia ambos lados */
     #cropContainer {
       max-height: 60vh;
       min-height: 40vh;
-      overflow: auto;              /* ✅ scroll vertical habilitado */
+      overflow: auto;
       padding: 4px;
-      align-items: flex-start;     /* la imagen empieza arriba */
-      justify-content: center;
+      align-items: flex-start;
+      justify-content: flex-start;    /* ← NO usar center */
       -webkit-overflow-scrolling: touch;
     }
     #imageToCrop {
-      max-height: none;            /* ✅ sin límite de altura */
-      max-width: 100%;             /* se ajusta al ancho del contenedor */
+      max-height: none;
+      max-width: 100%;
       height: auto;
       width: auto;
     }
