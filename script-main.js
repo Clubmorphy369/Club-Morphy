@@ -282,8 +282,11 @@
 
                 Main.actualizarHeaderUsuario();
 
-                if (Core.state.currentUser.esAdmin) {
+                    if (Core.state.currentUser.esAdmin) {
                     if (dom.btnAdmin) dom.btnAdmin.style.display = 'inline-flex';
+                    // ⭐ v81: mostrar botón "Alumnos" solo a admin
+                    const btnAlumnos = document.getElementById('btn-progreso-alumnos');
+                    if (btnAlumnos) btnAlumnos.style.display = 'inline-flex';
                     Core.state.modoAdmin = true;
                     document.body.classList.add('modo-admin');
                 } else {
