@@ -610,6 +610,10 @@ ${esAdmin ? `
         _guardarReferenciasDOM() {
             this.$board = this.contenedor.querySelector('[data-rol="board"]');
             this.$progressInfo = this.contenedor.querySelector('[data-rol="progressInfo"]');
+            // ⭐ v76: referencias de la barra de progreso
+            this.$progressCapActual = this.contenedor.querySelector('[data-rol="progressCapActual"]');
+            this.$progressPct = this.contenedor.querySelector('[data-rol="progressPct"]');
+            this.$progressFill = this.contenedor.querySelector('[data-rol="progressFill"]');
             this.$meta = this.contenedor.querySelector('[data-rol="meta"]');
             this.$status = this.contenedor.querySelector('[data-rol="status"]');
             this.$moves = this.contenedor.querySelector('[data-rol="moves"]');
