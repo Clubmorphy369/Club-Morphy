@@ -2292,33 +2292,44 @@ async importarDesdeLichess() {
                     try { this.contexto.onCompletado(); } catch (e) {}
                 }
 
-                if (this.autoAvance && !this.esModoAdmin && this.capituloActual < this.capitulos.length - 1) {
+                               if (this.autoAvance && !this.esModoAdmin && this.capituloActual < this.capitulos.length - 1) {
                     setTimeout(() => {
                         if (!this.destroyed) {
-                            this.mostrarToast('⏭️ Avanzando al siguiente…', '');
+                            this.mostrarToast('⏭️ Avanzando al siguiente capítulo…', '');
                             this.capituloSiguiente();
                         }
                     }, 2000);
-                } else if (this.autoAvance && !this.esModoAdmin && this.capituloActual >= this.capitulos.length - 1) {
-                    this.mostrarToast('🎉 ¡Último ejercicio completado!', 'elo-up');
                 }
 
-                               // ⭐ v58: Detener temporizador SOLO al completar el ÚLTIMO capítulo del bloque.
-                // No basta con `todosCaps` porque bloques ya completados de antes lo activarían
-                // al primer mate. Con `esUltimoCapitulo` solo se detiene al final real del recorrido.
+                // ⭐ v58: Detener temporizador SOLO al completar el ÚLTIMO capítulo del bloque.
+                // ⭐ v77: Extendido — también notifica "lección completa" y auto-avanza al siguiente bloque.
                 const esUltimoCapitulo = this.capituloActual === this.capitulos.length - 1;
                 const todosCaps = this.capitulos.length > 0 && this.capitulos.every(c => c.completado);
-                if (esUltimoCapitulo && todosCaps && this.temporizadorBloque && this.temporizadorBloque.activo) {
-                    this.temporizadorBloque.detener();
-                    if (this.$temporizadorBloque) {
-                        this.$temporizadorBloque.classList.add('cm-tablero-temporizador-detendido');
-                    }
 
-                    // ⭐ v58: Evaluar % de perfectos y aprobar/rechazar el bloque (Entrega 2)
-                    this._evaluarBloqueCompleto();
+                if (esUltimoCapitulo && todosCaps && !this.esModoAdmin) {
+                    // Notificación "¡Lección completa!"
+                    setTimeout(() => {
+                        if (this.destroyed) return;
+                        this.mostrarToast('🏆 ¡Lección completa!', 'elo-up');
+                    }, 600);
+
+                    if (this.temporizadorBloque && this.temporizadorBloque.activo) {
+                        // Con timer → overlay de evaluación; el auto-avance se hará al cerrar el overlay
+                        this.temporizadorBloque.detener();
+                        if (this.$temporizadorBloque) {
+                            this.$temporizadorBloque.classList.add('cm-tablero-temporizador-detendido');
+                        }
+                        this._evaluarBloqueCompleto();
+                    } else if (this.autoAvance) {
+                        // Sin timer → auto-avance directo tras el toast
+                        setTimeout(() => {
+                            if (this.destroyed) return;
+                            this._scrollAlSiguienteBloque();
+                        }, 2800);
+                    }
                 }
-               
-               // ⭐ v55: Mostrar aviso final con botones también en la última rama
+
+                // ⭐ v55: Mostrar aviso final con botones también en la última rama
                 this._mostrarAvisoRamaCompletada(null, completadas, total);
                 return;
             }
