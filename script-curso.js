@@ -997,6 +997,232 @@
         document.getElementById('modal-progreso').classList.add('active');
     };
 
+        // ============================================================
+    // ⭐ v81: PANEL DE PROGRESO DE ALUMNOS (admin)
+    // ============================================================
+    Curso.abrirPanelProgresoAlumnos = async function () {
+        if (!Core.state.currentUser?.esAdmin) return;
+
+        const contenedor = document.getElementById('progreso-alumnos-contenido');
+        if (!contenedor) return;
+
+        contenedor.innerHTML = '<div style="text-align:center; padding:30px;"><div class="loader" style="margin:0 auto;"></div><p style="margin-top:12px; color:var(--texto-suave);">Cargando progreso de alumnos…</p></div>';
+        document.getElementById('modal-progreso-alumnos').classList.add('active');
+
+        try {
+            // 1. Obtener todos los usuarios
+            const usuarios = await window.obtenerListaUsuarios();
+            const alumnos = usuarios.filter(u => u.uid !== ADMIN_UID);
+
+            if (alumnos.length === 0) {
+                contenedor.innerHTML = '<p style="color:var(--texto-suave); text-align:center; padding:24px;">📭 No hay alumnos registrados todavía.</p>';
+                return;
+            }
+
+            // 2. Obtener todos los documentos de /progreso de una sola vez
+            const snapshot = await db.collection('progreso').get();
+            const progresoPorUid = {};
+            snapshot.forEach(doc => {
+                progresoPorUid[doc.id] = doc.data() || {};
+            });
+
+            // 3. Calcular progreso de cada alumno por clase
+            const clasesVisibles = (Core.state.curso.clases || []).filter(c => c.publicada === true);
+            const filas = alumnos.map(alumno => {
+                const progresoAlumno = progresoPorUid[alumno.uid] || {};
+                const porClase = {};
+                let totalGeneral = 0;
+                let completadosGeneral = 0;
+
+                clasesVisibles.forEach(clase => {
+                    const resultado = Curso._calcularProgresoClaseDesdeDatos(clase, progresoAlumno);
+                    porClase[clase.id] = resultado;
+                    totalGeneral += resultado.total;
+                    completadosGeneral += resultado.completados;
+                });
+
+                const pctGeneral = totalGeneral > 0 ? Math.round((completadosGeneral / totalGeneral) * 100) : 0;
+
+                return {
+                    uid: alumno.uid,
+                    email: alumno.email,
+                    nombre: alumno.nombre && alumno.apellidos
+                        ? `${alumno.nombre} ${alumno.apellidos}`
+                        : '',
+                    porClase,
+                    totalGeneral,
+                    completadosGeneral,
+                    pctGeneral,
+                    progresoAlumno
+                };
+            });
+
+            // 4. Guardar en state para ordenamiento
+            Curso._datosAlumnosCache = {
+                clasesVisibles,
+                filas,
+                orden: 'progreso-desc',
+                busqueda: ''
+            };
+
+            Curso._renderizarTablaAlumnos(contenedor);
+
+        } catch (err) {
+            console.error('[v81] Error al cargar progreso de alumnos:', err);
+            contenedor.innerHTML = '<p style="color:var(--peligro); text-align:center; padding:24px;">⚠️ No se pudo cargar el progreso. Revisa la consola.</p>';
+        }
+    };
+
+    Curso._calcularProgresoClaseDesdeDatos = function (clase, progresoAlumno) {
+        let total = 0;
+        let completados = 0;
+
+        const recorrer = (temas) => {
+            (temas || []).forEach(t => {
+                total++;
+                if (progresoAlumno[`${clase.id}_${t.id}`] === true) {
+                    completados++;
+                }
+                if (t.subtemas) recorrer(t.subtemas);
+            });
+        };
+        recorrer(clase.temas);
+
+        return {
+            total,
+            completados,
+            porcentaje: total > 0 ? Math.round((completados / total) * 100) : 0
+        };
+    };
+
+    Curso._renderizarTablaAlumnos = function (contenedor) {
+        const cache = Curso._datosAlumnosCache;
+        if (!cache) return;
+
+        let { clasesVisibles, filas, orden, busqueda } = cache;
+
+        // Filtrar por búsqueda
+        let filasVisibles = filas;
+        if (busqueda) {
+            const term = busqueda.toLowerCase().trim();
+            filasVisibles = filas.filter(f =>
+                (f.nombre || '').toLowerCase().includes(term) ||
+                (f.email || '').toLowerCase().includes(term)
+            );
+        }
+
+        // Ordenar
+        filasVisibles = [...filasVisibles].sort((a, b) => {
+            if (orden === 'progreso-desc') return b.pctGeneral - a.pctGeneral;
+            if (orden === 'progreso-asc') return a.pctGeneral - b.pctGeneral;
+            if (orden === 'nombre') {
+                return (a.nombre || a.email).localeCompare(b.nombre || b.email);
+            }
+            return 0;
+        });
+
+        const headersClases = clasesVisibles.map(c =>
+            `<th class="cm-pa-th-clase" title="${escapeHtml(c.titulo)}">
+                <span class="cm-pa-th-num">${c.numero}</span>
+                <span class="cm-pa-th-titulo">${escapeHtml(c.titulo.length > 14 ? c.titulo.substring(0, 14) + '…' : c.titulo)}</span>
+            </th>`
+        ).join('');
+
+        const filasHTML = filasVisibles.map(f => {
+            const celdasClases = clasesVisibles.map(c => {
+                const p = f.porClase[c.id] || { completados: 0, total: 0, porcentaje: 0 };
+                const color = p.porcentaje >= 80 ? '#16a34a' : (p.porcentaje >= 40 ? '#0ea5e9' : (p.porcentaje > 0 ? '#f59e0b' : '#cbd5e1'));
+                return `<td class="cm-pa-td-clase">
+                    <div class="cm-pa-celda">
+                        <div class="cm-pa-mini-barra">
+                            <div class="cm-pa-mini-fill" style="width:${p.porcentaje}%; background:${color};"></div>
+                        </div>
+                        <span class="cm-pa-mini-pct" style="color:${color};">${p.porcentaje}%</span>
+                    </div>
+                </td>`;
+            }).join('');
+
+            const colorTotal = f.pctGeneral >= 80 ? '#16a34a' : (f.pctGeneral >= 40 ? '#0ea5e9' : (f.pctGeneral > 0 ? '#f59e0b' : '#94a3b8'));
+
+            return `
+                <tr class="cm-pa-fila" data-uid="${f.uid}">
+                    <td class="cm-pa-td-nombre">
+                        <div class="cm-pa-nombre-wrap">
+                            <span class="cm-pa-nombre">${escapeHtml(f.nombre || f.email)}</span>
+                            ${f.nombre ? `<span class="cm-pa-email">${escapeHtml(f.email)}</span>` : ''}
+                        </div>
+                    </td>
+                    ${celdasClases}
+                    <td class="cm-pa-td-total">
+                        <span class="cm-pa-total-pct" style="color:${colorTotal};">${f.pctGeneral}%</span>
+                        <span class="cm-pa-total-count">${f.completadosGeneral}/${f.totalGeneral}</span>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+
+        const sinResultados = filasVisibles.length === 0;
+
+        contenedor.innerHTML = `
+            <div class="cm-pa-toolbar">
+                <input type="text" id="cm-pa-buscar" class="cm-pa-buscar"
+                       placeholder="🔍 Buscar alumno por nombre o email…"
+                       value="${escapeAttr(busqueda)}">
+                <select id="cm-pa-orden" class="cm-pa-orden">
+                    <option value="progreso-desc" ${orden === 'progreso-desc' ? 'selected' : ''}>Mayor progreso</option>
+                    <option value="progreso-asc" ${orden === 'progreso-asc' ? 'selected' : ''}>Menor progreso</option>
+                    <option value="nombre" ${orden === 'nombre' ? 'selected' : ''}>Nombre A-Z</option>
+                </select>
+                <button class="btn btn-small" type="button" onclick="Curso.abrirPanelProgresoAlumnos()" title="Recargar">🔄</button>
+            </div>
+
+            ${sinResultados
+                ? '<p style="text-align:center; padding:24px; color:var(--texto-suave);">No hay alumnos que coincidan con la búsqueda.</p>'
+                : `<div class="cm-pa-tabla-wrap">
+                    <table class="cm-pa-tabla">
+                        <thead>
+                            <tr>
+                                <th class="cm-pa-th-nombre">Alumno</th>
+                                ${headersClases}
+                                <th class="cm-pa-th-total">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${filasHTML}
+                        </tbody>
+                    </table>
+                </div>`
+            }
+        `;
+
+        // Listeners
+        const inputBuscar = contenedor.querySelector('#cm-pa-buscar');
+        if (inputBuscar) {
+            let timer;
+            inputBuscar.addEventListener('input', (e) => {
+                clearTimeout(timer);
+                timer = setTimeout(() => {
+                    Curso._datosAlumnosCache.busqueda = e.target.value;
+                    Curso._renderizarTablaAlumnos(contenedor);
+                    // Restaurar foco al input después del re-render
+                    const nuevoInput = contenedor.querySelector('#cm-pa-buscar');
+                    if (nuevoInput) {
+                        nuevoInput.focus();
+                        nuevoInput.setSelectionRange(nuevoInput.value.length, nuevoInput.value.length);
+                    }
+                }, 300);
+            });
+        }
+
+        const selectOrden = contenedor.querySelector('#cm-pa-orden');
+        if (selectOrden) {
+            selectOrden.addEventListener('change', (e) => {
+                Curso._datosAlumnosCache.orden = e.target.value;
+                Curso._renderizarTablaAlumnos(contenedor);
+            });
+        }
+    };
+
     // ============================================================
     // ⭐ v80: Helpers de renderizado del panel
     // ============================================================
