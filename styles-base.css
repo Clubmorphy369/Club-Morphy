@@ -187,7 +187,6 @@ code {
     color: var(--acento-oscuro);
     font-size: 0.85em;
 }
-
 #user-info {
     font-size: 0.85rem;
     color: var(--texto-suave);
@@ -199,3 +198,67 @@ code {
     display: inline-block;
     vertical-align: middle;
 }
+
+/* ============================================================
+   ⭐ v82: MODO OSCURO
+   Sobrescribe variables de :root + ajustes específicos
+   ============================================================ */
+body.modo-oscuro {
+    --bg: #0f172a;
+    --surface: #1e293b;
+    --surface2: #334155;
+    --acento: #38bdf8;
+    --acento-oscuro: #0ea5e9;
+    --acento-claro: #7dd3fc;
+    --blanco: #1e293b;
+    --texto: #f1f5f9;
+    --texto-suave: #94a3b8;
+    --borde: #334155;
+    --exito: #22c55e;
+    --peligro: #ef4444;
+    --warning: #fbbf24;
+    --sombra: 0 4px 20px rgba(0, 0, 0, 0.5);
+    --sombra-acento: 0 0 15px rgba(56, 189, 248, 0.3);
+    --header-bg: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+    --sidebar-bg: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+    --btn-bg: linear-gradient(135deg, #334155, #1e293b);
+    --btn-hover-bg: linear-gradient(135deg, #475569, #334155);
+    --btn-acento-bg: linear-gradient(135deg, #0369a1, #0284c7, #0369a1);
+    --btn-acento-hover-bg: linear-gradient(135deg, #0284c7, #38bdf8, #0284c7);
+    --btn-peligro-bg: linear-gradient(135deg, #7f1d1d, #991b1b);
+    --btn-peligro-hover-bg: linear-gradient(135deg, #991b1b, #b91c1c);
+    --btn-exito-bg: linear-gradient(135deg, #14532d, #166534);
+    --btn-exito-hover-bg: linear-gradient(135deg, #166534, #15803d);
+    --modal-bg: linear-gradient(160deg, #0f172a 0%, #1e293b 100%);
+    --toast-bg: linear-gradient(135deg, #1e293b, #334155);
+    --input-bg: #1e293b;
+    color-scheme: dark;
+}
+
+/* Toasts en oscuro */
+body.modo-oscuro .toast.error {
+    background: #450a0a;
+    border-color: #ef4444;
+    color: #fecaca;
+}
+
+body.modo-oscuro .toast.success {
+    background: #052e16;
+    border-color: #22c55e;
+    color: #bbf7d0;
+}
+
+/* Inputs nativos del navegador (autofill) */
+body.modo-oscuro input:-webkit-autofill,
+body.modo-oscuro input:-webkit-autofill:hover,
+body.modo-oscuro input:-webkit-autofill:focus {
+    -webkit-text-fill-color: #f1f5f9;
+    -webkit-box-shadow: 0 0 0 30px #1e293b inset;
+    transition: background-color 5000s ease-in-out 0s;
+}
+
+/* Scrollbars */
+body.modo-oscuro ::-webkit-scrollbar { width: 10px; height: 10px; }
+body.modo-oscuro ::-webkit-scrollbar-track { background: #1e293b; }
+body.modo-oscuro ::-webkit-scrollbar-thumb { background: #475569; border-radius: 5px; }
+body.modo-oscuro ::-webkit-scrollbar-thumb:hover { background: #64748b; }
