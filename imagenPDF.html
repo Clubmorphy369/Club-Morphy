@@ -165,34 +165,113 @@
         }
 
         /* ============================================================
-           NUEVO: Selector de orden de las imágenes
+           SELECTOR DE ORDEN — destacado y visible en móvil
            ============================================================ */
         .sort-control {
-            background: #f8f9fa;
-            border: 1px solid #e9ecef;
+            background: linear-gradient(135deg, #e8f4fd 0%, #d6ebff 100%);
+            border: 2px solid var(--secondary);
             border-radius: var(--border-radius);
-            padding: 12px;
-            margin-bottom: 12px;
+            padding: 14px;
+            margin: 12px 0 16px 0;
         }
-        .sort-control .form-label {
+        .sort-control .sort-title {
             display: flex;
             align-items: center;
-            gap: 6px;
-            margin-bottom: 8px;
-            font-weight: 600;
+            gap: 8px;
+            font-weight: 700;
+            color: var(--primary);
+            font-size: 1rem;
+            margin-bottom: 10px;
         }
-        .sort-control .form-label i { color: var(--secondary); }
-        .sort-control select { margin-bottom: 8px; }
+        .sort-control .sort-title i {
+            color: var(--secondary);
+            font-size: 1.1rem;
+        }
+        .sort-control select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid var(--secondary);
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            font-weight: 500;
+            color: var(--dark);
+            background: white;
+            cursor: pointer;
+            margin-bottom: 8px;
+        }
+        .sort-control select:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(52,152,219,0.25);
+        }
         .sort-hint {
             font-size: 0.82rem;
-            color: var(--gray);
+            color: #5d6d7e;
             line-height: 1.4;
             display: flex;
             align-items: flex-start;
             gap: 6px;
         }
-        .sort-hint i { margin-top: 3px; flex-shrink: 0; }
-        /* ============================================================ */
+        .sort-hint i { margin-top: 3px; flex-shrink: 0; color: var(--secondary); }
+
+        /* ============================================================
+           DETECCIÓN DE REPETIDOS
+           ============================================================ */
+        .dedupe-control {
+            background: #fef9e7;
+            border: 2px solid var(--warning);
+            border-radius: var(--border-radius);
+            padding: 14px;
+            margin: 12px 0 16px 0;
+        }
+        .dedupe-control .dedupe-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 700;
+            color: var(--primary);
+            font-size: 1rem;
+            margin-bottom: 10px;
+        }
+        .dedupe-control .dedupe-title i { color: var(--warning); font-size: 1.1rem; }
+        .dedupe-check-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 0;
+            font-size: 0.98rem;
+            font-weight: 500;
+            cursor: pointer;
+            user-select: none;
+        }
+        .dedupe-check-row input[type="checkbox"] {
+            width: 22px;
+            height: 22px;
+            accent-color: var(--warning);
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+        .dedupe-sensitivity {
+            margin-top: 8px;
+            display: none;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+            flex-wrap: wrap;
+        }
+        .dedupe-sensitivity.show { display: flex; }
+        .dedupe-sensitivity select {
+            padding: 6px 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            background: white;
+        }
+        .dedupe-hint {
+            font-size: 0.8rem;
+            color: #7d6608;
+            line-height: 1.4;
+            margin-top: 8px;
+        }
 
         #cropContainer {
             position: relative;
@@ -358,6 +437,8 @@
             font-size: 0.95rem;
         }
         .notification.show { opacity: 1; transform: translateX(0); }
+        .notification.warning { background: var(--warning); }
+        .notification.info { background: var(--secondary); }
         .badge {
             display: inline-block;
             padding: 2px 8px;
@@ -383,6 +464,7 @@
             .app-header h1 { font-size: 1.5rem; }
             .card { padding: 12px; }
             #cropContainer { height: 280px; }
+            .sort-control, .dedupe-control { padding: 12px; }
         }
     </style>
 </head>
@@ -397,7 +479,7 @@
         <strong><i class="fas fa-info-circle"></i> Instrucciones:</strong>
         <ol>
             <li>Sube una o más capturas de pantalla con tableros</li>
-            <li>Elige el orden en que se cargarán las imágenes</li>
+            <li>Elige el orden y activa la detección de repetidos si quieres</li>
             <li>Ajusta el recuadro arrastrando o usando los tiradores</li>
             <li>Guarda cada tablero y genera el PDF</li>
         </ol>
@@ -408,21 +490,48 @@
         <input type="file" id="imageInput" class="form-control" accept="image/*" multiple />
 
         <!-- ============================================================
-             NUEVO: Selector de orden de las imágenes
+             SELECTOR DE ORDEN DE LAS IMÁGENES
              ============================================================ -->
         <div class="sort-control">
-            <label class="form-label" for="sortModeSelect">
-                <i class="fas fa-sort"></i> Ordenar imágenes por:
-            </label>
-            <select id="sortModeSelect" class="form-control">
-                <option value="name" selected>Nombre de archivo (A→Z, 1→100)</option>
-                <option value="date-asc">Fecha (más antigua primero)</option>
-                <option value="date-desc">Fecha (más reciente primero)</option>
-                <option value="selection">Orden de selección (como las elegiste)</option>
+            <div class="sort-title">
+                <i class="fas fa-sort"></i>
+                <span>Orden de las imágenes</span>
+            </div>
+            <select id="sortModeSelect">
+                <option value="name" selected>📄 Nombre de archivo (A→Z, 1→100)</option>
+                <option value="date-asc">📅 Fecha (más antigua primero)</option>
+                <option value="date-desc">📅 Fecha (más reciente primero)</option>
+                <option value="selection">👆 Orden de selección (como las elegiste)</option>
             </select>
             <p class="sort-hint">
                 <i class="fas fa-info-circle"></i>
-                <span>El orden se aplica al pulsar "Cargar". Puedes cambiarlo después y las imágenes se reordenarán. También puedes invertir el orden con el botón <em>"Invertir orden de trabajo"</em>.</span>
+                <span>Se aplica al pulsar "Cargar". Puedes cambiarlo después y las imágenes se reordenan.</span>
+            </p>
+        </div>
+
+        <!-- ============================================================
+             DETECCIÓN DE TABLEROS REPETIDOS
+             ============================================================ -->
+        <div class="dedupe-control">
+            <div class="dedupe-title">
+                <i class="fas fa-clone"></i>
+                <span>Evitar tableros repetidos</span>
+            </div>
+            <label class="dedupe-check-row">
+                <input type="checkbox" id="dedupeCheck" />
+                <span>Activar detección de repetidos</span>
+            </label>
+            <div class="dedupe-sensitivity" id="dedupeSensitivityWrap">
+                <span>Sensibilidad:</span>
+                <select id="dedupeThreshold">
+                    <option value="3">Estricta (solo casi idénticos)</option>
+                    <option value="6" selected>Normal (recomendado)</option>
+                    <option value="10">Permisiva (muy similar)</option>
+                </select>
+            </div>
+            <p class="dedupe-hint">
+                <i class="fas fa-lightbulb"></i>
+                Si un tablero ya guardado es igual o muy similar al que vas a guardar, se omite automáticamente y se muestra un aviso.
             </p>
         </div>
 
@@ -497,7 +606,7 @@
 
 <script>
 // ============================================================
-// VERSIÓN CON ESCALADO CORREGIDO + ORDEN DE IMÁGENES
+// VERSIÓN CON ORDEN DE IMÁGENES + DETECCIÓN DE REPETIDOS
 // ============================================================
 
 const MAX_DISPLAY_WIDTH = 900;
@@ -509,6 +618,7 @@ let resizeDirection = null;
 let startX, startY;
 let cropBoxX = 0, cropBoxY = 0, cropBoxWidth = 0, cropBoxHeight = 0;
 let startCropBoxX = 0, startCropBoxY = 0, startCropBoxWidth = 0, startCropBoxHeight = 0;
+// Cada tablero guardado es: { dataUrl, hash }
 let savedChessboards = [];
 let imageQuality = 0.7;
 let resolutionFactor = 0.75;
@@ -518,7 +628,7 @@ let currentImageIndex = 0;
 let cropTemplate = null;
 let templateAppliedToAll = false;
 
-// NUEVO: archivos tal cual llegan del selector (sin ordenar)
+// Archivos tal cual llegan del selector (sin ordenar)
 let rawImageFiles = [];
 
 // DOM
@@ -549,11 +659,14 @@ const headerInput = document.getElementById('headerInput');
 const footerInput = document.getElementById('footerInput');
 const processAllBtn = document.getElementById('processAllBtn');
 const clearAllBtn = document.getElementById('clearAllBtn');
-// NUEVO
+// Orden y dedupe
 const sortModeSelect = document.getElementById('sortModeSelect');
+const dedupeCheck = document.getElementById('dedupeCheck');
+const dedupeThreshold = document.getElementById('dedupeThreshold');
+const dedupeSensitivityWrap = document.getElementById('dedupeSensitivityWrap');
 
 // --------------------------------------------------------------
-// NUEVO: APLICAR ORDEN SEGÚN EL MODO SELECCIONADO
+// APLICAR ORDEN SEGÚN EL MODO SELECCIONADO
 // --------------------------------------------------------------
 function applySortOrder() {
     if (rawImageFiles.length === 0) return;
@@ -578,11 +691,76 @@ function applySortOrder() {
 
         case 'selection':
         default:
-            // Sin ordenar: mantener el orden original del selector
             break;
     }
 
     imageFiles = arr;
+}
+
+// --------------------------------------------------------------
+// HASH PERCEPTUAL (dHash de 64 bits) PARA DETECCIÓN DE REPETIDOS
+// --------------------------------------------------------------
+function computeHashFromImage(img) {
+    // Reducir a 9x8 en escala de grises y comparar píxeles adyacentes
+    const w = 9, h = 8;
+    const c = document.createElement('canvas');
+    c.width = w; c.height = h;
+    const cx = c.getContext('2d', { willReadFrequently: true });
+    cx.drawImage(img, 0, 0, w, h);
+
+    let data;
+    try {
+        data = cx.getImageData(0, 0, w, h).data;
+    } catch (e) {
+        return null; // Canvas contaminado (no debería pasar con blob/data)
+    }
+
+    let bits = '';
+    for (let y = 0; y < h; y++) {
+        for (let x = 0; x < w - 1; x++) {
+            const i = (y * w + x) * 4;
+            const j = (y * w + x + 1) * 4;
+            const l1 = 0.299 * data[i]   + 0.587 * data[i+1]   + 0.114 * data[i+2];
+            const l2 = 0.299 * data[j]   + 0.587 * data[j+1]   + 0.114 * data[j+2];
+            bits += l1 > l2 ? '1' : '0';
+        }
+    }
+    let hex = '';
+    for (let i = 0; i < 64; i += 4) {
+        hex += parseInt(bits.substr(i, 4), 2).toString(16);
+    }
+    return hex;
+}
+
+function computeHashFromDataUrl(dataUrl) {
+    return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => resolve(computeHashFromImage(img));
+        img.onerror = () => resolve(null);
+        img.src = dataUrl;
+    });
+}
+
+function hammingDistance(a, b) {
+    if (!a || !b || a.length !== b.length) return Infinity;
+    let d = 0;
+    for (let i = 0; i < a.length; i++) {
+        let x = parseInt(a[i], 16) ^ parseInt(b[i], 16);
+        while (x) { d += x & 1; x >>= 1; }
+    }
+    return d;
+}
+
+function findDuplicateIndex(hash, excludeIdx = -1) {
+    if (!hash) return -1;
+    const threshold = parseInt(dedupeThreshold.value, 10) || 6;
+    for (let i = 0; i < savedChessboards.length; i++) {
+        if (i === excludeIdx) continue;
+        const h = savedChessboards[i].hash;
+        if (!h) continue;
+        if (hammingDistance(hash, h) <= threshold) return i;
+    }
+    return -1;
 }
 
 // --------------------------------------------------------------
@@ -597,7 +775,7 @@ function getPointerPosition(e) {
 }
 
 // --------------------------------------------------------------
-// FACTOR DE ESCALA MEJORADO
+// FACTOR DE ESCALA
 // --------------------------------------------------------------
 function getScaleFactors() {
     if (!imageToCrop || !originalImage) return { scaleX: 1, scaleY: 1 };
@@ -823,23 +1001,54 @@ function cropImage() {
 }
 
 // --------------------------------------------------------------
-// RESTO DE FUNCIONES
+// NOTIFICACIONES
 // --------------------------------------------------------------
-function showNotification(msg) {
+function showNotification(msg, type) {
     notificationText.textContent = msg;
+    notification.classList.remove('warning', 'info');
+    if (type === 'warning') notification.classList.add('warning');
+    if (type === 'info') notification.classList.add('info');
     notification.classList.add('show');
-    setTimeout(() => notification.classList.remove('show'), 3000);
+    clearTimeout(showNotification._t);
+    showNotification._t = setTimeout(() => notification.classList.remove('show'), 3200);
 }
 
-function addChessboard(dataUrl) {
+// --------------------------------------------------------------
+// GUARDAR TABLERO (con detección de repetidos)
+// --------------------------------------------------------------
+async function addChessboard(dataUrl) {
+    const hash = await computeHashFromDataUrl(dataUrl);
+
+    // Edición de un tablero existente
     if (editingIndex >= 0) {
-        savedChessboards[editingIndex] = dataUrl;
+        savedChessboards[editingIndex] = { dataUrl, hash };
         showNotification('Tablero actualizado');
         editingIndex = -1;
-    } else {
-        savedChessboards.push(dataUrl);
-        showNotification('Tablero guardado');
+        updateChessboardsDisplay();
+        if (currentImageIndex < imageFiles.length - 1) {
+            nextImage();
+        } else {
+            resetCropSection();
+        }
+        return;
     }
+
+    // Detección de repetidos
+    if (dedupeCheck.checked && hash) {
+        const dup = findDuplicateIndex(hash);
+        if (dup >= 0) {
+            showNotification(`Tablero repetido (similar al #${dup + 1}) — omitido`, 'warning');
+            if (currentImageIndex < imageFiles.length - 1) {
+                nextImage();
+            } else {
+                resetCropSection();
+            }
+            return;
+        }
+    }
+
+    savedChessboards.push({ dataUrl, hash });
+    showNotification('Tablero guardado');
     updateChessboardsDisplay();
     if (currentImageIndex < imageFiles.length - 1) {
         nextImage();
@@ -867,18 +1076,18 @@ function startEdit(index) {
         imageToCrop.onload = function() { setTimeout(initCropBox, 50); };
         if (imageToCrop.complete) setTimeout(initCropBox, 50);
     };
-    originalImage.src = savedChessboards[index];
+    originalImage.src = savedChessboards[index].dataUrl;
     cropSection.classList.remove('hidden');
 }
 
 function updateChessboardsDisplay() {
     chessboardsContainer.innerHTML = '';
     chessboardsCount.textContent = savedChessboards.length;
-    savedChessboards.forEach((dataUrl, index) => {
+    savedChessboards.forEach((board, index) => {
         const item = document.createElement('div');
         item.className = 'chessboard-item';
         item.innerHTML = `
-            <img src="${dataUrl}" alt="Tablero ${index+1}" />
+            <img src="${board.dataUrl}" alt="Tablero ${index+1}" />
             <div class="chessboard-info">Tablero ${index+1}</div>
             <div class="chessboard-actions">
                 <button class="btn btn-warning btn-sm replace-btn" data-index="${index}"><i class="fas fa-edit"></i></button>
@@ -889,6 +1098,8 @@ function updateChessboardsDisplay() {
         item.querySelector('.remove-btn').addEventListener('click', function() {
             const idx = parseInt(this.dataset.index);
             savedChessboards.splice(idx, 1);
+            if (editingIndex === idx) editingIndex = -1;
+            else if (editingIndex > idx) editingIndex--;
             updateChessboardsDisplay();
             showNotification('Tablero eliminado');
         });
@@ -934,7 +1145,7 @@ function updatePdfPreview() {
             cell.appendChild(num);
             if (idx < savedChessboards.length) {
                 const img = document.createElement('img');
-                img.src = savedChessboards[idx];
+                img.src = savedChessboards[idx].dataUrl;
                 cell.appendChild(img);
                 const lines = document.createElement('div');
                 lines.className = 'answer-lines';
@@ -978,7 +1189,7 @@ function generatePdf() {
         const cx = positions[posIdx].x + imgW/2;
         doc.setFontSize(12);
         doc.text((i+1).toString(), cx, positions[posIdx].y - 2.5, {align:'center'});
-        doc.addImage(savedChessboards[i], 'JPEG', positions[posIdx].x, positions[posIdx].y, imgW, imgH);
+        doc.addImage(savedChessboards[i].dataUrl, 'JPEG', positions[posIdx].x, positions[posIdx].y, imgW, imgH);
         const lineY = positions[posIdx].y + imgH + 6;
         for (let j=0; j<3; j++) {
             doc.line(positions[posIdx].x, lineY + j*4, positions[posIdx].x+imgW, lineY + j*4);
@@ -1073,11 +1284,28 @@ function processAllImages() {
         }
         currentImageIndex = index;
         loadCurrentImage();
-        setTimeout(() => {
+        setTimeout(async () => {
             const data = cropImage();
             if (data) {
-                savedChessboards.push(data);
+                // Detección de repetidos también en "procesar todas"
+                if (dedupeCheck.checked) {
+                    const hash = await computeHashFromDataUrl(data);
+                    if (hash) {
+                        const dup = findDuplicateIndex(hash);
+                        if (dup >= 0) {
+                            showNotification(`Repetido (similar al #${dup+1}) — omitido`, 'warning');
+                            processNext(index + 1);
+                            return;
+                        }
+                    }
+                    savedChessboards.push({ dataUrl: data, hash });
+                } else {
+                    const hash = await computeHashFromDataUrl(data);
+                    savedChessboards.push({ dataUrl: data, hash });
+                }
                 updateChessboardsDisplay();
+                processNext(index + 1);
+            } else {
                 processNext(index + 1);
             }
         }, 400);
@@ -1094,6 +1322,7 @@ function clearAllChessboards() {
     if (savedChessboards.length === 0) return;
     if (confirm('¿Eliminar todos los tableros?')) {
         savedChessboards = [];
+        editingIndex = -1;
         updateChessboardsDisplay();
         showNotification('Todos eliminados');
     }
@@ -1105,25 +1334,31 @@ function clearAllChessboards() {
 imageInput.addEventListener('change', function() {
     loadImageBtn.disabled = !this.files || this.files.length === 0;
     if (this.files && this.files.length > 0) {
-        // NUEVO: guardar crudo y aplicar orden
         rawImageFiles = Array.from(this.files);
         applySortOrder();
     }
 });
 
-// NUEVO: al cambiar el modo de orden, reordenar
+// Cambio de modo de orden
 sortModeSelect.addEventListener('change', function() {
     if (rawImageFiles.length === 0) return;
-
     applySortOrder();
-
-    // Si ya estábamos trabajando, recargar con el nuevo orden
     if (!cropSection.classList.contains('hidden') && imageFiles.length > 0) {
         currentImageIndex = 0;
         loadCurrentImage();
-        showNotification(`Orden actualizado: ${this.options[this.selectedIndex].text}`);
+        showNotification(`Orden actualizado`, 'info');
     } else {
-        showNotification(`Orden seleccionado: ${this.options[this.selectedIndex].text}`);
+        showNotification(`Orden seleccionado`, 'info');
+    }
+});
+
+// Toggle sensibilidad dedupe
+dedupeCheck.addEventListener('change', function() {
+    if (this.checked) {
+        dedupeSensitivityWrap.classList.add('show');
+        showNotification('Detección de repetidos activada', 'info');
+    } else {
+        dedupeSensitivityWrap.classList.remove('show');
     }
 });
 
@@ -1132,6 +1367,7 @@ loadImageBtn.addEventListener('click', function() {
     cropSection.classList.remove('hidden');
     loadCurrentImage();
 });
+
 cropBtn.addEventListener('click', function() {
     const data = cropImage();
     if (data) {
@@ -1139,6 +1375,7 @@ cropBtn.addEventListener('click', function() {
         previewSection.classList.remove('hidden');
     }
 });
+
 prevImageBtn.addEventListener('click', prevImage);
 nextImageBtn.addEventListener('click', nextImage);
 generatePdfBtn.addEventListener('click', generatePdf);
