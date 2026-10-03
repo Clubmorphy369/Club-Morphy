@@ -4501,13 +4501,18 @@ mejorMovimientoFallback(c) {
         // --------------------------------------------------------
         // TOAST
         // --------------------------------------------------------
-        mostrarToast(msg, tipo) {
+               mostrarToast(msg, tipo, duracionMs) {
             const t = document.createElement('div');
             t.className = 'cm-tablero-toast show' + (tipo === 'elo-up' ? ' elo-up' : (tipo === 'elo-down' ? ' elo-down' : ''));
             t.textContent = msg;
             document.body.appendChild(t);
-            setTimeout(() => { t.classList.remove('show'); }, 2500);
-            setTimeout(() => { t.remove(); }, 3000);
+
+            // ⭐ v78: duración configurable (default 2500ms visible + 500ms fade)
+            const msVisible = (typeof duracionMs === 'number' && duracionMs > 0) ? duracionMs : 2500;
+            const msTotal = msVisible + 500;
+
+            setTimeout(() => { t.classList.remove('show'); }, msVisible);
+            setTimeout(() => { t.remove(); }, msTotal);
         }
 
                // ⭐ v44: Actualizar el texto de navegación
