@@ -1497,18 +1497,31 @@ function onPointerUp(e) {
 // =========================================================
 let _twoFingerActive = false;
 
+// ✅ Detecta si un punto (clientX, clientY) está cerca de un handle
+function isNearHandle(clientX, clientY) {
+  return getHandleFromPoint(clientX, clientY) !== null;
+}
+
 cropContainer.addEventListener('touchstart', (e) => {
-  if (e.touches.length >= 2) {
-    _twoFingerActive = true;
-    cropBox.classList.add('pan-mode');
-    if (state.pointerId !== null) {
-      try { cropBox.releasePointerCapture(state.pointerId); } catch (_) {}
-      cropBox.removeEventListener('pointermove', onPointerMove);
-      cropBox.removeEventListener('pointerup', onPointerUp);
-      cropBox.removeEventListener('pointercancel', onPointerUp);
-      state.pointerId = null;
-      state.mode = null;
-    }
+  if (e.touches.length < 2) return;
+
+  // ✅ Si alguno de los dos dedos está sobre un handle, NO activar pan
+  const t1 = e.touches[0];
+  const t2 = e.touches[1];
+  if (isNearHandle(t1.clientX, t1.clientY) || isNearHandle(t2.clientX, t2.clientY)) {
+    return;
+  }
+
+  _twoFingerActive = true;
+  cropBox.classList.add('pan-mode');
+
+  if (state.pointerId !== null) {
+    try { cropBox.releasePointerCapture(state.pointerId); } catch (_) {}
+    cropBox.removeEventListener('pointermove', onPointerMove);
+    cropBox.removeEventListener('pointerup', onPointerUp);
+    cropBox.removeEventListener('pointercancel', onPointerUp);
+    state.pointerId = null;
+    state.mode = null;
   }
 }, { passive: true });
 
@@ -1523,8 +1536,7 @@ cropContainer.addEventListener('touchcancel', () => {
   _twoFingerActive = false;
   cropBox.classList.toggle('pan-mode', state.panMode);
 }, { passive: true });
-
-// =========================================================
+  // =========================================================
 // TECLADO — cropBox
 // =========================================================
 cropBox.addEventListener('keydown', (e) => {
