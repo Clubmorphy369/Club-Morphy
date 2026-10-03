@@ -2431,8 +2431,14 @@ async importarDesdeLichess() {
             `;
             this.contenedor.appendChild(overlay);
 
-            overlay.querySelector('[data-accion="cerrar"]')?.addEventListener('click', () => {
+                     overlay.querySelector('[data-accion="cerrar"]')?.addEventListener('click', () => {
                 overlay.remove();
+                // ⭐ v77: Auto-avance al siguiente bloque si el checkbox está activo
+                if (this.autoAvance && !this.esModoAdmin) {
+                    setTimeout(() => {
+                        if (!this.destroyed) this._scrollAlSiguienteBloque();
+                    }, 300);
+                }
             });
             overlay.querySelector('[data-accion="reintentar"]')?.addEventListener('click', () => {
                 overlay.remove();
@@ -2445,8 +2451,34 @@ async importarDesdeLichess() {
             });
         }
 
+        // ============================================================
+        // ⭐ v77: AUTO-AVANCE ENTRE BLOQUES
+        // Busca el siguiente bloque tipo tablero dentro del mismo tema
+        // y hace scroll hacia él.
+        // ============================================================
+        _encontrarSiguienteBloque() {
+            if (!this.temaIdContexto || !this.bloqueIdContexto) return null;
+            const tema = document.querySelector(`.tema[data-tema-id="${this.temaIdContexto}"]`);
+            if (!tema) return null;
+            const bloques = Array.from(tema.querySelectorAll('.cm-tablero-bloque-alumno'));
+            const idx = bloques.findIndex(el => el.dataset.bloqueId === this.bloqueIdContexto);
+            if (idx === -1 || idx >= bloques.length - 1) return null;
+            return bloques[idx + 1];
+        }
+
+        _scrollAlSiguienteBloque() {
+            const siguiente = this._encontrarSiguienteBloque();
+            if (!siguiente) {
+                this.mostrarToast('🎓 ¡Terminaste todas las lecciones de este tema!', 'elo-up');
+                return false;
+            }
+            siguiente.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            this.mostrarToast('⏭️ Avanzando a la siguiente lección…', 'elo-up');
+            return true;
+        }
+
         _aplicarELOCapitulo(idxCap) {
-               // ============================================================
+           // ============================================================
         // ⭐ v58: Aplicar ELO según el estado del capítulo (Entrega 2)
         // Estados: 'perfecto' (+6), 'con_ayuda' (+3), 'no_resuelto' (-10)
         // ============================================================
