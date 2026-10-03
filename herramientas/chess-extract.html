@@ -133,6 +133,7 @@
         .btn-success { background-color: var(--success); }
         .btn-primary { background-color: #9b59b6; }
         .btn-primary:hover { background-color: #8e44ad; }
+        .btn-dark { background-color: #2c3e50; }
         .btn-outline {
             background-color: transparent;
             border: 2px solid var(--secondary);
@@ -271,6 +272,35 @@
         }
 
         /* ============================================================
+           CIRCULOS BLANCAS / NEGRAS
+           ============================================================ */
+        .turn-control {
+            background: #e8f5e9;
+            border: 2px solid var(--success);
+            border-radius: var(--border-radius);
+            padding: 12px 14px;
+            margin: 12px 0 16px 0;
+        }
+        .turn-control .turn-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 700;
+            color: var(--primary);
+            font-size: 1rem;
+            margin-bottom: 8px;
+        }
+        .turn-control .turn-title i { color: var(--success); font-size: 1.1rem; }
+        .turn-control .dedupe-check-row { padding: 4px 0; }
+        .turn-control .dedupe-check-row input[type="checkbox"] { accent-color: var(--success); }
+        .turn-hint {
+            font-size: 0.8rem;
+            color: #1e7e34;
+            line-height: 1.4;
+            margin-top: 6px;
+        }
+
+        /* ============================================================
            CROP AREA
            ============================================================ */
         #cropContainer {
@@ -385,6 +415,22 @@
             margin-top: 15px;
         }
         .navigation-buttons .btn { flex: 1 1 120px; min-width: 100px; }
+
+        /* ============================================================
+           GALERÍA DE TABLEROS
+           ============================================================ */
+        .batch-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            align-items: center;
+            margin-bottom: 12px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: var(--border-radius);
+            border: 1px solid #e1e4e8;
+        }
+        .batch-bar .btn { flex: 1; min-width: 90px; }
         .chessboards-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
@@ -397,16 +443,59 @@
             overflow: hidden;
             background: white;
             box-shadow: var(--box-shadow);
+            position: relative;
+            transition: var(--transition);
         }
-        .chessboard-item img {
+        .chessboard-item.selected {
+            border-color: var(--success);
+            box-shadow: 0 0 0 2px rgba(46,204,113,0.35);
+        }
+        .chessboard-item > img {
             width: 100%;
             height: 130px;
             object-fit: contain;
             background: #f8f9fa;
             padding: 6px;
+            cursor: pointer;
+            display: block;
         }
-        .chessboard-info { text-align: center; font-weight: 500; padding: 6px; background: var(--light); }
+        .chessboard-item .turn-overlay {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            border: 2px solid #333;
+            pointer-events: none;
+            z-index: 2;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.25);
+        }
+        .chessboard-item .turn-overlay.white { background: #ffffff; }
+        .chessboard-item .turn-overlay.black { background: #000000; }
+        .chessboard-info {
+            text-align: center;
+            font-weight: 500;
+            padding: 6px;
+            background: var(--light);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.85rem;
+        }
+        .chessboard-info .select-check {
+            width: 20px;
+            height: 20px;
+            accent-color: var(--success);
+            cursor: pointer;
+            flex-shrink: 0;
+        }
         .chessboard-actions { display: flex; justify-content: center; gap: 5px; padding: 8px; }
+
+        /* ============================================================
+           PDF PREVIEW
+           ============================================================ */
         .pdf-preview {
             border: 1px solid #ddd;
             margin-top: 15px;
@@ -442,12 +531,33 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
+            justify-content: flex-start;
             padding: 5px;
             background: #fafafa;
             border-radius: 4px;
             min-height: 120px;
         }
+        /* NUEVA fila superior: número (izq) + círculo (der) */
+        .cell-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            padding: 0 4px;
+            margin-bottom: 4px;
+            box-sizing: border-box;
+        }
+        .cell-num { font-weight: bold; font-size: 0.85rem; }
+        .turn-dot {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            border: 2px solid #333;
+            flex-shrink: 0;
+        }
+        .turn-dot.white { background: #ffffff; }
+        .turn-dot.black { background: #000000; }
         .page-cell img { max-width: 60%; max-height: 60%; margin-bottom: 4px; }
         .page-content.rows-2 .page-cell { min-height: 180px; }
         .page-content.rows-2 .page-cell img { max-width: 75%; max-height: 75%; }
@@ -458,6 +568,7 @@
         .page-footer { display: flex; justify-content: space-between; padding: 4px; font-size: 0.8rem; background: #f0f0f0; border-radius: 4px; margin-top: 10px; }
         .answer-lines { width: 100%; margin-top: 4px; }
         .line { border-bottom: 1px solid #ccc; height: 8px; width: 100%; margin: 4px 0; }
+
         .hidden { display: none; }
         .notification {
             position: fixed;
@@ -508,6 +619,58 @@
         .badge-primary { background: var(--secondary); color: white; }
         .badge-light { background: var(--light); color: var(--dark); }
         .section-title { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 12px; }
+
+        /* Modal de turno */
+        .turn-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            padding: 20px;
+        }
+        .turn-modal-content {
+            background: white;
+            padding: 18px;
+            border-radius: 12px;
+            text-align: center;
+            max-width: 95%;
+            width: 400px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+        }
+        .turn-modal-content h3 {
+            color: var(--primary);
+            margin-bottom: 8px;
+        }
+        .turn-modal-content img {
+            max-width: 100%;
+            max-height: 45vh;
+            margin: 10px 0;
+            border-radius: 6px;
+            background: #f8f9fa;
+        }
+        .turn-modal-buttons {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            margin: 15px 0;
+            flex-wrap: wrap;
+        }
+        .turn-modal-buttons button {
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 1.05rem;
+            cursor: pointer;
+            font-weight: 600;
+            min-height: 48px;
+            border: 2px solid #ccc;
+        }
+        .turn-modal-buttons .mw { background: #ffffff; color: #000; border-color: #333; }
+        .turn-modal-buttons .mb { background: #000000; color: #fff; border-color: #000; }
+        .turn-modal-buttons .mc { background: #e0e0e0; color: #333; }
+
         @media (max-width: 768px) {
             .app-container { padding: 12px; }
             #cropContainer { height: 360px; }
@@ -518,13 +681,16 @@
             .resize-ne, .resize-se { right: -13px; }
             .btn { font-size: 0.95rem; padding: 12px 14px; }
             .navigation-buttons .btn { flex: 1 1 100%; }
+            .batch-bar .btn { flex: 1 0 45%; }
         }
         @media (max-width: 480px) {
             .app-header h1 { font-size: 1.5rem; }
             .card { padding: 12px; }
             #cropContainer { height: 280px; }
-            .sort-control, .dedupe-control { padding: 12px; }
+            .sort-control, .dedupe-control, .turn-control { padding: 12px; }
             .progress-text { font-size: 0.75rem; }
+            .turn-dot { width: 12px; height: 12px; border-width: 1.5px; }
+            .chessboard-item .turn-overlay { width: 18px; height: 18px; top: 6px; right: 6px; }
         }
     </style>
 </head>
@@ -541,7 +707,8 @@
             <li>Sube una o más capturas de pantalla con tableros</li>
             <li>Elige el orden y activa la detección de repetidos si quieres</li>
             <li>Ajusta el recuadro arrastrando o usando los tiradores</li>
-            <li>Guarda cada tablero y genera el PDF</li>
+            <li>Guarda cada tablero, asígnale turno (blancas/negras) si quieres</li>
+            <li>Genera el PDF o descarga los tableros individualmente</li>
         </ol>
     </div>
 
@@ -586,6 +753,21 @@
             <p class="dedupe-hint">
                 <i class="fas fa-lightbulb"></i>
                 Si un tablero ya guardado es igual o muy similar al que vas a guardar, se omite automáticamente y se muestra un aviso.
+            </p>
+        </div>
+
+        <div class="turn-control">
+            <div class="turn-title">
+                <i class="fas fa-circle-half-stroke"></i>
+                <span>Círculo de turno (blancas / negras)</span>
+            </div>
+            <label class="dedupe-check-row">
+                <input type="checkbox" id="showCircleCheck" checked />
+                <span>Mostrar círculo de turno en preview, PDF y descargas</span>
+            </label>
+            <p class="turn-hint">
+                <i class="fas fa-info-circle"></i>
+                Al pulsar un tablero en la galería podrás marcar si juegan blancas o negras. El círculo se dibujará <strong>fuera del diagrama</strong>, al lado del número.
             </p>
         </div>
 
@@ -649,6 +831,16 @@
             <div class="card-header"><i class="fas fa-check-circle"></i> <h2>Tableros <span class="badge badge-primary" id="chessboardsCount">0</span></h2></div>
             <button id="clearAllBtn" class="btn btn-danger btn-sm"><i class="fas fa-trash"></i> Eliminar todos</button>
         </div>
+
+        <div class="batch-bar">
+            <button id="selectAllBtn" class="btn btn-sm"><i class="fas fa-check-square"></i> Todo</button>
+            <button id="deselectAllBtn" class="btn btn-sm">Deseleccionar</button>
+            <button id="batchWhiteBtn" class="btn btn-sm btn-success"><i class="fas fa-circle" style="color:white; text-shadow:0 0 1px black;"></i> Blancas (sel)</button>
+            <button id="batchBlackBtn" class="btn btn-sm btn-dark"><i class="fas fa-circle" style="color:black;"></i> Negras (sel)</button>
+            <button id="downloadSelectedBtn" class="btn btn-sm btn-warning"><i class="fas fa-download"></i> Descargar sel</button>
+            <button id="downloadAllBtn" class="btn btn-sm btn-success"><i class="fas fa-download"></i> Descargar todas</button>
+        </div>
+
         <div id="chessboards" class="chessboards-grid"></div>
     </section>
 
@@ -674,11 +866,14 @@
 <div class="notification" id="notification"><i class="fas fa-check-circle"></i> <span id="notificationText">Guardado</span></div>
 
 <script>
-// ============================================================
-// VERSIÓN CON ORDEN + REPETIDOS + BARRA DE PROGRESO + LAYOUTS +
-// localStorage + BLOB + NOTIFICACIONES + DESHACER
-// + ASPECT RATIO EN PDF (con fallback + cacheo para legacy)
-// ============================================================
+/* ============================================================
+   ChessExtract Pro — Móvil y Escritorio (v2)
+   Envuelto en IIFE → cero variables globales → integración segura.
+   Incluye: dedupe + orden + progreso + layouts + turnos (blancas/negras)
+   con círculo FUERA del diagrama (al lado del número) + descargas.
+   ============================================================ */
+(function () {
+'use strict';
 
 const MAX_DISPLAY_WIDTH = 900;
 
@@ -689,7 +884,7 @@ let resizeDirection = null;
 let startX, startY;
 let cropBoxX = 0, cropBoxY = 0, cropBoxWidth = 0, cropBoxHeight = 0;
 let startCropBoxX = 0, startCropBoxY = 0, startCropBoxWidth = 0, startCropBoxHeight = 0;
-// Cada tablero guardado: { blob, url, hash, w, h }
+// Cada tablero: { blob, url, hash, w, h, turno }
 let savedChessboards = [];
 let imageQuality = 0.7;
 let resolutionFactor = 0.75;
@@ -700,6 +895,7 @@ let cropTemplate = null;
 let templateAppliedToAll = false;
 let rawImageFiles = [];
 let _notifTimer = null;
+let selectedIndices = new Set();
 
 // Layouts dinámicos del PDF (mm, A4 = 210x297)
 const LAYOUTS = {
@@ -765,6 +961,13 @@ const itemsPerPageSelect = document.getElementById('itemsPerPageSelect');
 const progressBar = document.getElementById('progressBar');
 const progressFill = document.getElementById('progressFill');
 const progressText = document.getElementById('progressText');
+const showCircleCheck = document.getElementById('showCircleCheck');
+const selectAllBtn = document.getElementById('selectAllBtn');
+const deselectAllBtn = document.getElementById('deselectAllBtn');
+const batchWhiteBtn = document.getElementById('batchWhiteBtn');
+const batchBlackBtn = document.getElementById('batchBlackBtn');
+const downloadSelectedBtn = document.getElementById('downloadSelectedBtn');
+const downloadAllBtn = document.getElementById('downloadAllBtn');
 
 // --------------------------------------------------------------
 // HELPERS: BLOB <-> DATAURL
@@ -790,7 +993,6 @@ function blobToDataURL(blob) {
     });
 }
 
-// Obtiene dimensiones reales del blob (para preservar aspect ratio en PDF)
 function getBlobDimensions(blob) {
     return new Promise(function(resolve) {
         const url = URL.createObjectURL(blob);
@@ -808,23 +1010,19 @@ function getBlobDimensions(blob) {
 }
 
 // --------------------------------------------------------------
-// NOTIFICACIONES (con tipo + undo)
+// NOTIFICACIONES
 // --------------------------------------------------------------
 function showNotification(msg, type, opts) {
     type = type || 'success';
     opts = opts || {};
-
     notification.classList.remove('success', 'warning', 'error', 'info');
     notification.classList.add(type);
-
     const icon = notification.querySelector('i');
     icon.className = type === 'error' ? 'fas fa-exclamation-circle'
                    : type === 'warning' ? 'fas fa-exclamation-triangle'
                    : type === 'info' ? 'fas fa-info-circle'
                    : 'fas fa-check-circle';
-
     notificationText.textContent = msg;
-
     let undoBtn = notification.querySelector('.undo-btn');
     if (undoBtn) undoBtn.remove();
     if (opts.onUndo) {
@@ -838,7 +1036,6 @@ function showNotification(msg, type, opts) {
         });
         notification.appendChild(undoBtn);
     }
-
     notification.classList.add('show');
     clearTimeout(_notifTimer);
     _notifTimer = setTimeout(() => notification.classList.remove('show'), opts.duration || 3200);
@@ -853,7 +1050,6 @@ function showProgress(current, total) {
     progressFill.style.width = pct + '%';
     progressText.textContent = pct + '% · ' + current + '/' + total;
 }
-
 function hideProgress() {
     progressBar.classList.add('hidden');
     progressFill.style.width = '0%';
@@ -861,7 +1057,7 @@ function hideProgress() {
 }
 
 // --------------------------------------------------------------
-// ORDEN DE IMÁGENES
+// ORDEN
 // --------------------------------------------------------------
 function applySortOrder() {
     if (rawImageFiles.length === 0) return;
@@ -877,15 +1073,12 @@ function applySortOrder() {
         case 'date-desc':
             arr.sort((a, b) => (b.lastModified || 0) - (a.lastModified || 0));
             break;
-        case 'selection':
-        default:
-            break;
     }
     imageFiles = arr;
 }
 
 // --------------------------------------------------------------
-// HASH PERCEPTUAL (dHash 64 bits)
+// HASH PERCEPTUAL
 // --------------------------------------------------------------
 function computeHashFromImage(img) {
     const w = 9, h = 8;
@@ -909,7 +1102,6 @@ function computeHashFromImage(img) {
     for (let i = 0; i < 64; i += 4) hex += parseInt(bits.substr(i, 4), 2).toString(16);
     return hex;
 }
-
 function computeHashFromDataUrl(dataUrl) {
     return new Promise((resolve) => {
         const img = new Image();
@@ -918,7 +1110,6 @@ function computeHashFromDataUrl(dataUrl) {
         img.src = dataUrl;
     });
 }
-
 function hammingDistance(a, b) {
     if (!a || !b || a.length !== b.length) return Infinity;
     let d = 0;
@@ -928,7 +1119,6 @@ function hammingDistance(a, b) {
     }
     return d;
 }
-
 function findDuplicateIndex(hash, excludeIdx) {
     if (excludeIdx === undefined) excludeIdx = -1;
     if (!hash) return -1;
@@ -955,11 +1145,11 @@ function saveSettings() {
             itemsPerPage: itemsPerPageSelect.value,
             dedupeEnabled: dedupeCheck.checked,
             dedupeThreshold: dedupeThreshold.value,
-            sortMode: sortModeSelect.value
+            sortMode: sortModeSelect.value,
+            showCircle: showCircleCheck.checked
         }));
     } catch (e) {}
 }
-
 function loadSettings() {
     try {
         const raw = localStorage.getItem('chessExtract.settings');
@@ -985,34 +1175,25 @@ function loadSettings() {
         }
         if (typeof s.dedupeThreshold === 'string') dedupeThreshold.value = s.dedupeThreshold;
         if (typeof s.sortMode === 'string') sortModeSelect.value = s.sortMode;
+        if (typeof s.showCircle === 'boolean') showCircleCheck.checked = s.showCircle;
     } catch (e) {}
 }
 
 // ============================================================
-// ZONA INTOCABLE: TODO EL SISTEMA DE ARRASTRE Y RECORTE
+// ZONA DE ARRASTRE Y RECORTE (INTACTA)
 // ============================================================
 function getPointerPosition(e) {
-    if (e.touches) {
-        return { clientX: e.touches[0].clientX, clientY: e.touches[0].clientY };
-    } else {
-        return { clientX: e.clientX, clientY: e.clientY };
-    }
+    if (e.touches) return { clientX: e.touches[0].clientX, clientY: e.touches[0].clientY };
+    return { clientX: e.clientX, clientY: e.clientY };
 }
-
 function getScaleFactors() {
     if (!imageToCrop || !originalImage) return { scaleX: 1, scaleY: 1 };
     const rect = imageToCrop.getBoundingClientRect();
-    const displayW = rect.width;
-    const displayH = rect.height;
     const origW = originalImage.width;
     const origH = originalImage.height;
-    if (displayW === 0 || displayH === 0) return { scaleX: 1, scaleY: 1 };
-    return {
-        scaleX: origW / displayW,
-        scaleY: origH / displayH
-    };
+    if (rect.width === 0 || rect.height === 0) return { scaleX: 1, scaleY: 1 };
+    return { scaleX: origW / rect.width, scaleY: origH / rect.height };
 }
-
 function updateCropBox() {
     if (!cropBox) return;
     cropBox.style.left = cropBoxX + 'px';
@@ -1020,18 +1201,12 @@ function updateCropBox() {
     cropBox.style.width = cropBoxWidth + 'px';
     cropBox.style.height = cropBoxHeight + 'px';
 }
-
 function initCropBox() {
     cropBox = document.querySelector('.crop-box');
     if (!cropBox) return;
-
     const displayW = imageToCrop.naturalWidth || imageToCrop.width;
     const displayH = imageToCrop.naturalHeight || imageToCrop.height;
-    if (displayW === 0 || displayH === 0) {
-        setTimeout(initCropBox, 100);
-        return;
-    }
-
+    if (displayW === 0 || displayH === 0) { setTimeout(initCropBox, 100); return; }
     if (cropTemplate && templateAppliedToAll) {
         applyCropTemplate();
     } else {
@@ -1042,7 +1217,6 @@ function initCropBox() {
         cropBoxHeight = displayH * size;
         updateCropBox();
     }
-
     const handles = cropBox.querySelectorAll('.resize-handle');
     handles.forEach(handle => {
         handle.removeEventListener('mousedown', startResize);
@@ -1054,7 +1228,6 @@ function initCropBox() {
     cropBox.removeEventListener('touchstart', startDragTouch);
     cropBox.addEventListener('mousedown', startDrag);
     cropBox.addEventListener('touchstart', startDragTouch, { passive: false });
-
     document.removeEventListener('mousemove', handleMove);
     document.removeEventListener('touchmove', handleMoveTouch);
     document.removeEventListener('mouseup', stopInteraction);
@@ -1063,89 +1236,69 @@ function initCropBox() {
     document.addEventListener('touchmove', handleMoveTouch, { passive: false });
     document.addEventListener('mouseup', stopInteraction);
     document.addEventListener('touchend', stopInteractionTouch, { passive: false });
-
     cropBox.classList.remove('hidden');
     cropBtn.disabled = false;
     updateTemplateButtons();
 }
-
 function startDrag(e) {
     if (e.target.classList.contains('resize-handle')) return;
     e.preventDefault();
     const pos = getPointerPosition(e);
     isDragging = true;
-    startX = pos.clientX;
-    startY = pos.clientY;
-    startCropBoxX = cropBoxX;
-    startCropBoxY = cropBoxY;
+    startX = pos.clientX; startY = pos.clientY;
+    startCropBoxX = cropBoxX; startCropBoxY = cropBoxY;
 }
-
 function startDragTouch(e) {
     if (e.target.classList.contains('resize-handle')) return;
     e.preventDefault();
     const pos = getPointerPosition(e);
     isDragging = true;
-    startX = pos.clientX;
-    startY = pos.clientY;
-    startCropBoxX = cropBoxX;
-    startCropBoxY = cropBoxY;
+    startX = pos.clientX; startY = pos.clientY;
+    startCropBoxX = cropBoxX; startCropBoxY = cropBoxY;
 }
-
 function startResize(e) {
     if (!e.target.classList.contains('resize-handle')) return;
     e.preventDefault();
     const pos = getPointerPosition(e);
     isResizing = true;
-    startX = pos.clientX;
-    startY = pos.clientY;
-    startCropBoxX = cropBoxX;
-    startCropBoxY = cropBoxY;
-    startCropBoxWidth = cropBoxWidth;
-    startCropBoxHeight = cropBoxHeight;
+    startX = pos.clientX; startY = pos.clientY;
+    startCropBoxX = cropBoxX; startCropBoxY = cropBoxY;
+    startCropBoxWidth = cropBoxWidth; startCropBoxHeight = cropBoxHeight;
     resizeDirection = e.target.classList[1];
 }
-
 function startResizeTouch(e) {
     if (!e.target.classList.contains('resize-handle')) return;
     e.preventDefault();
     const pos = getPointerPosition(e);
     isResizing = true;
-    startX = pos.clientX;
-    startY = pos.clientY;
-    startCropBoxX = cropBoxX;
-    startCropBoxY = cropBoxY;
-    startCropBoxWidth = cropBoxWidth;
-    startCropBoxHeight = cropBoxHeight;
+    startX = pos.clientX; startY = pos.clientY;
+    startCropBoxX = cropBoxX; startCropBoxY = cropBoxY;
+    startCropBoxWidth = cropBoxWidth; startCropBoxHeight = cropBoxHeight;
     resizeDirection = e.target.classList[1];
 }
-
 function handleMove(e) {
     if (!isDragging && !isResizing) return;
     e.preventDefault();
     const pos = getPointerPosition(e);
     processMove(pos.clientX, pos.clientY);
 }
-
 function handleMoveTouch(e) {
     if (!isDragging && !isResizing) return;
     e.preventDefault();
     const pos = getPointerPosition(e);
     processMove(pos.clientX, pos.clientY);
 }
-
 function processMove(clientX, clientY) {
     const dx = clientX - startX;
     const dy = clientY - startY;
     const displayW = imageToCrop.naturalWidth || imageToCrop.width;
     const displayH = imageToCrop.naturalHeight || imageToCrop.height;
-
     if (isDragging) {
         let newX = startCropBoxX + dx;
         let newY = startCropBoxY + dy;
         newX = Math.max(0, Math.min(newX, displayW - cropBoxWidth));
         newY = Math.max(0, Math.min(newY, displayH - cropBoxHeight));
-        cropBoxX = newX;
-        cropBoxY = newY;
+        cropBoxX = newX; cropBoxY = newY;
     } else if (isResizing) {
         let newW = startCropBoxWidth, newH = startCropBoxHeight;
         let newX = startCropBoxX, newY = startCropBoxY;
@@ -1172,27 +1325,20 @@ function processMove(clientX, clientY) {
                 break;
         }
         if (newW >= 30 && newX >= 0 && newX + newW <= displayW) {
-            cropBoxWidth = newW;
-            cropBoxX = newX;
+            cropBoxWidth = newW; cropBoxX = newX;
         }
         if (newH >= 30 && newY >= 0 && newY + newH <= displayH) {
-            cropBoxHeight = newH;
-            cropBoxY = newY;
+            cropBoxHeight = newH; cropBoxY = newY;
         }
     }
     updateCropBox();
-    startX = clientX;
-    startY = clientY;
-    startCropBoxX = cropBoxX;
-    startCropBoxY = cropBoxY;
-    startCropBoxWidth = cropBoxWidth;
-    startCropBoxHeight = cropBoxHeight;
+    startX = clientX; startY = clientY;
+    startCropBoxX = cropBoxX; startCropBoxY = cropBoxY;
+    startCropBoxWidth = cropBoxWidth; startCropBoxHeight = cropBoxHeight;
 }
-
 function stopInteraction() { isDragging = false; isResizing = false; }
 function stopInteractionTouch() { isDragging = false; isResizing = false; }
 
-// Recortar (sigue devolviendo dataURL, la conversión a blob ocurre en addChessboard)
 function cropImage() {
     if (!originalImage || !cropBox) return null;
     const { scaleX, scaleY } = getScaleFactors();
@@ -1200,7 +1346,6 @@ function cropImage() {
     const origY = cropBoxY * scaleY;
     const origW = cropBoxWidth * scaleX;
     const origH = cropBoxHeight * scaleY;
-
     const canvas = document.createElement('canvas');
     const outW = Math.round(origW * resolutionFactor);
     const outH = Math.round(origH * resolutionFactor);
@@ -1215,19 +1360,19 @@ function cropImage() {
 // ============================================================
 
 // --------------------------------------------------------------
-// GUARDAR TABLERO (con Blob + dedupe + dimensiones)
+// GUARDAR TABLERO (blob + hash + dims + turno)
 // --------------------------------------------------------------
 async function addChessboard(dataUrl) {
     const hash = await computeHashFromDataUrl(dataUrl);
 
-    // Edición
     if (editingIndex >= 0) {
         const old = savedChessboards[editingIndex];
+        const oldTurno = old ? old.turno : null;
         if (old && old.url) URL.revokeObjectURL(old.url);
         const blob = await dataURLToBlob(dataUrl);
         const url = URL.createObjectURL(blob);
         const dims = await getBlobDimensions(blob);
-        savedChessboards[editingIndex] = { blob, url, hash, w: dims.w, h: dims.h };
+        savedChessboards[editingIndex] = { blob, url, hash, w: dims.w, h: dims.h, turno: oldTurno };
         showNotification('Tablero actualizado');
         editingIndex = -1;
         updateChessboardsDisplay();
@@ -1236,7 +1381,6 @@ async function addChessboard(dataUrl) {
         return;
     }
 
-    // Dedupe
     if (dedupeCheck.checked && hash) {
         const dup = findDuplicateIndex(hash);
         if (dup >= 0) {
@@ -1250,7 +1394,7 @@ async function addChessboard(dataUrl) {
     const blob = await dataURLToBlob(dataUrl);
     const url = URL.createObjectURL(blob);
     const dims = await getBlobDimensions(blob);
-    savedChessboards.push({ blob, url, hash, w: dims.w, h: dims.h });
+    savedChessboards.push({ blob, url, hash, w: dims.w, h: dims.h, turno: null });
     showNotification('Tablero guardado');
     updateChessboardsDisplay();
     if (currentImageIndex < imageFiles.length - 1) nextImage();
@@ -1280,35 +1424,92 @@ function startEdit(index) {
     cropSection.classList.remove('hidden');
 }
 
+// --------------------------------------------------------------
+// GALERÍA con turnos + selección
+// --------------------------------------------------------------
 function updateChessboardsDisplay() {
     chessboardsContainer.innerHTML = '';
     chessboardsCount.textContent = savedChessboards.length;
+
+    // Limpiar selecciones fuera de rango
+    const validSelected = new Set();
+    selectedIndices.forEach(function(i) {
+        if (i >= 0 && i < savedChessboards.length) validSelected.add(i);
+    });
+    selectedIndices = validSelected;
+
     savedChessboards.forEach((board, index) => {
         const item = document.createElement('div');
-        item.className = 'chessboard-item';
-        item.innerHTML =
-            '<img src="' + board.url + '" alt="Tablero ' + (index+1) + '" />' +
-            '<div class="chessboard-info">Tablero ' + (index+1) + '</div>' +
-            '<div class="chessboard-actions">' +
-                '<button class="btn btn-warning btn-sm replace-btn" data-index="' + index + '"><i class="fas fa-edit"></i></button>' +
-                '<button class="btn btn-danger btn-sm remove-btn" data-index="' + index + '"><i class="fas fa-trash"></i></button>' +
-            '</div>';
-        chessboardsContainer.appendChild(item);
-        item.querySelector('.remove-btn').addEventListener('click', function() {
-            const idx = parseInt(this.dataset.index);
-            const removed = savedChessboards[idx];
+        item.className = 'chessboard-item' + (selectedIndices.has(index) ? ' selected' : '');
+
+        const img = document.createElement('img');
+        img.src = board.url;
+        img.alt = 'Tablero ' + (index+1);
+        img.addEventListener('click', function(e) {
+            e.stopPropagation();
+            showTurnModal(index);
+        });
+        item.appendChild(img);
+
+        // Overlay de círculo (si está activo)
+        if (showCircleCheck.checked && (board.turno === 'white' || board.turno === 'black')) {
+            const ov = document.createElement('div');
+            ov.className = 'turn-overlay ' + board.turno;
+            item.appendChild(ov);
+        }
+
+        // Info con checkbox de selección
+        const info = document.createElement('div');
+        info.className = 'chessboard-info';
+        const label = document.createElement('span');
+        label.textContent = 'Tablero ' + (index+1);
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.className = 'select-check';
+        checkbox.checked = selectedIndices.has(index);
+        checkbox.addEventListener('change', function(e) {
+            e.stopPropagation();
+            if (checkbox.checked) selectedIndices.add(index);
+            else selectedIndices.delete(index);
+            updateChessboardsDisplay();
+        });
+        info.appendChild(label);
+        info.appendChild(checkbox);
+        item.appendChild(info);
+
+        // Acciones (editar / eliminar)
+        const actions = document.createElement('div');
+        actions.className = 'chessboard-actions';
+        const editBtn = document.createElement('button');
+        editBtn.className = 'btn btn-warning btn-sm';
+        editBtn.innerHTML = '<i class="fas fa-edit"></i>';
+        editBtn.title = 'Editar recorte';
+        editBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            startEdit(index);
+        });
+        const delBtn = document.createElement('button');
+        delBtn.className = 'btn btn-danger btn-sm';
+        delBtn.innerHTML = '<i class="fas fa-trash"></i>';
+        delBtn.title = 'Eliminar';
+        delBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const removed = savedChessboards[index];
             if (removed && removed.url) URL.revokeObjectURL(removed.url);
-            savedChessboards.splice(idx, 1);
-            if (editingIndex === idx) editingIndex = -1;
-            else if (editingIndex > idx) editingIndex--;
+            savedChessboards.splice(index, 1);
+            selectedIndices.clear();
+            if (editingIndex === index) editingIndex = -1;
+            else if (editingIndex > index) editingIndex--;
             updateChessboardsDisplay();
             showNotification('Tablero eliminado', 'info');
         });
-        item.querySelector('.replace-btn').addEventListener('click', function() {
-            const idx = parseInt(this.dataset.index);
-            startEdit(idx);
-        });
+        actions.appendChild(editBtn);
+        actions.appendChild(delBtn);
+        item.appendChild(actions);
+
+        chessboardsContainer.appendChild(item);
     });
+
     updatePdfPreview();
     if (savedChessboards.length > 0) {
         previewSection.classList.remove('hidden');
@@ -1320,7 +1521,131 @@ function updateChessboardsDisplay() {
 }
 
 // --------------------------------------------------------------
-// VISTA PREVIA PDF (con layout dinámico)
+// MODAL DE TURNO
+// --------------------------------------------------------------
+function showTurnModal(idx) {
+    const board = savedChessboards[idx];
+    if (!board) return;
+    const modal = document.createElement('div');
+    modal.className = 'turn-modal';
+    modal.innerHTML =
+        '<div class="turn-modal-content">' +
+            '<h3><i class="fas fa-circle-half-stroke"></i> Turno del tablero #' + (idx+1) + '</h3>' +
+            '<img src="' + board.url + '" alt="Tablero ' + (idx+1) + '">' +
+            '<div class="turn-modal-buttons">' +
+                '<button class="mw">♔ Blancas</button>' +
+                '<button class="mb">♚ Negras</button>' +
+                '<button class="mc">Sin círculo</button>' +
+            '</div>' +
+            '<button class="btn turn-close-btn">Cerrar</button>' +
+        '</div>';
+    document.body.appendChild(modal);
+    const closeModal = function() { if (modal.parentNode) document.body.removeChild(modal); };
+    modal.querySelector('.mw').addEventListener('click', function() {
+        board.turno = 'white'; updateChessboardsDisplay(); closeModal();
+    });
+    modal.querySelector('.mb').addEventListener('click', function() {
+        board.turno = 'black'; updateChessboardsDisplay(); closeModal();
+    });
+    modal.querySelector('.mc').addEventListener('click', function() {
+        board.turno = null; updateChessboardsDisplay(); closeModal();
+    });
+    modal.querySelector('.turn-close-btn').addEventListener('click', closeModal);
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal) closeModal();
+    });
+}
+
+// --------------------------------------------------------------
+// APLICAR TURNO EN LOTE
+// --------------------------------------------------------------
+function applyTurnToSelected(turno) {
+    if (savedChessboards.length === 0) return;
+    if (selectedIndices.size === 0) {
+        showNotification('No hay tableros seleccionados', 'warning');
+        return;
+    }
+    const otherTurno = turno === 'white' ? 'black' : 'white';
+    let marked = 0;
+    for (let i = 0; i < savedChessboards.length; i++) {
+        if (selectedIndices.has(i)) {
+            savedChessboards[i].turno = turno;
+            marked++;
+        }
+    }
+    updateChessboardsDisplay();
+    showNotification(marked + ' tablero(s) marcados como ' + (turno === 'white' ? 'Blancas' : 'Negras'), 'info');
+}
+
+// --------------------------------------------------------------
+// CÍRCULO EN IMAGEN (canvas, para descargas)
+// --------------------------------------------------------------
+function addCircleToImage(dataUrl, turno, callback) {
+    if (turno !== 'white' && turno !== 'black') { callback(dataUrl); return; }
+    const img = new Image();
+    img.onload = function() {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0);
+        const circleSize = Math.max(20, Math.min(40, Math.floor(img.width / 15)));
+        const padding = 8;
+        const x = img.width - circleSize - padding;
+        const y = img.height - circleSize - padding;
+        ctx.beginPath();
+        ctx.arc(x + circleSize/2, y + circleSize/2, circleSize/2, 0, 2 * Math.PI);
+        ctx.fillStyle = turno === 'white' ? '#ffffff' : '#000000';
+        ctx.fill();
+        ctx.strokeStyle = '#333333';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        callback(canvas.toDataURL('image/jpeg', 0.95));
+    };
+    img.src = dataUrl;
+}
+
+function downloadBoard(index, callback) {
+    const board = savedChessboards[index];
+    if (!board) { if (callback) callback(); return; }
+    blobToDataURL(board.blob).then(function(dataUrl) {
+        const drawTurn = showCircleCheck.checked ? board.turno : null;
+        addCircleToImage(dataUrl, drawTurn, function(finalUrl) {
+            const link = document.createElement('a');
+            link.download = 'tablero_' + (index+1) + (drawTurn ? '_' + drawTurn : '') + '.jpg';
+            link.href = finalUrl;
+            link.click();
+            if (callback) callback();
+        });
+    });
+}
+
+async function downloadAll() {
+    if (savedChessboards.length === 0) return;
+    showNotification('Preparando descarga de todas...', 'info');
+    for (let i = 0; i < savedChessboards.length; i++) {
+        await new Promise(function(resolve) { downloadBoard(i, resolve); });
+        await new Promise(function(r) { setTimeout(r, 150); });
+    }
+    showNotification('Descarga completada');
+}
+
+async function downloadSelected() {
+    const indices = Array.from(selectedIndices).sort(function(a,b){ return a-b; });
+    if (indices.length === 0) {
+        showNotification('No hay tableros seleccionados', 'warning');
+        return;
+    }
+    showNotification('Descargando ' + indices.length + ' seleccionados...', 'info');
+    for (let k = 0; k < indices.length; k++) {
+        await new Promise(function(resolve) { downloadBoard(indices[k], resolve); });
+        await new Promise(function(r) { setTimeout(r, 150); });
+    }
+    showNotification('Descarga completada');
+}
+
+// --------------------------------------------------------------
+// VISTA PREVIA PDF (con círculo al lado del número)
 // --------------------------------------------------------------
 function updatePdfPreview() {
     pdfPreview.innerHTML = '';
@@ -1329,6 +1654,7 @@ function updatePdfPreview() {
     const pageCount = Math.max(1, Math.ceil(savedChessboards.length / itemsPerPage));
     const headerText = headerInput.value;
     const footerText = footerInput.value;
+    const drawCircle = showCircleCheck.checked;
 
     for (let p = 0; p < pageCount; p++) {
         const page = document.createElement('div');
@@ -1346,10 +1672,24 @@ function updatePdfPreview() {
             const idx = p * itemsPerPage + i;
             const cell = document.createElement('div');
             cell.className = 'page-cell';
-            const num = document.createElement('div');
-            num.textContent = (idx+1);
-            num.style.cssText = 'font-weight:bold;margin-bottom:4px;';
-            cell.appendChild(num);
+
+            // Fila superior: número (izq) + círculo (der)
+            const cellHeader = document.createElement('div');
+            cellHeader.className = 'cell-header';
+            const numSpan = document.createElement('span');
+            numSpan.className = 'cell-num';
+            numSpan.textContent = (idx+1);
+            cellHeader.appendChild(numSpan);
+            if (idx < savedChessboards.length && drawCircle) {
+                const b = savedChessboards[idx];
+                if (b.turno === 'white' || b.turno === 'black') {
+                    const dot = document.createElement('span');
+                    dot.className = 'turn-dot ' + b.turno;
+                    cellHeader.appendChild(dot);
+                }
+            }
+            cell.appendChild(cellHeader);
+
             if (idx < savedChessboards.length) {
                 const img = document.createElement('img');
                 img.src = savedChessboards[idx].url;
@@ -1375,7 +1715,7 @@ function updatePdfPreview() {
 }
 
 // --------------------------------------------------------------
-// GENERAR PDF (con layout dinámico + blobs + aspect ratio + cacheo)
+// GENERAR PDF (aspect ratio + círculo al lado del número + cacheo)
 // --------------------------------------------------------------
 async function generatePdf() {
     if (savedChessboards.length === 0) return;
@@ -1390,6 +1730,7 @@ async function generatePdf() {
     const lineCount = layout.lineCount, lineGap = layout.lineGap;
 
     const headerText = headerInput.value, footerText = footerInput.value;
+    const drawCircle = showCircleCheck.checked;
 
     const prevHtml = generatePdfBtn.innerHTML;
     generatePdfBtn.disabled = true;
@@ -1415,38 +1756,45 @@ async function generatePdf() {
             }
 
             const pos = positions[posIdx];
-            const cx = pos.x + imgW / 2;
-            doc.setFontSize(itemsPerPage === 8 ? 10 : 12);
-            doc.text((i+1).toString(), cx, pos.y - 2.5, { align: 'center' });
-
-            // ---------------------------------------------------------
-            // Preservar proporción dentro de la caja imgW × imgH.
-            // Si el tablero viene de una sesión antigua (sin w/h), se
-            // miden al vuelo y se cachean en el objeto para no re-medir
-            // en próximas generaciones. Solo se escriben w/h — el blob,
-            // url y hash permanecen intactos.
-            // ---------------------------------------------------------
             const board = savedChessboards[i];
+
+            // --- Fila superior: número (izq) + círculo (der) ---
+            const labelY = pos.y - 2.5;
+            doc.setFontSize(itemsPerPage === 8 ? 10 : 12);
+            doc.text(String(i+1), pos.x + 3, labelY);
+
+            if (drawCircle && (board.turno === 'white' || board.turno === 'black')) {
+                const circleR = itemsPerPage === 4 ? 3 : (itemsPerPage === 6 ? 2.5 : 2.2);
+                const circleCx = pos.x + imgW - circleR - 1;
+                const circleCy = labelY - 1.2;
+                doc.setDrawColor(51, 51, 51);
+                doc.setLineWidth(0.3);
+                if (board.turno === 'white') doc.setFillColor(255, 255, 255);
+                else doc.setFillColor(0, 0, 0);
+                doc.circle(circleCx, circleCy, circleR, 'FD');
+            }
+
+            // --- Aspect ratio preservado + cacheo para boards legacy ---
             const dataUrl = await blobToDataURL(board.blob);
             let boardW = board.w, boardH = board.h;
             if (!boardW || !boardH) {
                 const dims = await getBlobDimensions(board.blob);
                 boardW = dims.w;
                 boardH = dims.h;
-                // 🔄 Cachear en el objeto (no toca blob, url ni hash)
                 board.w = boardW;
                 board.h = boardH;
             }
             let drawW = imgW, drawH = imgH;
             if (boardW && boardH) {
                 const aspect = boardW / boardH;
-                if (aspect > 1) drawH = imgW / aspect;   // más ancho que alto
-                else drawW = imgH * aspect;              // más alto que ancho
+                if (aspect > 1) drawH = imgW / aspect;
+                else drawW = imgH * aspect;
             }
             const offX = pos.x + (imgW - drawW) / 2;
             const offY = pos.y + (imgH - drawH) / 2;
             doc.addImage(dataUrl, 'JPEG', offX, offY, drawW, drawH, undefined, 'FAST');
 
+            // --- Líneas de respuesta ---
             const lineY = pos.y + imgH + (itemsPerPage === 8 ? 4 : 6);
             for (let j = 0; j < lineCount; j++) {
                 doc.line(pos.x, lineY + j * lineGap, pos.x + imgW, lineY + j * lineGap);
@@ -1493,13 +1841,8 @@ function loadCurrentImage() {
     prevImageBtn.disabled = (currentImageIndex === 0);
     nextImageBtn.disabled = (currentImageIndex === imageFiles.length - 1);
 }
-
-function prevImage() {
-    if (currentImageIndex > 0) { currentImageIndex--; loadCurrentImage(); }
-}
-function nextImage() {
-    if (currentImageIndex < imageFiles.length - 1) { currentImageIndex++; loadCurrentImage(); }
-}
+function prevImage() { if (currentImageIndex > 0) { currentImageIndex--; loadCurrentImage(); } }
+function nextImage() { if (currentImageIndex < imageFiles.length - 1) { currentImageIndex++; loadCurrentImage(); } }
 
 // --------------------------------------------------------------
 // PLANTILLAS
@@ -1517,7 +1860,6 @@ function saveCropTemplate() {
     showNotification('Plantilla guardada');
     updateTemplateButtons();
 }
-
 function applyCropTemplate() {
     if (!cropTemplate) return;
     const displayW = imageToCrop.naturalWidth || imageToCrop.width;
@@ -1529,41 +1871,37 @@ function applyCropTemplate() {
     updateCropBox();
     showNotification('Plantilla aplicada', 'info');
 }
-
 function applyTemplateToAll() {
     if (!cropTemplate) return;
     templateAppliedToAll = true;
     applyCropTemplate();
     showNotification('Plantilla aplicada a todas', 'info');
 }
+function updateTemplateButtons() {
+    applyTemplateBtn.disabled = !cropTemplate;
+    applyToAllBtn.disabled = !cropTemplate;
+}
 
 // --------------------------------------------------------------
-// PROCESAR TODAS (async + progreso + dedupe + dimensiones)
+// PROCESAR TODAS
 // --------------------------------------------------------------
 async function processAllImages() {
     if (imageFiles.length === 0) return;
     if (cropTemplate) templateAppliedToAll = true;
-
     const prevHtml = processAllBtn.innerHTML;
     processAllBtn.disabled = true;
     processAllBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...';
     showProgress(0, imageFiles.length);
-
     let skipped = 0, processed = 0;
-
     try {
         for (let i = 0; i < imageFiles.length; i++) {
             currentImageIndex = i;
             loadCurrentImage();
             showProgress(i, imageFiles.length);
-
             await new Promise(r => setTimeout(r, 400));
-
             const dataUrl = cropImage();
             if (!dataUrl) { showProgress(i + 1, imageFiles.length); continue; }
-
             const hash = await computeHashFromDataUrl(dataUrl);
-
             if (dedupeCheck.checked && hash) {
                 const dup = findDuplicateIndex(hash);
                 if (dup >= 0) {
@@ -1572,22 +1910,17 @@ async function processAllImages() {
                     continue;
                 }
             }
-
             const blob = await dataURLToBlob(dataUrl);
             const url = URL.createObjectURL(blob);
             const dims = await getBlobDimensions(blob);
-            savedChessboards.push({ blob, url, hash, w: dims.w, h: dims.h });
+            savedChessboards.push({ blob, url, hash, w: dims.w, h: dims.h, turno: null });
             processed++;
             updateChessboardsDisplay();
             showProgress(i + 1, imageFiles.length);
         }
-
         showProgress(imageFiles.length, imageFiles.length);
-        if (skipped > 0) {
-            showNotification(processed + ' procesadas · ' + skipped + ' repetidas omitidas', 'warning');
-        } else {
-            showNotification('Se procesaron ' + processed + ' imágenes');
-        }
+        if (skipped > 0) showNotification(processed + ' procesadas · ' + skipped + ' repetidas omitidas', 'warning');
+        else showNotification('Se procesaron ' + processed + ' imágenes');
     } catch (err) {
         console.error(err);
         showNotification('Error al procesar: ' + err.message, 'error');
@@ -1598,23 +1931,17 @@ async function processAllImages() {
     }
 }
 
-function updateTemplateButtons() {
-    applyTemplateBtn.disabled = !cropTemplate;
-    applyToAllBtn.disabled = !cropTemplate;
-}
-
 // --------------------------------------------------------------
 // LIMPIAR (con deshacer)
 // --------------------------------------------------------------
 function clearAllChessboards() {
     if (savedChessboards.length === 0) return;
     if (!confirm('¿Eliminar todos los tableros?')) return;
-
     const backup = savedChessboards.slice();
     savedChessboards = [];
+    selectedIndices.clear();
     editingIndex = -1;
     updateChessboardsDisplay();
-
     let undone = false;
     showNotification('Todos los tableros eliminados', 'info', {
         duration: 6000,
@@ -1625,12 +1952,9 @@ function clearAllChessboards() {
             showNotification('Tableros restaurados');
         }
     });
-
     setTimeout(function() {
         if (!undone) {
-            backup.forEach(function(b) {
-                if (b.url) URL.revokeObjectURL(b.url);
-            });
+            backup.forEach(function(b) { if (b.url) URL.revokeObjectURL(b.url); });
         }
     }, 6200);
 }
@@ -1669,8 +1993,12 @@ dedupeCheck.addEventListener('change', function() {
     saveSettings();
 });
 
-dedupeThreshold.addEventListener('change', function() {
+dedupeThreshold.addEventListener('change', function() { saveSettings(); });
+
+showCircleCheck.addEventListener('change', function() {
     saveSettings();
+    updateChessboardsDisplay();
+    showNotification(this.checked ? 'Círculo visible en preview/PDF/descargas' : 'Círculo oculto', 'info');
 });
 
 itemsPerPageSelect.addEventListener('change', function() {
@@ -1716,16 +2044,26 @@ clearAllBtn.addEventListener('click', clearAllChessboards);
 headerInput.addEventListener('input', function() { updatePdfPreview(); saveSettings(); });
 footerInput.addEventListener('input', function() { updatePdfPreview(); saveSettings(); });
 
+// Batch: selección + turnos + descargas
+selectAllBtn.addEventListener('click', function() {
+    for (let i = 0; i < savedChessboards.length; i++) selectedIndices.add(i);
+    updateChessboardsDisplay();
+});
+deselectAllBtn.addEventListener('click', function() {
+    selectedIndices.clear();
+    updateChessboardsDisplay();
+});
+batchWhiteBtn.addEventListener('click', function() { applyTurnToSelected('white'); });
+batchBlackBtn.addEventListener('click', function() { applyTurnToSelected('black'); });
+downloadSelectedBtn.addEventListener('click', downloadSelected);
+downloadAllBtn.addEventListener('click', downloadAll);
+
 cropContainer.addEventListener('touchstart', function(e) {
-    if (cropBox && cropBox.contains(e.target)) {
-        e.preventDefault();
-    }
+    if (cropBox && cropBox.contains(e.target)) e.preventDefault();
 }, { passive: false });
 
 window.addEventListener('beforeunload', function() {
-    savedChessboards.forEach(function(b) {
-        if (b.url) URL.revokeObjectURL(b.url);
-    });
+    savedChessboards.forEach(function(b) { if (b.url) URL.revokeObjectURL(b.url); });
 });
 
 // --------------------------------------------------------------
@@ -1735,6 +2073,8 @@ window.addEventListener('beforeunload', function() {
     loadSettings();
     updateTemplateButtons();
 })();
+
+})(); // fin IIFE
 </script>
 </body>
 </html>
