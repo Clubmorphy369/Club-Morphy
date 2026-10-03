@@ -4224,12 +4224,37 @@ mejorMovimientoFallback(c) {
 
         actualizarProgreso() {
             if (!this.$progressInfo) return;
+
+            const totalCaps = this.capitulos.length;
+            const capActual = this.capituloActual + 1;
             const completados = this.capitulos.filter(c => c.completado).length;
-            this.$progressInfo.textContent = `Progreso: ${completados} de ${this.capitulos.length} capítulos completados`;
+            const porcentaje = totalCaps > 0 ? Math.round((completados / totalCaps) * 100) : 0;
+
+            // ⭐ v76: Label "Cap. X de Y" + porcentaje
+            if (this.$progressCapActual) {
+                this.$progressCapActual.textContent = `Cap. ${capActual} de ${totalCaps}`;
+            }
+            if (this.$progressPct) {
+                this.$progressPct.textContent = `${porcentaje}%`;
+            }
+            if (this.$progressFill) {
+                this.$progressFill.style.width = `${porcentaje}%`;
+                // Color según avance
+                this.$progressFill.classList.remove('cm-progress-bajo', 'cm-progress-medio', 'cm-progress-alto');
+                if (porcentaje >= 100) {
+                    this.$progressFill.classList.add('cm-progress-alto');
+                } else if (porcentaje >= 50) {
+                    this.$progressFill.classList.add('cm-progress-medio');
+                } else {
+                    this.$progressFill.classList.add('cm-progress-bajo');
+                }
+            }
+
+            // Botones prev/next
             const btnPrev = this.contenedor.querySelector('[data-rol="btnPrev"]');
             const btnNext = this.contenedor.querySelector('[data-rol="btnNext"]');
             if (btnPrev) btnPrev.disabled = this.capituloActual === 0 || this.modoEdicionVariantes;
-            if (btnNext) btnNext.disabled = this.capituloActual === this.capitulos.length - 1 || this.modoEdicionVariantes;
+            if (btnNext) btnNext.disabled = this.capituloActual === totalCaps - 1 || this.modoEdicionVariantes;
         }
 
         actualizarBotonesModo() {
