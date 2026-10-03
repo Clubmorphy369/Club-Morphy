@@ -662,12 +662,66 @@
     window.cerrarSesionConfirmada = Main.cerrarSesionConfirmada;
     window.toggleAdmin = Main.toggleAdmin;
 
+        // ============================================================
+    // ⭐ v82: MODO OSCURO
+    // ============================================================
+    Main.MODO_OSCURO_KEY = 'clubMorphy_modoOscuro';
+
+    Main.cargarModoOscuro = function () {
+        try {
+            const guardado = localStorage.getItem(Main.MODO_OSCURO_KEY);
+            if (guardado === 'true') {
+                Core.state.modoOscuro = true;
+            } else if (guardado === 'false') {
+                Core.state.modoOscuro = false;
+            } else {
+                // Primera vez → respetar preferencia del sistema
+                Core.state.modoOscuro = window.matchMedia &&
+                    window.matchMedia('(prefers-color-scheme: dark)').matches;
+            }
+        } catch (e) {
+            Core.state.modoOscuro = false;
+        }
+    };
+
+    Main.aplicarModoOscuro = function () {
+        const activo = !!Core.state.modoOscuro;
+        document.body.classList.toggle('modo-oscuro', activo);
+        const btn = document.getElementById('btn-modo-oscuro');
+        if (btn) {
+            btn.setAttribute('title', activo ? 'Modo claro' : 'Modo oscuro');
+            const label = btn.querySelector('.btn-label');
+            const icono = btn.firstChild;
+            if (label) label.textContent = activo ? 'Claro' : 'Oscuro';
+            // Cambiar icono 🌙 ↔ ☀️
+            if (icono && icono.nodeType === 3) {
+                icono.textContent = activo ? '☀️ ' : '🌙 ';
+            }
+        }
+    };
+
+    Main.toggleModoOscuro = function () {
+        Core.state.modoOscuro = !Core.state.modoOscuro;
+        try {
+            localStorage.setItem(Main.MODO_OSCURO_KEY, Core.state.modoOscuro ? 'true' : 'false');
+        } catch (e) { /* ignorar */ }
+        Main.aplicarModoOscuro();
+        if (typeof Core.mostrarToast === 'function') {
+            Core.mostrarToast(Core.state.modoOscuro ? '🌙 Modo oscuro activado' : '☀️ Modo claro activado', 'success');
+        }
+    };
+
+    // Exposición global
+    window.toggleModoOscuro = Main.toggleModoOscuro;
+    window.aplicarModoOscuro = Main.aplicarModoOscuro;
+
     // ============================================================
     // INICIALIZACIÓN GLOBAL
     // ============================================================
     cargarModoZen();
     aplicarModoZen();
-
+    Main.cargarModoOscuro();
+    Main.aplicarModoOscuro();
     try {
         Main.configurarDeteccionAutofill();
     } catch (err) {
