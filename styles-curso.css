@@ -40,8 +40,73 @@
     transition: background var(--transicion);
     flex-wrap: wrap;
 }
-
 .tema-header:hover { background: #cbd5e1; }
+
+/* ⭐ v82: Overrides de modo oscuro en curso */
+body.modo-oscuro .tema-header:hover {
+    background: #475569;
+}
+
+body.modo-oscuro .bloque-texto-editor {
+    background: #1e293b;
+    color: #f1f5f9;
+}
+
+body.modo-oscuro .bloque-editor {
+    background: #1e293b;
+}
+
+body.modo-oscuro .bloque-editor .bloque-body {
+    background: #0f172a;
+}
+
+body.modo-oscuro .toolbar-btn,
+body.modo-oscuro .toolbar-select,
+body.modo-oscuro .toolbar-color {
+    background: #334155;
+    color: #f1f5f9;
+    border-color: #475569;
+}
+
+body.modo-oscuro .toolbar-btn:hover {
+    background: #475569;
+    color: #38bdf8;
+}
+
+body.modo-oscuro .input-edicion-inline {
+    background: #1e293b !important;
+    color: #f1f5f9 !important;
+}
+
+body.modo-oscuro .video-wrapper,
+body.modo-oscuro .iframe-wrapper {
+    background: #1e293b;
+    border-color: #334155;
+}
+
+/* Panel de progreso en oscuro */
+body.modo-oscuro .cm-progreso-clase-barra,
+body.modo-oscuro .cm-pa-mini-barra {
+    background: #334155;
+}
+
+body.modo-oscuro .cm-progreso-circulo circle:first-child {
+    stroke: #334155;
+}
+
+/* Modales con contenido claro */
+body.modo-oscuro .bloque-consejo {
+    background: rgba(245, 158, 11, 0.12);
+    border-color: rgba(245, 158, 11, 0.4);
+}
+
+body.modo-oscuro .bloque-consejo .consejo-texto {
+    color: #f1f5f9;
+}
+
+body.modo-oscuro .nota-debajo {
+    color: #94a3b8;
+}
 .tema.abierto .tema-header { border-bottom-color: var(--borde); background: var(--surface2); }
 
 .tema-body {
