@@ -2,8 +2,8 @@
 // SERVICE WORKER — Club Morphy
 // =============================================================
 
-// ⭐ v83: Fix crítico de Lozza (MultiPV + selección ponderada)
-const CACHE_NAME = 'club-morphy-v83';
+// ⭐ v84: Fix crítico de Lozza (MultiPV + selección ponderada)
+const CACHE_NAME = 'club-morphy-v84';
 
 // Scope dinámico: funciona tanto en "/" (Firebase) como en "/Club-Morphy/" (GitHub Pages)
 const ROOT = self.registration.scope;
@@ -32,6 +32,7 @@ const STATIC_ASSETS = [
     ROOT + 'entrenador-tablero.js',
     ROOT + 'entrenador-api.js',
     ROOT + 'reloj.html',
+    ROOT + 'herramientas/chess-extract.html',
     ROOT + 'manifest.json',
     ROOT + 'assets/lozza/lozza.js',
     ROOT + 'assets/android-chrome-192x192.png',
