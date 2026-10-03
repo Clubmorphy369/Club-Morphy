@@ -282,15 +282,19 @@
 
                 Main.actualizarHeaderUsuario();
 
-                                 if (Core.state.currentUser.esAdmin) {
+                               if (Core.state.currentUser.esAdmin) {
                     if (dom.btnAdmin) dom.btnAdmin.style.display = 'inline-flex';
                     // ⭐ v81: mostrar botón "Alumnos" solo a admin
                     const btnAlumnos = document.getElementById('btn-progreso-alumnos');
                     if (btnAlumnos) btnAlumnos.style.display = 'inline-flex';
+                    // ⭐ v84: mostrar botón "Herramientas" solo a admin
+                    const btnHerramientas = document.getElementById('btn-herramientas');
+                    if (btnHerramientas) btnHerramientas.style.display = 'inline-flex';
                     Core.state.modoAdmin = true;
                     document.body.classList.add('modo-admin');
                 } else {
-                    if (dom.btnAdmin) dom.btnAdmin.style.display = 'none';
+                               
+               if (dom.btnAdmin) dom.btnAdmin.style.display = 'none';
                     Core.state.modoAdmin = false;
                     document.body.classList.remove('modo-admin');
                 }
