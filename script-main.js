@@ -715,11 +715,26 @@
     window.toggleModoOscuro = Main.toggleModoOscuro;
     window.aplicarModoOscuro = Main.aplicarModoOscuro;
 
-    // ⭐ v83: Abrir reloj de ajedrez en pestaña nueva
+      // ⭐ v83: Abrir reloj de ajedrez en pestaña nueva
     window.abrirRelojAjedrez = function () {
         window.open('reloj.html', '_blank', 'noopener');
     };
-    // ============================================================
+
+    // ⭐ v84: Herramientas del docente
+    window.abrirHerramientas = function () {
+        const modal = document.getElementById('modal-herramientas');
+        if (!modal) return;
+        modal.classList.add('active');
+    };
+
+    window.abrirHerramienta = function (ruta) {
+        if (!ruta) return;
+        // Cerrar el modal antes de abrir la pestaña
+        const modal = document.getElementById('modal-herramientas');
+        if (modal) modal.classList.remove('active');
+        window.open(ruta, '_blank', 'noopener');
+    };
+   // ============================================================
     // INICIALIZACIÓN GLOBAL
     // ============================================================
     cargarModoZen();
