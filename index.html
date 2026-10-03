@@ -295,12 +295,36 @@
         </div>
     </div>
 
-        <!-- Modal de progreso -->
+         <!-- Modal de progreso -->
     <div class="modal-overlay" id="modal-progreso" role="dialog" aria-modal="true">
         <div class="modal-content">
             <h3>📊 Mi Progreso</h3>
             <div id="progreso-contenido"></div>
             <button class="btn" type="button" onclick="document.getElementById('modal-progreso').classList.remove('active')">Cerrar</button>
+        </div>
+    </div>
+
+    <!-- Modal de herramientas (admin) -->
+    <div class="modal-overlay" id="modal-herramientas" role="dialog" aria-modal="true">
+        <div class="modal-content">
+            <h3>🧰 Herramientas de trabajo</h3>
+            <p style="color:var(--texto-suave); font-size:0.9rem; margin-bottom:16px;">
+                Utilidades del docente. Cada una se abre en una pestaña nueva.
+            </p>
+            <div id="herramientas-lista" class="herramientas-lista">
+                <button class="herramienta-item" type="button" onclick="abrirHerramienta('herramientas/chess-extract.html')">
+                    <span class="herramienta-icono">📄</span>
+                    <span class="herramienta-info">
+                        <strong>Extraer tableros a PDF</strong>
+                        <small>Sube capturas, recorta tableros y genera un PDF listo para imprimir.</small>
+                    </span>
+                    <span class="herramienta-flecha">→</span>
+                </button>
+                <!-- ⭐ v84: Aquí se añadirán más herramientas en el futuro -->
+            </div>
+            <div class="modal-buttons" style="margin-top:20px;">
+                <button class="btn" type="button" onclick="document.getElementById('modal-herramientas').classList.remove('active')">Cerrar</button>
+            </div>
         </div>
     </div>
     
