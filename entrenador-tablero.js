@@ -628,6 +628,8 @@ ${esAdmin ? `
             this.$modoEstrictoCheck = this.contenedor.querySelector('[data-rol="modoEstrictoCheck"]');
             this.$temporizadorBloque = this.contenedor.querySelector('[data-rol="temporizadorBloque"]');
             this.$temporizadorTiempo = this.contenedor.querySelector('[data-rol="temporizadorTiempo"]');
+            // ⭐ v75: Referencia al botón de modo zen
+            this.$btnZenToggle = this.contenedor.querySelector('[data-rol="btnZenToggle"]');
         }
 
         _configurarSelectsIniciales() {
