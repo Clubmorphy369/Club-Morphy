@@ -2369,7 +2369,7 @@
     window.renombrarCapituloEnFirestore = Curso.renombrarCapituloEnFirestore;
     window.calcularProgresoClase = Curso.calcularProgresoClase;
     window.abrirPanelProgreso = Curso.abrirPanelProgreso;
-
+    window.abrirPanelProgresoAlumnos = Curso.abrirPanelProgresoAlumnos;
     window.solicitarAcceso = Curso.solicitarAcceso;
     window.solicitarAccesoTema = Curso.solicitarAccesoTema;
     window.aprobarSolicitud = Curso.aprobarSolicitud;
