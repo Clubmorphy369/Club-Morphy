@@ -1763,17 +1763,16 @@ async function generatePdf() {
             doc.setFontSize(itemsPerPage === 8 ? 10 : 12);
             doc.text(String(i+1), pos.x + 3, labelY);
 
-            if (drawCircle && (board.turno === 'white' || board.turno === 'black')) {
-                const circleR = itemsPerPage === 4 ? 3 : (itemsPerPage === 6 ? 2.5 : 2.2);
+                       if (drawCircle && (board.turno === 'white' || board.turno === 'black')) {
+                const circleR = itemsPerPage === 4 ? 3.5 : (itemsPerPage === 6 ? 3 : 2.6);
                 const circleCx = pos.x + imgW - circleR - 1;
                 const circleCy = labelY - 1.2;
-                doc.setDrawColor(51, 51, 51);
-                doc.setLineWidth(0.3);
+                doc.setDrawColor(0, 0, 0);       // borde negro puro
+                doc.setLineWidth(0.6);            // borde grueso (antes 0.3)
                 if (board.turno === 'white') doc.setFillColor(255, 255, 255);
                 else doc.setFillColor(0, 0, 0);
                 doc.circle(circleCx, circleCy, circleR, 'FD');
             }
-
             // --- Aspect ratio preservado + cacheo para boards legacy ---
             const dataUrl = await blobToDataURL(board.blob);
             let boardW = board.w, boardH = board.h;
