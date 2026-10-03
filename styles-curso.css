@@ -94,6 +94,246 @@
     box-shadow: 0 3px 10px rgba(14, 165, 233, 0.35);
 }
 
+/* ⭐ v80: Panel de progreso */
+.cm-progreso-panel {
+    max-height: 65vh;
+    overflow-y: auto;
+    padding-right: 6px;
+}
+
+.cm-progreso-hero {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 16px;
+    background: linear-gradient(135deg, rgba(14, 165, 233, 0.06), rgba(14, 165, 233, 0.02));
+    border-radius: 14px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+}
+
+.cm-progreso-circulo-wrap {
+    position: relative;
+    width: 120px;
+    height: 120px;
+    flex-shrink: 0;
+}
+
+.cm-progreso-circulo {
+    width: 120px;
+    height: 120px;
+    display: block;
+}
+
+.cm-progreso-circulo-texto {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+}
+
+.cm-progreso-circulo-pct {
+    font-size: 1.6rem;
+    font-weight: 800;
+    line-height: 1;
+    font-family: 'Playfair Display', serif;
+}
+
+.cm-progreso-circulo-label {
+    font-size: 0.65rem;
+    color: var(--texto-suave);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 4px;
+}
+
+.cm-progreso-resumen {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    flex: 1;
+    min-width: 120px;
+}
+
+.cm-progreso-resumen-item {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+}
+
+.cm-progreso-resumen-valor {
+    font-size: 1.3rem;
+    font-weight: 800;
+    font-family: 'Playfair Display', serif;
+    line-height: 1;
+}
+
+.cm-progreso-resumen-label {
+    font-size: 0.8rem;
+    color: var(--texto-suave);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.cm-progreso-clases {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.cm-progreso-clase {
+    border: 1px solid var(--borde);
+    border-radius: 10px;
+    overflow: hidden;
+    background: var(--surface);
+}
+
+.cm-progreso-clase-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.15s;
+    flex-wrap: wrap;
+}
+
+.cm-progreso-clase-header:hover {
+    background: var(--surface2);
+}
+
+.cm-progreso-clase-arrow {
+    color: var(--acento);
+    font-size: 0.7rem;
+    transition: transform 0.2s;
+    display: inline-block;
+}
+
+.cm-progreso-clase-header.abierta .cm-progreso-clase-arrow {
+    transform: rotate(90deg);
+}
+
+.cm-progreso-clase-num {
+    font-weight: 700;
+    color: var(--acento-oscuro);
+}
+
+.cm-progreso-clase-titulo {
+    font-weight: 600;
+    flex: 0 1 auto;
+    min-width: 0;
+}
+
+.cm-progreso-clase-barra {
+    flex: 1;
+    min-width: 60px;
+    height: 8px;
+    background: #e2e8f0;
+    border-radius: 20px;
+    overflow: hidden;
+    margin-left: auto;
+}
+
+.cm-progreso-clase-barra-fill {
+    height: 100%;
+    border-radius: 20px;
+    transition: width 0.4s;
+}
+
+.cm-progreso-clase-pct {
+    font-weight: 800;
+    font-size: 0.85rem;
+    font-variant-numeric: tabular-nums;
+    min-width: 40px;
+    text-align: right;
+}
+
+.cm-progreso-clase-count {
+    font-size: 0.75rem;
+    color: var(--texto-suave);
+    font-variant-numeric: tabular-nums;
+}
+
+.cm-progreso-clase-body {
+    padding: 8px 12px 12px;
+    border-top: 1px solid var(--borde);
+    background: var(--bg);
+    animation: cm-progreso-fade 0.2s ease-out;
+}
+
+@keyframes cm-progreso-fade {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.cm-progreso-tema {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 0;
+    font-size: 0.88rem;
+    border-bottom: 1px dashed rgba(203, 213, 225, 0.3);
+}
+
+.cm-progreso-tema:last-child {
+    border-bottom: none;
+}
+
+.cm-progreso-tema-icono {
+    width: 18px;
+    text-align: center;
+    flex-shrink: 0;
+    font-size: 0.85rem;
+}
+
+.cm-progreso-tema-titulo {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.cm-progreso-tema-completado .cm-progreso-tema-titulo {
+    color: #16a34a;
+    font-weight: 600;
+}
+
+.cm-progreso-tema-bloqueado .cm-progreso-tema-titulo {
+    color: var(--texto-suave);
+    opacity: 0.7;
+}
+
+.cm-progreso-tema-en-progreso .cm-progreso-tema-titulo {
+    color: #f59e0b;
+    font-weight: 600;
+}
+
+.cm-progreso-tema-sin-empezar .cm-progreso-tema-titulo {
+    color: var(--texto);
+}
+
+@media (max-width: 480px) {
+    .cm-progreso-hero {
+        flex-direction: column;
+        text-align: center;
+    }
+    .cm-progreso-resumen {
+        width: 100%;
+        align-items: center;
+    }
+    .cm-progreso-clase-barra {
+        min-width: 40px;
+    }
+    .cm-progreso-clase-pct,
+    .cm-progreso-clase-count {
+        font-size: 0.75rem;
+    }
+}
 .subtemas-container {
     border-left: 2px dashed var(--borde);
     padding-left: 15px;
