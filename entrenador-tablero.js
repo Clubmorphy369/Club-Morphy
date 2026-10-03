@@ -2307,12 +2307,11 @@ async importarDesdeLichess() {
                 const todosCaps = this.capitulos.length > 0 && this.capitulos.every(c => c.completado);
 
                 if (esUltimoCapitulo && todosCaps && !this.esModoAdmin) {
-                    // Notificación "¡Lección completa!"
+                // Notificación "¡Lección completa!" — dura 10 segundos (v78)
                     setTimeout(() => {
                         if (this.destroyed) return;
-                        this.mostrarToast('🏆 ¡Lección completa!', 'elo-up');
+                        this.mostrarToast('🏆 ¡Lección completa!', 'elo-up', 10000);
                     }, 600);
-
                     if (this.temporizadorBloque && this.temporizadorBloque.activo) {
                         // Con timer → overlay de evaluación; el auto-avance se hará al cerrar el overlay
                         this.temporizadorBloque.detener();
