@@ -1397,14 +1397,17 @@ function onPointerDown(e) {
   if (e.button !== undefined && e.button !== 0) return;
   if (state.pointerId !== null) return;
 
+  // Ignorar si este pointerdown viene de un toque multitáctil (2+ dedos)
+  if (e.pointerType === 'touch' && e.isPrimary === false) return;
+
   // 1) Tocar directamente el círculo (o su zona invisible)
-  let handle = e.target.closest('.resize-handle');
+  const handle = e.target.closest('.resize-handle');
   let mode;
 
   if (handle) {
     mode = handle.dataset.dir;
   } else {
-    // 2) Si no tocó el handle, ver si está cerca de una esquina
+    // 2) Detección por proximidad de esquina
     mode = getHandleFromPoint(e.clientX, e.clientY) || 'drag';
   }
 
@@ -1422,7 +1425,6 @@ function onPointerDown(e) {
   e.preventDefault();
   e.stopPropagation();
 }
-
 function onPointerMove(e) {
   if (state.pointerId !== e.pointerId) return;
 
