@@ -212,6 +212,7 @@
   }
   .toolbar-actions { display: flex; gap: 6px; }
 
+  /* ✅ EXACTO al del proyecto de referencia */
   #cropContainer {
     position: relative;
     overflow: hidden;
@@ -225,33 +226,23 @@
     line-height: 0;
   }
 
-  #cropStage {
-    position: relative;
-    display: inline-block;
-    line-height: 0;
-    font-size: 0;
-    max-width: 100%;
-  }
-
   #imageToCrop {
-    display: block;
     max-width: 100%;
-    height: auto;
-    width: auto;
+    display: block;
+    margin: 0 auto;
     user-select: none;
     -webkit-user-drag: none;
     -webkit-user-select: none;
     pointer-events: none;
   }
 
+  /* ✅ EXACTO al del proyecto de referencia (box-shadow 0.4) */
   .crop-box {
     position: absolute;
     border: 2px solid #fff;
     background-color: rgba(52, 152, 219, 0.12);
     cursor: move;
-    box-shadow:
-      0 0 0 1px rgba(52,152,219,.9),
-      0 0 0 9999px rgba(0,0,0,.40);
+    box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.4);
     z-index: 5;
   }
   .crop-box.hidden { display: none; }
@@ -274,126 +265,21 @@
   }
   .crop-box.show-grid::before { opacity: 1; }
 
+  /* ✅ EXACTO al del proyecto de referencia */
   .resize-handle {
     position: absolute;
-    width: 22px;
-    height: 22px;
+    width: 12px;
+    height: 12px;
     background-color: var(--secondary);
-    border: 2px solid #fff;
+    border: 2px solid white;
     border-radius: 50%;
-    box-shadow: 0 0 4px rgba(0,0,0,.5);
-    z-index: 6;
-    -webkit-user-select: none;
-    user-select: none;
+    box-shadow: 0 0 3px rgba(0,0,0,.5);
   }
-  .resize-nw { top: -12px; left: -12px; cursor: nw-resize; }
-  .resize-ne { top: -12px; right: -12px; cursor: ne-resize; }
-  .resize-sw { bottom: -12px; left: -12px; cursor: sw-resize; }
-  .resize-se { bottom: -12px; right: -12px; cursor: se-resize; }
 
-  /* ============================================================
-     CONTROLES TÁCTILES (botones de ajuste fino)
-     ============================================================ */
-  .touch-controls {
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
-    border-radius: var(--radius);
-    padding: 12px;
-    margin: 12px 0;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-  }
-  .tc-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 4px;
-    cursor: pointer;
-    user-select: none;
-  }
-  .tc-title {
-    font-size: .85rem;
-    font-weight: 700;
-    color: var(--primary);
-    text-transform: uppercase;
-    letter-spacing: .5px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-  .tc-title i { color: var(--secondary); }
-  .tc-toggle {
-    font-size: .75rem;
-    color: var(--gray);
-    background: transparent;
-    border: none;
-    cursor: pointer;
-    font-family: inherit;
-  }
-  .tc-body {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-  }
-  .tc-body.collapsed { display: none; }
-  .tc-group {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-  }
-  .tc-label {
-    font-size: .72rem;
-    font-weight: 600;
-    color: var(--gray);
-    text-transform: uppercase;
-    letter-spacing: .5px;
-  }
-  .tc-row {
-    display: flex;
-    gap: 5px;
-  }
-  .tc-btn {
-    flex: 1;
-    min-width: 0;
-    min-height: 48px;
-    border: 2px solid #cbd5e0;
-    background: #fff;
-    color: var(--dark);
-    border-radius: 8px;
-    font-size: 1.1rem;
-    font-weight: 700;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 4px;
-    user-select: none;
-    touch-action: manipulation;
-    transition: .1s;
-    font-family: inherit;
-    line-height: 1;
-  }
-  .tc-btn:hover { border-color: var(--secondary); }
-  .tc-btn:active {
-    background: var(--secondary);
-    color: #fff;
-    border-color: var(--secondary);
-    transform: scale(.94);
-  }
-  .tc-btn.tc-wide {
-    font-size: .8rem;
-    gap: 4px;
-  }
-  .tc-btn.tc-primary {
-    background: var(--secondary);
-    color: #fff;
-    border-color: var(--secondary);
-  }
-  .tc-btn.tc-primary:active {
-    background: var(--primary);
-    border-color: var(--primary);
-  }
+  .resize-nw { top: -6px; left: -6px; cursor: nw-resize; }
+  .resize-ne { top: -6px; right: -6px; cursor: ne-resize; }
+  .resize-sw { bottom: -6px; left: -6px; cursor: sw-resize; }
+  .resize-se { bottom: -6px; right: -6px; cursor: se-resize; }
 
   .progress-bar {
     position: relative;
@@ -716,7 +602,6 @@
     .crop-options { gap: 12px; font-size: .85rem; }
     .crop-actions .btn { flex: 1 1 48%; }
     .progress-text { font-size: .75rem; }
-    .tc-btn { min-height: 52px; font-size: 1.2rem; }
   }
   @media (max-width: 380px) {
     .app-header h1 { font-size: 1.2rem; }
@@ -737,7 +622,7 @@
     <strong><i class="fas fa-info-circle"></i> Cómo usarlo:</strong>
     <ol>
       <li>Sube o arrastra una o varias imágenes con tableros.</li>
-      <li>Ajusta el recuadro con el <strong>panel de botones</strong> (funciona en cualquier dispositivo).</li>
+      <li>Ajusta el recuadro sobre el tablero (arrastra y usa los tiradores).</li>
       <li>Pulsa <em>Guardar tablero</em> (<span class="kbd-hint">Ctrl</span>+<span class="kbd-hint">Enter</span>). Repite para cada uno.</li>
       <li>Elige 4, 6 u 8 tableros por página y descarga tu PDF.</li>
     </ol>
@@ -779,76 +664,13 @@
     </div>
 
     <div id="cropContainer">
-      <div id="cropStage">
-        <img id="imageToCrop" alt="" />
-        <div class="crop-box hidden" id="cropBox" tabindex="0"
-             role="group" aria-label="Área de recorte del tablero">
-          <div class="resize-handle resize-nw" data-dir="nw"></div>
-          <div class="resize-handle resize-ne" data-dir="ne"></div>
-          <div class="resize-handle resize-sw" data-dir="sw"></div>
-          <div class="resize-handle resize-se" data-dir="se"></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ✅ PANEL DE CONTROLES TÁCTILES -->
-    <div class="touch-controls" id="touchControls">
-      <div class="tc-header" id="tcHeader">
-        <span class="tc-title"><i class="fas fa-gamepad"></i> Ajuste fino del recuadro</span>
-        <button type="button" class="tc-toggle" id="tcToggleBtn">Ocultar ▲</button>
-      </div>
-      <div class="tc-body" id="tcBody">
-
-        <div class="tc-group">
-          <span class="tc-label">Mover recuadro</span>
-          <div class="tc-row">
-            <button type="button" class="tc-btn" data-action="move-left" title="Mover izquierda">←</button>
-            <button type="button" class="tc-btn" data-action="move-up" title="Mover arriba">↑</button>
-            <button type="button" class="tc-btn" data-action="move-down" title="Mover abajo">↓</button>
-            <button type="button" class="tc-btn" data-action="move-right" title="Mover derecha">→</button>
-          </div>
-        </div>
-
-        <div class="tc-group">
-          <span class="tc-label">Esquina superior izquierda (↖)</span>
-          <div class="tc-row">
-            <button type="button" class="tc-btn tc-wide" data-action="nw-out">↖ − (más)</button>
-            <button type="button" class="tc-btn tc-wide" data-action="nw-in">↖ + (menos)</button>
-          </div>
-        </div>
-
-        <div class="tc-group">
-          <span class="tc-label">Esquina superior derecha (↗)</span>
-          <div class="tc-row">
-            <button type="button" class="tc-btn tc-wide" data-action="ne-out">↗ − (más)</button>
-            <button type="button" class="tc-btn tc-wide" data-action="ne-in">↗ + (menos)</button>
-          </div>
-        </div>
-
-        <div class="tc-group">
-          <span class="tc-label">Esquina inferior izquierda (↙)</span>
-          <div class="tc-row">
-            <button type="button" class="tc-btn tc-wide" data-action="sw-out">↙ − (más)</button>
-            <button type="button" class="tc-btn tc-wide" data-action="sw-in">↙ + (menos)</button>
-          </div>
-        </div>
-
-        <div class="tc-group">
-          <span class="tc-label">Esquina inferior derecha (↘)</span>
-          <div class="tc-row">
-            <button type="button" class="tc-btn tc-wide" data-action="se-out">↘ − (más)</button>
-            <button type="button" class="tc-btn tc-wide" data-action="se-in">↘ + (menos)</button>
-          </div>
-        </div>
-
-        <div class="tc-group">
-          <span class="tc-label">Tamaño general</span>
-          <div class="tc-row">
-            <button type="button" class="tc-btn tc-wide tc-primary" data-action="size-down">− Más chico</button>
-            <button type="button" class="tc-btn tc-wide tc-primary" data-action="size-up">+ Más grande</button>
-          </div>
-        </div>
-
+      <img id="imageToCrop" alt="" />
+      <div class="crop-box hidden" id="cropBox" tabindex="0"
+           role="group" aria-label="Área de recorte del tablero">
+        <div class="resize-handle resize-nw"></div>
+        <div class="resize-handle resize-ne"></div>
+        <div class="resize-handle resize-sw"></div>
+        <div class="resize-handle resize-se"></div>
       </div>
     </div>
 
@@ -985,53 +807,35 @@
 <script>
 "use strict";
 
-const state = {
-  imageFiles: [],
-  currentIndex: 0,
-  originalImage: null,
-  savedBoards: [],
-  editingIndex: -1,
-  quality: 0.75,
-  resolution: 0.85,
-  squareLock: false,
-  showGrid: true,
-  dedupe: false,
-  dedupeThreshold: 6,
-  overlayHidden: false,
-  cropTemplate: null,
-  headerText: '',
-  footerText: '',
-  itemsPerPage: 6,
-  crop: { x: 0, y: 0, w: 0, h: 0 },
-  isDragging: false,
-  isResizing: false,
-  resizeDir: null,
-  startX: 0, startY: 0,
-  startCrop: { x: 0, y: 0, w: 0, h: 0 }
-};
+// =========================================================
+// ESTADO
+// =========================================================
+let originalImage = null;
+let cropBox = null;
+let isDragging = false;
+let isResizing = false;
+let resizeDirection = null;
+let startX, startY;
+let cropBoxX = 0, cropBoxY = 0, cropBoxWidth = 0, cropBoxHeight = 0;
+let cropBoxInitialized = false;
 
-const MAX_DISPLAY_LONG_SIDE = 1600;
-const MEMORY_WARN_THRESHOLD = 30;
+let savedChessboards = [];   // { blob, url, hash, w, h }
+let imageQuality = 0.75;
+let resolutionFactor = 0.85;
+let editingIndex = -1;
+
+let imageFiles = [];
+let currentImageIndex = 0;
+let cropTemplate = null;
+let overlayHidden = false;
+let dedupeEnabled = false;
+let dedupeThresholdVal = 6;
 let _memoryWarned = false;
+const MEMORY_WARN_THRESHOLD = 30;
 
-const LAYOUTS = {
-  4: { cols: 2, rows: 2, imgW: 75, imgH: 75, lineCount: 3, lineGap: 4, positions: [
-    { x: 27,  y: 55  }, { x: 108, y: 55  },
-    { x: 27,  y: 170 }, { x: 108, y: 170 }
-  ]},
-  6: { cols: 2, rows: 3, imgW: 58.5, imgH: 58.5, lineCount: 3, lineGap: 4, positions: [
-    { x: 27,  y: 40  }, { x: 122, y: 40  },
-    { x: 27,  y: 120 }, { x: 122, y: 120 },
-    { x: 27,  y: 200 }, { x: 122, y: 200 }
-  ]},
-  8: { cols: 2, rows: 4, imgW: 46, imgH: 46, lineCount: 3, lineGap: 3.5, positions: [
-    { x: 25, y: 32  }, { x: 139, y: 32  },
-    { x: 25, y: 93  }, { x: 139, y: 93  },
-    { x: 25, y: 154 }, { x: 139, y: 154 },
-    { x: 25, y: 215 }, { x: 139, y: 215 }
-  ]}
-};
-
+// =========================================================
+// DOM
+// =========================================================
 const $ = (id) => document.getElementById(id);
 const imageInput       = $('imageInput');
 const selectFilesBtn   = $('selectFilesBtn');
@@ -1043,7 +847,7 @@ const previewSection   = $('previewSection');
 const pdfSection       = $('pdfSection');
 const imageCounter     = $('imageCounter');
 const imageToCrop      = $('imageToCrop');
-const cropBox          = $('cropBox');
+const cropContainer    = $('cropContainer');
 const cropBtn          = $('cropBtn');
 const prevImageBtn     = $('prevImageBtn');
 const nextImageBtn     = $('nextImageBtn');
@@ -1077,11 +881,10 @@ const notificationText = $('notificationText');
 const progressBar      = $('progressBar');
 const progressFill     = $('progressFill');
 const progressText     = $('progressText');
-const touchControls    = $('touchControls');
-const tcHeader         = $('tcHeader');
-const tcBody           = $('tcBody');
-const tcToggleBtn      = $('tcToggleBtn');
 
+// =========================================================
+// UTILIDADES
+// =========================================================
 function notify(msg, type = 'success', opts = {}) {
   notification.classList.remove('success', 'error', 'info');
   notification.classList.add(type);
@@ -1131,11 +934,8 @@ function blobToDataURL(blob) {
 
 function canvasToBlob(canvas, quality) {
   return new Promise((resolve, reject) => {
-    canvas.toBlob(
-      blob => blob ? resolve(blob) : reject(new Error('No se pudo generar la imagen')),
-      'image/jpeg',
-      quality
-    );
+    canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('No se pudo generar la imagen')),
+      'image/jpeg', quality);
   });
 }
 
@@ -1162,9 +962,7 @@ function setImageSrc(el, src) {
   });
 }
 
-function nextFrame() {
-  return new Promise(r => requestAnimationFrame(r));
-}
+function nextFrame() { return new Promise(r => requestAnimationFrame(r)); }
 
 function isHeicFile(file) {
   const name = (file.name || '').toLowerCase();
@@ -1172,54 +970,55 @@ function isHeicFile(file) {
   return /\.(heic|heif)$/.test(name) || type === 'image/heic' || type === 'image/heif';
 }
 
-function isMobileViewport() {
-  return window.matchMedia('(max-width: 700px)').matches;
-}
+function isMobileViewport() { return window.matchMedia('(max-width: 700px)').matches; }
 
+// =========================================================
+// PERSISTENCIA
+// =========================================================
 function saveSettings() {
   try {
     localStorage.setItem('chessExtract.settings', JSON.stringify({
-      quality: state.quality,
-      resolution: state.resolution,
-      squareLock: state.squareLock,
-      showGrid: state.showGrid,
-      dedupe: state.dedupe,
-      dedupeThreshold: state.dedupeThreshold,
-      overlayHidden: state.overlayHidden,
-      headerText: state.headerText,
-      footerText: state.footerText,
-      itemsPerPage: state.itemsPerPage,
-      cropTemplate: state.cropTemplate
+      quality: imageQuality,
+      resolution: resolutionFactor,
+      squareLock: squareLock.checked,
+      showGrid: showGrid.checked,
+      dedupe: dedupeEnabled,
+      dedupeThreshold: dedupeThresholdVal,
+      overlayHidden,
+      headerText: headerInput.value,
+      footerText: footerInput.value,
+      itemsPerPage: parseInt(itemsPerPageSelect.value, 10),
+      cropTemplate
     }));
   } catch (e) {}
 }
 
 let _saveTimer = null;
-function saveSettingsDebounced() {
-  clearTimeout(_saveTimer);
-  _saveTimer = setTimeout(saveSettings, 250);
-}
+function saveSettingsDebounced() { clearTimeout(_saveTimer); _saveTimer = setTimeout(saveSettings, 250); }
 
 function loadSettings() {
   try {
     const raw = localStorage.getItem('chessExtract.settings');
     if (!raw) return;
     const s = JSON.parse(raw);
-    if (typeof s.quality === 'number')          state.quality = s.quality;
-    if (typeof s.resolution === 'number')       state.resolution = s.resolution;
-    if (typeof s.squareLock === 'boolean')      state.squareLock = s.squareLock;
-    if (typeof s.showGrid === 'boolean')        state.showGrid = s.showGrid;
-    if (typeof s.dedupe === 'boolean')          state.dedupe = s.dedupe;
-    if (typeof s.dedupeThreshold === 'number')  state.dedupeThreshold = s.dedupeThreshold;
-    if (typeof s.overlayHidden === 'boolean')   state.overlayHidden = s.overlayHidden;
-    if (typeof s.headerText === 'string')       state.headerText = s.headerText;
-    if (typeof s.footerText === 'string')       state.footerText = s.footerText;
+    if (typeof s.quality === 'number') imageQuality = s.quality;
+    if (typeof s.resolution === 'number') resolutionFactor = s.resolution;
+    if (typeof s.squareLock === 'boolean') squareLock.checked = s.squareLock;
+    if (typeof s.showGrid === 'boolean') showGrid.checked = s.showGrid;
+    if (typeof s.dedupe === 'boolean') dedupeEnabled = s.dedupe;
+    if (typeof s.dedupeThreshold === 'number') dedupeThresholdVal = s.dedupeThreshold;
+    if (typeof s.overlayHidden === 'boolean') overlayHidden = s.overlayHidden;
+    if (typeof s.headerText === 'string') headerInput.value = s.headerText;
+    if (typeof s.footerText === 'string') footerInput.value = s.footerText;
     if (typeof s.itemsPerPage === 'number' && [4, 6, 8].includes(s.itemsPerPage))
-      state.itemsPerPage = s.itemsPerPage;
-    if (s.cropTemplate) state.cropTemplate = s.cropTemplate;
+      itemsPerPageSelect.value = String(s.itemsPerPage);
+    if (s.cropTemplate) cropTemplate = s.cropTemplate;
   } catch (e) {}
 }
 
+// =========================================================
+// CARGA DE ARCHIVOS
+// =========================================================
 function handleFiles(files) {
   const all = Array.from(files);
   const valid = all.filter(f => f.type.startsWith('image/') || isHeicFile(f));
@@ -1236,8 +1035,8 @@ function handleFiles(files) {
 
   valid.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }));
 
-  state.imageFiles = valid;
-  state.currentIndex = 0;
+  imageFiles = valid;
+  currentImageIndex = 0;
 
   fileInfo.classList.remove('hidden');
   fileInfoText.textContent = `${valid.length} imagen${valid.length === 1 ? '' : 'es'} cargada${valid.length === 1 ? '' : 's'}`;
@@ -1265,11 +1064,14 @@ dropZone.addEventListener('drop', (e) => {
   if (files && files.length) handleFiles(files);
 });
 
+// =========================================================
+// CARGA DE IMAGEN
+// =========================================================
 async function loadCurrentImage() {
-  if (state.imageFiles.length === 0) return;
+  if (imageFiles.length === 0) return;
+  editingIndex = -1;
 
-  state.editingIndex = -1;
-  const file = state.imageFiles[state.currentIndex];
+  const file = imageFiles[currentImageIndex];
 
   try {
     const dataUrl = await fileToDataURL(file);
@@ -1280,10 +1082,11 @@ async function loadCurrentImage() {
       if (isHeicFile(file)) throw new Error('HEIC no soportado en este navegador. Convierte a JPG.');
       throw err;
     }
-    state.originalImage = img;
+    originalImage = img;
 
     const displayUrl = rescaleForDisplay(img);
     await setImageSrc(imageToCrop, displayUrl);
+    await nextFrame();
     await nextFrame();
     initCropBox();
   } catch (err) {
@@ -1291,20 +1094,19 @@ async function loadCurrentImage() {
     notify(err.message || 'No se pudo cargar la imagen', 'error', { duration: 5000 });
   }
 
-  imageCounter.textContent = `Imagen ${state.currentIndex + 1} de ${state.imageFiles.length}`;
-  prevImageBtn.disabled = state.currentIndex === 0;
-  nextImageBtn.disabled = state.currentIndex === state.imageFiles.length - 1;
+  imageCounter.textContent = `Imagen ${currentImageIndex + 1} de ${imageFiles.length}`;
+  prevImageBtn.disabled = currentImageIndex === 0;
+  nextImageBtn.disabled = currentImageIndex === imageFiles.length - 1;
 }
 
 function rescaleForDisplay(img) {
-  const maxDim = Math.min(MAX_DISPLAY_LONG_SIDE, Math.max(img.width, img.height));
+  const maxDim = Math.min(1600, Math.max(img.width, img.height));
   const scale = maxDim / Math.max(img.width, img.height);
   if (scale >= 1) return img.src;
   const w = Math.round(img.width * scale);
   const h = Math.round(img.height * scale);
   const canvas = document.createElement('canvas');
-  canvas.width = w;
-  canvas.height = h;
+  canvas.width = w; canvas.height = h;
   const ctx = canvas.getContext('2d');
   ctx.imageSmoothingEnabled = true;
   ctx.imageSmoothingQuality = 'high';
@@ -1312,394 +1114,160 @@ function rescaleForDisplay(img) {
   return canvas.toDataURL('image/jpeg', 0.92);
 }
 
-function getDisplaySize() {
-  const rect = imageToCrop.getBoundingClientRect();
-  return { w: rect.width, h: rect.height };
-}
-
-function applyCropStyles() {
-  const { x, y, w, h } = state.crop;
-  cropBox.style.left = x + 'px';
-  cropBox.style.top = y + 'px';
-  cropBox.style.width = w + 'px';
-  cropBox.style.height = h + 'px';
-}
-
-function applyOverlayMode() {
-  cropBox.classList.toggle('no-overlay', state.overlayHidden);
-  toggleOverlayBtn.classList.toggle('toggle-active', state.overlayHidden);
-  toggleOverlayBtn.innerHTML = state.overlayHidden
-    ? '<i class="fas fa-eye-slash"></i> Oscurecer'
-    : '<i class="fas fa-eye"></i> Ver completa';
-}
-
+// =========================================================
+// INIT CROP BOX — exacto al del proyecto de referencia
+// =========================================================
 function initCropBox() {
-  const { w: dW, h: dH } = getDisplaySize();
-  if (dW <= 0 || dH <= 0) return;
+  cropBox = document.querySelector('.crop-box');
+  if (!cropBox) return;
 
-  if (isMobileViewport() && !state._mobileOverlayInited) {
-    state._mobileOverlayInited = true;
-    if (!state.overlayHidden) {
-      state.overlayHidden = true;
-      saveSettingsDebounced();
-    }
+  // Registrar listeners UNA SOLA VEZ
+  if (!cropBoxInitialized) {
+    const handles = cropBox.querySelectorAll('.resize-handle');
+    handles.forEach(handle => {
+      handle.addEventListener('mousedown', startResize);
+    });
+    cropBox.addEventListener('mousedown', startDrag);
+    document.addEventListener('mousemove', handleMove);
+    document.addEventListener('mouseup', stopInteraction);
+    cropBoxInitialized = true;
   }
 
-  if (state.cropTemplate) {
-    const t = state.cropTemplate;
-    state.crop = { x: t.x * dW, y: t.y * dH, w: t.w * dW, h: t.h * dH };
+  const imgWidth = imageToCrop.width;
+  const imgHeight = imageToCrop.height;
+
+  if (imgWidth === 0 || imgHeight === 0) return;
+
+  // Auto "Ver completa" primera vez en móvil
+  if (isMobileViewport() && !window._mobileOverlayInited) {
+    window._mobileOverlayInited = true;
+    if (!overlayHidden) overlayHidden = true;
+  }
+
+  if (cropTemplate) {
+    cropBoxX = cropTemplate.x * imgWidth;
+    cropBoxY = cropTemplate.y * imgHeight;
+    cropBoxWidth = cropTemplate.w * imgWidth;
+    cropBoxHeight = cropTemplate.h * imgHeight;
   } else {
-    const side = Math.min(dW, dH) * 0.7;
-    state.crop = { x: (dW - side) / 2, y: (dH - side) / 2, w: side, h: side };
+    cropBoxX = imgWidth * 0.25;
+    cropBoxY = imgHeight * 0.25;
+    cropBoxWidth = imgWidth * 0.5;
+    cropBoxHeight = imgHeight * 0.5;
   }
-  applyCropStyles();
+
+  updateCropBox();
   cropBox.classList.remove('hidden');
-  cropBox.classList.toggle('show-grid', state.showGrid);
-  applyOverlayMode();
+  cropBox.classList.toggle('no-overlay', overlayHidden);
+  cropBox.classList.toggle('show-grid', showGrid.checked);
+  updateOverlayBtn();
   cropBtn.disabled = false;
   updateTemplateButtons();
 }
 
-function getHandleFromPoint(clientX, clientY) {
-  const rect = cropBox.getBoundingClientRect();
-  const threshold = isMobileViewport() ? 60 : 44;
-
-  const corners = [
-    { name: 'nw', x: rect.left,   y: rect.top    },
-    { name: 'ne', x: rect.right,  y: rect.top    },
-    { name: 'sw', x: rect.left,   y: rect.bottom },
-    { name: 'se', x: rect.right,  y: rect.bottom }
-  ];
-
-  let best = null;
-  let bestDist = threshold;
-
-  for (const c of corners) {
-    const dx = clientX - c.x;
-    const dy = clientY - c.y;
-    const d = Math.sqrt(dx * dx + dy * dy);
-    if (d < bestDist) { bestDist = d; best = c.name; }
-  }
-  return best;
+function updateCropBox() {
+  if (!cropBox) return;
+  cropBox.style.left = `${cropBoxX}px`;
+  cropBox.style.top = `${cropBoxY}px`;
+  cropBox.style.width = `${cropBoxWidth}px`;
+  cropBox.style.height = `${cropBoxHeight}px`;
 }
 
 // =========================================================
-// INTERACCIÓN CON MOUSE (escritorio)
+// DRAG & RESIZE — idéntico al del proyecto de referencia
 // =========================================================
-function startGesture(clientX, clientY, target) {
-  if (state.isDragging || state.isResizing) return;
-  const handle = target.closest && target.closest('.resize-handle');
-  let mode = null;
-
-  if (handle) {
-    for (const dir of ['nw', 'ne', 'sw', 'se']) {
-      if (handle.classList.contains('resize-' + dir)) { mode = dir; break; }
-    }
-  }
-  if (!mode) mode = getHandleFromPoint(clientX, clientY);
-
-  if (mode) { state.isResizing = true; state.resizeDir = mode; }
-  else { state.isDragging = true; }
-
-  state.startX = clientX;
-  state.startY = clientY;
-  state.startCrop = { ...state.crop };
+function startDrag(e) {
+  if (e.target.classList.contains('resize-handle')) return;
+  isDragging = true;
+  startX = e.clientX;
+  startY = e.clientY;
+  cropBoxX = parseInt(cropBox.style.left) || 0;
+  cropBoxY = parseInt(cropBox.style.top) || 0;
+  cropBoxWidth = parseInt(cropBox.style.width) || 0;
+  cropBoxHeight = parseInt(cropBox.style.height) || 0;
 }
 
-function moveGesture(clientX, clientY) {
-  if (!state.isDragging && !state.isResizing) return;
+function startResize(e) {
+  isResizing = true;
+  startX = e.clientX;
+  startY = e.clientY;
+  cropBoxX = parseInt(cropBox.style.left) || 0;
+  cropBoxY = parseInt(cropBox.style.top) || 0;
+  cropBoxWidth = parseInt(cropBox.style.width) || 0;
+  cropBoxHeight = parseInt(cropBox.style.height) || 0;
 
-  const dx = clientX - state.startX;
-  const dy = clientY - state.startY;
-  const { w: dW, h: dH } = getDisplaySize();
-  const sc = state.startCrop;
+  // Detectar dirección por nombre de clase
+  if (e.target.classList.contains('resize-nw')) resizeDirection = 'resize-nw';
+  else if (e.target.classList.contains('resize-ne')) resizeDirection = 'resize-ne';
+  else if (e.target.classList.contains('resize-sw')) resizeDirection = 'resize-sw';
+  else if (e.target.classList.contains('resize-se')) resizeDirection = 'resize-se';
+}
 
-  if (state.isDragging) {
-    let nx = sc.x + dx;
-    let ny = sc.y + dy;
-    nx = Math.max(0, Math.min(nx, dW - sc.w));
-    ny = Math.max(0, Math.min(ny, dH - sc.h));
-    state.crop.x = nx;
-    state.crop.y = ny;
-  } else {
-    let nx = sc.x, ny = sc.y, nw = sc.w, nh = sc.h;
-    const min = 30;
+function handleMove(e) {
+  if (!isDragging && !isResizing) return;
 
-    switch (state.resizeDir) {
-      case 'nw': nw = sc.w - dx; nh = sc.h - dy; nx = sc.x + dx; ny = sc.y + dy; break;
-      case 'ne': nw = sc.w + dx; nh = sc.h - dy; ny = sc.y + dy; break;
-      case 'sw': nw = sc.w - dx; nh = sc.h + dy; nx = sc.x + dx; break;
-      case 'se': nw = sc.w + dx; nh = sc.h + dy; break;
+  const dx = e.clientX - startX;
+  const dy = e.clientY - startY;
+
+  if (isDragging) {
+    const newX = cropBoxX + dx;
+    const newY = cropBoxY + dy;
+    if (newX >= 0 && newX + cropBoxWidth <= imageToCrop.width) cropBoxX = newX;
+    if (newY >= 0 && newY + cropBoxHeight <= imageToCrop.height) cropBoxY = newY;
+  } else if (isResizing) {
+    switch (resizeDirection) {
+      case 'resize-nw':
+        if (cropBoxX + dx >= 0 && cropBoxWidth - dx >= 50) {
+          cropBoxX += dx; cropBoxWidth -= dx;
+        }
+        if (cropBoxY + dy >= 0 && cropBoxHeight - dy >= 50) {
+          cropBoxY += dy; cropBoxHeight -= dy;
+        }
+        break;
+      case 'resize-ne':
+        if (cropBoxWidth + dx >= 50) cropBoxWidth += dx;
+        if (cropBoxY + dy >= 0 && cropBoxHeight - dy >= 50) {
+          cropBoxY += dy; cropBoxHeight -= dy;
+        }
+        break;
+      case 'resize-sw':
+        if (cropBoxX + dx >= 0 && cropBoxWidth - dx >= 50) {
+          cropBoxX += dx; cropBoxWidth -= dx;
+        }
+        if (cropBoxHeight + dy >= 50) cropBoxHeight += dy;
+        break;
+      case 'resize-se':
+        if (cropBoxWidth + dx >= 50) cropBoxWidth += dx;
+        if (cropBoxHeight + dy >= 50) cropBoxHeight += dy;
+        break;
     }
 
-    if (state.squareLock) {
-      const side = Math.min(nw, nh);
-      switch (state.resizeDir) {
-        case 'nw': nx = sc.x + sc.w - side; ny = sc.y + sc.h - side; break;
-        case 'ne': ny = sc.y + sc.h - side; break;
-        case 'sw': nx = sc.x + sc.w - side; break;
+    // Bloquear cuadrado
+    if (squareLock.checked) {
+      const side = Math.min(cropBoxWidth, cropBoxHeight);
+      if (resizeDirection === 'resize-nw') {
+        cropBoxX = cropBoxX + cropBoxWidth - side;
+        cropBoxY = cropBoxY + cropBoxHeight - side;
+      } else if (resizeDirection === 'resize-ne') {
+        cropBoxY = cropBoxY + cropBoxHeight - side;
+      } else if (resizeDirection === 'resize-sw') {
+        cropBoxX = cropBoxX + cropBoxWidth - side;
       }
-      nw = side; nh = side;
+      cropBoxWidth = side;
+      cropBoxHeight = side;
     }
-
-    if (nw < min) { if (state.resizeDir === 'nw' || state.resizeDir === 'sw') nx = sc.x + sc.w - min; nw = min; }
-    if (nh < min) { if (state.resizeDir === 'nw' || state.resizeDir === 'ne') ny = sc.y + sc.h - min; nh = min; }
-    if (nx < 0) { nw += nx; nx = 0; }
-    if (ny < 0) { nh += ny; ny = 0; }
-    if (nx + nw > dW) nw = dW - nx;
-    if (ny + nh > dH) nh = dH - ny;
-
-    state.crop.x = nx; state.crop.y = ny; state.crop.w = nw; state.crop.h = nh;
   }
 
-  applyCropStyles();
+  updateCropBox();
+  startX = e.clientX;
+  startY = e.clientY;
 }
 
-function endGesture() {
-  state.isDragging = false;
-  state.isResizing = false;
-  state.resizeDir = null;
+function stopInteraction() {
+  isDragging = false;
+  isResizing = false;
+  resizeDirection = null;
 }
-
-cropBox.addEventListener('mousedown', (e) => {
-  if (e.button !== 0) return;
-  startGesture(e.clientX, e.clientY, e.target);
-  if (state.isDragging || state.isResizing) e.preventDefault();
-});
-
-document.addEventListener('mousemove', (e) => {
-  if (!state.isDragging && !state.isResizing) return;
-  moveGesture(e.clientX, e.clientY);
-  e.preventDefault();
-});
-
-document.addEventListener('mouseup', () => {
-  if (!state.isDragging && !state.isResizing) return;
-  endGesture();
-});
-
-// =========================================================
-// ✅ CONTROLES TÁCTILES — ajuste fino con botones
-// =========================================================
-const TC_STEP = 8;
-const TC_MIN = 30;
-
-function tcApply(updater) {
-  const { w: dW, h: dH } = getDisplaySize();
-  if (dW <= 0 || dH <= 0) return;
-  const current = { ...state.crop };
-  const next = updater(current, dW, dH);
-  if (!next) return;
-
-  let x = Math.max(0, Math.min(next.x, dW - TC_MIN));
-  let y = Math.max(0, Math.min(next.y, dH - TC_MIN));
-  let w = Math.max(TC_MIN, Math.min(next.w, dW - x));
-  let h = Math.max(TC_MIN, Math.min(next.h, dH - y));
-
-  if (state.squareLock) {
-    const side = Math.min(w, h);
-    if (updater === tcApply._lastSquareLockFn) { /* no-op */ }
-    w = side; h = side;
-    if (x + w > dW) x = dW - w;
-    if (y + h > dH) y = dH - h;
-  }
-
-  state.crop = { x, y, w, h };
-  applyCropStyles();
-}
-
-touchControls.addEventListener('click', (e) => {
-  const btn = e.target.closest('[data-action]');
-  if (!btn) return;
-  const action = btn.dataset.action;
-  const S = TC_STEP;
-
-  switch (action) {
-    case 'move-left':   tcApply(c => ({ ...c, x: c.x - S })); break;
-    case 'move-right':  tcApply(c => ({ ...c, x: c.x + S })); break;
-    case 'move-up':     tcApply(c => ({ ...c, y: c.y - S })); break;
-    case 'move-down':   tcApply(c => ({ ...c, y: c.y + S })); break;
-
-    case 'nw-out': tcApply(c => {
-      const canX = c.x - S >= 0;
-      const canY = c.y - S >= 0;
-      return {
-        x: canX ? c.x - S : c.x,
-        y: canY ? c.y - S : c.y,
-        w: (canX ? c.w + S : c.w),
-        h: (canY ? c.h + S : c.h)
-      };
-    }); break;
-
-    case 'nw-in': tcApply(c => {
-      const canX = c.w - S >= TC_MIN;
-      const canY = c.h - S >= TC_MIN;
-      return {
-        x: canX ? c.x + S : c.x,
-        y: canY ? c.y + S : c.y,
-        w: canX ? c.w - S : c.w,
-        h: canY ? c.h - S : c.h
-      };
-    }); break;
-
-    case 'ne-out': tcApply(c => {
-      const canY = c.y - S >= 0;
-      const canW = c.x + c.w + S <= getDisplaySize().w;
-      return {
-        x: c.x,
-        y: canY ? c.y - S : c.y,
-        w: canW ? c.w + S : c.w,
-        h: (canY ? c.h + S : c.h)
-      };
-    }); break;
-
-    case 'ne-in': tcApply(c => {
-      const canW = c.w - S >= TC_MIN;
-      const canH = c.h - S >= TC_MIN;
-      return {
-        x: c.x,
-        y: c.h - S >= TC_MIN ? c.y + S : c.y,
-        w: canW ? c.w - S : c.w,
-        h: canH ? c.h - S : c.h
-      };
-    }); break;
-
-    case 'sw-out': tcApply(c => {
-      const canX = c.x - S >= 0;
-      const canH = c.y + c.h + S <= getDisplaySize().h;
-      return {
-        x: canX ? c.x - S : c.x,
-        y: c.y,
-        w: canX ? c.w + S : c.w,
-        h: canH ? c.h + S : c.h
-      };
-    }); break;
-
-    case 'sw-in': tcApply(c => {
-      const canW = c.w - S >= TC_MIN;
-      const canH = c.h - S >= TC_MIN;
-      return {
-        x: canW ? c.x + S : c.x,
-        y: c.y,
-        w: canW ? c.w - S : c.w,
-        h: canH ? c.h - S : c.h
-      };
-    }); break;
-
-    case 'se-out': tcApply(c => {
-      const { w: dW, h: dH } = getDisplaySize();
-      const canW = c.x + c.w + S <= dW;
-      const canH = c.y + c.h + S <= dH;
-      return {
-        x: c.x, y: c.y,
-        w: canW ? c.w + S : c.w,
-        h: canH ? c.h + S : c.h
-      };
-    }); break;
-
-    case 'se-in': tcApply(c => ({
-      x: c.x, y: c.y,
-      w: c.w - S >= TC_MIN ? c.w - S : c.w,
-      h: c.h - S >= TC_MIN ? c.h - S : c.h
-    })); break;
-
-    case 'size-up': tcApply(c => {
-      const { w: dW, h: dH } = getDisplaySize();
-      const newW = Math.min(dW, c.w + S * 2);
-      const newH = Math.min(dH, c.h + S * 2);
-      const cx = c.x + c.w / 2;
-      const cy = c.y + c.h / 2;
-      return {
-        x: Math.max(0, cx - newW / 2),
-        y: Math.max(0, cy - newH / 2),
-        w: newW, h: newH
-      };
-    }); break;
-
-    case 'size-down': tcApply(c => {
-      const newW = Math.max(TC_MIN, c.w - S * 2);
-      const newH = Math.max(TC_MIN, c.h - S * 2);
-      const cx = c.x + c.w / 2;
-      const cy = c.y + c.h / 2;
-      return {
-        x: Math.max(0, cx - newW / 2),
-        y: Math.max(0, cy - newH / 2),
-        w: newW, h: newH
-      };
-    }); break;
-  }
-});
-
-// Toggle plegar/desplegar el panel
-tcToggleBtn.addEventListener('click', (e) => {
-  e.stopPropagation();
-  const collapsed = tcBody.classList.toggle('collapsed');
-  tcToggleBtn.textContent = collapsed ? 'Mostrar ▼' : 'Ocultar ▲';
-});
-
-tcHeader.addEventListener('click', (e) => {
-  if (e.target === tcToggleBtn) return;
-  const collapsed = tcBody.classList.toggle('collapsed');
-  tcToggleBtn.textContent = collapsed ? 'Mostrar ▼' : 'Ocultar ▲';
-});
-
-// =========================================================
-// TECLADO — cropBox
-// =========================================================
-cropBox.addEventListener('keydown', (e) => {
-  const step = e.shiftKey ? 5 : 1;
-  const { w: dW, h: dH } = getDisplaySize();
-  let { x, y, w, h } = state.crop;
-  let changed = true;
-
-  switch (e.key) {
-    case 'ArrowLeft':
-      if (e.shiftKey) { w = Math.max(30, w - step); if (x + w > dW) w = dW - x; }
-      else x = Math.max(0, x - step);
-      break;
-    case 'ArrowRight':
-      if (e.shiftKey) { w = Math.max(30, Math.min(w + step, dW - x)); }
-      else x = Math.min(dW - w, x + step);
-      break;
-    case 'ArrowUp':
-      if (e.shiftKey) { h = Math.max(30, h - step); if (y + h > dH) h = dH - y; }
-      else y = Math.max(0, y - step);
-      break;
-    case 'ArrowDown':
-      if (e.shiftKey) { h = Math.max(30, Math.min(h + step, dH - y)); }
-      else y = Math.min(dH - h, y + step);
-      break;
-    default:
-      changed = false;
-  }
-  if (changed) {
-    e.preventDefault();
-    state.crop = { x, y, w, h };
-    if (state.squareLock) {
-      const side = Math.min(state.crop.w, state.crop.h);
-      state.crop.w = state.crop.h = side;
-    }
-    applyCropStyles();
-  }
-});
-
-document.addEventListener('keydown', (e) => {
-  const tag = (e.target.tagName || '').toLowerCase();
-  if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
-
-  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-    if (!cropBtn.disabled && !cropSection.classList.contains('hidden')) {
-      e.preventDefault();
-      cropBtn.click();
-    }
-    return;
-  }
-
-  if (e.key === 'Escape' && state.editingIndex >= 0) {
-    state.editingIndex = -1;
-    notify('Edición cancelada', 'info');
-  }
-});
 
 // =========================================================
 // HASH + DEDUPE
@@ -1716,83 +1284,84 @@ function computeHashFromCanvas(srcCanvas) {
     for (let x = 0; x < w - 1; x++) {
       const i = (y * w + x) * 4;
       const j = (y * w + x + 1) * 4;
-      const l1 = 0.299 * data[i]   + 0.587 * data[i+1]   + 0.114 * data[i+2];
-      const l2 = 0.299 * data[j]   + 0.587 * data[j+1]   + 0.114 * data[j+2];
+      const l1 = 0.299 * data[i] + 0.587 * data[i+1] + 0.114 * data[i+2];
+      const l2 = 0.299 * data[j] + 0.587 * data[j+1] + 0.114 * data[j+2];
       bits += l1 > l2 ? '1' : '0';
     }
   }
   let hex = '';
-  for (let i = 0; i < 64; i += 4) {
-    hex += parseInt(bits.substr(i, 4), 2).toString(16);
-  }
+  for (let i = 0; i < 64; i += 4) hex += parseInt(bits.substr(i, 4), 2).toString(16);
   return hex;
 }
 
-function hammingDistance(hexA, hexB) {
-  if (!hexA || !hexB || hexA.length !== hexB.length) return Infinity;
-  let dist = 0;
-  for (let i = 0; i < hexA.length; i++) {
-    let xor = parseInt(hexA[i], 16) ^ parseInt(hexB[i], 16);
-    while (xor) { dist += xor & 1; xor >>= 1; }
+function hammingDistance(a, b) {
+  if (!a || !b || a.length !== b.length) return Infinity;
+  let d = 0;
+  for (let i = 0; i < a.length; i++) {
+    let x = parseInt(a[i], 16) ^ parseInt(b[i], 16);
+    while (x) { d += x & 1; x >>= 1; }
   }
-  return dist;
+  return d;
 }
 
-function findDuplicateIndex(hash, excludeIdx = -1) {
+function findDuplicateIndex(hash, exclude = -1) {
   if (!hash) return -1;
-  for (let i = 0; i < state.savedBoards.length; i++) {
-    if (i === excludeIdx) continue;
-    const h = state.savedBoards[i].hash;
+  for (let i = 0; i < savedChessboards.length; i++) {
+    if (i === exclude) continue;
+    const h = savedChessboards[i].hash;
     if (!h) continue;
-    if (hammingDistance(hash, h) <= state.dedupeThreshold) return i;
+    if (hammingDistance(hash, h) <= dedupeThresholdVal) return i;
   }
   return -1;
 }
 
+// =========================================================
+// RECORTAR
+// =========================================================
 async function cropImage() {
-  if (!state.originalImage) return null;
-  const { w: dW, h: dH } = getDisplaySize();
-  if (dW <= 0 || dH <= 0) return null;
+  if (!originalImage || !cropBox) return null;
 
-  const scaleX = state.originalImage.naturalWidth  / dW;
-  const scaleY = state.originalImage.naturalHeight / dH;
-
-  const srcX = state.crop.x * scaleX;
-  const srcY = state.crop.y * scaleY;
-  const srcW = state.crop.w * scaleX;
-  const srcH = state.crop.h * scaleY;
-
-  const outW = Math.max(1, Math.round(srcW * state.resolution));
-  const outH = Math.max(1, Math.round(srcH * state.resolution));
+  const canvasWidth = Math.max(1, Math.round(cropBoxWidth * resolutionFactor));
+  const canvasHeight = Math.max(1, Math.round(cropBoxHeight * resolutionFactor));
 
   const canvas = document.createElement('canvas');
-  canvas.width = outW;
-  canvas.height = outH;
+  canvas.width = canvasWidth;
+  canvas.height = canvasHeight;
   const ctx = canvas.getContext('2d');
+
+  const scaleX = originalImage.naturalWidth / imageToCrop.width;
+  const scaleY = originalImage.naturalHeight / imageToCrop.height;
+
   ctx.imageSmoothingEnabled = true;
   ctx.imageSmoothingQuality = 'high';
-  ctx.drawImage(state.originalImage, srcX, srcY, srcW, srcH, 0, 0, outW, outH);
+  ctx.drawImage(
+    originalImage,
+    cropBoxX * scaleX, cropBoxY * scaleY,
+    cropBoxWidth * scaleX, cropBoxHeight * scaleY,
+    0, 0, canvasWidth, canvasHeight
+  );
 
   const hash = computeHashFromCanvas(canvas);
-  const blob = await canvasToBlob(canvas, state.quality);
+  const blob = await canvasToBlob(canvas, imageQuality);
   const url = URL.createObjectURL(blob);
-
-  return { blob, url, hash, w: outW, h: outH };
+  return { blob, url, hash, w: canvasWidth, h: canvasHeight };
 }
 
+// =========================================================
+// GUARDAR / EDITAR / ELIMINAR
+// =========================================================
 function addBoard(board) {
-  if (state.editingIndex >= 0) {
-    const idx = state.editingIndex;
-    const old = state.savedBoards[idx];
+  if (editingIndex >= 0) {
+    const old = savedChessboards[editingIndex];
     if (old && old.url) URL.revokeObjectURL(old.url);
-    state.savedBoards[idx] = board;
-    state.editingIndex = -1;
+    savedChessboards[editingIndex] = board;
+    editingIndex = -1;
     notify('Tablero actualizado');
-    updateBoardsDisplay();
+    updateChessboardsDisplay();
     return true;
   }
 
-  if (state.dedupe && board.hash) {
+  if (dedupeEnabled && board.hash) {
     const dup = findDuplicateIndex(board.hash);
     if (dup >= 0) {
       URL.revokeObjectURL(board.url);
@@ -1801,36 +1370,38 @@ function addBoard(board) {
     }
   }
 
-  state.savedBoards.push(board);
+  savedChessboards.push(board);
   notify('Tablero guardado');
 
-  if (!_memoryWarned && state.savedBoards.length === MEMORY_WARN_THRESHOLD) {
+  if (!_memoryWarned && savedChessboards.length === MEMORY_WARN_THRESHOLD) {
     _memoryWarned = true;
-    notify(`Tienes ${state.savedBoards.length} tableros. Si la app va lenta, genera el PDF por partes o baja la resolución.`, 'info', { duration: 7000 });
+    notify(`Tienes ${savedChessboards.length} tableros. Si va lenta, genera por partes o baja la resolución.`, 'info', { duration: 7000 });
   }
 
-  updateBoardsDisplay();
+  updateChessboardsDisplay();
   return true;
 }
 
 async function startEdit(index) {
-  state.editingIndex = index;
-  const board = state.savedBoards[index];
+  editingIndex = index;
+  const board = savedChessboards[index];
   if (!board) return;
 
   try {
     const img = await loadImageFromSrc(board.url);
-    state.originalImage = img;
+    originalImage = img;
     const displayUrl = rescaleForDisplay(img);
     await setImageSrc(imageToCrop, displayUrl);
     await nextFrame();
+    await nextFrame();
 
-    const { w: dW, h: dH } = getDisplaySize();
-    state.crop = { x: 0, y: 0, w: dW, h: dH };
-    applyCropStyles();
+    // Cubrir toda la imagen al editar
+    cropBoxX = 0;
+    cropBoxY = 0;
+    cropBoxWidth = imageToCrop.width;
+    cropBoxHeight = imageToCrop.height;
+    updateCropBox();
     cropBox.classList.remove('hidden');
-    cropBox.classList.toggle('show-grid', state.showGrid);
-    applyOverlayMode();
     cropBtn.disabled = false;
 
     cropSection.classList.remove('hidden');
@@ -1839,23 +1410,23 @@ async function startEdit(index) {
   } catch (err) {
     console.error(err);
     notify('No se pudo iniciar la edición', 'error');
-    state.editingIndex = -1;
+    editingIndex = -1;
   }
 }
 
 function removeBoardAt(idx) {
-  const b = state.savedBoards[idx];
+  const b = savedChessboards[idx];
   if (b && b.url) URL.revokeObjectURL(b.url);
-  state.savedBoards.splice(idx, 1);
-  if (state.editingIndex === idx) state.editingIndex = -1;
-  else if (state.editingIndex > idx) state.editingIndex--;
+  savedChessboards.splice(idx, 1);
+  if (editingIndex === idx) editingIndex = -1;
+  else if (editingIndex > idx) editingIndex--;
 }
 
-function updateBoardsDisplay() {
+function updateChessboardsDisplay() {
   chessboards.innerHTML = '';
-  chessboardsCount.textContent = state.savedBoards.length;
+  chessboardsCount.textContent = savedChessboards.length;
 
-  state.savedBoards.forEach((board, index) => {
+  savedChessboards.forEach((board, index) => {
     const item = document.createElement('div');
     item.className = 'chessboard-item';
     item.innerHTML = `
@@ -1878,14 +1449,14 @@ function updateBoardsDisplay() {
   chessboards.querySelectorAll('.remove-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       removeBoardAt(+btn.dataset.index);
-      updateBoardsDisplay();
+      updateChessboardsDisplay();
       notify('Tablero eliminado');
     });
   });
 
   updatePdfPreview();
 
-  if (state.savedBoards.length > 0) {
+  if (savedChessboards.length > 0) {
     previewSection.classList.remove('hidden');
     pdfSection.classList.remove('hidden');
   } else {
@@ -1894,41 +1465,48 @@ function updateBoardsDisplay() {
   }
 }
 
+// =========================================================
+// NAVEGACIÓN
+// =========================================================
 prevImageBtn.addEventListener('click', () => {
-  if (state.currentIndex > 0) { state.currentIndex--; loadCurrentImage(); }
+  if (currentImageIndex > 0) { currentImageIndex--; loadCurrentImage(); }
 });
 nextImageBtn.addEventListener('click', () => {
-  if (state.currentIndex < state.imageFiles.length - 1) { state.currentIndex++; loadCurrentImage(); }
+  if (currentImageIndex < imageFiles.length - 1) { currentImageIndex++; loadCurrentImage(); }
 });
 reverseOrderBtn.addEventListener('click', () => {
-  if (state.imageFiles.length < 2) { notify('No hay suficientes imágenes', 'info'); return; }
-  state.imageFiles.reverse();
-  state.currentIndex = state.imageFiles.length - 1 - state.currentIndex;
+  if (imageFiles.length < 2) { notify('No hay suficientes imágenes', 'info'); return; }
+  imageFiles.reverse();
+  currentImageIndex = imageFiles.length - 1 - currentImageIndex;
   loadCurrentImage();
   notify('Orden de imágenes invertido');
 });
 reverseSavedBtn.addEventListener('click', () => {
-  if (state.savedBoards.length < 2) { notify('No hay suficientes tableros', 'info'); return; }
-  state.savedBoards.reverse();
-  state.editingIndex = -1;
-  updateBoardsDisplay();
+  if (savedChessboards.length < 2) { notify('No hay suficientes tableros', 'info'); return; }
+  savedChessboards.reverse();
+  editingIndex = -1;
+  updateChessboardsDisplay();
   notify('Orden de tableros invertido');
 });
 
+// =========================================================
+// PLANTILLAS
+// =========================================================
 function updateTemplateButtons() {
-  const has = !!state.cropTemplate;
+  const has = !!cropTemplate;
   applyTemplateBtn.disabled = !has;
   applyToAllBtn.disabled = !has;
 }
 
 saveTemplateBtn.addEventListener('click', () => {
-  const { w: dW, h: dH } = getDisplaySize();
-  if (dW <= 0 || dH <= 0) return;
-  state.cropTemplate = {
-    x: state.crop.x / dW,
-    y: state.crop.y / dH,
-    w: state.crop.w / dW,
-    h: state.crop.h / dH
+  const imgWidth = imageToCrop.width;
+  const imgHeight = imageToCrop.height;
+  if (!imgWidth || !imgHeight) return;
+  cropTemplate = {
+    x: cropBoxX / imgWidth,
+    y: cropBoxY / imgHeight,
+    w: cropBoxWidth / imgWidth,
+    h: cropBoxHeight / imgHeight
   };
   saveSettings();
   updateTemplateButtons();
@@ -1936,50 +1514,69 @@ saveTemplateBtn.addEventListener('click', () => {
 });
 
 applyTemplateBtn.addEventListener('click', () => {
-  if (!state.cropTemplate) return;
-  const { w: dW, h: dH } = getDisplaySize();
-  const t = state.cropTemplate;
-  state.crop = { x: t.x * dW, y: t.y * dH, w: t.w * dW, h: t.h * dH };
-  applyCropStyles();
+  if (!cropTemplate) return;
+  const imgWidth = imageToCrop.width;
+  const imgHeight = imageToCrop.height;
+  cropBoxX = cropTemplate.x * imgWidth;
+  cropBoxY = cropTemplate.y * imgHeight;
+  cropBoxWidth = cropTemplate.w * imgWidth;
+  cropBoxHeight = cropTemplate.h * imgHeight;
+  updateCropBox();
   notify('Plantilla aplicada');
 });
 
 applyToAllBtn.addEventListener('click', () => {
-  if (!state.cropTemplate) return;
+  if (!cropTemplate) return;
   notify('Aplicando plantilla y procesando todas…', 'info');
   processAllImages(true);
 });
 
+// =========================================================
+// BOTONES CENTRAR / TODO / OVERLAY
+// =========================================================
 centerCropBtn.addEventListener('click', () => {
-  const { w: dW, h: dH } = getDisplaySize();
-  if (dW <= 0 || dH <= 0) return;
-  const side = Math.min(state.crop.w || Infinity, state.crop.h || Infinity, Math.min(dW, dH) * 0.8);
-  const finalSide = Number.isFinite(side) && side > 30 ? side : Math.min(dW, dH) * 0.8;
-  state.crop = {
-    x: (dW - finalSide) / 2,
-    y: (dH - finalSide) / 2,
-    w: finalSide,
-    h: finalSide
-  };
-  applyCropStyles();
+  const imgWidth = imageToCrop.width;
+  const imgHeight = imageToCrop.height;
+  if (!imgWidth || !imgHeight) return;
+  const side = Math.min(cropBoxWidth || Infinity, cropBoxHeight || Infinity, Math.min(imgWidth, imgHeight) * 0.8);
+  const finalSide = Number.isFinite(side) && side > 30 ? side : Math.min(imgWidth, imgHeight) * 0.8;
+  cropBoxWidth = finalSide;
+  cropBoxHeight = finalSide;
+  cropBoxX = (imgWidth - finalSide) / 2;
+  cropBoxY = (imgHeight - finalSide) / 2;
+  updateCropBox();
   notify('Recuadro centrado', 'info');
 });
 
 fullCropBtn.addEventListener('click', () => {
-  const { w: dW, h: dH } = getDisplaySize();
-  if (dW <= 0 || dH <= 0) return;
-  state.crop = { x: 0, y: 0, w: dW, h: dH };
-  applyCropStyles();
+  const imgWidth = imageToCrop.width;
+  const imgHeight = imageToCrop.height;
+  if (!imgWidth || !imgHeight) return;
+  cropBoxX = 0; cropBoxY = 0;
+  cropBoxWidth = imgWidth;
+  cropBoxHeight = imgHeight;
+  updateCropBox();
   notify('Recuadro = imagen completa', 'info');
 });
 
+function updateOverlayBtn() {
+  toggleOverlayBtn.classList.toggle('toggle-active', overlayHidden);
+  toggleOverlayBtn.innerHTML = overlayHidden
+    ? '<i class="fas fa-eye-slash"></i> Oscurecer'
+    : '<i class="fas fa-eye"></i> Ver completa';
+}
+
 toggleOverlayBtn.addEventListener('click', () => {
-  state.overlayHidden = !state.overlayHidden;
-  applyOverlayMode();
+  overlayHidden = !overlayHidden;
+  cropBox.classList.toggle('no-overlay', overlayHidden);
+  updateOverlayBtn();
   saveSettings();
-  notify(state.overlayHidden ? 'Fondo visible: ya ves toda la imagen' : 'Fondo oscurecido', 'info', { duration: 1800 });
+  notify(overlayHidden ? 'Fondo visible' : 'Fondo oscurecido', 'info', { duration: 1500 });
 });
 
+// =========================================================
+// BARRA DE PROGRESO
+// =========================================================
 function showProgress(current, total) {
   progressBar.classList.remove('hidden');
   const pct = total > 0 ? Math.round((current / total) * 100) : 0;
@@ -1995,87 +1592,90 @@ function hideProgress() {
   progressBar.setAttribute('aria-valuenow', '0');
 }
 
+// =========================================================
+// PROCESAMIENTO AUTOMÁTICO
+// =========================================================
 async function processAllImages(useTemplate) {
-  if (state.imageFiles.length === 0) { notify('No hay imágenes', 'info'); return; }
+  if (imageFiles.length === 0) { notify('No hay imágenes', 'info'); return; }
 
   const prevHtml = processAllBtn.innerHTML;
   processAllBtn.disabled = true;
   processAllBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando…';
-  showProgress(0, state.imageFiles.length);
+  showProgress(0, imageFiles.length);
 
-  const previousIndex = state.currentIndex;
+  const previousIndex = currentImageIndex;
 
-  let activeTemplate = state.cropTemplate;
+  let activeTemplate = cropTemplate;
   if (!useTemplate) {
-    const { w: cW, h: cH } = getDisplaySize();
-    if (cW > 0 && cH > 0 && state.crop.w > 30) {
+    const iW = imageToCrop.width, iH = imageToCrop.height;
+    if (iW > 0 && iH > 0 && cropBoxWidth > 30) {
       activeTemplate = {
-        x: state.crop.x / cW,
-        y: state.crop.y / cH,
-        w: state.crop.w / cW,
-        h: state.crop.h / cH
+        x: cropBoxX / iW,
+        y: cropBoxY / iH,
+        w: cropBoxWidth / iW,
+        h: cropBoxHeight / iH
       };
     }
   }
 
-  let skipped = 0;
-  let processed = 0;
+  let skipped = 0, processed = 0;
 
   try {
-    for (let i = 0; i < state.imageFiles.length; i++) {
-      state.currentIndex = i;
-      imageCounter.textContent = `Procesando ${i + 1} de ${state.imageFiles.length}…`;
-      showProgress(i, state.imageFiles.length);
+    for (let i = 0; i < imageFiles.length; i++) {
+      currentImageIndex = i;
+      imageCounter.textContent = `Procesando ${i + 1} de ${imageFiles.length}…`;
+      showProgress(i, imageFiles.length);
       await nextFrame();
 
       try {
-        const file = state.imageFiles[i];
+        const file = imageFiles[i];
         const dataUrl = await fileToDataURL(file);
         let img;
         try {
           img = await loadImageFromSrc(dataUrl);
         } catch (err) {
-          if (isHeicFile(file)) { console.warn('Saltando HEIC:', file.name); continue; }
+          if (isHeicFile(file)) continue;
           throw err;
         }
-        state.originalImage = img;
+        originalImage = img;
 
         const displayUrl = rescaleForDisplay(img);
         await setImageSrc(imageToCrop, displayUrl);
         await nextFrame();
+        await nextFrame();
 
-        const { w: dW, h: dH } = getDisplaySize();
-        if (dW <= 0 || dH <= 0) continue;
+        const iW = imageToCrop.width, iH = imageToCrop.height;
+        if (iW <= 0 || iH <= 0) continue;
 
         if (activeTemplate) {
-          state.crop = {
-            x: activeTemplate.x * dW,
-            y: activeTemplate.y * dH,
-            w: activeTemplate.w * dW,
-            h: activeTemplate.h * dH
-          };
+          cropBoxX = activeTemplate.x * iW;
+          cropBoxY = activeTemplate.y * iH;
+          cropBoxWidth = activeTemplate.w * iW;
+          cropBoxHeight = activeTemplate.h * iH;
         } else {
-          const side = Math.min(dW, dH) * 0.7;
-          state.crop = { x: (dW - side) / 2, y: (dH - side) / 2, w: side, h: side };
+          cropBoxX = iW * 0.25;
+          cropBoxY = iH * 0.25;
+          cropBoxWidth = iW * 0.5;
+          cropBoxHeight = iH * 0.5;
         }
-        applyCropStyles();
+        updateCropBox();
 
         const res = await cropImage();
         if (!res) continue;
 
-        if (state.dedupe && res.hash) {
+        if (dedupeEnabled && res.hash) {
           const dup = findDuplicateIndex(res.hash);
           if (dup >= 0) { URL.revokeObjectURL(res.url); skipped++; continue; }
         }
-        state.savedBoards.push(res);
+        savedChessboards.push(res);
         processed++;
       } catch (innerErr) {
-        console.error('Error procesando', state.imageFiles[i].name, innerErr);
+        console.error('Error procesando', imageFiles[i].name, innerErr);
       }
     }
 
-    showProgress(state.imageFiles.length, state.imageFiles.length);
-    updateBoardsDisplay();
+    showProgress(imageFiles.length, imageFiles.length);
+    updateChessboardsDisplay();
     notify(
       skipped > 0 ? `${processed} procesadas · ${skipped} repetidas omitidas` : `Se procesaron ${processed} imágenes`,
       'success'
@@ -2084,7 +1684,7 @@ async function processAllImages(useTemplate) {
     console.error(err);
     notify(err.message || 'Error al procesar', 'error');
   } finally {
-    state.currentIndex = previousIndex;
+    currentImageIndex = previousIndex;
     loadCurrentImage();
     processAllBtn.disabled = false;
     processAllBtn.innerHTML = prevHtml;
@@ -2094,6 +1694,9 @@ async function processAllImages(useTemplate) {
 
 processAllBtn.addEventListener('click', () => processAllImages(false));
 
+// =========================================================
+// GUARDAR TABLERO
+// =========================================================
 let savingCrop = false;
 cropBtn.addEventListener('click', async () => {
   if (savingCrop) return;
@@ -2110,58 +1713,82 @@ cropBtn.addEventListener('click', async () => {
   }
 });
 
+// =========================================================
+// LIMPIAR
+// =========================================================
 clearAllBtn.addEventListener('click', () => {
-  if (state.savedBoards.length === 0) return;
+  if (savedChessboards.length === 0) return;
   if (!confirm('¿Eliminar todos los tableros guardados?')) return;
 
-  const backupBlobs = state.savedBoards.map(b => ({ blob: b.blob, hash: b.hash, w: b.w, h: b.h }));
-  state.savedBoards.forEach(b => b.url && URL.revokeObjectURL(b.url));
-  state.savedBoards = [];
-  state.editingIndex = -1;
+  const backup = savedChessboards.map(b => ({ blob: b.blob, hash: b.hash, w: b.w, h: b.h }));
+  savedChessboards.forEach(b => b.url && URL.revokeObjectURL(b.url));
+  savedChessboards = [];
+  editingIndex = -1;
   _memoryWarned = false;
 
-  updateBoardsDisplay();
+  updateChessboardsDisplay();
   notify('Todos los tableros eliminados', 'info', {
     duration: 6000,
     onUndo: () => {
-      state.savedBoards = backupBlobs.map(b => ({
+      savedChessboards = backup.map(b => ({
         blob: b.blob, url: URL.createObjectURL(b.blob), hash: b.hash, w: b.w, h: b.h
       }));
-      updateBoardsDisplay();
+      updateChessboardsDisplay();
       notify('Restaurados');
     }
   });
 });
 
+// =========================================================
+// PDF PREVIEW
+// =========================================================
+const LAYOUTS = {
+  4: { cols: 2, rows: 2, imgW: 75, imgH: 75, lineCount: 3, lineGap: 4, positions: [
+    { x: 27, y: 55 }, { x: 108, y: 55 }, { x: 27, y: 170 }, { x: 108, y: 170 }
+  ]},
+  6: { cols: 2, rows: 3, imgW: 58.5, imgH: 58.5, lineCount: 3, lineGap: 4, positions: [
+    { x: 27, y: 40 }, { x: 122, y: 40 }, { x: 27, y: 120 }, { x: 122, y: 120 },
+    { x: 27, y: 200 }, { x: 122, y: 200 }
+  ]},
+  8: { cols: 2, rows: 4, imgW: 46, imgH: 46, lineCount: 3, lineGap: 3.5, positions: [
+    { x: 25, y: 32 }, { x: 139, y: 32 }, { x: 25, y: 93 }, { x: 139, y: 93 },
+    { x: 25, y: 154 }, { x: 139, y: 154 }, { x: 25, y: 215 }, { x: 139, y: 215 }
+  ]}
+};
+
+function getItemsPerPage() { return parseInt(itemsPerPageSelect.value, 10) || 6; }
+
 function updatePdfPreview() {
   pdfPreview.innerHTML = '';
-  const layout = LAYOUTS[state.itemsPerPage] || LAYOUTS[6];
-  const itemsPerPage = state.itemsPerPage;
-  const pageCount = Math.max(1, Math.ceil(state.savedBoards.length / itemsPerPage));
+  const ipp = getItemsPerPage();
+  const layout = LAYOUTS[ipp];
+  const pageCount = Math.max(1, Math.ceil(savedChessboards.length / ipp));
+  const headerText = headerInput.value;
+  const footerText = footerInput.value;
 
   for (let p = 0; p < pageCount; p++) {
     const page = document.createElement('div');
     page.className = 'page';
-    if (state.headerText) {
+    if (headerText) {
       const h = document.createElement('div');
       h.className = 'page-header';
-      h.textContent = state.headerText;
+      h.textContent = headerText;
       page.appendChild(h);
     }
     const content = document.createElement('div');
     content.className = `page-content cols-${layout.cols} rows-${layout.rows}`;
 
-    for (let i = 0; i < itemsPerPage; i++) {
-      const idx = p * itemsPerPage + i;
+    for (let i = 0; i < ipp; i++) {
+      const idx = p * ipp + i;
       const cell = document.createElement('div');
       cell.className = 'page-cell';
       const num = document.createElement('div');
       num.className = 'num';
       num.textContent = idx + 1;
       cell.appendChild(num);
-      if (idx < state.savedBoards.length) {
+      if (idx < savedChessboards.length) {
         const img = document.createElement('img');
-        img.src = state.savedBoards[idx].url;
+        img.src = savedChessboards[idx].url;
         cell.appendChild(img);
         const lines = document.createElement('div');
         lines.className = 'answer-lines';
@@ -2175,27 +1802,28 @@ function updatePdfPreview() {
       content.appendChild(cell);
     }
     page.appendChild(content);
-
     const footer = document.createElement('div');
     footer.className = 'page-footer';
-    footer.innerHTML = `<span>Página ${p + 1} / ${pageCount}</span><span>${escapeHtml(state.footerText || '')}</span>`;
+    footer.innerHTML = `<span>Página ${p + 1} / ${pageCount}</span><span>${escapeHtml(footerText || '')}</span>`;
     page.appendChild(footer);
     pdfPreview.appendChild(page);
   }
 }
 
+// =========================================================
+// GENERAR PDF
+// =========================================================
 async function generatePdf() {
-  if (state.savedBoards.length === 0) { notify('No hay tableros', 'info'); return; }
+  if (savedChessboards.length === 0) { notify('No hay tableros', 'info'); return; }
 
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF('p', 'mm', 'a4');
-
-  const layout = LAYOUTS[state.itemsPerPage] || LAYOUTS[6];
-  const itemsPerPage = state.itemsPerPage;
+  const ipp = getItemsPerPage();
+  const layout = LAYOUTS[ipp];
   const { positions, imgW, imgH, lineCount, lineGap } = layout;
 
-  const headerText = state.headerText.trim();
-  const footerText = state.footerText.trim();
+  const headerText = headerInput.value.trim();
+  const footerText = footerInput.value.trim();
 
   const prevHtml = generatePdfBtn.innerHTML;
   generatePdfBtn.disabled = true;
@@ -2203,22 +1831,21 @@ async function generatePdf() {
 
   try {
     let currentPage = -1;
-    for (let i = 0; i < state.savedBoards.length; i++) {
-      const board = state.savedBoards[i];
-      const pageIndex = Math.floor(i / itemsPerPage);
-      const posIndex  = i % itemsPerPage;
+    for (let i = 0; i < savedChessboards.length; i++) {
+      const board = savedChessboards[i];
+      const pageIndex = Math.floor(i / ipp);
+      const posIndex = i % ipp;
 
       if (pageIndex !== currentPage) {
         if (currentPage !== -1) doc.addPage();
         currentPage = pageIndex;
-        if (headerText) { doc.setFontSize(state.itemsPerPage === 8 ? 11 : 12); doc.text(headerText, 105, 18, { align: 'center' }); }
+        if (headerText) { doc.setFontSize(ipp === 8 ? 11 : 12); doc.text(headerText, 105, 18, { align: 'center' }); }
         if (footerText) { doc.setFontSize(10); doc.text(footerText, 105, 290, { align: 'center' }); }
       }
 
       const pos = positions[posIndex];
-      const cellCx = pos.x + imgW / 2;
-      doc.setFontSize(state.itemsPerPage === 8 ? 10 : 12);
-      doc.text(String(i + 1), cellCx, pos.y - 2, { align: 'center' });
+      doc.setFontSize(ipp === 8 ? 10 : 12);
+      doc.text(String(i + 1), pos.x + imgW / 2, pos.y - 2, { align: 'center' });
 
       let drawW = imgW, drawH = imgH;
       if (board.w && board.h) {
@@ -2233,10 +1860,9 @@ async function generatePdf() {
       const dataUrl = await blobToDataURL(board.blob);
       doc.addImage(dataUrl, 'JPEG', drawX, drawY, drawW, drawH, undefined, 'FAST');
 
-      const lineY = pos.y + imgH + (state.itemsPerPage === 8 ? 4 : 6);
+      const lineY = pos.y + imgH + (ipp === 8 ? 4 : 6);
       for (let j = 0; j < lineCount; j++) {
-        const y = lineY + j * lineGap;
-        doc.line(pos.x, y, pos.x + imgW, y);
+        doc.line(pos.x, lineY + j * lineGap, pos.x + imgW, lineY + j * lineGap);
       }
     }
     doc.save('ejercicios_ajedrez.pdf');
@@ -2252,91 +1878,103 @@ async function generatePdf() {
 
 generatePdfBtn.addEventListener('click', generatePdf);
 
+// =========================================================
+// AJUSTES
+// =========================================================
 qualitySlider.addEventListener('input', function () {
-  state.quality = parseFloat(this.value);
+  imageQuality = parseFloat(this.value);
   qualityValue.textContent = this.value;
   saveSettingsDebounced();
 });
 resolutionSelect.addEventListener('change', function () {
-  state.resolution = parseFloat(this.value);
+  resolutionFactor = parseFloat(this.value);
   saveSettings();
 });
 squareLock.addEventListener('change', function () {
-  state.squareLock = this.checked;
   if (this.checked) {
-    const side = Math.min(state.crop.w, state.crop.h);
-    state.crop.w = state.crop.h = side;
-    applyCropStyles();
+    const side = Math.min(cropBoxWidth, cropBoxHeight);
+    cropBoxWidth = cropBoxHeight = side;
+    updateCropBox();
   }
   saveSettings();
 });
 showGrid.addEventListener('change', function () {
-  state.showGrid = this.checked;
   cropBox.classList.toggle('show-grid', this.checked);
   saveSettings();
 });
 dedupeCheck.addEventListener('change', function () {
-  state.dedupe = this.checked;
+  dedupeEnabled = this.checked;
   dedupeThresholdWrap.style.display = this.checked ? '' : 'none';
   saveSettings();
-  notify(state.dedupe ? 'Detección de repetidos activada' : 'Detección desactivada', 'info');
 });
 dedupeThreshold.addEventListener('change', function () {
-  state.dedupeThreshold = parseInt(this.value, 10);
+  dedupeThresholdVal = parseInt(this.value, 10);
   saveSettings();
 });
-headerInput.addEventListener('input', function () {
-  state.headerText = this.value;
-  updatePdfPreview();
-  saveSettingsDebounced();
-});
-footerInput.addEventListener('input', function () {
-  state.footerText = this.value;
-  updatePdfPreview();
-  saveSettingsDebounced();
-});
+headerInput.addEventListener('input', () => { updatePdfPreview(); saveSettingsDebounced(); });
+footerInput.addEventListener('input', () => { updatePdfPreview(); saveSettingsDebounced(); });
 itemsPerPageSelect.addEventListener('change', function () {
-  state.itemsPerPage = parseInt(this.value, 10);
   updatePdfPreview();
   saveSettings();
-  notify(`Layout: ${state.itemsPerPage} tableros por página`, 'info');
 });
 
+// =========================================================
+// ATAJOS
+// =========================================================
+document.addEventListener('keydown', (e) => {
+  const tag = (e.target.tagName || '').toLowerCase();
+  if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+
+  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+    if (!cropBtn.disabled && !cropSection.classList.contains('hidden')) {
+      e.preventDefault();
+      cropBtn.click();
+    }
+  }
+});
+
+// =========================================================
+// RESIZE
+// =========================================================
 let _resizeTimer = null;
 window.addEventListener('resize', () => {
   clearTimeout(_resizeTimer);
   _resizeTimer = setTimeout(() => {
-    if (imageToCrop.naturalWidth > 0 && !cropBox.classList.contains('hidden')) {
-      const { w: dW, h: dH } = getDisplaySize();
-      if (dW > 0 && dH > 0) {
-        state.crop.x = Math.min(state.crop.x, Math.max(0, dW - state.crop.w));
-        state.crop.y = Math.min(state.crop.y, Math.max(0, dH - state.crop.h));
-        state.crop.w = Math.min(state.crop.w, dW);
-        state.crop.h = Math.min(state.crop.h, dH);
-        applyCropStyles();
+    if (imageToCrop.naturalWidth > 0 && cropBox && !cropBox.classList.contains('hidden')) {
+      // Reescalar proporcionalmente
+      const oldW = cropBoxWidth, oldH = cropBoxHeight;
+      const newW = imageToCrop.width, newH = imageToCrop.height;
+      const scaleX = newW / (imageToCrop.dataset.prevW || newW);
+      const scaleY = newH / (imageToCrop.dataset.prevH || newH);
+      if (scaleX !== 1 || scaleY !== 1) {
+        cropBoxX *= scaleX; cropBoxY *= scaleY;
+        cropBoxWidth *= scaleX; cropBoxHeight *= scaleY;
       }
+      imageToCrop.dataset.prevW = newW;
+      imageToCrop.dataset.prevH = newH;
+      updateCropBox();
     }
   }, 120);
 });
 
+// =========================================================
+// CLEANUP
+// =========================================================
 window.addEventListener('beforeunload', () => {
-  state.savedBoards.forEach(b => b.url && URL.revokeObjectURL(b.url));
+  savedChessboards.forEach(b => b.url && URL.revokeObjectURL(b.url));
 });
 
+// =========================================================
+// INIT
+// =========================================================
 (function init() {
   loadSettings();
-  qualitySlider.value = state.quality;
-  qualityValue.textContent = state.quality;
-  resolutionSelect.value = String(state.resolution);
-  squareLock.checked = state.squareLock;
-  showGrid.checked = state.showGrid;
-  dedupeCheck.checked = state.dedupe;
-  dedupeThreshold.value = String(state.dedupeThreshold);
-  dedupeThresholdWrap.style.display = state.dedupe ? '' : 'none';
-  headerInput.value = state.headerText;
-  footerInput.value = state.footerText;
-  itemsPerPageSelect.value = String(state.itemsPerPage);
-  applyOverlayMode();
+  qualitySlider.value = imageQuality;
+  qualityValue.textContent = imageQuality;
+  resolutionSelect.value = String(resolutionFactor);
+  dedupeCheck.checked = dedupeEnabled;
+  dedupeThreshold.value = String(dedupeThresholdVal);
+  dedupeThresholdWrap.style.display = dedupeEnabled ? '' : 'none';
   updateTemplateButtons();
 })();
 </script>
