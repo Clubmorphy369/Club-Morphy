@@ -2925,11 +2925,85 @@
     justify-content: center;
     gap: 10px;
 }
+/* ⭐ v76: Barra de progreso dentro del tablero */
+.cm-tablero-progress-bar-wrap {
+    margin: 8px 0 4px;
+    padding: 8px 12px;
+    background: linear-gradient(135deg, rgba(14, 165, 233, 0.06), rgba(14, 165, 233, 0.02));
+    border-radius: 10px;
+    border: 1px solid rgba(14, 165, 233, 0.15);
+}
+
+.cm-tablero-progress-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--cm-texto);
+    letter-spacing: 0.3px;
+}
+
+.cm-progress-cap-actual {
+    color: var(--cm-acento);
+    text-transform: uppercase;
+}
+
+.cm-progress-pct {
+    color: var(--cm-texto-suave);
+    font-variant-numeric: tabular-nums;
+    font-family: 'Courier New', monospace;
+    font-size: 0.82rem;
+    font-weight: 800;
+}
+
+.cm-tablero-progress-track {
+    width: 100%;
+    height: 8px;
+    background: rgba(148, 163, 184, 0.25);
+    border-radius: 20px;
+    overflow: hidden;
+    position: relative;
+}
+
+.cm-tablero-progress-fill {
+    height: 100%;
+    border-radius: 20px;
+    transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1), background 0.3s;
+    background: linear-gradient(90deg, #0ea5e9, #0284c7);
+    box-shadow: 0 0 8px rgba(14, 165, 233, 0.4);
+}
+
+.cm-tablero-progress-fill.cm-progress-bajo {
+    background: linear-gradient(90deg, #f59e0b, #ea580c);
+    box-shadow: 0 0 8px rgba(245, 158, 11, 0.4);
+}
+
+.cm-tablero-progress-fill.cm-progress-medio {
+    background: linear-gradient(90deg, #0ea5e9, #0284c7);
+    box-shadow: 0 0 8px rgba(14, 165, 233, 0.4);
+}
+
+.cm-tablero-progress-fill.cm-progress-alto {
+    background: linear-gradient(90deg, #16a34a, #15803d);
+    box-shadow: 0 0 10px rgba(22, 163, 74, 0.5);
+}
+
+/* Modo Zen: barra de progreso más visible */
+.cm-tablero-wrap--zen .cm-tablero-progress-bar-wrap {
+    padding: 10px 16px;
+    background: linear-gradient(135deg, rgba(14, 165, 233, 0.1), rgba(14, 165, 233, 0.04));
+}
+
+.cm-tablero-wrap--zen .cm-tablero-progress-track {
+    height: 10px;
+}
+
 /* ⭐ v75: Modo Zen — botón toggle */
 .cm-tablero-wrap {
     position: relative;
 }
-
 .cm-btn-zen-toggle {
     position: absolute;
     top: 8px;
