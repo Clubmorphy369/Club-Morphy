@@ -31,6 +31,7 @@ const STATIC_ASSETS = [
     ROOT + 'entrenador-core.js',
     ROOT + 'entrenador-tablero.js',
     ROOT + 'entrenador-api.js',
+    ROOT + 'reloj.html',
     ROOT + 'manifest.json',
     ROOT + 'assets/lozza/lozza.js',
     ROOT + 'assets/android-chrome-192x192.png',
