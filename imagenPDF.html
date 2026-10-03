@@ -658,20 +658,22 @@
     .crop-options { gap: 12px; font-size: .85rem; }
     .crop-actions .btn { flex: 1 1 48%; }
 
-    /* La imagen SIEMPRE cabe en el contenedor */
+       /* La imagen se ajusta al ANCHO y permite scroll vertical */
     #cropContainer {
-      max-height: 54vh;
-      min-height: 0;
-      overflow: hidden;
+      max-height: 60vh;
+      min-height: 40vh;
+      overflow: auto;              /* ✅ scroll vertical habilitado */
       padding: 4px;
-      align-items: center;
+      align-items: flex-start;     /* la imagen empieza arriba */
       justify-content: center;
+      -webkit-overflow-scrolling: touch;
     }
     #imageToCrop {
-      max-height: 52vh;
-      max-width: 100%;
+      max-height: none;            /* ✅ sin límite de altura */
+      max-width: 100%;             /* se ajusta al ancho del contenedor */
+      height: auto;
+      width: auto;
     }
-
     /* Tiradores más grandes en móvil */
     .resize-handle {
       width: 38px;
