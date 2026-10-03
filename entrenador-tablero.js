@@ -5270,13 +5270,62 @@ mejorMovimientoFallback(c) {
                 document.removeEventListener('cm-tablero-sf-ready', this._sfReadyHandler);
                 this._sfReadyHandler = null;
             }
-                      if (this.esModoAdmin) {
+            if (this.esModoAdmin) {
                 // ⭐ v74: decrementar contador (nunca por debajo de 0)
                 ELO._bloqueadoresAdmin = Math.max(0, ELO._bloqueadoresAdmin - 1);
-            }    
-          this.contenedor.innerHTML = '';
+            }
+
+            // ⭐ v75: Limpiar modo zen
+            if (this._zenKeydownHandler) {
+                document.removeEventListener('keydown', this._zenKeydownHandler);
+                this._zenKeydownHandler = null;
+            }
+            document.body.classList.remove('cm-zen-activo');
+
+            this.contenedor.innerHTML = '';
+        }
+
+        // ============================================================
+        // ⭐ v75: MODO ZEN (tablero a pantalla completa)
+        // ============================================================
+        toggleModoZenTablero() {
+            this._zenActivo = !this._zenActivo;
+            try {
+                localStorage.setItem('cm-tablero-modo-zen', this._zenActivo ? 'true' : 'false');
+            } catch (e) { /* ignorar */ }
+            this._aplicarModoZenTablero();
+        }
+
+        _aplicarModoZenTablero() {
+            const wrap = this.contenedor.querySelector('.cm-tablero-wrap');
+            if (!wrap) return;
+
+            wrap.classList.toggle('cm-tablero-wrap--zen', this._zenActivo);
+            document.body.classList.toggle('cm-zen-activo', this._zenActivo);
+
+            // Actualizar icono y título del botón
+            if (this.$btnZenToggle) {
+                const icon = this.$btnZenToggle.querySelector('.cm-btn-zen-icon');
+                if (icon) icon.textContent = this._zenActivo ? '✕' : '⛶';
+                this.$btnZenToggle.setAttribute('title',
+                    this._zenActivo ? 'Salir del modo zen (Esc)' : 'Modo zen (tablero a pantalla completa)');
+            }
+
+            // Redibujar piezas por si cambió el tamaño del tablero
+            if (this.$board && this.chess) {
+                this.dibujarPiezas();
+            }
+        }
+
+        _documentKeydownZen(e) {
+            if (e.key === 'Escape' && this._zenActivo) {
+                e.preventDefault();
+                e.stopPropagation();
+                this.toggleModoZenTablero();
+            }
         }
     }
+          
 
     // ============================================================
     // REGISTRO EN EL NAMESPACE GLOBAL
